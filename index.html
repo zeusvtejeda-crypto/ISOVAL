@@ -106,12 +106,18 @@ nav.scrolled{
 .nav-brand em{font-style:normal;color:var(--red);}
 .nav-links{display:flex;gap:40px;list-style:none;}
 .nav-links a{
+  position:relative;
   font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:0.22em;text-transform:uppercase;
   color:var(--ink-dim);text-decoration:none;
   transition:color 200ms;
 }
+.nav-links a::after{
+  content:'';position:absolute;left:0;right:100%;bottom:-6px;height:1px;
+  background:var(--red);transition:right 360ms cubic-bezier(0.16,1,0.3,1);
+}
 .nav-links a:hover{color:var(--ink);}
+.nav-links a:hover::after{right:0;}
 .nav-cta{
   font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:0.18em;text-transform:uppercase;
@@ -159,11 +165,11 @@ nav.scrolled{
    REVEAL
 ══════════════════════════════════════════ */
 .reveal{
-  opacity:0;transform:translateY(20px);
-  transition:opacity 550ms cubic-bezier(0.16,1,0.3,1),
-             transform 550ms cubic-bezier(0.16,1,0.3,1);
+  opacity:0;transform:translateY(20px) scale(0.97);
+  transition:opacity 650ms cubic-bezier(0.16,1,0.3,1),
+             transform 650ms cubic-bezier(0.16,1,0.3,1);
 }
-.reveal.in{opacity:1;transform:translateY(0);}
+.reveal.in{opacity:1;transform:translateY(0) scale(1);}
 
 /* ══════════════════════════════════════════
    HERO
@@ -189,10 +195,10 @@ nav.scrolled{
 .slide:nth-child(3){background-image:url('imgs/hero3-lg.webp');}
 .slide:nth-child(4){background-image:url('imgs/hero4-lg.webp');}
 }
-@keyframes kb1{0%{opacity:0;transform:scale(1.08) translate(1%,0.5%);}8%{opacity:1;}33%{opacity:1;transform:scale(1.14) translate(-0.5%,-0.5%);}41%{opacity:0;}100%{opacity:0;}}
-@keyframes kb2{0%{opacity:0;transform:scale(1.10) translate(-0.5%,0);}8%{opacity:1;}33%{opacity:1;transform:scale(1.16) translate(0.5%,0.5%);}41%{opacity:0;}100%{opacity:0;}}
-@keyframes kb3{0%{opacity:0;transform:scale(1.06) translate(0,0.5%);}8%{opacity:1;}33%{opacity:1;transform:scale(1.13) translate(-0.5%,-0.5%);}41%{opacity:0;}100%{opacity:0;}}
-@keyframes kb4{0%{opacity:0;transform:scale(1.09) translate(0.5%,0);}8%{opacity:1;}33%{opacity:1;transform:scale(1.15) translate(-0.5%,0.5%);}41%{opacity:0;}100%{opacity:0;}}
+@keyframes kb1{0%{opacity:0;transform:scale(1.08) translate(1%,0.5%);}10%{opacity:1;}30%{opacity:1;transform:scale(1.14) translate(-0.5%,-0.5%);}46%{opacity:0;}100%{opacity:0;}}
+@keyframes kb2{0%{opacity:0;transform:scale(1.10) translate(-0.5%,0);}10%{opacity:1;}30%{opacity:1;transform:scale(1.16) translate(0.5%,0.5%);}46%{opacity:0;}100%{opacity:0;}}
+@keyframes kb3{0%{opacity:0;transform:scale(1.06) translate(0,0.5%);}10%{opacity:1;}30%{opacity:1;transform:scale(1.13) translate(-0.5%,-0.5%);}46%{opacity:0;}100%{opacity:0;}}
+@keyframes kb4{0%{opacity:0;transform:scale(1.09) translate(0.5%,0);}10%{opacity:1;}30%{opacity:1;transform:scale(1.15) translate(-0.5%,0.5%);}46%{opacity:0;}100%{opacity:0;}}
 
 /* Overlay cálido — no negro puro */
 .hero-overlay{
@@ -671,8 +677,7 @@ nav.scrolled{
   font-family:'JetBrains Mono',monospace;
 }
 .faq-item.open .faq-icon{transform:rotate(45deg);background:var(--red);color:var(--cream);border-color:var(--red);}
-.faq-a{max-height:0;overflow:hidden;transition:max-height 420ms cubic-bezier(0.16,1,0.3,1);}
-.faq-item.open .faq-a{max-height:280px;}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 480ms cubic-bezier(0.16,1,0.3,1);}
 .faq-a-inner{
   padding-bottom:28px;max-width:700px;
   font-family:'Fraunces',serif;font-weight:300;
@@ -1134,7 +1139,7 @@ footer{
 <!-- NOSOTROS -->
 <section id="nosotros">
   <div class="about-grid">
-    <div class="about-img">
+    <div class="about-img reveal">
       <picture>
         <source media="(min-width:769px)" srcset="imgs/about-lg.webp" type="image/webp"/>
         <source srcset="imgs/about-sm.webp" type="image/webp"/>
@@ -1675,8 +1680,15 @@ else{boot();}
 function toggleFaq(el){
   var item=el.parentElement;
   var isOpen=item.classList.contains('open');
-  document.querySelectorAll('.faq-item.open').forEach(function(i){i.classList.remove('open');});
-  if(!isOpen){item.classList.add('open');}
+  document.querySelectorAll('.faq-item.open').forEach(function(i){
+    i.classList.remove('open');
+    i.querySelector('.faq-a').style.maxHeight='';
+  });
+  if(!isOpen){
+    item.classList.add('open');
+    var a=item.querySelector('.faq-a');
+    a.style.maxHeight=a.querySelector('.faq-a-inner').offsetHeight+'px';
+  }
 }
 </script>
 </body>
