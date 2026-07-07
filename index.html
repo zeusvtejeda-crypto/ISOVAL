@@ -124,7 +124,14 @@ nav.scrolled{
   padding:10px 22px;
   border:1px solid var(--red);
   color:var(--red);text-decoration:none;
+  white-space:nowrap;flex-shrink:0;
   position:relative;overflow:hidden;transition:color 200ms;
+}
+/* Nav se apretaba entre 1025-1400px (marca y links casi sin espacio) */
+@media(min-width:1025px) and (max-width:1400px){
+  nav{padding:20px 32px;}
+  .nav-links{gap:20px;}
+  .nav-cta{padding:10px 16px;}
 }
 .nav-cta::before{
   content:'';position:absolute;inset:0;
@@ -864,7 +871,7 @@ footer{
   display:flex;align-items:center;justify-content:space-between;
 }
 .f-logo{display:flex;align-items:center;gap:12px;}
-.f-logo img{height:30px;width:30px;object-fit:contain;filter:brightness(0) invert(1);opacity:0.7;}
+.f-logo img{height:30px;width:30px;object-fit:contain;opacity:0.85;}
 .f-brand{font-family:'Fraunces',serif;font-weight:300;font-size:16px;letter-spacing:0.05em;color:rgba(243,237,224,0.7);}
 .f-brand em{font-style:normal;color:var(--red);}
 .f-copy{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(243,237,224,0.28);letter-spacing:0.12em;}
@@ -886,7 +893,22 @@ footer{
 @media(max-width:1024px){
   :root{--pad-section:100px;--pad-h:28px;}
   nav{padding:16px 28px;} .nav-links{display:none;}
-  .hero-content{padding:0 28px 80px;}
+  /* padding-top evita que el texto del hero quede debajo del nav fijo en pantallas cortas */
+  .hero-content{padding:100px 28px 56px;}
+  .hero-eyebrow{margin-bottom:20px;}
+  .hero-sub{margin-top:20px;}
+  .hero-actions{margin-top:28px;}
+  .hero-stats-row{margin-top:32px;}
+  .hstat{padding:16px 16px;}
+  /* background-attachment:fixed es poco fiable en iOS Safari y cuesta perf de scroll en móvil */
+  #quote{background-attachment:scroll;}
+  /* En mobile el layout se apila a 1 columna: las secciones son más altas */
+  #proyectos{contain-intrinsic-size:auto 1550px;}
+  #nayarit{contain-intrinsic-size:auto 1650px;}
+  #pilares{contain-intrinsic-size:auto 1700px;}
+  #insights{contain-intrinsic-size:auto 780px;}
+  #proceso{contain-intrinsic-size:auto 1150px;}
+  #contacto{contain-intrinsic-size:auto 1600px;}
   .about-grid,.ct-wrap{grid-template-columns:1fr;}
   .about-img{min-height:300px;} .about-img-overlay{background:linear-gradient(to bottom,transparent 55%,var(--cream) 100%);}
   .stats-row{grid-template-columns:1fr 1fr;}
@@ -992,11 +1014,17 @@ footer{
   .hero-badge{display:none;}
 }
 
-/* content-visibility: secciones debajo del fold se renderizan solo al llegar */
-#proyectos,#nayarit,#pilares,#insights,#proceso,#contacto{
-  content-visibility:auto;
-  contain-intrinsic-size:auto 600px;
-}
+/* content-visibility: secciones debajo del fold se renderizan solo al llegar.
+   contain-intrinsic-size aproxima la altura real de cada sección para que
+   los links con #ancla (nav, botones) no salten a una posición incorrecta
+   antes de que la sección se haya medido. */
+#proyectos,#nayarit,#pilares,#insights,#proceso,#contacto{content-visibility:auto;}
+#proyectos{contain-intrinsic-size:auto 1650px;}
+#nayarit{contain-intrinsic-size:auto 1100px;}
+#pilares{contain-intrinsic-size:auto 1000px;}
+#insights{contain-intrinsic-size:auto 950px;}
+#proceso{contain-intrinsic-size:auto 720px;}
+#contacto{contain-intrinsic-size:auto 1050px;}
 
 /* prefers-reduced-motion: respeta preferencia del sistema */
 @media(prefers-reduced-motion:reduce){
