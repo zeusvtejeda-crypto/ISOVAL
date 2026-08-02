@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="300" viewBox="0 0 900 300" font-family="'Archivo Black','Arial Black',sans-serif">
+  <g transform="translate(150,40) scale(0.62)">
+    <g fill="#F2591F">
+      <polygon points="-103.9,190 -83.9,201.5 -83.9,214 -103.9,202.5"/>
+      <polygon points="103.9,190 83.9,201.5 83.9,214 103.9,202.5"/>
+      <rect x="-6" y="250" width="12" height="12"/>
+    </g>
+    <polygon points="103.9,60 0,120 0,250 103.9,190" fill="#3A3A3A"/>
+    <polygon points="-103.9,60 0,120 0,250 -103.9,190" fill="#2A2A2A"/>
+    <g transform="matrix(103.9,60,0,130,-103.9,60)">
+      <text x="0.20" y="0.76" font-size="0.9" fill="#F4F2ED">B</text>
+    </g>
+    <polygon points="0,0 103.9,60 0,120 -103.9,60" fill="#ECEAE4" stroke="#0E0E0E" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="#1A1A1A" opacity="0.55">
+      <circle cx="0" cy="40" r="3"/><circle cx="-34" cy="60" r="3"/><circle cx="34" cy="60" r="3"/>
+      <circle cx="0" cy="80" r="3"/><circle cx="0" cy="60" r="3.5"/>
+    </g>
+  </g>
+  <text x="290" y="150" font-size="92" fill="#F4F2ED" letter-spacing="1">BASES BO<tspan fill="#F2591F">X</tspan></text>
+  <line x1="292" y1="188" x2="470" y2="188" stroke="#F2591F" stroke-width="4"/>
+  <text x="486" y="200" font-size="30" fill="#9A9A98" letter-spacing="10" font-family="'Barlow','Arial',sans-serif" font-weight="700">TEPIC</text>
+  <line x1="640" y1="188" x2="820" y2="188" stroke="#F2591F" stroke-width="4"/>
+</svg>

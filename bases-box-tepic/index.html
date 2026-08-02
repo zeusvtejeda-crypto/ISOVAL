@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Bases Box Tepic — Bases tipo box a la medida · Fábrica propia en Tepic, Nayarit</title>
+<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit. Más de 8 tonos, estructura durable y patas cromadas. Cotiza directo por WhatsApp."/>
+<meta property="og:title" content="Bases Box Tepic — Fábrica de bases para cama"/>
+<meta property="og:description" content="Bases tipo box a la medida, +8 tonos, fabricación propia en Tepic. Cotiza por WhatsApp."/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="assets/logo-icon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --graphite:#1A1A1A;
+  --graphite-2:#242424;
+  --steel:#3E4A54;
+  --concrete:#E5E3DE;
+  --paper:#F4F2ED;
+  --orange:#F2591F;
+  --orange-2:#d84812;
+  --yellow:#F2A900;
+  --muted:#8C8C88;
+  --border:rgba(26,26,26,.12);
+  --tone:#6B3FA0;       /* tono base seleccionado */
+  --tone-dark:#532f80;  /* sombra del tono */
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--graphite);font-family:'Barlow',system-ui,sans-serif;font-size:18px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,.display{font-family:'Anton',Impact,sans-serif;font-weight:400;line-height:.98;letter-spacing:.5px;text-transform:uppercase}
+a{color:inherit;text-decoration:none}
+img,svg{max-width:100%;display:block}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:4px;text-transform:uppercase;font-size:15px;color:var(--orange)}
+.tag-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;color:var(--muted);font-size:14px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;font-size:17px;padding:15px 26px;border:2px solid var(--graphite);transition:.15s;cursor:pointer}
+.btn-primary{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn-primary:hover{background:var(--orange-2);border-color:var(--orange-2)}
+.btn-dark{background:var(--graphite);color:var(--paper)}
+.btn-dark:hover{background:#000}
+.btn-ghost{background:transparent;color:var(--graphite)}
+.btn-ghost:hover{background:var(--graphite);color:var(--paper)}
+.btn svg{width:20px;height:20px}
+
+/* header */
+header{position:sticky;top:0;z-index:50;background:rgba(244,242,237,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:74px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .mark{width:42px;height:42px}
+.brand .name{font-family:'Anton',sans-serif;font-size:26px;letter-spacing:.5px;line-height:1}
+.brand .name .x{color:var(--orange)}
+.brand .sub{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:5px;font-size:11px;color:var(--steel);margin-top:2px}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links a{font-family:'Barlow Condensed',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;font-size:16px}
+.nav-links a:hover{color:var(--orange)}
+.nav-cta{display:flex;align-items:center;gap:14px}
+.menu-btn{display:none;background:none;border:0;cursor:pointer}
+
+/* hero */
+.hero{position:relative;background:var(--graphite);color:var(--paper);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:42px 42px;opacity:.09}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;padding:80px 0 90px;position:relative}
+.hero h1{font-size:clamp(46px,7vw,92px);color:var(--paper)}
+.hero h1 .o{color:var(--orange)}
+.hero p.lead{font-size:20px;color:#cfcdc7;max-width:520px;margin:22px 0 32px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:34px;margin-top:44px;flex-wrap:wrap}
+.hero-stats .s{border-left:3px solid var(--orange);padding-left:14px}
+.hero-stats .n{font-family:'Anton',sans-serif;font-size:34px;line-height:1}
+.hero-stats .l{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.hero-art{display:flex;justify-content:center;align-items:center}
+.hero-art svg{filter:drop-shadow(0 30px 40px rgba(0,0,0,.45));width:100%;max-width:360px}
+
+/* section base */
+section{padding:96px 0}
+.sec-head{margin-bottom:48px}
+.sec-head h2{font-size:clamp(32px,4.4vw,54px)}
+.sec-head p{color:var(--steel);max-width:560px;margin-top:12px}
+.divider-label{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.divider-label::after{content:"";flex:1;height:2px;background:var(--border)}
+
+/* tonos */
+#tonos{background:var(--concrete)}
+.tonos-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.base-stage{display:flex;justify-content:center;align-items:center;min-height:320px}
+.base-stage svg{width:100%;max-width:440px}
+.tone-face-l{fill:var(--tone-dark);transition:fill .35s}
+.tone-face-r{fill:var(--tone);transition:fill .35s}
+.swatches{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px}
+.sw{width:56px;height:56px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--border),0 4px 10px rgba(0,0,0,.12);cursor:pointer;transition:transform .12s;position:relative}
+.sw:hover{transform:scale(1.08)}
+.sw[aria-pressed="true"]{outline:3px solid var(--graphite);outline-offset:3px}
+.sw .lbl{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;white-space:nowrap;color:var(--steel);text-transform:uppercase}
+.tone-name{font-family:'Anton',sans-serif;font-size:40px;margin-bottom:6px}
+.note{font-size:14px;color:var(--muted);margin-top:44px}
+
+/* features */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border)}
+.feat{background:var(--paper);padding:34px 28px}
+.feat .ic{width:46px;height:46px;color:var(--orange);margin-bottom:16px}
+.feat h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.feat p{color:var(--steel);font-size:16px}
+
+/* medidas */
+#medidas{background:var(--graphite);color:var(--paper)}
+#medidas .sec-head h2{color:var(--paper)}
+#medidas .sec-head p{color:#b7b5af}
+.med-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.med{border:1px solid #333;padding:26px 22px;transition:.15s;position:relative}
+.med:hover{border-color:var(--orange);background:#202020}
+.med .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-size:14px;font-weight:700}
+.med .name{font-family:'Anton',sans-serif;font-size:30px;margin:8px 0 4px}
+.med .dim{font-family:'Barlow',monospace;color:#b7b5af;font-size:16px}
+.med-custom{margin-top:22px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;border:1px dashed #444;padding:22px 26px}
+.med-custom b{color:var(--orange)}
+
+/* infantil */
+#infantil{background:linear-gradient(180deg,var(--paper),var(--concrete))}
+.kids{display:grid;grid-template-columns:.9fr 1.1fr;gap:50px;align-items:center}
+.kids .chips{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 28px}
+.kids .chip{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.kids-art{background:#fff;border:1px solid var(--border);padding:34px;display:flex;justify-content:center}
+
+/* contacto */
+#contacto{background:var(--graphite);color:var(--paper)}
+#contacto .sec-head h2{color:var(--paper)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.contact-card{border:1px solid #333;padding:30px}
+.contact-card .row{display:flex;gap:14px;align-items:flex-start;margin-bottom:22px}
+.contact-card .ic{width:26px;height:26px;color:var(--orange);flex:none;margin-top:2px}
+.contact-card .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.contact-card .v{font-size:19px;font-weight:600}
+.contact-cta{display:flex;flex-direction:column;gap:14px;justify-content:center}
+.contact-cta .btn{justify-content:center;font-size:19px;padding:18px}
+
+/* footer */
+footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
+.foot-grid{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;align-items:center}
+.foot-brand{display:flex;align-items:center;gap:12px}
+.foot-brand .name{font-family:'Anton',sans-serif;font-size:24px;color:var(--paper)}
+.foot-brand .name .x{color:var(--orange)}
+.foot-links{display:flex;gap:24px;flex-wrap:wrap;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px}
+.foot-links a:hover{color:var(--orange)}
+.copy{margin-top:30px;padding-top:20px;border-top:1px solid #262626;font-size:14px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* floating whatsapp */
+.wa-float{position:fixed;right:20px;bottom:20px;z-index:60;background:#25D366;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.28);transition:transform .15s}
+.wa-float:hover{transform:scale(1.08)}
+.wa-float svg{width:32px;height:32px;fill:#fff}
+
+@media(max-width:900px){
+  .hero-grid,.tonos-grid,.kids,.contact-grid{grid-template-columns:1fr}
+  .hero-art{order:-1}
+  .feat-grid{grid-template-columns:1fr 1fr}
+  .med-grid{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+  .menu-btn{display:block}
+  .nav-links.open{display:flex;position:absolute;top:74px;left:0;right:0;flex-direction:column;background:var(--paper);padding:20px 24px;gap:16px;border-bottom:1px solid var(--border)}
+}
+@media(max-width:560px){
+  .feat-grid,.med-grid{grid-template-columns:1fr}
+  .hero-stats{gap:20px}
+  section{padding:70px 0}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Bases Box Tepic">
+      <img class="mark" src="assets/logo-icon.svg" alt=""/>
+      <div>
+        <div class="name">BASES BO<span class="x">X</span></div>
+        <div class="sub">TEPIC · FÁBRICA PROPIA</div>
+      </div>
+    </a>
+    <nav class="nav-links" id="navlinks">
+      <a href="#tonos">Tonos</a>
+      <a href="#porque">Por qué</a>
+      <a href="#medidas">Medidas</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+        Cotizar
+      </a>
+      <button class="menu-btn" aria-label="Menú" onclick="document.getElementById('navlinks').classList.toggle('open')">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2.4"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<a id="top"></a>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Fábrica propia · Tepic, Nayarit</span>
+      <h1>Bases que <span class="o">aguantan.</span><br/>Diseño que combina.</h1>
+      <p class="lead">Fabricamos bases para cama tipo <b>box</b> a la medida, en más de 8 tonos, con estructura durable y patas cromadas. Directo de fábrica, sin intermediarios.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+          Cotiza por WhatsApp
+        </a>
+        <a class="btn btn-ghost" href="#tonos" style="border-color:#555;color:var(--paper)">Ver tonos</a>
+      </div>
+      <div class="hero-stats">
+        <div class="s"><div class="n">+8</div><div class="l">Tonos</div></div>
+        <div class="s"><div class="n">100%</div><div class="l">Fabricación local</div></div>
+        <div class="s"><div class="n">A tu</div><div class="l">Medida</div></div>
+      </div>
+    </div>
+    <div class="hero-art">
+      <!-- big product icon -->
+      <svg viewBox="-130 -30 260 320" xmlns="http://www.w3.org/2000/svg">
+        <g fill="#F2591F">
+          <polygon points="-103.9,190 -83.9,201.5 -83.9,214 -103.9,202.5"/>
+          <polygon points="103.9,190 83.9,201.5 83.9,214 103.9,202.5"/>
+          <rect x="-6" y="250" width="12" height="12"/>
+        </g>
+        <polygon points="103.9,60 0,120 0,250 103.9,190" fill="#2A2A2A"/>
+        <polygon points="-103.9,60 0,120 0,250 -103.9,190" fill="#151515"/>
+        <g transform="matrix(103.9,60,0,130,-103.9,60)">
+          <text x="0.20" y="0.76" font-size="0.9" fill="#F4F2ED" font-family="'Anton',sans-serif">B</text>
+        </g>
+        <polygon points="0,0 103.9,60 0,120 -103.9,60" fill="#ECEAE4" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+        <g fill="#1A1A1A" opacity="0.5">
+          <circle cx="0" cy="40" r="3"/><circle cx="-34" cy="60" r="3"/><circle cx="34" cy="60" r="3"/>
+          <circle cx="0" cy="80" r="3"/><circle cx="0" cy="60" r="3.5"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TONOS ============ -->
+<section id="tonos">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">01 / TONOS</span></div>
+      <h2>Elige el tono que combina con tu cuarto</h2>
+      <p>Toca un color y la base se transforma. Manejamos gran variedad de tonos para que combine con cualquier estilo.</p>
+    </div>
+    <div class="tonos-grid">
+      <div class="base-stage">
+        <svg viewBox="-150 -20 300 280" xmlns="http://www.w3.org/2000/svg">
+          <!-- chrome legs -->
+          <g fill="#9aa0a6">
+            <rect x="-118" y="150" width="10" height="34" rx="3"/>
+            <rect x="108" y="150" width="10" height="34" rx="3"/>
+            <rect x="-6" y="196" width="12" height="34" rx="3"/>
+          </g>
+          <!-- body -->
+          <polygon points="120,52 0,110 0,200 120,150" class="tone-face-r"/>
+          <polygon points="-120,52 0,110 0,200 -120,150" class="tone-face-l"/>
+          <!-- mattress -->
+          <polygon points="0,0 120,52 0,104 -120,52" fill="#FBFAF7" stroke="#d9d7d1" stroke-width="2" stroke-linejoin="round"/>
+          <g fill="#cfcdc7"><circle cx="0" cy="35" r="2.6"/><circle cx="-40" cy="52" r="2.6"/><circle cx="40" cy="52" r="2.6"/><circle cx="0" cy="69" r="2.6"/></g>
+        </svg>
+      </div>
+      <div>
+        <div class="tone-name" id="toneName">Morado</div>
+        <div class="swatches" id="swatches" role="group" aria-label="Selector de tonos"></div>
+        <p class="note">*Colores sujetos a disponibilidad. ¿Buscas un tono especial? Pídelo por WhatsApp y lo cotizamos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ POR QUÉ ============ -->
+<section id="porque">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">02 / POR QUÉ BASES BOX</span></div>
+      <h2>Hechas para durar, pensadas para verse bien</h2>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="feat-grid">
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>
+        <h3>Estructura durable</h3>
+        <p>Armazón reforzado que aguanta el uso diario sin hundirse ni rechinar.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18"/></svg>
+        <h3>+8 tonos disponibles</h3>
+        <p>Del cocoa al negro, pasando por morado, azul y rosa. El que combine con tu recámara.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.2L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>
+        <h3>Diseño minimalista</h3>
+        <p>Silueta limpia, tapizado uniforme y patas cromadas. Se ve caro sin serlo.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V8l8-4 8 4v12"/><path d="M4 20h16M9 20v-6h6v6"/></svg>
+        <h3>Fabricación local</h3>
+        <p>Hechas en Tepic, Nayarit. Directo de fábrica, sin intermediarios ni sobreprecios.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M12 3v18" stroke-dasharray="3 2"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+        <h3>A la medida</h3>
+        <p>¿Medida especial? La fabricamos exacta para tu colchón o tu espacio.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+        <h3>Cotización el mismo día</h3>
+        <p>Escríbenos por WhatsApp y te pasamos precio y tiempos de entrega rapidísimo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MEDIDAS ============ -->
+<section id="medidas">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">03 / MEDIDAS</span></div>
+      <h2>Todas las medidas estándar</h2>
+      <p>Y si necesitas una diferente, la hacemos a tu medida.</p>
+    </div>
+    <div class="med-grid">
+      <div class="med"><div class="k">Individual</div><div class="name">1 Plaza</div><div class="dim">1.00 × 1.90 m</div></div>
+      <div class="med"><div class="k">Matrimonial</div><div class="name">Full</div><div class="dim">1.35 × 1.90 m</div></div>
+      <div class="med"><div class="k">Queen</div><div class="name">Queen Size</div><div class="dim">1.50 × 2.00 m</div></div>
+      <div class="med"><div class="k">King</div><div class="name">King Size</div><div class="dim">2.00 × 2.00 m</div></div>
+    </div>
+    <div class="med-custom">
+      <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:20px">¿Necesitas una <b>medida especial</b>? También la fabricamos.</div>
+      <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20necesito%20una%20base%20a%20la%20medida" target="_blank" rel="noopener">Cotizar a la medida</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INFANTIL ============ -->
+<section id="infantil">
+  <div class="wrap">
+    <div class="kids">
+      <div>
+        <div class="divider-label"><span class="tag-num">04 / LÍNEA INFANTIL</span></div>
+        <h2 style="font-size:clamp(30px,4vw,48px)">La habitación que tus pequeños merecen</h2>
+        <p style="color:var(--steel);margin-top:14px">Bases individuales en colores alegres, seguras y resistentes para el uso rudo de los niños. Combínalas con su cuarto.</p>
+        <div class="chips">
+          <span class="chip" style="background:#E84E8A"></span>
+          <span class="chip" style="background:#2E5AAC"></span>
+          <span class="chip" style="background:#F2A900"></span>
+          <span class="chip" style="background:#39A85B"></span>
+          <span class="chip" style="background:#6B3FA0"></span>
+        </div>
+        <a class="btn btn-dark" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base%20infantil" target="_blank" rel="noopener">Cotizar base infantil</a>
+      </div>
+      <div class="kids-art">
+        <svg viewBox="-150 -20 300 250" xmlns="http://www.w3.org/2000/svg" style="max-width:360px">
+          <g fill="#9aa0a6"><rect x="-118" y="150" width="10" height="30" rx="3"/><rect x="108" y="150" width="10" height="30" rx="3"/><rect x="-6" y="196" width="12" height="30" rx="3"/></g>
+          <polygon points="120,52 0,110 0,200 120,150" fill="#c93b73"/>
+          <polygon points="-120,52 0,110 0,200 -120,150" fill="#E84E8A"/>
+          <polygon points="0,0 120,52 0,104 -120,52" fill="#FBFAF7" stroke="#d9d7d1" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACTO ============ -->
+<section id="contacto">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">05 / CONTACTO</span></div>
+      <h2>Cotiza hoy tu base</h2>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <div><div class="k">Dirección</div><div class="v">Querétaro #285, Col. Centro<br/>Tepic, Nayarit</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2A19.8 19.8 0 013 4.2 2 2 0 015 2h3a2 2 0 012 1.7l.5 3a2 2 0 01-.6 1.9L8.1 10a16 16 0 006 6l1.4-1.4a2 2 0 011.9-.5l3 .5a2 2 0 011.7 2z"/></svg>
+          <div><div class="k">Teléfono / WhatsApp</div><div class="v">311 121 6033</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+          <div><div class="k">Horario</div><div class="v">Lun a Sáb · 9:00 – 19:00</div></div>
+        </div>
+        <a class="btn btn-ghost" style="border-color:#444;color:var(--paper);width:100%;justify-content:center" href="https://maps.google.com/?q=Quer%C3%A9taro%20285%20Col%20Centro%20Tepic%20Nayarit" target="_blank" rel="noopener">Ver en el mapa</a>
+      </div>
+      <div class="contact-cta">
+        <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+          Cotizar por WhatsApp
+        </a>
+        <a class="btn btn-dark" style="border-color:#444" href="tel:+523111216033">Llamar ahora</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <img src="assets/logo-icon.svg" alt="" style="width:40px"/>
+        <div>
+          <div class="name">BASES BO<span class="x">X</span> <span style="font-size:14px;letter-spacing:4px;color:#8C8C88">TEPIC</span></div>
+          <div style="font-size:14px">Fábrica de bases para cama · Tepic, Nayarit</div>
+        </div>
+      </div>
+      <nav class="foot-links">
+        <a href="#tonos">Tonos</a>
+        <a href="#porque">Por qué</a>
+        <a href="#medidas">Medidas</a>
+        <a href="#contacto">Contacto</a>
+        <a href="https://wa.me/523111216033" target="_blank" rel="noopener">WhatsApp</a>
+      </nav>
+    </div>
+    <div class="copy">
+      <span>© <span id="yr"></span> Bases Box Tepic. Todos los derechos reservados.</span>
+      <span>Querétaro #285, Col. Centro, Tepic · 311 121 6033</span>
+    </div>
+  </div>
+</footer>
+
+<!-- floating whatsapp -->
+<a class="wa-float" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+</a>
+
+<script>
+// year
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// tone selector
+var tones = [
+  {name:'Cocoa',  c:'#6F4E37', d:'#573c2b'},
+  {name:'Morado', c:'#6B3FA0', d:'#532f80'},
+  {name:'Rosa',   c:'#E84E8A', d:'#c93b73'},
+  {name:'Gris',   c:'#8A8D8F', d:'#6f7274'},
+  {name:'Azul',   c:'#2E5AAC', d:'#244a8f'},
+  {name:'Marino', c:'#1E2A52', d:'#141d3b'},
+  {name:'Verde',  c:'#39A85B', d:'#2c8747'},
+  {name:'Negro',  c:'#1A1A1A', d:'#000000'}
+];
+
+var sw = document.getElementById('swatches');
+var root = document.documentElement;
+var toneName = document.getElementById('toneName');
+tones.forEach(function(t,i){
+  var b = document.createElement('button');
+  b.className='sw';
+  b.style.background=t.c;
+  b.setAttribute('aria-pressed', i===1?'true':'false');
+  b.setAttribute('aria-label','Tono '+t.name);
+  b.innerHTML='<span class="lbl">'+t.name+'</span>';
+  b.onclick=function(){
+    root.style.setProperty('--tone',t.c);
+    root.style.setProperty('--tone-dark',t.d);
+    toneName.textContent=t.name;
+    Array.prototype.forEach.call(sw.children,function(x){x.setAttribute('aria-pressed','false')});
+    b.setAttribute('aria-pressed','true');
+  };
+  sw.appendChild(b);
+});
+
+// close mobile menu on link click
+Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a){
+  a.addEventListener('click',function(){document.getElementById('navlinks').classList.remove('open')});
+});
+</script>
+</body>
+</html>
