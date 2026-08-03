@@ -1,11 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
-//  SERVIDOR — para correr en tu compu o en hosting tradicional
-//  (Render, tu propio servidor). En Vercel se usa api/index.js
-//  en su lugar, que comparte la misma lógica de src/app.js.
+//  PUNTO DE ENTRADA PARA VERCEL
+//  Vercel detecta este archivo automáticamente como función
+//  serverless. Toda la lógica real vive en ../src/app.js.
 // ═══════════════════════════════════════════════════════════════
-const app = require("./app");
-const { PORT } = require("./config");
-
-app.listen(PORT, () => {
-  console.log(`Asistente de WhatsApp escuchando en el puerto ${PORT}`);
-});
+module.exports = require("../src/app");
