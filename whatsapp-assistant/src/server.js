@@ -7,6 +7,7 @@
 //   3) El "cerebro" (Claude) redacta la respuesta
 //   4) La enviamos de vuelta por WhatsApp
 // ═══════════════════════════════════════════════════════════════
+require("./proxy");
 const express = require("express");
 const { PORT, VERIFY_TOKEN } = require("./config");
 const { elegirNegocio } = require("./router");

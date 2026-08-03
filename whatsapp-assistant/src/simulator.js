@@ -9,6 +9,7 @@
 //  WhatsApp. Si pusiste ANTHROPIC_API_KEY responde con IA real;
 //  si no, responde en "modo prueba".
 // ═══════════════════════════════════════════════════════════════
+require("./proxy");
 const readline = require("readline");
 const { negocios, porId } = require("../businesses");
 const { generarRespuesta } = require("./brain");

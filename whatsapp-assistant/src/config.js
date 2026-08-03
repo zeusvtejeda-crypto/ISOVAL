@@ -22,7 +22,9 @@ module.exports = {
   AI_PROVIDER: (process.env.AI_PROVIDER || "gemini").toLowerCase(),
 
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
-  GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+  // "gemini-flash-latest" es un alias que Google mantiene apuntando al
+  // modelo flash estable más reciente, así no se rompe cuando jubilan versiones.
+  GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-flash-latest",
 
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",
   MODEL: process.env.ANTHROPIC_MODEL || "claude-sonnet-5",
