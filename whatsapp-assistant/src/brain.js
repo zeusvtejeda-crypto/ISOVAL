@@ -1,15 +1,27 @@
 // ═══════════════════════════════════════════════════════════════
-//  CEREBRO — genera la respuesta con Claude (Anthropic)
+//  CEREBRO — genera la respuesta con IA (Gemini o Claude)
 //  Construye las instrucciones del asistente a partir del perfil
-//  del negocio y le pide a Claude una respuesta para WhatsApp.
+//  del negocio y le pide al proveedor configurado una respuesta.
+//
+//  Proveedor por defecto: Gemini (gratis, sin tarjeta). Si más
+//  adelante quieres mejor calidad y no te importa pagar, cambia
+//  AI_PROVIDER=anthropic en el .env — no hay que tocar código.
 // ═══════════════════════════════════════════════════════════════
 const Anthropic = require("@anthropic-ai/sdk");
-const { ANTHROPIC_API_KEY, MODEL } = require("./config");
+const {
+  AI_PROVIDER, ANTHROPIC_API_KEY, MODEL,
+  GEMINI_API_KEY, GEMINI_MODEL,
+} = require("./config");
 const memoria = require("./memory");
 
-const client = ANTHROPIC_API_KEY
+const anthropicClient = ANTHROPIC_API_KEY
   ? new Anthropic({ apiKey: ANTHROPIC_API_KEY })
   : null;
+
+function hayCerebroConfigurado() {
+  if (AI_PROVIDER === "anthropic") return !!anthropicClient;
+  return !!GEMINI_API_KEY; // gemini por defecto
+}
 
 // Arma las instrucciones (system prompt) para un negocio concreto.
 function construirInstrucciones(negocio) {
@@ -47,15 +59,61 @@ REGLAS IMPORTANTES:
 `.trim();
 }
 
-// Respuesta de respaldo cuando no hay API key configurada (modo prueba).
+// Respuesta de respaldo cuando no hay ningún cerebro configurado (modo prueba).
 function respuestaDeRespaldo(negocio, textoUsuario) {
+  const faltante = AI_PROVIDER === "anthropic" ? "ANTHROPIC_API_KEY" : "GEMINI_API_KEY";
   return (
     negocio.saludo +
-    "\n\n(⚙️ Modo prueba: falta configurar ANTHROPIC_API_KEY para " +
+    `\n\n(⚙️ Modo prueba: falta configurar ${faltante} para ` +
     "respuestas con IA. Recibí tu mensaje: \"" +
     textoUsuario +
     "\")"
   );
+}
+
+async function llamarAnthropic(system, historial) {
+  const resp = await anthropicClient.messages.create({
+    model: MODEL,
+    max_tokens: 500,
+    system,
+    messages: historial, // [{role:'user'|'assistant', content:'...'}]
+  });
+  return resp.content
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("\n")
+    .trim();
+}
+
+async function llamarGemini(system, historial) {
+  // Gemini usa roles "user" y "model" (no "assistant").
+  const contents = historial.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent` +
+    `?key=${GEMINI_API_KEY}`;
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: system }] },
+      contents,
+      generationConfig: { maxOutputTokens: 500 },
+    }),
+  });
+
+  if (!resp.ok) {
+    const detalle = await resp.text();
+    throw new Error(`Gemini ${resp.status}: ${detalle}`);
+  }
+
+  const data = await resp.json();
+  const partes = data?.candidates?.[0]?.content?.parts || [];
+  return partes.map((p) => p.text || "").join("\n").trim();
 }
 
 // Genera la respuesta para un mensaje entrante.
@@ -64,8 +122,8 @@ async function generarRespuesta(negocio, usuario, textoUsuario) {
   const eraNuevo = memoria.esNuevo(negocio.id, usuario);
   memoria.agregar(negocio.id, usuario, "user", textoUsuario);
 
-  // Sin API key -> modo prueba (para probar la plomería sin gastar)
-  if (!client) {
+  // Sin cerebro configurado -> modo prueba (para probar la plomería sin gastar)
+  if (!hayCerebroConfigurado()) {
     const r = respuestaDeRespaldo(negocio, textoUsuario);
     memoria.agregar(negocio.id, usuario, "assistant", r);
     return r;
@@ -82,24 +140,15 @@ async function generarRespuesta(negocio, usuario, textoUsuario) {
     : instrucciones;
 
   try {
-    const resp = await client.messages.create({
-      model: MODEL,
-      max_tokens: 500,
-      system,
-      messages: historial,
-    });
-
-    const texto = resp.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
+    const texto = AI_PROVIDER === "anthropic"
+      ? await llamarAnthropic(system, historial)
+      : await llamarGemini(system, historial);
 
     const respuesta = texto || negocio.saludo;
     memoria.agregar(negocio.id, usuario, "assistant", respuesta);
     return respuesta;
   } catch (err) {
-    console.error("[brain] Error llamando a Claude:", err.message);
+    console.error(`[brain] Error llamando a ${AI_PROVIDER}:`, err.message);
     // No dejamos al cliente sin respuesta
     return (
       "¡Gracias por tu mensaje! 🙌 En un momento te atendemos. " +

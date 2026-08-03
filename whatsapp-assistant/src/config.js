@@ -16,7 +16,14 @@ module.exports = {
   // Versión de la Graph API de Meta.
   GRAPH_VERSION: process.env.GRAPH_VERSION || "v21.0",
 
-  // ── Cerebro (Claude / Anthropic) ─────────────────────────────
+  // ── Cerebro (IA que redacta las respuestas) ──────────────────
+  // "gemini" (gratis, con límite de peticiones por minuto) o
+  // "anthropic" (Claude, de paga por uso, mejor calidad).
+  AI_PROVIDER: (process.env.AI_PROVIDER || "gemini").toLowerCase(),
+
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
+  GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",
   MODEL: process.env.ANTHROPIC_MODEL || "claude-sonnet-5",
 
