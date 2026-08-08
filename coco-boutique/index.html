@@ -331,6 +331,30 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
 .f-contact a:hover{color:var(--blush);}
 .f-copy{width:100%;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(251,243,236,0.25);letter-spacing:0.1em;}
 
+/* ══ CURSOR — detalle que sigue al mouse, no reemplaza el cursor nativo ══ */
+#cur{position:fixed;pointer-events:none;z-index:9999;top:0;left:0;opacity:0;transition:opacity 300ms;}
+#cur.show{opacity:1;}
+#cur .dot{position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--wine);border-radius:50%;transition:transform 180ms cubic-bezier(0.34,1.56,0.64,1);}
+body.hov #cur .dot{transform:scale(2.4);}
+@media(hover:none){#cur{display:none;}}
+
+/* ══ HERO — líneas escalonadas ══ */
+.rw{overflow:hidden;display:block;}
+.rl{display:block;opacity:0;transform:translateY(112%) skewY(2deg);}
+.rl.go{opacity:1;transform:translateY(0) skewY(0);transition:opacity 900ms cubic-bezier(0.16,1,0.3,1),transform 900ms cubic-bezier(0.16,1,0.3,1);}
+
+/* ══ Blobs a la deriva ══ */
+@keyframes blobDrift1{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-24px,18px) scale(1.08);}}
+@keyframes blobDrift2{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(20px,-16px) scale(1.06);}}
+@keyframes blobDrift3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-14px,-20px) scale(1.1);}}
+.hb1{animation:blobDrift1 16s ease-in-out infinite;}
+.hb2{animation:blobDrift2 19s ease-in-out infinite;}
+.hb3{animation:blobDrift3 14s ease-in-out infinite;}
+
+/* ══ Tarjetas con levantamiento al hover ══ */
+.price-card,.mock-card{transition:transform 380ms cubic-bezier(0.16,1,0.3,1),box-shadow 380ms;}
+.price-card:hover,.mock-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px -18px rgba(46,33,27,0.22);}
+
 /* ══ RESPONSIVE ══ */
 @media(max-width:1024px){
   :root{--pad-section:84px;--pad-h:26px;}
@@ -357,11 +381,14 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
 @media(prefers-reduced-motion:reduce){
   .reveal{transition:none;opacity:1;transform:none;}
   .mq-track{animation:none;}
+  .hb1,.hb2,.hb3{animation:none;}
+  .rl{transition:none;opacity:1;transform:none;}
 }
 </style>
 </head>
 <body>
 
+<div id="cur"><div class="dot"></div></div>
 <div class="scroll-progress" id="sp"></div>
 
 <div class="confidential-strip">Propuesta privada · preparada exclusivamente para <strong>COCO Boutique</strong> (@boutique_cocotepic) · Tepic, Nayarit</div>
@@ -382,8 +409,10 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
   <div class="hero-blob hb2"></div>
   <div class="hero-inner">
     <div class="hero-eyebrow reveal">Propuesta de publicidad · hecha a la medida de COCO Boutique</div>
-    <h1 class="hero-h1 reveal">
-      Tu ropa ya<br>es increíble.<br>Falta que la <em>vean.</em>
+    <h1 class="hero-h1">
+      <span class="rw"><span class="rl" data-d="150">Tu ropa ya</span></span>
+      <span class="rw"><span class="rl" data-d="290">es increíble.</span></span>
+      <span class="rw"><span class="rl" data-d="430">Falta que la <em>vean.</em></span></span>
     </h1>
     <div class="hero-sub reveal">
       Recorrí completo tu Instagram <b>@boutique_cocotepic</b> — el estilo, el local en Lagos de Aztlán, la atención por WhatsApp. Te preparé, sin costo, la propuesta y el video listos para que tu primera campaña esté al aire <b>esta misma semana</b>.
@@ -451,8 +480,8 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
 <section id="diagnostico">
   <div class="eyebrow reveal">Diagnóstico</div>
   <h2 class="s-title reveal">Lo miré con calma. <em>Esto</em> encontré.</h2>
-  <div class="diag-grid reveal">
-    <div class="diag-col">
+  <div class="diag-grid">
+    <div class="diag-col reveal">
       <div class="diag-head"><div class="diag-icon ok">✓</div><div class="diag-title">Lo que ya construiste</div></div>
       <ul class="diag-list">
         <li>Una estética consistente — rosa, dorado, mármol — que se reconoce en un scroll.</li>
@@ -461,7 +490,7 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
         <li>310 publicaciones: una constancia que muy pocas boutiques en Tepic tienen.</li>
       </ul>
     </div>
-    <div class="diag-col">
+    <div class="diag-col reveal">
       <div class="diag-head"><div class="diag-icon no">✕</div><div class="diag-title">Lo que te está costando ventas</div></div>
       <ul class="diag-list">
         <li>$0 invertidos en anuncios pagados — todo tu alcance depende del algoritmo.</li>
@@ -479,8 +508,8 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
   <h2 class="s-title reveal">El paquete de publicidad, listo para <em>encender</em> esta semana</h2>
   <div class="paquete-note reveal">La inversión en pauta (lo que se paga directo a Meta/Instagram) va aparte de la administración, para que siempre sepas exactamente en qué se va cada peso.</div>
 
-  <div class="pricing-grid reveal">
-    <div class="price-card">
+  <div class="pricing-grid">
+    <div class="price-card reveal">
       <div class="price-tier">Esencial</div>
       <div class="price-amount">$2,900<sup> MXN</sup></div>
       <div class="price-period">Administración · por mes</div>
@@ -494,7 +523,7 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
       <a href="https://wa.me/52XXXXXXXXXX?text=Hola%2C%20me%20interesa%20el%20paquete%20Esencial%20de%20publicidad%20para%20COCO%20Boutique." class="price-btn" target="_blank">Quiero este paquete</a>
     </div>
 
-    <div class="price-card featured">
+    <div class="price-card featured reveal">
       <div class="price-badge">Más elegido</div>
       <div class="price-tier">Crecimiento</div>
       <div class="price-amount">$4,900<sup> MXN</sup></div>
@@ -510,7 +539,7 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
       <a href="https://wa.me/52XXXXXXXXXX?text=Hola%2C%20me%20interesa%20el%20paquete%20Crecimiento%20de%20publicidad%20para%20COCO%20Boutique." class="price-btn" target="_blank">Quiero este paquete</a>
     </div>
 
-    <div class="price-card">
+    <div class="price-card reveal">
       <div class="price-tier">Boutique VIP</div>
       <div class="price-amount">$7,500<sup> MXN</sup></div>
       <div class="price-period">Administración · por mes</div>
@@ -531,8 +560,8 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
 <section id="vista-previa">
   <div class="eyebrow reveal">Vista previa</div>
   <h2 class="s-title reveal">Así se vería tu <em>primer</em> anuncio</h2>
-  <div class="mock-grid reveal">
-    <div class="mock-card">
+  <div class="mock-grid">
+    <div class="mock-card reveal">
       <div class="mock-topbar"><div class="mock-avatar"></div><div class="mock-who">COCO Boutique<span>Anuncio · Tepic, Nayarit</span></div></div>
       <div class="mock-photo">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2E211B" stroke-width="1"><path d="M9 4l3 2 3-2 3 3-2 2v11H8V9L6 7z"/></svg>
@@ -543,7 +572,7 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
         <div class="mock-cta">Enviar mensaje</div>
       </div>
     </div>
-    <div class="mock-card">
+    <div class="mock-card reveal">
       <div class="mock-topbar"><div class="mock-avatar"></div><div class="mock-who">COCO Boutique<span>Anuncio · Remarketing</span></div></div>
       <div class="mock-photo">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2E211B" stroke-width="1"><path d="M4 4h16v12H8l-4 4z"/></svg>
@@ -554,7 +583,7 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
         <div class="mock-cta">Ver disponibilidad</div>
       </div>
     </div>
-    <div class="mock-card">
+    <div class="mock-card reveal">
       <div class="mock-topbar"><div class="mock-avatar"></div><div class="mock-who">COCO Boutique<span>Historia destacada</span></div></div>
       <div class="mock-photo">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2E211B" stroke-width="1"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg>
@@ -572,26 +601,26 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
 <section id="proceso">
   <div class="eyebrow reveal">Proceso</div>
   <h2 class="s-title reveal">De la propuesta al primer anuncio — en días, <em>no meses</em></h2>
-  <div class="timeline reveal">
-    <div class="tl-step">
+  <div class="timeline">
+    <div class="tl-step reveal">
       <div class="tl-circle">01</div>
       <div class="tl-tag">Día 1</div>
       <div class="tl-name">Auditoría y estrategia</div>
       <div class="tl-desc">Reviso tu catálogo, tu competencia local y defino a quién le hablamos primero.</div>
     </div>
-    <div class="tl-step">
+    <div class="tl-step reveal">
       <div class="tl-circle">02</div>
       <div class="tl-tag">Día 2–3</div>
       <div class="tl-name">Diseño de campaña</div>
       <div class="tl-desc">Creativos, textos y segmentación listos para Meta Ads.</div>
     </div>
-    <div class="tl-step">
+    <div class="tl-step reveal">
       <div class="tl-circle">03</div>
       <div class="tl-tag">Día 5</div>
       <div class="tl-name">Lanzamiento</div>
       <div class="tl-desc">Tu primera campaña sale al aire — catálogo o remarketing, según el paquete.</div>
     </div>
-    <div class="tl-step">
+    <div class="tl-step reveal">
       <div class="tl-circle">04</div>
       <div class="tl-tag">Semana 2</div>
       <div class="tl-name">Optimización</div>
@@ -604,13 +633,13 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
 <section id="garantia">
   <div class="eyebrow reveal">Por qué ahora</div>
   <h2 class="s-title reveal">Sin letra chica. Con <em>cupo</em> limitado.</h2>
-  <div class="garantias-grid reveal">
-    <div class="garantia">
+  <div class="garantias-grid">
+    <div class="garantia reveal">
       <div class="garantia-check">✓ Garantía de arranque</div>
       <div class="garantia-title">Ajuste sin costo</div>
       <div class="garantia-body">Si en tus primeros 30 días no crecen los mensajes a tu WhatsApp, ajusto la estrategia sin costo extra hasta lograrlo.</div>
     </div>
-    <div class="garantia">
+    <div class="garantia reveal">
       <div class="garantia-check">✓ Cupo de agosto</div>
       <div class="garantia-title">Solo 3 negocios nuevos</div>
       <div class="garantia-body">Tomo máximo 3 negocios nuevos por mes en Tepic para darle seguimiento real a cada uno. Esta propuesta es válida hasta el 15 de agosto de 2026.</div>
@@ -661,54 +690,107 @@ footer{position:relative;z-index:2;background:var(--dark);padding:44px var(--pad
 </footer>
 
 <script>
-// Reveal on scroll
-const revealEls = document.querySelectorAll('.reveal');
-const io = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-},{threshold:0.12});
-revealEls.forEach(el=>io.observe(el));
+(function(){
+'use strict';
+function boot(){
+  try{initCursor();}catch(e){}
+  try{initScroll();}catch(e){}
+  try{initStagger();}catch(e){}
+  try{initObservers();}catch(e){}
+  try{initTextReveals();}catch(e){}
+  try{initFaq();}catch(e){}
+  /* Red de seguridad: si algo de lo anterior no dispara (observer que no
+     ve el elemento, navegador raro, JS tardío), el contenido igual aparece. */
+  setTimeout(function(){
+    document.querySelectorAll('.reveal:not(.in)').forEach(function(el){ el.classList.add('in'); });
+    document.querySelectorAll('.rl:not(.go)').forEach(function(el){ el.classList.add('go'); });
+  },1800);
+}
 
-// Scroll progress bar
-const sp = document.getElementById('sp');
-window.addEventListener('scroll',()=>{
-  const h = document.documentElement;
-  const pct = (h.scrollTop)/(h.scrollHeight-h.clientHeight)*100;
-  sp.style.width = pct+'%';
-});
+function initCursor(){
+  var cur=document.getElementById('cur');
+  var dot=cur&&cur.querySelector('.dot');
+  if(!dot)return;
+  document.addEventListener('mousemove',function(e){
+    cur.classList.add('show');
+    dot.style.transform='translate('+e.clientX+'px,'+e.clientY+'px)';
+  },{passive:true});
+  document.addEventListener('mouseover',function(e){
+    document.body.classList.toggle('hov',
+      !!e.target.closest('a,button,.btn,.price-card,.mock-card,.tl-step,.garantia,.faq-q'));
+  });
+}
 
-// Animated counters
-const counters = document.querySelectorAll('.stat-number[data-target]');
-let countersDone = false;
-const cio = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting && !countersDone){
-      countersDone = true;
-      counters.forEach(c=>{
-        const target = parseInt(c.dataset.target,10);
-        const dur = 1100, start = performance.now();
+function initScroll(){
+  var sp=document.getElementById('sp');
+  var ticking=false;
+  window.addEventListener('scroll',function(){
+    if(ticking)return;ticking=true;
+    requestAnimationFrame(function(){
+      var y=window.scrollY;
+      var sh=document.documentElement.scrollHeight-window.innerHeight;
+      if(sp)sp.style.width=(sh>0?Math.round(y/sh*100):0)+'%';
+      ticking=false;
+    });
+  },{passive:true});
+}
+
+/* Cascada: cada tarjeta de una grilla aparece un poco después que la anterior */
+function initStagger(){
+  document.querySelectorAll('.diag-grid,.pricing-grid,.mock-grid,.timeline,.garantias-grid').forEach(function(grid){
+    grid.querySelectorAll('.reveal').forEach(function(el,i){
+      el.style.transitionDelay=(i*110)+'ms';
+    });
+  });
+}
+
+function initObservers(){
+  var revealIO=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); revealIO.unobserve(e.target); } });
+  },{threshold:0.08,rootMargin:'0px 0px -20px 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el){ revealIO.observe(el); });
+
+  var row=document.getElementById('statsRow');
+  if(row){
+    var counterIO=new IntersectionObserver(function(entries){
+      if(!entries[0].isIntersecting)return;
+      row.querySelectorAll('[data-target]').forEach(function(n){
+        var target=parseInt(n.dataset.target,10)||0,dur=1100,start=null;
         function tick(now){
-          const p = Math.min(1,(now-start)/dur);
-          const eased = 1-Math.pow(1-p,3);
-          c.textContent = Math.round(eased*target);
-          if(p<1) requestAnimationFrame(tick);
+          if(!start)start=now;
+          var p=Math.min(1,(now-start)/dur),eased=1-Math.pow(1-p,3);
+          n.textContent=Math.round(eased*target);
+          if(p<1)requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
       });
-      cio.disconnect();
-    }
-  });
-},{threshold:0.4});
-const statsRow = document.getElementById('statsRow');
-if(statsRow) cio.observe(statsRow);
+      counterIO.disconnect();
+    },{threshold:0.4});
+    counterIO.observe(row);
+  }
+}
 
-// FAQ toggle
-document.querySelectorAll('.faq-q').forEach(q=>{
-  q.addEventListener('click',()=>{
-    const item = q.parentElement;
-    document.querySelectorAll('.faq-item').forEach(i=>{ if(i!==item) i.classList.remove('open'); });
-    item.classList.toggle('open');
+/* Reveal de líneas del titular del hero (independiente del scroll) */
+function initTextReveals(){
+  document.querySelectorAll('.rl').forEach(function(el){
+    setTimeout(function(){ el.classList.add('go'); },+(el.dataset.d||0));
   });
-});
+}
+
+function initFaq(){
+  document.querySelectorAll('.faq-q').forEach(function(q){
+    q.addEventListener('click',function(){
+      var item=q.parentElement;
+      var isOpen=item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(function(i){ i.classList.remove('open'); });
+      if(!isOpen){ item.classList.add('open'); }
+    });
+  });
+}
+
+if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',boot); }
+else{ boot(); }
+})();
 </script>
 </body>
 </html>
