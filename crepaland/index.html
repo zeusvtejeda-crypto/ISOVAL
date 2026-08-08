@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>Crepaland Tepic — Crepas dulces y saladas hechas al momento</title>
+<meta name="description" content="Crepaland Tepic: crepas dulces y saladas, waffles y bebidas hechas al momento. Arma tu crepa y pide por WhatsApp."/>
+<meta name="theme-color" content="#3B2317"/>
+<meta property="og:title" content="Crepaland Tepic — Crepas hechas al momento"/>
+<meta property="og:description" content="Arma tu crepa y pídela por WhatsApp en menos de 30 segundos."/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%9E%3C/text%3E%3C/svg%3E"/>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   CREPALAND TEPIC — landing de conversión
+   Paleta: crema · masa dorada · chocolate · fresa
+   Sin dependencias externas: carga instantánea en 4G
+   ═══════════════════════════════════════════════════════════ */
+
+:root{
+  --cream:      #FFF8EF;
+  --cream-2:    #FBEEDC;
+  --card:       #FFFFFF;
+  --masa:       #E8A93C;
+  --masa-soft:  #F6D79A;
+  --choco:      #3A2217;
+  --choco-2:    #55362408;
+  --fresa:      #DC4C46;
+  --fresa-soft: #F7C9C3;
+  --mint:       #6E9B5B;
+  --ink:        #2C1B12;
+  --ink-mid:    #6B5344;
+  --ink-dim:    #9C8574;
+  --line:       #EADCC7;
+  --shadow-sm:  0 2px 8px rgba(58,34,23,.07);
+  --shadow-md:  0 12px 32px -8px rgba(58,34,23,.18);
+  --shadow-lg:  0 32px 64px -16px rgba(58,34,23,.28);
+  --r:          20px;
+  --r-lg:       32px;
+  --display:    Georgia,'Iowan Old Style','Times New Roman',serif;
+  --sans:       ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --maxw:       1180px;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--cream);color:var(--ink);
+  font-family:var(--sans);font-size:17px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.08;letter-spacing:-.02em;margin:0}
+p{margin:0}
+
+.wrap{width:min(100% - 2.5rem,var(--maxw));margin-inline:auto}
+.eyebrow{
+  font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--fresa);display:flex;align-items:center;gap:.6rem;
+}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--fresa);border-radius:2px;flex:none}
+.eyebrow.c{justify-content:center}
+
+/* ── Botones ─────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.55rem;
+  padding:.95rem 1.7rem;border-radius:999px;font-weight:700;font-size:.95rem;
+  letter-spacing:.01em;transition:transform .18s cubic-bezier(.3,1.4,.5,1),box-shadow .18s,background .18s;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(.96)}
+.btn-wa{background:#25D366;color:#0B2E17;box-shadow:0 8px 20px -6px rgba(37,211,102,.6)}
+.btn-wa:hover{transform:translateY(-2px);box-shadow:0 14px 28px -8px rgba(37,211,102,.7)}
+.btn-dark{background:var(--choco);color:var(--cream);box-shadow:var(--shadow-md)}
+.btn-dark:hover{transform:translateY(-2px)}
+.btn-ghost{border:1.5px solid var(--line);color:var(--ink);background:var(--card)}
+.btn-ghost:hover{border-color:var(--choco);transform:translateY(-2px)}
+.btn-lg{padding:1.15rem 2.2rem;font-size:1.02rem}
+
+/* ── Aviso de propuesta ──────────────────── */
+#demoBar{
+  background:var(--choco);color:var(--cream-2);font-size:.76rem;
+  display:flex;align-items:center;justify-content:center;gap:.8rem;
+  padding:.5rem 1rem;text-align:center;letter-spacing:.01em;
+}
+#demoBar b{color:var(--masa-soft);font-weight:700}
+#demoBar button{color:var(--cream-2);opacity:.55;font-size:1.1rem;line-height:1;padding:0 .2rem}
+#demoBar button:hover{opacity:1}
+
+/* ── Nav ─────────────────────────────────── */
+header{
+  position:sticky;top:0;z-index:50;background:rgba(255,248,239,.86);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;transition:border-color .3s,box-shadow .3s;
+}
+header.stuck{border-bottom-color:var(--line);box-shadow:0 4px 20px -12px rgba(58,34,23,.35)}
+nav{display:flex;align-items:center;gap:1.5rem;padding:.85rem 0;}
+.logo{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-size:1.4rem;letter-spacing:-.03em;margin-right:auto}
+.logo-mark{
+  width:38px;height:38px;border-radius:12px;flex:none;
+  background:linear-gradient(140deg,var(--masa),var(--fresa));
+  display:grid;place-items:center;box-shadow:var(--shadow-sm);
+}
+.logo em{font-style:normal;color:var(--fresa)}
+.navlinks{display:flex;gap:1.7rem;font-size:.92rem;font-weight:600;color:var(--ink-mid)}
+.navlinks a{position:relative;padding:.2rem 0}
+.navlinks a::after{
+  content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;
+  background:var(--fresa);border-radius:2px;transition:width .25s;
+}
+.navlinks a:hover{color:var(--ink)}
+.navlinks a:hover::after{width:100%}
+@media(max-width:900px){.navlinks{display:none}}
+@media(max-width:520px){nav .btn{padding:.7rem 1.1rem;font-size:.85rem}}
+
+/* ── Hero ────────────────────────────────── */
+.hero{position:relative;padding:clamp(3rem,7vw,5.5rem) 0 clamp(3.5rem,8vw,6rem);overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+@media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:2.5rem}}
+
+.hero h1{font-size:clamp(2.9rem,7.5vw,5rem);margin:1.1rem 0 0}
+.hero h1 .accent{
+  font-style:italic;color:var(--fresa);position:relative;display:inline-block;
+}
+.hero h1 .accent::after{
+  content:"";position:absolute;left:-2%;right:-2%;bottom:.06em;height:.28em;
+  background:var(--masa-soft);border-radius:99px;z-index:-1;opacity:.75;
+}
+.hero-sub{margin-top:1.3rem;font-size:clamp(1.05rem,2.2vw,1.22rem);color:var(--ink-mid);max-width:30ch}
+.hero-cta{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:2.1rem}
+.hero-note{margin-top:1.2rem;font-size:.85rem;color:var(--ink-dim);display:flex;align-items:center;gap:.5rem}
+.dot-live{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 0 rgba(110,155,91,.6);animation:pulse 2.2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(110,155,91,0)}100%{box-shadow:0 0 0 0 rgba(110,155,91,0)}}
+
+/* Ilustración de crepa */
+.hero-art{position:relative;display:grid;place-items:center;min-height:340px}
+.plate{
+  width:min(100%,420px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 32% 28%,#fff 0%,var(--cream-2) 55%,#EFDCC0 100%);
+  box-shadow:var(--shadow-lg),inset 0 0 0 12px rgba(255,255,255,.65);
+  display:grid;place-items:center;position:relative;
+  animation:float 7s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(-1.2deg)}}
+.plate svg{width:74%;height:auto;filter:drop-shadow(0 18px 24px rgba(58,34,23,.22))}
+.chip-float{
+  position:absolute;background:var(--card);border-radius:999px;padding:.55rem 1rem;
+  font-size:.83rem;font-weight:700;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:.45rem;
+  white-space:nowrap;
+}
+.chip-float span{font-size:1rem}
+.cf-1{top:6%;left:-4%;animation:float 6s ease-in-out infinite .4s}
+.cf-2{bottom:14%;right:-6%;animation:float 6.5s ease-in-out infinite 1.1s}
+.cf-3{bottom:-2%;left:10%;animation:float 8s ease-in-out infinite .7s}
+@media(max-width:920px){.cf-1{left:0}.cf-2{right:0}}
+
+/* Blobs de fondo */
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;pointer-events:none;z-index:-2}
+.blob-a{width:460px;height:460px;background:var(--masa-soft);top:-140px;right:-120px}
+.blob-b{width:380px;height:380px;background:var(--fresa-soft);bottom:-160px;left:-140px;opacity:.42}
+
+/* ── Tira de valor ───────────────────────── */
+.strip{background:var(--choco);color:var(--cream-2);padding:1.15rem 0;overflow:hidden}
+.strip-track{display:flex;gap:3rem;white-space:nowrap;animation:marquee 26s linear infinite;width:max-content}
+.strip-track span{font-family:var(--display);font-size:1.15rem;font-style:italic;display:flex;align-items:center;gap:3rem}
+.strip-track span::after{content:"✦";color:var(--masa);font-style:normal;font-size:.8rem}
+@keyframes marquee{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.strip-track,.plate,.chip-float{animation:none}}
+
+/* ── Secciones ───────────────────────────── */
+section{padding:clamp(3.5rem,8vw,6rem) 0}
+.sec-head{max-width:38rem;margin-bottom:2.8rem}
+.sec-head.c{margin-inline:auto;text-align:center}
+.sec-head h2{font-size:clamp(2rem,4.6vw,3.1rem);margin-top:.9rem}
+.sec-head p{margin-top:1rem;color:var(--ink-mid);font-size:1.05rem}
+
+/* ── Menú ────────────────────────────────── */
+#menu{background:var(--cream-2)}
+.tabs{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2.4rem}
+.tab{
+  padding:.7rem 1.5rem;border-radius:999px;font-weight:700;font-size:.9rem;
+  background:var(--card);color:var(--ink-mid);box-shadow:var(--shadow-sm);transition:.2s;
+}
+.tab[aria-selected="true"]{background:var(--choco);color:var(--cream);box-shadow:var(--shadow-md)}
+.tab:hover{transform:translateY(-2px)}
+
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.1rem}
+.item{
+  background:var(--card);border-radius:var(--r);padding:1.4rem 1.5rem;
+  box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:.45rem;
+  border:1px solid transparent;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative;
+}
+.item:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--masa-soft)}
+.item-top{display:flex;align-items:baseline;gap:.8rem}
+.item h3{font-size:1.22rem;flex:1}
+.item .price{font-weight:800;font-size:1.05rem;color:var(--fresa);font-variant-numeric:tabular-nums}
+.item p{font-size:.9rem;color:var(--ink-mid);line-height:1.55}
+.tag{
+  position:absolute;top:-9px;right:16px;background:var(--masa);color:var(--choco);
+  font-size:.65rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  padding:.28rem .7rem;border-radius:999px;box-shadow:var(--shadow-sm);
+}
+.tag.hot{background:var(--fresa);color:#fff}
+
+/* ── Armador ─────────────────────────────── */
+#armar{background:var(--choco);color:var(--cream-2);position:relative;overflow:hidden}
+#armar .eyebrow{color:var(--masa)}
+#armar .eyebrow::before{background:var(--masa)}
+#armar h2{color:var(--cream)}
+#armar .sec-head p{color:#D8C4AE}
+.builder{
+  display:grid;grid-template-columns:1.35fr .65fr;gap:1.6rem;align-items:start;
+}
+@media(max-width:880px){.builder{grid-template-columns:1fr}}
+.b-panel{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.11);border-radius:var(--r-lg);padding:1.7rem}
+.b-step{margin-bottom:1.7rem}
+.b-step:last-child{margin-bottom:0}
+.b-label{
+  font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--masa);
+  font-weight:800;margin-bottom:.85rem;display:flex;align-items:center;gap:.6rem;
+}
+.b-label i{
+  font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--masa);color:var(--choco);
+  display:grid;place-items:center;font-size:.68rem;flex:none;
+}
+.b-label small{margin-left:auto;color:#B9A28C;text-transform:none;letter-spacing:0;font-weight:600;font-size:.75rem}
+.opts{display:flex;flex-wrap:wrap;gap:.5rem}
+.opt{
+  padding:.6rem 1.05rem;border-radius:999px;font-size:.88rem;font-weight:600;
+  background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.14);
+  color:var(--cream-2);transition:.18s;
+}
+.opt:hover{background:rgba(255,255,255,.14);transform:translateY(-2px)}
+.opt[aria-pressed="true"]{background:var(--masa);border-color:var(--masa);color:var(--choco);font-weight:800}
+.opt[disabled]{opacity:.32;cursor:not-allowed;transform:none}
+
+.ticket{
+  background:var(--cream);color:var(--ink);border-radius:var(--r-lg);padding:1.7rem;
+  box-shadow:var(--shadow-lg);position:sticky;top:96px;
+}
+.ticket h3{font-size:1.35rem;margin-bottom:.2rem}
+.ticket .t-sub{font-size:.82rem;color:var(--ink-dim);margin-bottom:1.2rem}
+.t-lines{border-top:1.5px dashed var(--line);border-bottom:1.5px dashed var(--line);padding:1rem 0;margin-bottom:1rem;min-height:96px;display:flex;flex-direction:column;gap:.5rem}
+.t-line{display:flex;justify-content:space-between;gap:1rem;font-size:.9rem}
+.t-line span:first-child{color:var(--ink-mid)}
+.t-line b{font-variant-numeric:tabular-nums;font-weight:700}
+.t-empty{color:var(--ink-dim);font-size:.88rem;font-style:italic;margin:auto 0}
+.t-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.2rem}
+.t-total span{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);font-weight:700}
+.t-total b{font-family:var(--display);font-size:2.3rem;color:var(--fresa);font-variant-numeric:tabular-nums}
+.ticket .btn{width:100%}
+.t-foot{font-size:.75rem;color:var(--ink-dim);text-align:center;margin-top:.8rem}
+
+/* ── Galería ─────────────────────────────── */
+.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.9rem}
+.gcard{
+  aspect-ratio:1;border-radius:var(--r);position:relative;overflow:hidden;
+  display:grid;place-items:center;box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s;
+}
+.gcard:hover{transform:translateY(-5px) rotate(-1deg);box-shadow:var(--shadow-md)}
+.gcard::after{
+  content:attr(data-label);position:absolute;bottom:0;left:0;right:0;
+  padding:1.6rem .9rem .8rem;font-size:.82rem;font-weight:700;color:#fff;
+  background:linear-gradient(transparent,rgba(44,27,18,.72));
+}
+.gcard svg{width:52%;height:auto;opacity:.92;filter:drop-shadow(0 8px 12px rgba(58,34,23,.2))}
+.g1{background:linear-gradient(150deg,#F6D79A,#E8A93C)}
+.g2{background:linear-gradient(150deg,#F7C9C3,#DC4C46)}
+.g3{background:linear-gradient(150deg,#E4D3BC,#8C6142)}
+.g4{background:linear-gradient(150deg,#CFE0BE,#6E9B5B)}
+.g5{background:linear-gradient(150deg,#F2DCC4,#C98F4E)}
+.g6{background:linear-gradient(150deg,#EFD5E3,#C77BA4)}
+
+/* ── Reseñas ─────────────────────────────── */
+#resenas{background:var(--cream-2)}
+.revs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem}
+.rev{background:var(--card);border-radius:var(--r);padding:1.7rem;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:1rem}
+.stars{color:var(--masa);letter-spacing:.15em;font-size:.95rem}
+.rev p{font-family:var(--display);font-size:1.1rem;line-height:1.5;color:var(--ink)}
+.rev footer{display:flex;align-items:center;gap:.7rem;font-size:.85rem;color:var(--ink-mid);margin-top:auto}
+.av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.85rem;color:#fff;flex:none}
+
+/* ── Visita ──────────────────────────────── */
+.visit{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
+@media(max-width:820px){.visit{grid-template-columns:1fr}}
+.vcard{background:var(--card);border-radius:var(--r-lg);padding:2rem;box-shadow:var(--shadow-sm)}
+.vrow{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}
+.vrow:last-child{border-bottom:0;padding-bottom:0}
+.vrow .ic{width:38px;height:38px;border-radius:12px;background:var(--cream-2);display:grid;place-items:center;flex:none;font-size:1.1rem}
+.vrow strong{display:block;font-size:.95rem}
+.vrow span{font-size:.88rem;color:var(--ink-mid)}
+.hours{display:flex;justify-content:space-between;font-size:.92rem;padding:.55rem 0;border-bottom:1px dashed var(--line)}
+.hours:last-child{border:0}
+.hours b{font-variant-numeric:tabular-nums;font-weight:600}
+.hours.today{color:var(--mint);font-weight:700}
+
+/* ── CTA final ───────────────────────────── */
+#cta{background:linear-gradient(150deg,var(--fresa),#B8352F);color:#fff;text-align:center;position:relative;overflow:hidden}
+#cta h2{font-size:clamp(2.2rem,5.5vw,3.6rem);color:#fff}
+#cta p{color:rgba(255,255,255,.85);max-width:34ch;margin:1.1rem auto 2.2rem;font-size:1.05rem}
+#cta .btn-ghost{background:#fff;border-color:#fff}
+.cta-btns{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+
+/* ── Footer ──────────────────────────────── */
+footer.site{background:var(--choco);color:#C6B09B;padding:3rem 0 2rem;font-size:.88rem}
+.f-grid{display:flex;flex-wrap:wrap;gap:2rem;justify-content:space-between;align-items:flex-start;margin-bottom:2rem}
+footer.site .logo{color:var(--cream);font-size:1.3rem;margin:0}
+.f-links{display:flex;gap:1.4rem;flex-wrap:wrap}
+.f-links a:hover{color:var(--masa)}
+.f-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:1.4rem;display:flex;flex-wrap:wrap;gap:.8rem;justify-content:space-between;font-size:.78rem;color:#8E7967}
+
+/* ── FAB WhatsApp ────────────────────────── */
+.fab{
+  position:fixed;right:18px;bottom:18px;z-index:60;width:58px;height:58px;border-radius:50%;
+  background:#25D366;display:grid;place-items:center;box-shadow:0 10px 26px -6px rgba(37,211,102,.65);
+  transition:transform .2s;
+}
+.fab:hover{transform:scale(1.08)}
+.fab svg{width:30px;height:30px}
+@media(max-width:520px){.fab{width:54px;height:54px;bottom:14px;right:14px}}
+
+/* ── Reveal ──────────────────────────────── */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+
+<!-- ══ Aviso de propuesta ══ -->
+<div id="demoBar">
+  <span>Propuesta de sitio web para <b>Crepaland Tepic</b> · textos, precios y fotos son de ejemplo</span>
+  <button aria-label="Cerrar aviso" onclick="this.parentNode.remove()">×</button>
+</div>
+
+<!-- ══ Nav ══ -->
+<header id="hdr">
+  <nav class="wrap">
+    <a class="logo" href="#top">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 15c3-1 6-1.5 9-1.5s6 .5 9 1.5c-1.5 3.5-4.8 5.5-9 5.5S4.5 18.5 3 15z" fill="#fff" opacity=".95"/><circle cx="9" cy="9" r="2.2" fill="#fff"/><circle cx="15.5" cy="7.5" r="1.6" fill="#fff" opacity=".8"/></svg>
+      </span>
+      <span>Crepa<em>land</em></span>
+    </a>
+    <div class="navlinks">
+      <a href="#menu">Menú</a>
+      <a href="#armar">Arma tu crepa</a>
+      <a href="#galeria">Galería</a>
+      <a href="#visita">Visítanos</a>
+    </div>
+    <a class="btn btn-wa" href="#" data-wa="Hola Crepaland 👋 quiero hacer un pedido.">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.2-.7.1s-.8 1-.9 1.2c-.2.2-.3.2-.6.1a8 8 0 01-2.4-1.5 9 9 0 01-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.7.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.4z"/><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1112 20.2z"/></svg>
+      Pedir
+    </a>
+  </nav>
+</header>
+
+<main id="top">
+
+<!-- ══ Hero ══ -->
+<section class="hero">
+  <div class="blob blob-a"></div><div class="blob blob-b"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Crepería artesanal · Tepic, Nayarit</div>
+      <h1>La crepa que se te <span class="accent">antoja</span>, hecha al momento.</h1>
+      <p class="hero-sub">Masa fresca todos los días, ingredientes de verdad y el punto exacto de dorado. Dulces, saladas y para llevar.</p>
+      <div class="hero-cta">
+        <a class="btn btn-wa btn-lg" href="#" data-wa="Hola Crepaland 👋 quiero pedir a domicilio.">Pedir por WhatsApp</a>
+        <a class="btn btn-ghost btn-lg" href="#menu">Ver el menú</a>
+      </div>
+      <p class="hero-note"><span class="dot-live"></span> Abierto hoy · entrega en Tepic en ~25 min</p>
+    </div>
+
+    <div class="hero-art">
+      <div class="plate">
+        <svg viewBox="32 38 136 136" aria-label="Ilustración de una crepa">
+          <ellipse cx="100" cy="150" rx="72" ry="16" fill="#3A2217" opacity=".1"/>
+          <path d="M42 140c14-6 34-10 58-10s44 4 58 10c-12 12-33 19-58 19s-46-7-58-19z" fill="#E8A93C"/>
+          <path d="M46 138c0-30 22-58 54-58s54 28 54 58c-14-6-33-9-54-9s-40 3-54 9z" fill="#F0BC5C"/>
+          <path d="M62 112c10-14 24-22 38-22s28 8 38 22c-11 22-27 30-38 30s-27-8-38-30z" fill="#C97F35" opacity=".55"/>
+          <path d="M70 108c8 16 20 24 30 24s22-8 30-24c-9-8-19-12-30-12s-21 4-30 12z" fill="#5A3018"/>
+          <path d="M76 106c7 12 17 18 24 18s17-6 24-18" stroke="#3A2217" stroke-width="3" fill="none" opacity=".5"/>
+          <path d="M60 92c12 6 22 9 40 9s28-3 40-9" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".9"/>
+          <path d="M66 78c14-8 26-12 34-12" stroke="#5A3018" stroke-width="3.5" stroke-linecap="round" fill="none" opacity=".35"/>
+          <circle cx="84" cy="128" r="9" fill="#DC4C46"/><circle cx="81" cy="125" r="2.4" fill="#fff" opacity=".55"/>
+          <circle cx="112" cy="132" r="7" fill="#DC4C46"/><circle cx="110" cy="130" r="1.9" fill="#fff" opacity=".55"/>
+          <circle cx="132" cy="126" r="5.2" fill="#DC4C46"/>
+          <path d="M100 62c-6-6-4-14 2-16-2 7 3 9 5 14 3-4 8-3 9-8 4 7-2 14-8 16-3 1-6-2-8-6z" fill="#6E9B5B"/>
+        </svg>
+      </div>
+      <div class="chip-float cf-1"><span>🍓</span> Fresa con Nutella</div>
+      <div class="chip-float cf-2"><span>🧀</span> Salada de jamón</div>
+      <div class="chip-float cf-3"><span>⚡</span> Lista en 8 min</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ Tira ══ -->
+<div class="strip" aria-hidden="true">
+  <div class="strip-track">
+    <span>Masa fresca del día</span><span>Nutella de verdad</span><span>Sin conservadores</span><span>Pedidos por WhatsApp</span><span>Entrega en Tepic</span><span>Eventos y cumpleaños</span>
+    <span>Masa fresca del día</span><span>Nutella de verdad</span><span>Sin conservadores</span><span>Pedidos por WhatsApp</span><span>Entrega en Tepic</span><span>Eventos y cumpleaños</span>
+  </div>
+</div>
+
+<!-- ══ Menú ══ -->
+<section id="menu">
+  <div class="wrap">
+    <div class="sec-head c rv">
+      <div class="eyebrow c">Nuestro menú</div>
+      <h2>Lo que sale de la plancha</h2>
+      <p>Todo se prepara al momento. ¿No encuentras lo tuyo? Ármala a tu gusto más abajo.</p>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true"  data-cat="dulces">Dulces</button>
+      <button class="tab" role="tab" aria-selected="false" data-cat="saladas">Saladas</button>
+      <button class="tab" role="tab" aria-selected="false" data-cat="waffles">Waffles</button>
+      <button class="tab" role="tab" aria-selected="false" data-cat="bebidas">Bebidas</button>
+    </div>
+
+    <div class="menu-grid" id="menuGrid"></div>
+  </div>
+</section>
+
+<!-- ══ Armador ══ -->
+<section id="armar">
+  <div class="wrap">
+    <div class="sec-head c rv">
+      <div class="eyebrow c">Hazla tuya</div>
+      <h2>Arma tu crepa</h2>
+      <p>Escoge, mira el total en vivo y mándalo a WhatsApp ya escrito. Sin llamadas, sin malentendidos.</p>
+    </div>
+
+    <div class="builder">
+      <div class="b-panel rv">
+        <div class="b-step">
+          <div class="b-label"><i>1</i> Elige tu base</div>
+          <div class="opts" id="stepBase"></div>
+        </div>
+        <div class="b-step">
+          <div class="b-label"><i>2</i> Rellenos <small>hasta 3</small></div>
+          <div class="opts" id="stepFill"></div>
+        </div>
+        <div class="b-step">
+          <div class="b-label"><i>3</i> Extras <small>opcional</small></div>
+          <div class="opts" id="stepExtra"></div>
+        </div>
+        <div class="b-step">
+          <div class="b-label"><i>4</i> ¿Cómo la quieres?</div>
+          <div class="opts" id="stepMode"></div>
+        </div>
+      </div>
+
+      <aside class="ticket rv">
+        <h3>Tu pedido</h3>
+        <p class="t-sub">Actualiza en tiempo real</p>
+        <div class="t-lines" id="tLines"><p class="t-empty">Empieza eligiendo una base…</p></div>
+        <div class="t-total"><span>Total</span><b id="tTotal">$0</b></div>
+        <a class="btn btn-wa btn-lg" id="tSend" href="#">Enviar por WhatsApp</a>
+        <p class="t-foot">Te confirmamos el tiempo de entrega por mensaje.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ══ Galería ══ -->
+<section id="galeria">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow">En el mostrador</div>
+      <h2>Así se ven de cerca</h2>
+      <p>Aquí van las fotos reales de Crepaland. Cada recuadro se reemplaza por una foto del Instagram.</p>
+    </div>
+    <div class="gal rv">
+      <div class="gcard g1" data-label="Crepa de Nutella con fresa"><svg viewBox="0 0 24 24" fill="none"><path d="M3 16c3-1 6-1.5 9-1.5s6 .5 9 1.5c-1.5 3.5-4.8 5.5-9 5.5S4.5 19.5 3 16z" fill="#fff"/><path d="M4 15c0-6 4-11 8-11s8 5 8 11c-2.4-1-5-1.5-8-1.5s-5.6.5-8 1.5z" fill="#fff" opacity=".7"/></svg></div>
+      <div class="gcard g2" data-label="Fresas con crema"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21c-4 0-7-3.5-7-7.5S8 4 12 4s7 5.5 7 9.5S16 21 12 21z" fill="#fff"/><circle cx="10" cy="11" r="1" fill="#DC4C46"/><circle cx="14" cy="13" r="1" fill="#DC4C46"/><circle cx="11.5" cy="16" r="1" fill="#DC4C46"/></svg></div>
+      <div class="gcard g3" data-label="Crepa salada de jamón"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="10" rx="3" fill="#fff"/><path d="M3 12h18" stroke="#8C6142" stroke-width="1.5"/></svg></div>
+      <div class="gcard g4" data-label="Opción ligera"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21S4 15 4 9.5A5.5 5.5 0 0112 6a5.5 5.5 0 018 3.5C20 15 12 21 12 21z" fill="#fff"/></svg></div>
+      <div class="gcard g5" data-label="Waffle de la casa"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" fill="#fff"/><path d="M9 4v16M15 4v16M4 9h16M4 15h16" stroke="#C98F4E" stroke-width="1.4"/></svg></div>
+      <div class="gcard g6" data-label="Malteadas y frappés"><svg viewBox="0 0 24 24" fill="none"><path d="M7 8h10l-1.5 12h-7L7 8z" fill="#fff"/><circle cx="12" cy="6" r="3" fill="#fff"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ Reseñas ══ -->
+<section id="resenas">
+  <div class="wrap">
+    <div class="sec-head c rv">
+      <div class="eyebrow c">Lo que dicen</div>
+      <h2>Clientes que regresan</h2>
+      <p>Reseñas de ejemplo — se reemplazan por las reales de Google o Facebook.</p>
+    </div>
+    <div class="revs rv">
+      <article class="rev">
+        <div class="stars">★★★★★</div>
+        <p>“Las mejores crepas de Tepic, sin exagerar. La de Nutella con fresa está increíble y el servicio es rapidísimo.”</p>
+        <footer><span class="av" style="background:var(--fresa)">MG</span> María G. · Tepic</footer>
+      </article>
+      <article class="rev">
+        <div class="stars">★★★★★</div>
+        <p>“Pedí por WhatsApp y llegó calientita en 20 minutos. Ya es la cena de los viernes en la casa.”</p>
+        <footer><span class="av" style="background:var(--masa)">JR</span> Jorge R. · Cd. del Valle</footer>
+      </article>
+      <article class="rev">
+        <div class="stars">★★★★★</div>
+        <p>“Nos atendieron el cumpleaños de mi hija con crepas para 30 personas. Todos preguntaron de dónde eran.”</p>
+        <footer><span class="av" style="background:var(--mint)">AL</span> Ana L. · Tepic</footer>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ══ Visita ══ -->
+<section id="visita">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow">Encuéntranos</div>
+      <h2>Pasa por la tuya</h2>
+    </div>
+    <div class="visit rv">
+      <div class="vcard">
+        <div class="vrow"><div class="ic">📍</div><div><strong>Dirección</strong><span>Tepic, Nayarit — <em>pendiente de confirmar</em></span></div></div>
+        <div class="vrow"><div class="ic">💬</div><div><strong>WhatsApp</strong><span id="waText">311 000 0000</span></div></div>
+        <div class="vrow"><div class="ic">📷</div><div><strong>Instagram</strong><span><a href="https://www.instagram.com/crepaland_tepic" target="_blank" rel="noopener" style="color:var(--fresa);font-weight:700">@crepaland_tepic</a></span></div></div>
+        <div class="vrow"><div class="ic">🛵</div><div><strong>Entrega</strong><span>A domicilio en Tepic y para recoger en sucursal</span></div></div>
+      </div>
+      <div class="vcard">
+        <h3 style="font-size:1.3rem;margin-bottom:1rem">Horarios</h3>
+        <div id="hoursBox"></div>
+        <a class="btn btn-dark" style="width:100%;margin-top:1.5rem" href="#" data-wa="Hola 👋 ¿tienen servicio ahorita?">Preguntar disponibilidad</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ══ -->
+<section id="cta">
+  <div class="wrap rv">
+    <h2>¿Se te antojó?</h2>
+    <p>Mándanos mensaje y en un ratito la tienes en la mano.</p>
+    <div class="cta-btns">
+      <a class="btn btn-wa btn-lg" href="#" data-wa="Hola Crepaland 👋 quiero pedir.">Pedir por WhatsApp</a>
+      <a class="btn btn-ghost btn-lg" href="#armar">Armar mi crepa</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <div class="logo"><span class="logo-mark" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 15c3-1 6-1.5 9-1.5s6 .5 9 1.5c-1.5 3.5-4.8 5.5-9 5.5S4.5 18.5 3 15z" fill="#fff" opacity=".95"/><circle cx="9" cy="9" r="2.2" fill="#fff"/></svg></span> Crepa<em style="font-style:normal;color:var(--masa)">land</em></div>
+        <p style="margin-top:.7rem;max-width:26ch">Crepas hechas al momento en Tepic, Nayarit.</p>
+      </div>
+      <div class="f-links">
+        <a href="#menu">Menú</a><a href="#armar">Arma tu crepa</a><a href="#galeria">Galería</a><a href="#visita">Visítanos</a>
+        <a href="https://www.instagram.com/crepaland_tepic" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© <span id="yr"></span> Crepaland Tepic</span>
+      <span>Propuesta de sitio · contenido de ejemplo</span>
+    </div>
+  </div>
+</footer>
+
+<a class="fab" id="fab" href="#" aria-label="Escribir por WhatsApp">
+  <svg viewBox="0 0 24 24" fill="#0B2E17"><path d="M17.5 14.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.2-.7.1s-.8 1-.9 1.2c-.2.2-.3.2-.6.1a8 8 0 01-2.4-1.5 9 9 0 01-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.7.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.4z"/><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1112 20.2z"/></svg>
+</a>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ⚙️ CONFIGURACIÓN — lo único que hay que cambiar
+   ═══════════════════════════════════════════════════════════ */
+const CONFIG = {
+  whatsapp: '523110000000',      // número real con 52 + LADA, sin espacios ni +
+  whatsappDisplay: '311 000 0000'
+};
+
+/* ── Menú ── */
+const MENU = {
+  dulces: [
+    {n:'Nutella & Fresa',   p:95,  d:'Nutella auténtica, fresa fresca y un toque de azúcar glass.', t:'La favorita'},
+    {n:'Plátano con Cajeta',p:88,  d:'Plátano caramelizado, cajeta de Celaya y nuez picada.'},
+    {n:'Oreo Explosion',    p:98,  d:'Crema de avellana, galleta Oreo triturada y crema batida.', t:'hot'},
+    {n:'Manzana Canela',    p:85,  d:'Manzana salteada, canela y helado de vainilla.'},
+    {n:'Lotus Biscoff',     p:105, d:'Crema Lotus, galleta y helado.'},
+    {n:'Clásica de Azúcar', p:60,  d:'Mantequilla, azúcar y limón. Simple y perfecta.'}
+  ],
+  saladas: [
+    {n:'Jamón y Queso',        p:95,  d:'Jamón de pierna, queso manchego gratinado y orégano.'},
+    {n:'Pollo con Champiñones',p:115, d:'Pollo a la plancha, champiñones salteados y crema.', t:'La favorita'},
+    {n:'Tres Quesos',          p:105, d:'Manchego, gouda y philadelphia con toque de albahaca.'},
+    {n:'Salchicha Alemana',    p:98,  d:'Salchicha, queso amarillo y mostaza dulce.'},
+    {n:'Vegetariana',          p:92,  d:'Espinaca, champiñón, pimiento y queso panela.'}
+  ],
+  waffles: [
+    {n:'Waffle Nutella',   p:99,  d:'Waffle belga con Nutella, fresa y crema batida.'},
+    {n:'Waffle Churro',    p:92,  d:'Azúcar con canela, cajeta y helado de vainilla.', t:'hot'},
+    {n:'Waffle de la Casa',p:120, d:'Doble waffle, tres toppings y bola de helado.'}
+  ],
+  bebidas: [
+    {n:'Frappé de Café',   p:65, d:'Café frío batido con hielo y crema.'},
+    {n:'Malteada de Fresa',p:70, d:'Helado natural, leche y fresa de verdad.'},
+    {n:'Chocolate Caliente',p:55,d:'Chocolate espeso estilo francés.'},
+    {n:'Soda Italiana',    p:60, d:'Jarabe a elegir, agua mineral y hielo.'}
+  ]
+};
+
+/* ── Armador ── */
+const BASES  = [
+  {n:'Crepa dulce', p:60}, {n:'Crepa salada', p:75},
+  {n:'Waffle belga', p:75}, {n:'Crepa integral', p:70}
+];
+const FILLS  = [
+  {n:'Nutella',p:20},{n:'Cajeta',p:15},{n:'Fresa',p:18},{n:'Plátano',p:12},
+  {n:'Oreo',p:15},{n:'Queso crema',p:15},{n:'Jamón',p:18},{n:'Pollo',p:25},
+  {n:'Champiñón',p:15},{n:'Queso manchego',p:18},{n:'Nuez',p:15},{n:'Lechera',p:12}
+];
+const EXTRAS = [
+  {n:'Bola de helado',p:25},{n:'Crema batida',p:15},
+  {n:'Doble relleno',p:20},{n:'Malteada chica',p:45}
+];
+const MODES  = [{n:'Para comer aquí',p:0},{n:'Para llevar',p:0},{n:'A domicilio',p:35}];
+
+const HOURS = [
+  ['Lunes','4:00 – 10:30 pm'],['Martes','4:00 – 10:30 pm'],['Miércoles','4:00 – 10:30 pm'],
+  ['Jueves','4:00 – 10:30 pm'],['Viernes','4:00 – 11:30 pm'],['Sábado','2:00 – 11:30 pm'],
+  ['Domingo','2:00 – 10:00 pm']
+];
+
+/* ═══ Utilidades ═══ */
+const $  = (s,c=document)=>c.querySelector(s);
+const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
+const wa = t => `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(t)}`;
+const mx = n => '$' + n.toLocaleString('es-MX');
+
+/* ═══ Enlaces de WhatsApp ═══ */
+$$('[data-wa]').forEach(a => a.href = wa(a.dataset.wa));
+$('#fab').href = wa('Hola Crepaland 👋 quiero pedir.');
+$('#waText').textContent = CONFIG.whatsappDisplay;
+$('#yr').textContent = new Date().getFullYear();
+
+/* ═══ Menú con pestañas ═══ */
+const grid = $('#menuGrid');
+function renderMenu(cat){
+  grid.innerHTML = MENU[cat].map(i => `
+    <article class="item">
+      ${i.t ? `<span class="tag${i.t==='hot'?' hot':''}">${i.t==='hot'?'Nuevo':i.t}</span>` : ''}
+      <div class="item-top"><h3>${i.n}</h3><span class="price">${mx(i.p)}</span></div>
+      <p>${i.d}</p>
+    </article>`).join('');
+}
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.setAttribute('aria-selected','false'));
+  t.setAttribute('aria-selected','true');
+  renderMenu(t.dataset.cat);
+}));
+renderMenu('dulces');
+
+/* ═══ Armador de crepas ═══ */
+const state = {base:null, fills:[], extras:[], mode:MODES[1]};
+const MAX_FILLS = 3;
+
+function chips(list, container, kind){
+  const sign = kind === 'base' ? '' : '+';
+  container.innerHTML = list.map((o,i) =>
+    `<button class="opt" data-i="${i}" aria-pressed="false">${o.n}${o.p ? ` <span style="opacity:.65">${sign}${mx(o.p)}</span>` : ''}</button>`
+  ).join('');
+  container.addEventListener('click', e => {
+    const b = e.target.closest('.opt'); if(!b || b.disabled) return;
+    const item = list[+b.dataset.i];
+
+    if(kind === 'base' || kind === 'mode'){
+      $$('.opt', container).forEach(x => x.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      state[kind === 'base' ? 'base' : 'mode'] = item;
+    } else {
+      const arr = state[kind];
+      const at = arr.indexOf(item);
+      if(at > -1) arr.splice(at,1);
+      else if(kind !== 'fills' || arr.length < MAX_FILLS) arr.push(item);
+      b.setAttribute('aria-pressed', arr.includes(item));
+    }
+    if(kind === 'fills') lockFills();
+    paint();
+  });
+}
+function lockFills(){
+  const full = state.fills.length >= MAX_FILLS;
+  $$('#stepFill .opt').forEach(b => {
+    b.disabled = full && b.getAttribute('aria-pressed') === 'false';
+  });
+}
+
+function paint(){
+  const lines = [];
+  if(state.base) lines.push([state.base.n, state.base.p]);
+  state.fills.forEach(f => lines.push(['+ ' + f.n, f.p]));
+  state.extras.forEach(f => lines.push(['+ ' + f.n, f.p]));
+  if(state.mode && state.mode.p) lines.push([state.mode.n, state.mode.p]);
+
+  const box = $('#tLines');
+  box.innerHTML = lines.length
+    ? lines.map(([l,p]) => `<div class="t-line"><span>${l}</span><b>${mx(p)}</b></div>`).join('')
+    : '<p class="t-empty">Empieza eligiendo una base…</p>';
+
+  const total = lines.reduce((s,[,p]) => s + p, 0);
+  $('#tTotal').textContent = mx(total);
+
+  const msg = state.base
+    ? `Hola Crepaland 👋 quiero armar mi pedido:\n\n`
+      + `🥞 ${state.base.n}\n`
+      + (state.fills.length  ? `🍫 Rellenos: ${state.fills.map(f=>f.n).join(', ')}\n` : '')
+      + (state.extras.length ? `✨ Extras: ${state.extras.map(f=>f.n).join(', ')}\n`  : '')
+      + `📦 ${state.mode.n}\n\n`
+      + `💵 Total aproximado: ${mx(total)}\n\n¿Me confirman por favor?`
+    : 'Hola Crepaland 👋 quiero hacer un pedido.';
+  $('#tSend').href = wa(msg);
+}
+
+chips(BASES,  $('#stepBase'),  'base');
+chips(FILLS,  $('#stepFill'),  'fills');
+chips(EXTRAS, $('#stepExtra'), 'extras');
+chips(MODES,  $('#stepMode'),  'mode');
+$$('#stepMode .opt')[1].setAttribute('aria-pressed','true');
+paint();
+
+/* ═══ Horarios ═══ */
+const todayIdx = (new Date().getDay() + 6) % 7;   // lunes = 0
+$('#hoursBox').innerHTML = HOURS.map(([d,h],i) =>
+  `<div class="hours${i===todayIdx?' today':''}"><span>${d}${i===todayIdx?' · hoy':''}</span><b>${h}</b></div>`
+).join('');
+
+/* ═══ Header pegado + reveal ═══ */
+const hdr = $('#hdr');
+addEventListener('scroll', () => hdr.classList.toggle('stuck', scrollY > 8), {passive:true});
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+}, {threshold:.12, rootMargin:'0px 0px -40px'});
+$$('.rv').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
