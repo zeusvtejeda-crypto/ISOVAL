@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Distribuidora EP — Gorras y ropa a mayoreo</title>
+<meta name="description" content="Distribuidora EP: gorras personalizadas, playeras, sudaderas y accesorios a precio de mayoreo. Diseños propios, bordado y estampado. Pide directo por WhatsApp."/>
+<meta name="theme-color" content="#0A0908"/>
+<meta property="og:title" content="Distribuidora EP — Gorras y ropa a mayoreo"/>
+<meta property="og:description" content="Gorras personalizadas, playeras, sudaderas y accesorios a precio de mayoreo. Pide por WhatsApp."/>
+<meta property="og:type" content="business.business"/>
+<meta property="og:locale" content="es_MX"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230A0908'/%3E%3Cpath d='M4 9l3.2 2.7L12 5l4.8 6.7L20 9l-1.7 9H5.7L4 9z' fill='none' stroke='%23D9A441' stroke-width='1.7' stroke-linejoin='round'/%3E%3C/svg%3E"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Store","name":"Distribuidora EP","telephone":"+52 311 315 9402","description":"Venta de ropa y accesorios a mayoreo — gorras, playeras, sudaderas y accesorios con diseño personalizado.","areaServed":"MX"}
+</script>
+<style>
+/* ═══════════════════════════════════════════════
+   DISTRIBUIDORA EP
+   Paleta: negro · dorado · verde WhatsApp (acción)
+   Estilo: streetwear · mayorista · gorra 3D interactiva
+═══════════════════════════════════════════════ */
+:root{
+  --bg:        #0A0908;
+  --bg-soft:   #131210;
+  --bg-card:   #1A1815;
+  --bg-card-h: #211E19;
+
+  --white:     #F5F2EA;
+  --gray:      #A7A29A;
+  --gray-dim:  #6F6A62;
+
+  --gold:      #D9A441;
+  --gold-hi:   #EFCB82;
+  --gold-deep: #A97A24;
+
+  --wa:        #25D366;
+  --wa-deep:   #1DA851;
+
+  --border:      rgba(245,242,234,0.09);
+  --border-mid:  rgba(245,242,234,0.16);
+  --border-strong:rgba(245,242,234,0.30);
+
+  --f-display:'Bungee',sans-serif;
+  --f-body:   'Inter',sans-serif;
+  --f-mono:   'JetBrains Mono',monospace;
+
+  --pad-h:       64px;
+  --pad-section: 128px;
+
+  --cap-color:#1c1c1c; --cap-hi:#3d3d3d; --cap-lo:#050505;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--white);
+  font-family:var(--f-body);font-weight:400;
+  overflow-x:hidden;line-height:1.6;
+}
+section{scroll-margin-top:84px;}
+a{color:inherit;}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:998;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size:220px;opacity:0.03;
+}
+.scroll-progress{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(to right,var(--gold-deep),var(--gold));z-index:1000;}
+
+/* ══ EYEBROW / TITLE ══ */
+.eyebrow{
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:20px;display:flex;align-items:center;gap:12px;
+}
+.eyebrow::before{content:'';width:28px;height:1px;background:var(--gold);}
+.eyebrow.on-dark{color:rgba(245,242,234,0.8);}
+.eyebrow.on-dark::before{background:rgba(245,242,234,0.55);}
+.s-title{
+  font-family:var(--f-display);font-weight:400;text-transform:uppercase;
+  font-size:clamp(26px,3.6vw,46px);line-height:1.18;letter-spacing:.005em;
+  color:var(--white);max-width:680px;
+}
+.s-title em{font-style:normal;color:var(--gold);}
+.s-sub{
+  font-family:var(--f-body);font-size:16px;line-height:1.75;color:var(--gray);
+  max-width:560px;margin-top:22px;
+}
+
+/* ══ REVEAL ══ */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity 550ms cubic-bezier(.16,1,.3,1),transform 550ms cubic-bezier(.16,1,.3,1);}
+.reveal.in{opacity:1;transform:translateY(0);}
+
+/* ══ BUTTONS ══ */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:15px 30px;
+  font-family:var(--f-mono);font-size:10.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+  text-decoration:none;border:1px solid transparent;position:relative;overflow:hidden;transition:color 200ms,border-color 200ms;cursor:pointer;
+}
+.btn.wa{background:var(--wa);color:#04210f;}
+.btn.wa::before{content:'';position:absolute;inset:0;background:var(--wa-deep);transform:scaleX(0);transform-origin:left;transition:transform 440ms cubic-bezier(.16,1,.3,1);}
+.btn.wa:hover::before{transform:scaleX(1);}
+.btn.gold{background:var(--gold);color:#171310;}
+.btn.gold:hover{background:var(--gold-hi);}
+.btn.outline{border-color:var(--border-strong);color:var(--white);background:transparent;}
+.btn.outline:hover{border-color:var(--gold);color:var(--gold);}
+.btn.outline-light{border-color:rgba(245,242,234,.4);color:rgba(245,242,234,.85);}
+.btn.outline-light:hover{border-color:#fff;color:#fff;}
+.btn span{position:relative;z-index:1;display:flex;align-items:center;gap:8px;}
+.btn svg{width:14px;height:14px;}
+.btn.sm{padding:10px 18px;font-size:9.5px;}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  background:var(--bg-soft);border-bottom:1px solid var(--border);
+  padding:9px var(--pad-h);display:flex;justify-content:center;gap:36px;flex-wrap:wrap;
+}
+.tb-item{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.05em;color:var(--gray);}
+.tb-item svg{width:12px;height:12px;color:var(--gold);flex-shrink:0;}
+.tb-item strong{color:var(--white);font-weight:600;}
+
+/* ══ NAV ══ */
+nav{
+  position:sticky;top:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px var(--pad-h);
+  background:rgba(10,9,8,.88);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{display:flex;align-items:center;gap:11px;text-decoration:none;}
+.logo-mark{width:32px;height:32px;flex-shrink:0;}
+.logo-word{display:flex;flex-direction:column;line-height:1.05;}
+.logo-word small{font-family:var(--f-mono);font-size:8.5px;letter-spacing:.3em;color:var(--gray);}
+.logo-word b{font-family:var(--f-display);font-weight:400;font-size:17px;letter-spacing:.02em;color:var(--white);text-transform:uppercase;}
+.logo-word b em{font-style:normal;color:var(--gold);}
+.nav-links{display:flex;gap:34px;list-style:none;}
+.nav-links a{font-family:var(--f-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gray);text-decoration:none;transition:color 200ms;}
+.nav-links a:hover{color:var(--white);}
+.nav-right{display:flex;align-items:center;gap:18px;}
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;}
+.hamburger span{width:22px;height:2px;background:var(--white);display:block;transition:transform 260ms,opacity 260ms;}
+.mobile-menu{
+  position:fixed;inset:0;z-index:600;background:rgba(8,7,6,.98);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;
+  opacity:0;pointer-events:none;transition:opacity 300ms;
+}
+.mobile-menu.open{opacity:1;pointer-events:auto;}
+.mobile-menu a{font-family:var(--f-display);font-size:22px;text-transform:uppercase;color:var(--white);text-decoration:none;letter-spacing:.02em;}
+.mobile-menu .btn{margin-top:10px;}
+.mm-close{position:absolute;top:22px;right:var(--pad-h);background:none;border:none;color:var(--white);font-size:28px;cursor:pointer;line-height:1;}
+
+/* ══ HERO ══ */
+.hero{position:relative;padding:80px var(--pad-h) 72px;overflow:hidden;}
+.hero-glow{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.hero-glow::before{content:'';position:absolute;top:-14%;right:-10%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(217,164,65,.16),transparent 70%);}
+.hero-glow::after{content:'';position:absolute;bottom:-22%;left:-12%;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(37,211,102,.08),transparent 70%);}
+.hero-ghost{
+  position:absolute;top:50%;left:var(--pad-h);transform:translateY(-50%);
+  font-family:var(--f-display);font-size:min(24vw,340px);line-height:1;color:rgba(245,242,234,.025);
+  z-index:0;pointer-events:none;user-select:none;white-space:nowrap;
+}
+.hero-grid{position:relative;z-index:2;max-width:1360px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;}
+.hero-h1{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:clamp(34px,5.2vw,68px);line-height:1.12;letter-spacing:.005em;color:var(--white);}
+.hero-h1 em{font-style:normal;color:var(--gold);}
+.hero-sub{font-size:16.5px;line-height:1.75;color:var(--gray);max-width:500px;margin-top:26px;}
+.hero-actions{margin-top:36px;display:flex;gap:14px;flex-wrap:wrap;}
+.trust-row{margin-top:48px;display:flex;gap:0;border:1px solid var(--border-mid);max-width:560px;flex-wrap:wrap;}
+.trust-item{flex:1 1 50%;min-width:220px;display:flex;align-items:center;gap:10px;padding:14px 18px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+.trust-item svg{width:17px;height:17px;color:var(--gold);flex-shrink:0;}
+.trust-item span{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);}
+
+/* ── Escenario de la gorra 3D (hero) ── */
+.cap-hero-wrap{display:flex;flex-direction:column;align-items:center;}
+.cap-stage{perspective:1100px;width:300px;height:300px;}
+.cap-stage.mini{width:150px;height:150px;perspective:700px;}
+.cap-3d{
+  position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  transform:rotateX(6deg) rotateY(-20deg);transition:transform 160ms ease-out;
+  animation:capIdle 7s ease-in-out infinite;
+}
+.cap-stage.mini .cap-3d{animation-duration:6s;transition:none;}
+@keyframes capIdle{
+  0%,100%{transform:rotateX(6deg) rotateY(-20deg);}
+  50%{transform:rotateX(6deg) rotateY(14deg);}
+}
+.cap-3d.tracking{animation-play-state:paused;}
+.cap-crown{
+  position:absolute;left:50%;top:30%;width:66%;height:56%;margin-left:-33%;
+  border-radius:50% 50% 12% 12% / 62% 62% 10% 10%;
+  background:radial-gradient(circle at 34% 26%,var(--cap-hi),var(--cap-color) 55%,var(--cap-lo) 100%);
+  transform:translateZ(26px);
+  box-shadow:0 26px 50px rgba(0,0,0,.5);
+  transition:background 260ms;
+}
+.cap-crown::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  background:repeating-conic-gradient(from -90deg at 50% 40%,transparent 0deg 40deg,rgba(0,0,0,.14) 41deg 44deg);
+  opacity:.55;mix-blend-mode:multiply;
+}
+.cap-button{
+  position:absolute;left:50%;top:29%;width:14px;height:14px;margin:-7px 0 0 -7px;
+  border-radius:50%;background:var(--cap-lo);transform:translateZ(30px);
+  box-shadow:0 2px 5px rgba(0,0,0,.5);transition:background 260ms;
+}
+.cap-patch{
+  position:absolute;left:50%;top:48%;width:34%;height:34%;margin:-17% 0 0 -17%;
+  border-radius:50%;background:#0c0b0a;border:3px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  transform:translateZ(40px);box-shadow:0 10px 20px rgba(0,0,0,.55);
+}
+.cap-patch svg{width:52%;height:52%;color:var(--gold);}
+.cap-brim-mask{
+  position:absolute;left:50%;bottom:16%;width:78%;height:17%;margin-left:-39%;
+  overflow:hidden;transform:translateZ(52px) rotateX(68deg);
+}
+.cap-brim{
+  position:absolute;top:0;left:0;width:100%;height:220%;border-radius:50%;
+  background:linear-gradient(to bottom,var(--cap-color),var(--cap-lo));
+  box-shadow:0 14px 26px rgba(0,0,0,.4);transition:background 260ms;
+}
+.cap-shadow{
+  position:absolute;left:50%;bottom:2%;width:60%;height:14%;margin-left:-30%;
+  border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.55),transparent 72%);
+  transform:translateZ(-10px);
+}
+.cap-swatches{display:flex;gap:10px;margin-top:28px;}
+.cap-sw{width:28px;height:28px;border-radius:50%;border:2px solid var(--border-mid);cursor:pointer;transition:border-color 200ms,transform 200ms;padding:0;}
+.cap-sw:hover{transform:translateY(-3px);}
+.cap-sw.active{border-color:var(--gold);}
+.cap-hint{margin-top:16px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;color:var(--gray-dim);text-align:center;max-width:260px;}
+
+/* ══ MARQUEE ══ */
+.mq-wrap{border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;padding:16px 0;background:var(--bg-soft);position:relative;z-index:2;}
+.mq-track{display:flex;width:max-content;animation:mqScroll 34s linear infinite;white-space:nowrap;}
+.mq-item{display:inline-flex;align-items:center;gap:18px;padding:0 40px;font-family:var(--f-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gray);}
+.mq-dot{width:4px;height:4px;background:var(--gold);border-radius:50%;flex-shrink:0;}
+@keyframes mqScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ══ GORRAS 3D ══ */
+#gorras{position:relative;z-index:2;padding:var(--pad-section) var(--pad-h);background:var(--bg-soft);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.gorras-head{max-width:640px;}
+.gorras-grid{margin-top:64px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-mid);}
+.gorra-card{background:var(--bg-card);padding:34px 26px 30px;display:flex;flex-direction:column;align-items:center;text-align:center;transition:background 300ms;}
+.gorra-card:hover{background:var(--bg-card-h);}
+.gorra-name{font-family:var(--f-display);font-size:15px;text-transform:uppercase;color:var(--white);margin-top:18px;letter-spacing:.01em;}
+.gorra-desc{font-size:12.5px;color:var(--gray);line-height:1.6;margin-top:10px;min-height:52px;}
+.gorra-card .btn{margin-top:18px;width:100%;justify-content:center;}
+
+/* ══ CATÁLOGO ROPA ══ */
+#catalogo{position:relative;z-index:2;padding:var(--pad-section) var(--pad-h);}
+.cat-head{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap;margin-bottom:64px;}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-mid);}
+.cat-card{background:var(--bg-card);padding:38px 28px;position:relative;overflow:hidden;transition:background 300ms;}
+.cat-card:hover{background:var(--bg-card-h);}
+.cat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform 460ms cubic-bezier(.16,1,.3,1);}
+.cat-card:hover::before{transform:scaleX(1);}
+.cat-icon{width:30px;height:30px;color:var(--gray-dim);margin-bottom:24px;transition:color 300ms;}
+.cat-card:hover .cat-icon{color:var(--gold);}
+.cat-name{font-family:var(--f-display);font-size:16px;text-transform:uppercase;letter-spacing:.01em;color:var(--white);margin-bottom:10px;}
+.cat-desc{font-size:13px;color:var(--gray);line-height:1.6;min-height:44px;}
+.cat-card .btn{margin-top:18px;width:100%;justify-content:center;}
+
+/* ══ MAYOREO (banda dorada) ══ */
+#mayoreo{position:relative;z-index:2;padding:var(--pad-section) var(--pad-h);background:linear-gradient(120deg,var(--gold-deep),var(--gold) 60%,#8a6318);}
+#mayoreo .s-title{color:#171310;}
+#mayoreo .s-title em{color:#fff;}
+.mayoreo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(23,19,16,.16);margin-top:60px;}
+.mayoreo-card{background:rgba(23,19,16,.06);padding:36px 28px;transition:background 300ms;}
+.mayoreo-card:hover{background:rgba(23,19,16,.12);}
+.mayoreo-icon{width:26px;height:26px;color:#171310;margin-bottom:22px;}
+.mayoreo-tag{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(23,19,16,.65);margin-bottom:12px;}
+.mayoreo-title{font-family:var(--f-display);font-size:16.5px;text-transform:uppercase;color:#171310;margin-bottom:10px;line-height:1.15;}
+.mayoreo-body{font-size:13px;color:rgba(23,19,16,.82);line-height:1.65;}
+
+/* ══ PROCESO ══ */
+#proceso{position:relative;z-index:2;padding:var(--pad-section) var(--pad-h);}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:72px;position:relative;}
+.timeline::before{content:'';position:absolute;top:15px;left:calc(12.5% + 14px);right:calc(12.5% + 14px);height:1px;background:var(--border-mid);z-index:0;}
+.tl-step{position:relative;z-index:1;padding:0 24px;text-align:center;}
+.tl-circle{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border-mid);background:var(--bg);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-family:var(--f-mono);font-size:9px;color:var(--gray);letter-spacing:.08em;}
+.tl-name{font-family:var(--f-display);font-size:14.5px;text-transform:uppercase;color:var(--white);margin-bottom:10px;letter-spacing:.01em;}
+.tl-desc{font-size:12.5px;color:var(--gray);line-height:1.65;}
+
+/* ══ FAQ ══ */
+#faq{position:relative;z-index:2;padding:var(--pad-section) var(--pad-h);background:var(--bg-soft);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.faq-list{margin-top:52px;border-top:1px solid var(--border);max-width:820px;}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:24px 0;cursor:pointer;gap:24px;font-family:var(--f-body);font-weight:600;font-size:16px;color:var(--white);transition:color 200ms;user-select:none;}
+.faq-q:hover{color:var(--gold);}
+.faq-icon{width:28px;height:28px;border-radius:50%;flex-shrink:0;border:1px solid var(--border-mid);display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;color:var(--gold);transition:transform 320ms cubic-bezier(.16,1,.3,1),background 200ms,border-color 200ms,color 200ms;font-family:var(--f-mono);}
+.faq-item.open .faq-icon{transform:rotate(45deg);background:var(--gold);color:#171310;border-color:var(--gold);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 420ms cubic-bezier(.16,1,.3,1);}
+.faq-item.open .faq-a{max-height:220px;}
+.faq-a-inner{padding-bottom:26px;max-width:680px;font-size:14.5px;color:var(--gray);line-height:1.8;}
+
+/* ══ CONTACTO ══ */
+#contacto{position:relative;z-index:2;padding:var(--pad-section) var(--pad-h);}
+.ct-wrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:80px;align-items:start;margin-top:56px;}
+.ci-block{margin-bottom:26px;}
+.ci-label{font-family:var(--f-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gray-dim);margin-bottom:7px;}
+.ci-val{font-size:16.5px;color:var(--white);}
+.ci-val a{text-decoration:none;color:var(--white);transition:color 200ms;}
+.ci-val a:hover{color:var(--gold);}
+.ct-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.ct-btn{display:inline-flex;align-items:center;gap:9px;padding:11px 17px;border:1px solid var(--border-mid);color:var(--gray);text-decoration:none;font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;transition:border-color 300ms,color 300ms;}
+.ct-btn:hover{border-color:var(--gold);color:var(--gold);}
+.ct-btn svg{width:13px;height:13px;flex-shrink:0;}
+
+.f-group{margin-bottom:16px;}
+.f-label{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gray-dim);margin-bottom:9px;}
+.f-inp{width:100%;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border-mid);color:var(--white);font-family:var(--f-body);font-size:15px;outline:none;transition:border-color 300ms,background 300ms;}
+.f-inp:focus{border-color:var(--gold);background:var(--bg-card-h);}
+.f-inp::placeholder{color:var(--gray-dim);}
+textarea.f-inp{resize:vertical;min-height:100px;}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.btn-sub{width:100%;padding:16px;background:var(--wa);color:#04210f;font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;border:none;cursor:pointer;margin-top:8px;transition:background 200ms;}
+.btn-sub:hover{background:var(--wa-deep);}
+.f-note{margin-top:12px;font-family:var(--f-mono);font-size:10px;color:var(--gray-dim);letter-spacing:.04em;}
+
+/* ══ CLOSING ══ */
+.closing{position:relative;z-index:2;padding:104px var(--pad-h);text-align:center;border-top:1px solid var(--border);background:var(--bg-soft);overflow:hidden;}
+.closing::before{
+  content:'EP';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--f-display);font-size:280px;line-height:1;color:rgba(245,242,234,.025);
+  pointer-events:none;z-index:0;white-space:nowrap;
+}
+.closing-inner{position:relative;z-index:1;}
+.closing-quote{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:clamp(22px,3vw,42px);line-height:1.3;max-width:820px;margin:0 auto 34px;color:var(--white);}
+.closing-quote strong{color:var(--gold);font-weight:400;}
+.closing-attr{font-family:var(--f-mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gray-dim);}
+.closing-cta{margin-top:44px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;}
+
+/* ══ FOOTER ══ */
+footer{position:relative;z-index:2;background:#050504;padding:56px var(--pad-h) 32px;}
+.f-top{display:flex;justify-content:space-between;gap:48px;flex-wrap:wrap;padding-bottom:40px;border-bottom:1px solid var(--border);}
+.f-logo{display:flex;align-items:center;gap:11px;margin-bottom:16px;}
+.f-logo svg{width:26px;height:26px;color:var(--gold);}
+.f-brand{font-family:var(--f-display);font-size:16px;text-transform:uppercase;color:var(--white);}
+.f-brand em{font-style:normal;color:var(--gold);}
+.f-tag{font-size:13.5px;color:var(--gray-dim);max-width:280px;line-height:1.6;}
+.f-cols{display:flex;gap:64px;flex-wrap:wrap;}
+.f-col-title{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--gray-dim);margin-bottom:16px;}
+.f-links{list-style:none;display:flex;flex-direction:column;gap:11px;}
+.f-links a{font-size:13.5px;color:var(--gray);text-decoration:none;transition:color 200ms;}
+.f-links a:hover{color:var(--gold);}
+.f-social{display:flex;gap:10px;}
+.f-social a{width:36px;height:36px;border:1px solid var(--border-mid);display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--gray);transition:border-color 200ms,color 200ms;}
+.f-social a:hover{border-color:var(--gold);color:var(--gold);}
+.f-social svg{width:15px;height:15px;}
+.f-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:26px;}
+.f-copy{font-family:var(--f-mono);font-size:9.5px;color:var(--gray-dim);letter-spacing:.06em;}
+
+/* ══ WHATSAPP FAB ══ */
+.wa-fab{
+  position:fixed;bottom:26px;right:26px;z-index:700;
+  width:58px;height:58px;border-radius:50%;background:var(--wa);
+  display:flex;align-items:center;justify-content:center;text-decoration:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.wa-fab svg{width:28px;height:28px;color:#04210f;}
+.wa-fab::before{content:'';position:absolute;inset:0;border-radius:50%;background:var(--wa);opacity:.55;animation:waPulse 2.4s ease-out infinite;z-index:-1;}
+@keyframes waPulse{0%{transform:scale(1);opacity:.5;}100%{transform:scale(1.7);opacity:0;}}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:1100px){
+  .gorras-grid{grid-template-columns:repeat(2,1fr);}
+  .cat-grid{grid-template-columns:repeat(2,1fr);}
+  .mayoreo-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:1024px){
+  :root{--pad-section:88px;--pad-h:26px;}
+  nav{padding:12px 26px;}
+  .nav-links{display:none;}
+  .hamburger{display:flex;}
+  .hero{padding:48px 26px 56px;}
+  .hero-grid{grid-template-columns:1fr;gap:44px;}
+  .hero-grid > div:first-child{order:2;}
+  .cap-hero-wrap{order:1;}
+  .hero-ghost{display:none;}
+  .ct-wrap{grid-template-columns:1fr;}
+  .f-top{flex-direction:column;}
+  .f-bottom{flex-direction:column;align-items:flex-start;}
+  .closing::before{font-size:150px;}
+  .timeline{grid-template-columns:1fr 1fr;gap:40px 0;}
+  .timeline::before{display:none;}
+}
+@media(max-width:640px){
+  .gorras-grid{grid-template-columns:1fr 1fr;}
+  .cat-grid{grid-template-columns:1fr;}
+  .mayoreo-grid{grid-template-columns:1fr;}
+  .f-grid{grid-template-columns:1fr;}
+  .topbar{gap:16px 24px;padding:9px 20px;}
+  .wa-fab{width:52px;height:52px;bottom:18px;right:18px;}
+  .timeline{grid-template-columns:1fr;}
+  .trust-item{flex:1 1 100%;}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .reveal{transition:none;opacity:1;transform:none;}
+  .mq-track{animation:none;}
+  .wa-fab::before{animation:none;display:none;}
+  .cap-3d{animation:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="scroll-progress" id="sp"></div>
+
+<!-- ═══ TOPBAR ═══ -->
+<div class="topbar">
+  <div class="tb-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 3h4l2.4 12.2a2 2 0 002 1.8h7.2a2 2 0 002-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg>
+    Venta de ropa y accesorios <strong>a mayoreo</strong>
+  </div>
+  <div class="tb-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 20l9-16H3l9 16z"/><path d="M8 8l4 6 4-6"/></svg>
+    Diseños <strong>personalizados</strong> con bordado
+  </div>
+  <div class="tb-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/></svg>
+    <strong>+52 311 315 9402</strong>
+  </div>
+</div>
+
+<!-- ═══ NAV ═══ -->
+<nav id="nav">
+  <a href="#inicio" class="nav-logo">
+    <svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M3 8l3.5 3L12 5l5.5 6L21 8l-2 10H5L3 8z"/><line x1="5" y1="21" x2="19" y2="21"/></svg>
+    <div class="logo-word"><small>DISTRIBUIDORA</small><b>EP</b></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#gorras">Gorras</a></li>
+    <li><a href="#catalogo">Catálogo</a></li>
+    <li><a href="#mayoreo">Mayoreo</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="https://wa.me/523113159402" target="_blank" class="btn wa" style="padding:11px 20px;">
+      <span>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Pedir por WhatsApp
+      </span>
+    </a>
+    <button class="hamburger" id="mmOpen" aria-label="Abrir menú"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mm-close" id="mmClose" aria-label="Cerrar menú">×</button>
+  <a href="#gorras">Gorras</a>
+  <a href="#catalogo">Catálogo</a>
+  <a href="#mayoreo">Mayoreo</a>
+  <a href="#faq">FAQ</a>
+  <a href="#contacto">Contacto</a>
+  <a href="https://wa.me/523113159402" target="_blank" class="btn wa"><span>Pedir por WhatsApp</span></a>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="inicio">
+  <div class="hero-glow"></div>
+  <div class="hero-ghost">EP</div>
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow reveal in">Distribuidora EP · Ropa y accesorios a mayoreo</div>
+      <h1 class="hero-h1 reveal in">GORRAS Y ROPA<br>CON DISEÑO.<br>PRECIO DE <em>MAYOREO.</em></h1>
+      <p class="hero-sub reveal in">Gorras personalizadas, playeras, sudaderas y accesorios — diseños propios, bordado y estampado a tu gusto, con atención directa para negocios y revendedores.</p>
+      <div class="hero-actions reveal in">
+        <a href="https://wa.me/523113159402" target="_blank" class="btn wa">
+          <span>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Pedir por WhatsApp
+          </span>
+        </a>
+        <a href="#gorras" class="btn outline"><span>Ver gorras</span></a>
+      </div>
+      <div class="trust-row reveal in">
+        <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M20.6 11.5L12.5 3.4a2 2 0 00-1.4-.6H4.9A1.9 1.9 0 003 4.7v6.2a2 2 0 00.6 1.4l8.1 8.1a2 2 0 002.8 0l6.1-6.1a2 2 0 000-2.8z"/><circle cx="8.5" cy="8.5" r="1.5"/></svg><span>Precio de mayoreo</span></div>
+        <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg><span>Diseños personalizados</span></div>
+        <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span>Bordado y estampado</span></div>
+        <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/></svg><span>Atención directa</span></div>
+      </div>
+    </div>
+    <div class="cap-hero-wrap reveal in">
+      <div class="cap-stage" id="capStage">
+        <div class="cap-3d" id="cap3d">
+          <div class="cap-shadow"></div>
+          <div class="cap-brim-mask"><div class="cap-brim"></div></div>
+          <div class="cap-crown"></div>
+          <div class="cap-button"></div>
+          <div class="cap-patch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8l3.5 3L12 5l5.5 6L21 8l-2 10H5L3 8z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="cap-swatches" id="capSwatches">
+        <button class="cap-sw active" data-c="#1c1c1c" data-hi="#3d3d3d" data-lo="#050505" style="background:#1c1c1c" aria-label="Negro"></button>
+        <button class="cap-sw" data-c="#C79A3E" data-hi="#E8C878" data-lo="#8A691F" style="background:#C79A3E" aria-label="Dorado"></button>
+        <button class="cap-sw" data-c="#B23A2E" data-hi="#D96650" data-lo="#7A2419" style="background:#B23A2E" aria-label="Rojo"></button>
+        <button class="cap-sw" data-c="#1F3A5F" data-hi="#3C5F8C" data-lo="#10233D" style="background:#1F3A5F" aria-label="Azul"></button>
+        <button class="cap-sw" data-c="#EDE7D9" data-hi="#FFFFFF" data-lo="#C7BFA9" style="background:#EDE7D9" aria-label="Hueso"></button>
+      </div>
+      <div class="cap-hint">Mueve el mouse o tu dedo sobre la gorra — elige color</div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="mq-wrap">
+  <div class="mq-track">
+    <div class="mq-item"><span class="mq-dot"></span>Gorras Snapback</div>
+    <div class="mq-item"><span class="mq-dot"></span>Gorras Trucker</div>
+    <div class="mq-item"><span class="mq-dot"></span>Dad Hats</div>
+    <div class="mq-item"><span class="mq-dot"></span>Gorras Bordadas</div>
+    <div class="mq-item"><span class="mq-dot"></span>Playeras</div>
+    <div class="mq-item"><span class="mq-dot"></span>Sudaderas</div>
+    <div class="mq-item"><span class="mq-dot"></span>Accesorios</div>
+    <div class="mq-item"><span class="mq-dot"></span>Venta a Mayoreo</div>
+    <div class="mq-item"><span class="mq-dot"></span>Diseños Personalizados</div>
+    <!-- duplicado para loop continuo -->
+    <div class="mq-item"><span class="mq-dot"></span>Gorras Snapback</div>
+    <div class="mq-item"><span class="mq-dot"></span>Gorras Trucker</div>
+    <div class="mq-item"><span class="mq-dot"></span>Dad Hats</div>
+    <div class="mq-item"><span class="mq-dot"></span>Gorras Bordadas</div>
+    <div class="mq-item"><span class="mq-dot"></span>Playeras</div>
+    <div class="mq-item"><span class="mq-dot"></span>Sudaderas</div>
+    <div class="mq-item"><span class="mq-dot"></span>Accesorios</div>
+    <div class="mq-item"><span class="mq-dot"></span>Venta a Mayoreo</div>
+    <div class="mq-item"><span class="mq-dot"></span>Diseños Personalizados</div>
+  </div>
+</div>
+
+<!-- GORRAS 3D -->
+<section id="gorras">
+  <div class="gorras-head">
+    <div class="eyebrow">Nuestras gorras</div>
+    <h2 class="s-title reveal">Gira la gorra. <em>Elige tu estilo.</em></h2>
+    <p class="s-sub reveal">Estos son los estilos base que manejamos — todos disponibles con tu diseño, logo o bordado. Toca "Comprar por WhatsApp" y te cotizamos al momento.</p>
+  </div>
+  <div class="gorras-grid">
+    <div class="gorra-card reveal">
+      <div class="cap-stage mini"><div class="cap-3d" style="--cap-color:#1c1c1c;--cap-hi:#3d3d3d;--cap-lo:#050505;"><div class="cap-shadow"></div><div class="cap-brim-mask"><div class="cap-brim"></div></div><div class="cap-crown"></div><div class="cap-button"></div><div class="cap-patch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8l3.5 3L12 5l5.5 6L21 8l-2 10H5L3 8z"/></svg></div></div></div>
+      <div class="gorra-name">Snapback Clásica</div>
+      <div class="gorra-desc">Ajuste plano trasero, ideal para bordado grande al frente.</div>
+      <a href="#" class="btn wa sm" data-wa-text="Hola, me interesa la gorra Snapback Clásica. ¿Me pueden dar información de precio y mayoreo?"><span>Comprar por WhatsApp</span></a>
+    </div>
+    <div class="gorra-card reveal">
+      <div class="cap-stage mini"><div class="cap-3d" style="--cap-color:#1F3A5F;--cap-hi:#3C5F8C;--cap-lo:#10233D;animation-delay:-2s;"><div class="cap-shadow"></div><div class="cap-brim-mask"><div class="cap-brim"></div></div><div class="cap-crown"></div><div class="cap-button"></div><div class="cap-patch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8l3.5 3L12 5l5.5 6L21 8l-2 10H5L3 8z"/></svg></div></div></div>
+      <div class="gorra-name">Trucker Malla</div>
+      <div class="gorra-desc">Frente estructurado y malla trasera, fresca para el día a día.</div>
+      <a href="#" class="btn wa sm" data-wa-text="Hola, me interesa la gorra Trucker Malla. ¿Me pueden dar información de precio y mayoreo?"><span>Comprar por WhatsApp</span></a>
+    </div>
+    <div class="gorra-card reveal">
+      <div class="cap-stage mini"><div class="cap-3d" style="--cap-color:#B23A2E;--cap-hi:#D96650;--cap-lo:#7A2419;animation-delay:-4s;"><div class="cap-shadow"></div><div class="cap-brim-mask"><div class="cap-brim"></div></div><div class="cap-crown"></div><div class="cap-button"></div><div class="cap-patch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8l3.5 3L12 5l5.5 6L21 8l-2 10H5L3 8z"/></svg></div></div></div>
+      <div class="gorra-name">Dad Hat Bordada</div>
+      <div class="gorra-desc">Perfil bajo y curvo, look relajado con bordado fino.</div>
+      <a href="#" class="btn wa sm" data-wa-text="Hola, me interesa la gorra Dad Hat Bordada. ¿Me pueden dar información de precio y mayoreo?"><span>Comprar por WhatsApp</span></a>
+    </div>
+    <div class="gorra-card reveal">
+      <div class="cap-stage mini"><div class="cap-3d" style="--cap-color:#C79A3E;--cap-hi:#E8C878;--cap-lo:#8A691F;animation-delay:-1s;"><div class="cap-shadow"></div><div class="cap-brim-mask"><div class="cap-brim"></div></div><div class="cap-crown"></div><div class="cap-button"></div><div class="cap-patch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8l3.5 3L12 5l5.5 6L21 8l-2 10H5L3 8z"/></svg></div></div></div>
+      <div class="gorra-name">Gorra Personalizada</div>
+      <div class="gorra-desc">Tu logo, tus colores — cotiza tu diseño a mayoreo.</div>
+      <a href="#" class="btn wa sm" data-wa-text="Hola, quiero cotizar una gorra personalizada con mi logo. ¿Me pueden dar información de precio y mayoreo?"><span>Comprar por WhatsApp</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- CATÁLOGO ROPA -->
+<section id="catalogo">
+  <div class="cat-head">
+    <div>
+      <div class="eyebrow">Catálogo</div>
+      <h2 class="s-title reveal">Ropa y accesorios <em>a mayoreo.</em></h2>
+    </div>
+    <p class="s-sub reveal">Además de gorras, manejamos estas líneas. Cuéntanos qué buscas y armamos tu pedido.</p>
+  </div>
+  <div class="cat-grid">
+    <div class="cat-card reveal">
+      <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 3L4 6l2 3-1 11h14l-1-11 2-3-4-3-2 2h-4z"/></svg>
+      <div class="cat-name">Playeras</div>
+      <div class="cat-desc">Algodón y mezclas, en corte básico y oversize.</div>
+      <a href="#" class="btn outline sm" data-wa-text="Hola, me interesan las playeras. ¿Me pueden dar información de precio y mayoreo?"><span>Pedir por WhatsApp</span></a>
+    </div>
+    <div class="cat-card reveal">
+      <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 3L3 7l3 3 2-1.5V21h8V8.5L18 10l3-3-5-4-2 2h-4z"/></svg>
+      <div class="cat-name">Sudaderas / Hoodies</div>
+      <div class="cat-desc">Con y sin gorro, ideales para bordado o estampado grande.</div>
+      <a href="#" class="btn outline sm" data-wa-text="Hola, me interesan las sudaderas / hoodies. ¿Me pueden dar información de precio y mayoreo?"><span>Pedir por WhatsApp</span></a>
+    </div>
+    <div class="cat-card reveal">
+      <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 3h8l1 18h-4l-1-11-1 11H7L8 3z"/><line x1="7.6" y1="7" x2="16.4" y2="7"/></svg>
+      <div class="cat-name">Pants y Joggers</div>
+      <div class="cat-desc">Cómodos y versátiles para completar el look.</div>
+      <a href="#" class="btn outline sm" data-wa-text="Hola, me interesan los pants / joggers. ¿Me pueden dar información de precio y mayoreo?"><span>Pedir por WhatsApp</span></a>
+    </div>
+    <div class="cat-card reveal">
+      <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="3" y="10" width="18" height="6" rx="2"/><circle cx="12" cy="13" r="1.6"/></svg>
+      <div class="cat-name">Accesorios</div>
+      <div class="cat-desc">Cinturones, bolsas y más para complementar tu tienda.</div>
+      <a href="#" class="btn outline sm" data-wa-text="Hola, me interesan los accesorios. ¿Me pueden dar información de precio y mayoreo?"><span>Pedir por WhatsApp</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- MAYOREO -->
+<section id="mayoreo">
+  <div class="eyebrow on-dark" style="color:rgba(23,19,16,.65);">Por qué comprarnos</div>
+  <div class="eyebrow on-dark" style="display:none;"></div>
+  <h2 class="s-title reveal">Hecho para tu <em>negocio.</em></h2>
+  <div class="mayoreo-grid reveal">
+    <div class="mayoreo-card">
+      <svg class="mayoreo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M20.6 11.5L12.5 3.4a2 2 0 00-1.4-.6H4.9A1.9 1.9 0 003 4.7v6.2a2 2 0 00.6 1.4l8.1 8.1a2 2 0 002.8 0l6.1-6.1a2 2 0 000-2.8z"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
+      <div class="mayoreo-tag">Ventaja 01</div>
+      <div class="mayoreo-title">Precio de mayoreo</div>
+      <div class="mayoreo-body">Cotizaciones pensadas para negocios y revendedores — entre más compras, mejor precio.</div>
+    </div>
+    <div class="mayoreo-card">
+      <svg class="mayoreo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+      <div class="mayoreo-tag">Ventaja 02</div>
+      <div class="mayoreo-title">Diseños personalizados</div>
+      <div class="mayoreo-body">Bordado y estampado con tu logo o idea — tú eliges color, tela y estilo.</div>
+    </div>
+    <div class="mayoreo-card">
+      <svg class="mayoreo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="4" x2="8" y2="20"/></svg>
+      <div class="mayoreo-tag">Ventaja 03</div>
+      <div class="mayoreo-title">Tallas y colores</div>
+      <div class="mayoreo-body">Variedad para surtir tu tienda completa, del chico al extra grande.</div>
+    </div>
+    <div class="mayoreo-card">
+      <svg class="mayoreo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/></svg>
+      <div class="mayoreo-tag">Ventaja 04</div>
+      <div class="mayoreo-title">Atención directa con Edwin</div>
+      <div class="mayoreo-body">Sin intermediarios — hablas directo con quien surte tu pedido.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESO -->
+<section id="proceso">
+  <div class="eyebrow">Cómo comprar</div>
+  <h2 class="s-title reveal">De la idea a tu <em>pedido.</em></h2>
+  <div class="timeline reveal">
+    <div class="tl-step">
+      <div class="tl-circle">01</div>
+      <div class="tl-name">Elige tu estilo</div>
+      <div class="tl-desc">Gorra, playera, sudadera o accesorio — con o sin diseño propio.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-circle">02</div>
+      <div class="tl-name">Escríbenos</div>
+      <div class="tl-desc">Por WhatsApp, contándonos cantidad, colores y talla.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-circle">03</div>
+      <div class="tl-name">Confirmamos</div>
+      <div class="tl-desc">Te damos precio de mayoreo y tiempos según tu pedido.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-circle">04</div>
+      <div class="tl-name">Recibes tu pedido</div>
+      <div class="tl-desc">Listo para tu tienda, tu equipo o tu evento.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="eyebrow">Preguntas frecuentes</div>
+  <h2 class="s-title reveal">Lo que nos <em>preguntan.</em></h2>
+  <div class="faq-list reveal">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>¿Cuál es la compra mínima?</span><div class="faq-icon">+</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Varía según el producto y si es diseño propio o personalizado. Escríbenos por WhatsApp contándonos qué necesitas y te damos el detalle exacto para tu pedido.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>¿Hacen gorras u otras prendas personalizadas?</span><div class="faq-icon">+</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Sí. Manejamos diseños propios y también personalización con tu marca o logo, en bordado o estampado. Cuéntanos tu idea por WhatsApp y la revisamos contigo.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>¿Solo venden a mayoreo?</span><div class="faq-icon">+</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Nuestro fuerte es el mayoreo para negocios, revendedores y equipos. Escríbenos tu caso por WhatsApp y con gusto te decimos cómo podemos apoyarte.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>¿Hacen envíos?</span><div class="faq-icon">+</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Contáctanos por WhatsApp con tu ubicación y pedido, y te confirmamos las opciones disponibles.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>¿Cómo hago mi pedido?</span><div class="faq-icon">+</div></div>
+      <div class="faq-a"><div class="faq-a-inner">Por WhatsApp al +52 311 315 9402, contándonos qué buscas — gorras, playeras, sudaderas o accesorios — y la cantidad aproximada. También puedes usar el formulario de esta página.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <div class="eyebrow">Contacto</div>
+  <h2 class="s-title reveal" style="margin-bottom:0;">Arma tu <em>pedido.</em></h2>
+  <div class="ct-wrap">
+    <div class="reveal">
+      <div class="ci-block"><div class="ci-label">Atiende</div><div class="ci-val">Edwin — Distribuidora EP</div></div>
+      <div class="ci-block"><div class="ci-label">WhatsApp / Teléfono</div><div class="ci-val"><a href="tel:+523113159402">+52 311 315 9402</a></div></div>
+      <div class="ci-block"><div class="ci-label">Modalidad</div><div class="ci-val">Venta a mayoreo</div></div>
+      <div class="ci-block">
+        <div class="ci-label">Contáctanos por</div>
+        <div class="ct-btns">
+          <a href="https://wa.me/523113159402" class="ct-btn" target="_blank">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp
+          </a>
+          <a href="tel:+523113159402" class="ct-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.09a16 16 0 006 6l.36-.35a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+            Llamada
+          </a>
+        </div>
+      </div>
+    </div>
+    <form id="ctForm" class="reveal" onsubmit="onOrderSubmit(event)">
+      <div class="f-grid">
+        <div class="f-group"><label class="f-label">Nombre</label><input type="text" id="fNombre" class="f-inp" placeholder="Tu nombre" required/></div>
+        <div class="f-group"><label class="f-label">Teléfono (opcional)</label><input type="tel" id="fTel" class="f-inp" placeholder="311 000 0000"/></div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Producto de interés</label>
+        <select id="fProducto" class="f-inp" style="appearance:none;cursor:pointer;">
+          <option>Gorras</option>
+          <option>Playeras</option>
+          <option>Sudaderas / Hoodies</option>
+          <option>Pants y Joggers</option>
+          <option>Accesorios</option>
+          <option>Diseño personalizado con mi logo</option>
+          <option>No estoy seguro — pedir recomendación</option>
+        </select>
+      </div>
+      <div class="f-group"><label class="f-label">Cantidad aproximada</label><input type="text" id="fCantidad" class="f-inp" placeholder="Ej. 20 piezas"/></div>
+      <div class="f-group"><label class="f-label">Detalles</label><textarea id="fNotas" class="f-inp" placeholder="Colores, tallas, diseño, logo..."></textarea></div>
+      <button type="submit" class="btn-sub"><span>Enviar pedido por WhatsApp →</span></button>
+      <div class="f-note">Al enviar se abrirá WhatsApp con tu pedido ya redactado, listo para mandar.</div>
+    </form>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<div class="closing">
+  <div class="closing-inner">
+    <div class="closing-quote reveal">Tu marca, tu diseño,<br>precio de <strong>mayoreo.</strong></div>
+    <div class="closing-attr">Distribuidora EP · Ropa y accesorios a mayoreo</div>
+    <div class="closing-cta reveal">
+      <a href="https://wa.me/523113159402" target="_blank" class="btn wa"><span>Pedir por WhatsApp →</span></a>
+      <a href="#gorras" class="btn outline"><span>Ver gorras</span></a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-top">
+    <div>
+      <div class="f-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8l3.5 3L12 5l5.5 6L21 8l-2 10H5L3 8z"/><line x1="5" y1="21" x2="19" y2="21"/></svg>
+        <div class="f-brand">DISTRIBUIDORA <em>EP</em></div>
+      </div>
+      <div class="f-tag">Gorras, playeras, sudaderas y accesorios a mayoreo. Diseños personalizados con bordado y estampado.</div>
+    </div>
+    <div class="f-cols">
+      <div>
+        <div class="f-col-title">Navegación</div>
+        <ul class="f-links">
+          <li><a href="#gorras">Gorras</a></li>
+          <li><a href="#catalogo">Catálogo</a></li>
+          <li><a href="#mayoreo">Mayoreo</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="f-col-title">Contacto</div>
+        <div class="f-social">
+          <a href="https://wa.me/523113159402" target="_blank" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>
+          <a href="tel:+523113159402" aria-label="Llamar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.09a16 16 0 006 6l.36-.35a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="f-bottom">
+    <div class="f-copy">© 2026 Distribuidora EP — Venta de ropa y accesorios a mayoreo</div>
+    <div class="f-copy">Atención directa por WhatsApp</div>
+  </div>
+</footer>
+
+<a href="https://wa.me/523113159402" target="_blank" class="wa-fab" aria-label="Pedir por WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<script>
+(function(){
+'use strict';
+function boot(){
+  try{initScroll();}catch(e){}
+  try{initReveal();}catch(e){}
+  try{initMobileMenu();}catch(e){}
+  try{initCapTilt();}catch(e){}
+  try{initWaLinks();}catch(e){}
+  setTimeout(function(){
+    document.querySelectorAll('.reveal:not(.in)').forEach(function(el){el.classList.add('in');});
+  },1800);
+}
+
+function initScroll(){
+  var sp=document.getElementById('sp');
+  var ticking=false;
+  window.addEventListener('scroll',function(){
+    if(ticking)return;ticking=true;
+    requestAnimationFrame(function(){
+      var y=window.scrollY;
+      var sh=document.body.scrollHeight-window.innerHeight;
+      sp.style.width=(sh>0?Math.round(y/sh*100):0)+'%';
+      ticking=false;
+    });
+  },{passive:true});
+}
+
+function initReveal(){
+  document.querySelectorAll('.gorras-grid,.cat-grid,.mayoreo-grid,.timeline').forEach(function(grid){
+    grid.querySelectorAll('.reveal').forEach(function(el,i){el.style.transitionDelay=(i*70)+'ms';});
+  });
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('in');});
+  },{threshold:0.08,rootMargin:'0px 0px -20px 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+}
+
+function initMobileMenu(){
+  var menu=document.getElementById('mobileMenu');
+  var open=document.getElementById('mmOpen');
+  var close=document.getElementById('mmClose');
+  if(!menu||!open)return;
+  open.addEventListener('click',function(){menu.classList.add('open');document.body.style.overflow='hidden';});
+  close.addEventListener('click',function(){menu.classList.remove('open');document.body.style.overflow='';});
+  menu.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click',function(){menu.classList.remove('open');document.body.style.overflow='';});
+  });
+}
+
+/* Gorra 3D del hero: sigue el puntero (mouse o touch) y cambia de color por swatch */
+function initCapTilt(){
+  var stage=document.getElementById('capStage');
+  var cap=document.getElementById('cap3d');
+  if(!stage||!cap)return;
+
+  function setFromPointer(clientX,clientY){
+    var r=stage.getBoundingClientRect();
+    var px=(clientX-r.left)/r.width-0.5;
+    var py=(clientY-r.top)/r.height-0.5;
+    var ry=px*46;
+    var rx=-py*30;
+    cap.classList.add('tracking');
+    cap.style.animation='none';
+    cap.style.transform='rotateX('+rx.toFixed(2)+'deg) rotateY('+ry.toFixed(2)+'deg)';
+  }
+  stage.addEventListener('pointermove',function(e){ setFromPointer(e.clientX,e.clientY); });
+  stage.addEventListener('pointerleave',function(){
+    cap.classList.remove('tracking');
+    cap.style.animation='';
+    cap.style.transform='';
+  });
+
+  var swatches=document.querySelectorAll('#capSwatches .cap-sw');
+  swatches.forEach(function(sw){
+    sw.addEventListener('click',function(){
+      swatches.forEach(function(s){s.classList.remove('active');});
+      sw.classList.add('active');
+      cap.style.setProperty('--cap-color',sw.dataset.c);
+      cap.style.setProperty('--cap-hi',sw.dataset.hi);
+      cap.style.setProperty('--cap-lo',sw.dataset.lo);
+    });
+  });
+}
+
+/* Botones de compra: arma el link de WhatsApp desde data-wa-text */
+function initWaLinks(){
+  document.querySelectorAll('[data-wa-text]').forEach(function(a){
+    a.href='https://wa.me/523113159402?text='+encodeURIComponent(a.dataset.waText);
+    a.target='_blank';
+  });
+}
+
+window.onOrderSubmit=function(e){
+  e.preventDefault();
+  var nombre=document.getElementById('fNombre').value.trim();
+  var producto=document.getElementById('fProducto').value;
+  var cantidad=document.getElementById('fCantidad').value.trim();
+  var notas=document.getElementById('fNotas').value.trim();
+  var msg='Hola, soy '+nombre+'. Me interesa: '+producto+'.';
+  if(cantidad)msg+=' Cantidad aproximada: '+cantidad+'.';
+  if(notas)msg+=' Detalles: '+notas;
+  window.open('https://wa.me/523113159402?text='+encodeURIComponent(msg),'_blank');
+};
+
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',boot);}
+else{boot();}
+})();
+
+function toggleFaq(el){
+  var item=el.parentElement;
+  var isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(function(i){i.classList.remove('open');});
+  if(!isOpen){item.classList.add('open');}
+}
+</script>
+</body>
+</html>
