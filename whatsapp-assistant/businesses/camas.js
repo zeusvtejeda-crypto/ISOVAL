@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-//  PERFIL DE NEGOCIO — BASES Y CAMAS
-//  (nombre oficial aún sin decidir: NO lo ponemos todavía)
+//  PERFIL DE NEGOCIO — BASES BOX TEPIC
+//  Fabricación de bases para cama tipo box · Tepic, Nayarit
+//  basesboxtepic.com / la web que armamos en bases-box-tepic/
 //
 //  👉 Edita SOLO los textos entre comillas. No borres las comas.
 //     Este archivo le dice al asistente cómo debe contestar
@@ -13,41 +14,45 @@ module.exports = {
   // ── ¿El asistente está activo para este negocio?
   activo: true,
 
-  // ── Nombre corto SOLO para uso interno (no se le dice al cliente
-  //    todavía porque el nombre oficial no está decidido).
-  //    Cuando decidas el nombre, ponlo aquí y en "nombrePublico".
-  nombreInterno: "Bases y Camas",
+  nombreInterno: "Bases Box Tepic",
 
-  // ── Nombre que el asistente SÍ puede mencionar al cliente.
-  //    Déjalo vacío ("") mientras no haya nombre oficial: así el
-  //    asistente se presenta de forma neutral, sin inventar marca.
-  nombrePublico: "",
+  // ── Nombre oficial ya decidido — el asistente SÍ lo puede mencionar.
+  nombrePublico: "Bases Box Tepic",
 
   // ── El phone_number_id que Meta le asigna al número de WhatsApp
-  //    de ESTE negocio. Lo llenas cuando conectes el número
-  //    (ver README). Mientras esté vacío, este negocio se usa como
-  //    respaldo si defines DEFAULT_BUSINESS=camas.
+  //    de ESTE negocio (el celular físico que ya tienen). Se llena
+  //    solo, tomándolo de la variable de entorno PHONE_ID_CAMAS.
   phoneNumberId: process.env.PHONE_ID_CAMAS || "",
 
   // ── Cómo saluda al primer mensaje del cliente
   saludo:
-    "¡Hola! 👋 Gracias por escribirnos. Con gusto te ayudo con nuestras " +
-    "bases y camas. ¿Qué medida o modelo estás buscando?",
+    "¡Hola! 👋 Gracias por escribir a Bases Box Tepic. Fabricamos bases " +
+    "para cama tipo box, a la medida, en más de 8 tonos. ¿Qué medida o " +
+    "color estás buscando?",
 
   // ── Todo lo que el asistente DEBE saber del negocio.
   //    Entre más completo, mejor contesta. Puedes escribir libre.
   info: `
-NEGOCIO: Fabricación y venta de bases y camas.
+NEGOCIO: Bases Box Tepic — fábrica propia de bases para cama tipo box.
+Tepic, Nayarit. Sitio web: (el que armamos en bases-box-tepic/).
 
-PRODUCTOS (ejemplo — ajústalos a lo real):
-- Bases para cama (individual, matrimonial, queen, king).
-- Camas con cabecera.
-- Colchones (si aplica).
+PRODUCTOS:
+- Bases tipo box a la medida.
+- Línea infantil (colores alegres: rosa, azul, amarillo, verde, morado).
+- Más de 8 tonos disponibles: cocoa, morado, rosa, gris, azul, marino,
+  verde, negro (sujeto a disponibilidad).
+- Estructura durable, patas cromadas, diseño minimalista.
 
-MEDIDAS Y PRECIOS:
-- (Pon aquí tus medidas y precios reales, ej: "Matrimonial $2,500")
-- Si no tienes el precio a la mano, ofrece tomar los datos y que
-  una persona confirme.
+MEDIDAS ESTÁNDAR:
+- Individual (1 plaza): 1.00 × 1.90 m
+- Matrimonial (Full): 1.35 × 1.90 m
+- Queen: 1.50 × 2.00 m
+- King: 2.00 × 2.00 m
+- También fabrican a la medida si el cliente necesita otra.
+
+PRECIOS:
+- (Pon aquí tus precios reales por medida cuando los tengas. Mientras
+  tanto, el asistente NO debe inventar montos — ofrece cotizar.)
 
 ENTREGAS / COBERTURA:
 - (Zonas a las que entregan, costo de envío, tiempos.)
@@ -56,7 +61,11 @@ FORMAS DE PAGO:
 - (Efectivo, transferencia, tarjeta, etc.)
 
 HORARIO DE ATENCIÓN:
-- (Ej: Lunes a sábado 9:00–19:00)
+- Lunes a sábado, 9:00–19:00 (confirmar si cambia).
+
+DIFERENCIADORES:
+- Fabricación 100% local en Tepic, directo de fábrica, sin intermediarios.
+- Cotización el mismo día.
 `,
 
   // ── Personalidad / tono con el que contesta
