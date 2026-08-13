@@ -14,6 +14,10 @@ module.exports = {
   // que se debe registrar en Meta para obtener este ID.
   phoneNumberId: process.env.PHONE_ID_ISOVAL || "",
 
+  // Token de acceso de LA APP DE META de Isoval (cada app tiene el
+  // suyo). Si no lo defines aparte, usa el WHATSAPP_TOKEN general.
+  whatsappToken: process.env.WHATSAPP_TOKEN_ISOVAL || process.env.WHATSAPP_TOKEN || "",
+
   saludo:
     "¡Hola! 👋 Gracias por escribir a Isoval, arquitectura y construcción. " +
     "¿Tu proyecto es de diseño, construcción, o ambos?",

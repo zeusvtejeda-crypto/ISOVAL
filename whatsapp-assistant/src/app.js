@@ -73,7 +73,7 @@ app.post("/webhook", async (req, res) => {
           console.log(`[${negocio.id}] ${usuario}: ${texto.slice(0, 80)}`);
 
           const respuesta = await generarRespuesta(negocio, usuario, texto);
-          await enviarTexto(phoneNumberId, usuario, respuesta);
+          await enviarTexto(phoneNumberId, usuario, respuesta, negocio.whatsappToken);
 
           console.log(`[${negocio.id}] → ${respuesta.slice(0, 80)}`);
         }

@@ -24,6 +24,10 @@ module.exports = {
   //    solo, tomándolo de la variable de entorno PHONE_ID_CAMAS.
   phoneNumberId: process.env.PHONE_ID_CAMAS || "",
 
+  // Token de acceso de LA APP DE META de Bases Box Tepic (es una app
+  // de Meta distinta a la de Isoval, así que tiene su propio token).
+  whatsappToken: process.env.WHATSAPP_TOKEN_CAMAS || process.env.WHATSAPP_TOKEN || "",
+
   // ── Cómo saluda al primer mensaje del cliente
   saludo:
     "¡Hola! 👋 Gracias por escribir a Bases Box Tepic. Fabricamos bases " +

@@ -6,9 +6,15 @@ const { WHATSAPP_TOKEN, GRAPH_VERSION } = require("./config");
 
 // phoneNumberId = número del NEGOCIO que envía (lo da Meta)
 // para          = número del CLIENTE (a quién le contestamos)
-async function enviarTexto(phoneNumberId, para, texto) {
-  if (!WHATSAPP_TOKEN) {
-    console.warn("[whatsapp] Falta WHATSAPP_TOKEN; no se envió el mensaje.");
+// token         = token de acceso de ESE negocio (cada app de Meta
+//                  tiene el suyo). Si no se pasa, usa el general
+//                  WHATSAPP_TOKEN como respaldo (útil si solo tienes
+//                  un negocio conectado por ahora).
+async function enviarTexto(phoneNumberId, para, texto, token) {
+  const tokenUsar = token || WHATSAPP_TOKEN;
+
+  if (!tokenUsar) {
+    console.warn("[whatsapp] Falta el token de acceso; no se envió el mensaje.");
     return;
   }
   if (!phoneNumberId) {
@@ -22,7 +28,7 @@ async function enviarTexto(phoneNumberId, para, texto) {
     const resp = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+        Authorization: `Bearer ${tokenUsar}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
