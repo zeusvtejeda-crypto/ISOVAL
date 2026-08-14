@@ -22,6 +22,10 @@ app.use(express.json());
 // ── Salud: para comprobar que el servidor está vivo ─────────────
 app.get("/", (_req, res) => res.send("Asistente de WhatsApp activo ✅"));
 
+// El rewrite de Vercel manda TODO aquí, incluido el favicon que pide el
+// navegador; sin esta ruta cada visita ensucia los logs con un 404.
+app.get(/^\/favicon\.(ico|png)$/, (_req, res) => res.sendStatus(204));
+
 // ── Verificación del webhook (Meta la llama UNA vez al conectar) ─
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
