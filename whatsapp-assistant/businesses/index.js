@@ -12,13 +12,19 @@ const isoval = require("./isoval");
 
 const negocios = [camas, fithouse, inmobiliaria, isoval];
 
-// Índices rápidos para buscar por id o por phoneNumberId de WhatsApp
+// Índices rápidos para encontrar el negocio según por dónde llegó el mensaje:
+//   • phoneNumberId -> WhatsApp
+//   • paginaId / instagramId -> Facebook e Instagram
 const porId = {};
 const porPhoneNumberId = {};
+const porPaginaId = {};
 
 for (const n of negocios) {
   porId[n.id] = n;
   if (n.phoneNumberId) porPhoneNumberId[n.phoneNumberId] = n;
+  // La Página de Facebook y la cuenta de Instagram apuntan al mismo negocio.
+  if (n.paginaId) porPaginaId[n.paginaId] = n;
+  if (n.instagramId) porPaginaId[n.instagramId] = n;
 }
 
-module.exports = { negocios, porId, porPhoneNumberId };
+module.exports = { negocios, porId, porPhoneNumberId, porPaginaId };

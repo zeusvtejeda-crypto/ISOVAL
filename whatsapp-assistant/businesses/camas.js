@@ -28,6 +28,15 @@ module.exports = {
   // de Meta distinta a la de Isoval, así que tiene su propio token).
   whatsappToken: process.env.WHATSAPP_TOKEN_CAMAS || process.env.WHATSAPP_TOKEN || "",
 
+  // ── Instagram y Facebook ──────────────────────────────────────
+  // Aquí sí atiende el asistente con IA (a diferencia de WhatsApp,
+  // que se quedó en el teléfono con respuestas automáticas fijas).
+  // El id de la Página de Facebook y el de la cuenta de Instagram.
+  paginaId: process.env.PAGE_ID_CAMAS || "",
+  instagramId: process.env.IG_ID_CAMAS || "",
+  // Token de la Página (sirve para contestar en ambas redes).
+  metaPageToken: process.env.PAGE_TOKEN_CAMAS || "",
+
   // ── Cómo saluda al primer mensaje del cliente
   saludo:
     "¡Hola! 👋 Gracias por escribir a Bases Box Tepic. Fabricamos bases " +

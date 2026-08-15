@@ -12,9 +12,10 @@
 require("./proxy");
 const express = require("express");
 const { VERIFY_TOKEN } = require("./config");
-const { elegirNegocio } = require("./router");
+const { elegirNegocio, elegirNegocioPorPagina } = require("./router");
 const { generarRespuesta } = require("./brain");
 const { enviarTexto } = require("./whatsapp");
+const { enviarMensaje, extraerMensajes } = require("./messenger");
 const store = require("./store");
 const panel = require("./panel");
 
@@ -55,49 +56,37 @@ async function anotar(businessId, usuario, quien, texto) {
   }
 }
 
+// Atiende UN mensaje: piensa la respuesta, la manda y la anota.
+// "canal" solo sirve para las bitácoras (whatsapp / instagram / facebook).
+async function atender(negocio, usuario, texto, canal, responder) {
+  console.log(`[${negocio.id}/${canal}] ${usuario}: ${texto.slice(0, 80)}`);
+  await anotar(negocio.id, usuario, "cliente", texto);
+
+  const respuesta = await generarRespuesta(negocio, usuario, texto);
+  await responder(respuesta);
+
+  console.log(`[${negocio.id}/${canal}] → ${respuesta.slice(0, 80)}`);
+  await anotar(negocio.id, usuario, "bot", respuesta);
+}
+
 // ── Recepción de mensajes ───────────────────────────────────────
+// Un solo webhook atiende los tres canales. Meta los distingue con el
+// campo "object": "whatsapp_business_account", "instagram" o "page".
+//
 // IMPORTANTE: procesamos todo ANTES de responder. En hosting serverless
 // (Vercel) el proceso puede congelarse justo después de mandar la
 // respuesta, así que cualquier código async posterior a res.send()
 // podría no llegar a ejecutarse nunca.
 app.post("/webhook", async (req, res) => {
   try {
+    const tipo = req.body?.object;
     const entradas = req.body?.entry || [];
+
     for (const entrada of entradas) {
-      for (const cambio of entrada.changes || []) {
-        const valor = cambio.value || {};
-        const phoneNumberId = valor.metadata?.phone_number_id;
-        const mensajes = valor.messages || [];
-
-        for (const msg of mensajes) {
-          // Solo atendemos mensajes de texto por ahora
-          if (msg.type !== "text") {
-            console.log(`[webhook] Mensaje tipo "${msg.type}" ignorado.`);
-            continue;
-          }
-
-          const usuario = msg.from; // número del cliente
-          const texto = msg.text?.body?.trim();
-          if (!texto) continue;
-
-          const negocio = elegirNegocio(phoneNumberId);
-          if (!negocio) {
-            console.warn(
-              `[router] Sin negocio para phone_number_id=${phoneNumberId}. ` +
-                `Asigna ese número en un perfil o define DEFAULT_BUSINESS.`
-            );
-            continue;
-          }
-
-          console.log(`[${negocio.id}] ${usuario}: ${texto.slice(0, 80)}`);
-          await anotar(negocio.id, usuario, "cliente", texto);
-
-          const respuesta = await generarRespuesta(negocio, usuario, texto);
-          await enviarTexto(phoneNumberId, usuario, respuesta, negocio.whatsappToken);
-
-          console.log(`[${negocio.id}] → ${respuesta.slice(0, 80)}`);
-          await anotar(negocio.id, usuario, "bot", respuesta);
-        }
+      if (tipo === "instagram" || tipo === "page") {
+        await atenderRedesSociales(entrada, tipo);
+      } else {
+        await atenderWhatsApp(entrada);
       }
     }
   } catch (err) {
@@ -107,5 +96,59 @@ app.post("/webhook", async (req, res) => {
   // Respondemos AL FINAL, ya que todo el trabajo real terminó.
   res.sendStatus(200);
 });
+
+// ── WhatsApp ────────────────────────────────────────────────────
+async function atenderWhatsApp(entrada) {
+  for (const cambio of entrada.changes || []) {
+    const valor = cambio.value || {};
+    const phoneNumberId = valor.metadata?.phone_number_id;
+
+    for (const msg of valor.messages || []) {
+      // Solo atendemos mensajes de texto por ahora
+      if (msg.type !== "text") {
+        console.log(`[webhook] Mensaje tipo "${msg.type}" ignorado.`);
+        continue;
+      }
+
+      const usuario = msg.from; // número del cliente
+      const texto = msg.text?.body?.trim();
+      if (!texto) continue;
+
+      const negocio = elegirNegocio(phoneNumberId);
+      if (!negocio) {
+        console.warn(
+          `[router] Sin negocio para phone_number_id=${phoneNumberId}. ` +
+            `Asigna ese número en un perfil o define DEFAULT_BUSINESS.`
+        );
+        continue;
+      }
+
+      await atender(negocio, usuario, texto, "whatsapp", (respuesta) =>
+        enviarTexto(phoneNumberId, usuario, respuesta, negocio.whatsappToken)
+      );
+    }
+  }
+}
+
+// ── Instagram y Facebook ────────────────────────────────────────
+async function atenderRedesSociales(entrada, tipo) {
+  const canal = tipo === "instagram" ? "instagram" : "facebook";
+  const paginaId = entrada.id;
+
+  const negocio = elegirNegocioPorPagina(paginaId);
+  if (!negocio) {
+    console.warn(
+      `[router] Sin negocio para la página/cuenta ${paginaId}. ` +
+        `Agrega "paginaId" o "instagramId" en el perfil del negocio.`
+    );
+    return;
+  }
+
+  for (const { de, texto } of extraerMensajes(entrada)) {
+    await atender(negocio, de, texto, canal, (respuesta) =>
+      enviarMensaje(de, respuesta, negocio.metaPageToken)
+    );
+  }
+}
 
 module.exports = app;
