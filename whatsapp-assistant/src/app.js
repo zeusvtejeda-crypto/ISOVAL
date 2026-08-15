@@ -15,6 +15,8 @@ const { VERIFY_TOKEN } = require("./config");
 const { elegirNegocio } = require("./router");
 const { generarRespuesta } = require("./brain");
 const { enviarTexto } = require("./whatsapp");
+const store = require("./store");
+const panel = require("./panel");
 
 const app = express();
 app.use(express.json());
@@ -25,6 +27,9 @@ app.get("/", (_req, res) => res.send("Asistente de WhatsApp activo ✅"));
 // El rewrite de Vercel manda TODO aquí, incluido el favicon que pide el
 // navegador; sin esta ruta cada visita ensucia los logs con un 404.
 app.get(/^\/favicon\.(ico|png)$/, (_req, res) => res.sendStatus(204));
+
+// ── Panel de atención (ver conversaciones en vivo) ──────────────
+app.use("/panel", panel);
 
 // ── Verificación del webhook (Meta la llama UNA vez al conectar) ─
 app.get("/webhook", (req, res) => {
@@ -39,6 +44,16 @@ app.get("/webhook", (req, res) => {
   console.warn("[webhook] Verificación fallida (token no coincide).");
   return res.sendStatus(403);
 });
+
+// Anota en la bitácora del panel. Nunca revienta: si la bitácora
+// falla, el cliente igual recibe su respuesta (es lo que importa).
+async function anotar(businessId, usuario, quien, texto) {
+  try {
+    await store.registrar(businessId, usuario, quien, texto);
+  } catch (err) {
+    console.error("[panel] No se pudo anotar el mensaje:", err.message);
+  }
+}
 
 // ── Recepción de mensajes ───────────────────────────────────────
 // IMPORTANTE: procesamos todo ANTES de responder. En hosting serverless
@@ -75,11 +90,13 @@ app.post("/webhook", async (req, res) => {
           }
 
           console.log(`[${negocio.id}] ${usuario}: ${texto.slice(0, 80)}`);
+          await anotar(negocio.id, usuario, "cliente", texto);
 
           const respuesta = await generarRespuesta(negocio, usuario, texto);
           await enviarTexto(phoneNumberId, usuario, respuesta, negocio.whatsappToken);
 
           console.log(`[${negocio.id}] → ${respuesta.slice(0, 80)}`);
+          await anotar(negocio.id, usuario, "bot", respuesta);
         }
       }
     }

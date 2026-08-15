@@ -35,4 +35,10 @@ module.exports = {
   // Negocio por defecto cuando no se reconoce el número que recibió
   // el mensaje (útil al empezar con un solo número). Ej: "camas".
   DEFAULT_BUSINESS: process.env.DEFAULT_BUSINESS || "",
+
+  // ── Panel de atención ────────────────────────────────────────
+  // Clave para entrar a /panel y ver las conversaciones. Invéntala
+  // tú (algo largo y difícil de adivinar). Si la dejas vacía, el
+  // panel queda apagado.
+  PANEL_TOKEN: process.env.PANEL_TOKEN || "",
 };
