@@ -22,6 +22,41 @@ const {
   ANTHROPIC_API_KEY,
 } = require("./config");
 
+// Averigua qué números de WhatsApp puede ver realmente un token.
+// Truco: debug_token devuelve los "granular_scopes", y ahí vienen los
+// IDs de las cuentas de WhatsApp (WABA) a las que ese token tiene
+// alcance. Con cada WABA pedimos sus números. Así, cuando el id
+// configurado está mal, podemos decir cuál es el bueno en vez de
+// dejarte adivinando.
+async function numerosVisibles(token) {
+  const g = (ruta) =>
+    fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${ruta}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((r) => r.json());
+
+  try {
+    const dbg = await g(`debug_token?input_token=${encodeURIComponent(token)}`);
+    const scopes = dbg?.data?.granular_scopes || [];
+    const wabas = new Set();
+    for (const s of scopes) {
+      if (/whatsapp_business/.test(s.scope || "")) {
+        for (const id of s.target_ids || []) wabas.add(id);
+      }
+    }
+
+    const numeros = [];
+    for (const waba of wabas) {
+      const res = await g(`${waba}/phone_numbers?fields=id,display_phone_number,verified_name`);
+      for (const n of res?.data || []) {
+        numeros.push({ id: n.id, display_phone_number: n.display_phone_number, waba });
+      }
+    }
+    return numeros;
+  } catch {
+    return [];
+  }
+}
+
 // Le pregunta a Meta por el número del negocio. Es la forma más
 // barata de saber si el token sirve: si venció, responde 401/190.
 async function revisarNegocio(negocio) {
@@ -68,8 +103,25 @@ async function revisarNegocio(negocio) {
       };
     }
 
-    return { ...base, conectado: true, estado: "ERROR",
-      detalle: err.message || `Meta respondió ${resp.status}.` };
+    // El token sirve, pero Meta no reconoce ese número. Casi siempre es
+    // que el phone_number_id está mal copiado, o que al Usuario del
+    // Sistema no le asignaron la cuenta de WhatsApp como activo.
+    // En vez de que adivines cuál de las dos, le preguntamos al token
+    // qué números SÍ puede ver y te los listamos.
+    const visibles = await numerosVisibles(token);
+    return {
+      ...base,
+      conectado: true,
+      estado: "NUMERO_NO_VISIBLE",
+      detalle: err.message || `Meta respondió ${resp.status}.`,
+      numerosDisponibles: visibles,
+      comoArreglar: visibles.length
+        ? `El token sí ve estos números: ${visibles
+            .map((n) => `${n.display_phone_number} → id ${n.id}`)
+            .join(" | ")}. Copia el id correcto en la variable del negocio "${negocio.id}" en Vercel y redespliega.`
+        : "El token no ve NINGÚN número. En Meta Business › Usuarios del sistema, " +
+          "asígnale a ese usuario la CUENTA DE WHATSAPP como activo (control total), no solo la app.",
+    };
   } catch (e) {
     return { ...base, conectado: true, estado: "SIN_CONEXION", detalle: e.message };
   }
@@ -132,6 +184,11 @@ function aTexto(r) {
   for (const n of conectados) {
     lineas.push(`  • ${n.nombre} [${n.id}]: ${n.estado}${n.numero ? " (" + n.numero + ")" : ""}`);
     if (n.detalle) lineas.push(`      ${n.detalle}`);
+    if (n.numerosDisponibles?.length) {
+      lineas.push("      Números que el token SÍ ve:");
+      for (const d of n.numerosDisponibles)
+        lineas.push(`        - ${d.display_phone_number}  →  phone_number_id: ${d.id}`);
+    }
     if (n.comoArreglar) lineas.push(`      Cómo arreglar: ${n.comoArreglar}`);
   }
   if (pendientes.length) {
