@@ -3,176 +3,422 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>LAB A+A — Appraiser & Architect · Tepic, Nayarit</title>
+<!-- Marca que hay JS ANTES de pintar: los estados ocultos del reveal
+     cuelgan de .js, así que si el script falla o está bloqueado la
+     página se ve completa en vez de quedarse en blanco. -->
+<script>document.documentElement.className+=' js';</script>
+<title>LAB A+A — Arquitectura, Construcción y Valuación · Tepic, Nayarit</title>
+<meta name="description" content="Estudio de arquitectura, construcción integral y valuación inmobiliaria en Tepic, Nayarit. +12 años, +200 proyectos entregados. Presupuesto fijo y plazo por contrato."/>
+<meta name="theme-color" content="#F4EEE2"/>
+<link rel="canonical" href="https://isoval.com.mx/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="es_MX"/>
+<meta property="og:title" content="LAB A+A — Arquitectura, Construcción y Valuación"/>
+<meta property="og:description" content="Diseño con propósito. Construcción sin excusas. Valuación con precisión — todo bajo un mismo techo. Tepic, Nayarit."/>
+<meta property="og:image" content="imgs/hero1-lg.webp"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" href="imgs/logo.png"/>
+<link rel="apple-touch-icon" href="imgs/logo.png"/>
+
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,900&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,700;1,9..144,900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="preload" as="image" href="imgs/hero1-sm.webp" media="(max-width:768px)"/>
+<link rel="preload" as="image" href="imgs/hero1-lg.webp" media="(min-width:769px)"/>
+
 <style>
-/* ═══════════════════════════════════════════════
-   LAB A+A — WARM MINIMALIST EDITION
-   Paleta: crema · café cálido · rojo logo
-   Estilo: editorial · old school · arquitectónico
-═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   LAB A+A · v3 — "EDITORIAL BLUEPRINT"
+   Paleta: papel crema · tinta cálida · rojo del logo
+   Sistema: retícula de 12 columnas, jerarquía numerada,
+            movimiento ligado al scroll.
+═══════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────
+   1. TOKENS
+─────────────────────────────────────────── */
 :root{
-  /* ── Fondo cálido */
-  --cream:        #F3EDE0;   /* papel crema */
-  --cream-alt:    #EBE2CF;   /* crema oscuro */
-  --cream-card:   #F9F5EE;   /* tarjeta */
+  /* Papel */
+  --cream:      #F4EEE2;
+  --cream-2:    #EAE1D0;
+  --cream-3:    #FBF8F2;
 
-  /* ── Tono oscuro CÁLIDO (nunca negro puro) */
-  --warm-dark:    #231C10;   /* carbón cálido */
-  --warm-dark-2:  #2E2416;   /* secciones oscuras */
+  /* Tinta — siempre cálida, nunca negro puro */
+  --ink:        #1E1710;
+  --ink-2:      #2B2115;
+  --body:       #58472F;
+  --dim:        #937F65;
+  --faint:      #C3B096;
 
-  /* ── Tipografía */
-  --ink:          #221A0E;   /* texto principal */
-  --ink-mid:      #5C4A36;   /* texto secundario */
-  --ink-dim:      #9C866E;   /* texto atenuado */
-  --ink-faint:    #C2AE96;   /* ghost */
+  /* Acento del logo */
+  --red:        #E8192C;
+  --red-2:      #B8131F;
+  --red-soft:   rgba(232,25,44,.08);
 
-  /* ── Acento — logo */
-  --red:          #E8192C;   /* rojo del logo */
-  --red-deep:     #B8131F;   /* rojo oscuro hover */
+  /* Hairlines */
+  --line:       rgba(30,23,16,.11);
+  --line-2:     rgba(30,23,16,.20);
+  --line-3:     rgba(30,23,16,.34);
+  --line-inv:   rgba(244,238,226,.13);
 
-  /* ── Borde */
-  --border:       rgba(34,26,14,0.10);
-  --border-mid:   rgba(34,26,14,0.18);
-  --border-strong:rgba(34,26,14,0.30);
+  /* Retícula */
+  --maxw:       1400px;
+  --gut:        clamp(20px,4.2vw,64px);
+  --nav-h:      74px;
+  --sec:        clamp(84px,10.5vw,164px);
 
-  /* ── Espaciado */
-  --pad-section:  140px;
-  --pad-h:        64px;
+  /* Movimiento */
+  --ease:       cubic-bezier(.16,1,.3,1);
+  --ease-soft:  cubic-bezier(.33,1,.68,1);
+  --rev-dur:    780ms;
 }
 
+/* ───────────────────────────────────────────
+   2. RESET + BASE
+─────────────────────────────────────────── */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+
+html{
+  /* Scroll suave nativo, con el header fijo ya descontado
+     para que los anclajes no queden por debajo de la barra. */
+  scroll-behavior:smooth;
+  scroll-padding-top:calc(var(--nav-h) + 16px);
+  -webkit-text-size-adjust:100%;
+}
 body{
   background:var(--cream);
   color:var(--ink);
-  font-family:'Fraunces',serif;
+  font-family:'Fraunces',Georgia,serif;
   font-weight:300;
+  font-size:17px;
+  line-height:1.6;
   overflow-x:hidden;
-  cursor:none;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img,svg,picture,video{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+button,input,select,textarea{font:inherit;color:inherit;}
+::selection{background:var(--red);color:var(--cream);}
+
+/* Foco visible — obligatorio al ocultar el cursor nativo */
+:focus-visible{
+  outline:2px solid var(--red);
+  outline-offset:3px;
 }
 
-/* ── Grano sutil (papel impreso) */
+/* Salto al contenido — sólo aparece al tabular */
+.skip{
+  position:fixed;top:12px;left:12px;z-index:9999;
+  background:var(--red);color:#fff;padding:13px 22px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  transform:translateY(-200%);transition:transform 260ms var(--ease);
+}
+.skip:focus{transform:translateY(0);}
+
+/* Grano sutil de papel impreso */
 body::before{
   content:'';
   position:fixed;inset:0;
-  z-index:999;pointer-events:none;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  z-index:900;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-size:220px;
-  opacity:0.022;
+  opacity:.024;
 }
 
-/* ── Cursor minimalista ── */
-#cur{position:fixed;pointer-events:none;z-index:9999;top:0;left:0;}
-#cur .dot{
-  position:absolute;width:7px;height:7px;
-  background:var(--red);border-radius:50%;
-  transform:translate(-50%,-50%);
-  transition:transform 180ms cubic-bezier(0.34,1.56,0.64,1);
+/* ───────────────────────────────────────────
+   3. SISTEMA DE MOVIMIENTO AL SCROLL
+   Un solo contrato: [data-reveal] + .is-in
+─────────────────────────────────────────── */
+.js [data-reveal]{
+  opacity:0;
+  transform:translate3d(var(--rx,0),var(--ry,30px),0) scale(var(--rs,1));
+  transition:
+    opacity   var(--rev-dur) var(--ease) var(--rev-delay,0ms),
+    transform var(--rev-dur) var(--ease) var(--rev-delay,0ms);
 }
-body.hov #cur .dot{transform:translate(-50%,-50%) scale(2.5);}
+/* La capa de GPU sólo existe mientras hace falta */
+.js [data-reveal]:not(.is-in){will-change:opacity,transform;}
+[data-reveal].is-in{opacity:1;transform:none;}
 
-/* ── Barra progreso ── */
-.scroll-progress{
-  position:fixed;top:0;left:0;height:1.5px;width:0%;
+[data-reveal="left"] {--rx:-44px;--ry:0;}
+[data-reveal="right"]{--rx:44px;--ry:0;}
+[data-reveal="scale"]{--ry:20px;--rs:.955;}
+[data-reveal="fade"] {--ry:0;}
+
+/* Hairline que se dibuja */
+.js [data-reveal="line"]{
+  opacity:1;
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 900ms var(--ease) var(--rev-delay,0ms);
+}
+[data-reveal="line"].is-in{transform:scaleX(1);}
+
+/* Títulos por líneas — cada renglón sube tras su máscara */
+[data-reveal="lines"]{opacity:1;transform:none;}
+/* El padding compensa el clip de descendentes e itálicas dentro del overflow */
+.rw{
+  display:block;overflow:hidden;
+  padding-bottom:.16em;margin-bottom:-.16em;
+  padding-right:.08em;margin-right:-.08em;
+}
+.rl{display:block;}
+.js .rl{
+  transform:translate3d(0,110%,0);
+  transition:transform 940ms var(--ease) var(--rev-delay,0ms);
+}
+[data-reveal="lines"].is-in .rl{transform:none;}
+[data-reveal="lines"] .rw:nth-child(2) .rl{transition-delay:calc(var(--rev-delay,0ms) + 90ms);}
+[data-reveal="lines"] .rw:nth-child(3) .rl{transition-delay:calc(var(--rev-delay,0ms) + 180ms);}
+[data-reveal="lines"] .rw:nth-child(4) .rl{transition-delay:calc(var(--rev-delay,0ms) + 270ms);}
+
+/* Reveal de entrada del hero (sin observer, corre al cargar) */
+.js .hero .rl{transform:translate3d(0,110%,0) skewY(1.4deg);}
+.js .hero.ready .rl{transform:none;transition-delay:var(--d,0ms);}
+
+/* Cursor personalizado — SÓLO con ratón real */
+#cur{display:none;}
+@media (hover:hover) and (pointer:fine){
+  html.js body{cursor:none;}
+  html.js a,html.js button,html.js .pill,html.js summary,
+  html.js .faq-q,html.js .f-method-btn,html.js label{cursor:none;}
+  html.js input,html.js textarea,html.js select{cursor:text;}
+  html.js #cur{
+    display:block;position:fixed;top:0;left:0;
+    z-index:9999;pointer-events:none;
+  }
+  #cur .dot{
+    position:absolute;width:7px;height:7px;
+    background:var(--red);border-radius:50%;
+    transform:translate(-50%,-50%);
+    transition:transform 180ms cubic-bezier(.34,1.56,.64,1);
+  }
+  #cur .ring{
+    position:absolute;width:34px;height:34px;
+    border:1px solid rgba(232,25,44,.36);border-radius:50%;
+    transform:translate(-50%,-50%) scale(.6);opacity:0;
+    transition:transform 320ms var(--ease),opacity 320ms;
+  }
+  body.hov #cur .dot{transform:translate(-50%,-50%) scale(2.4);}
+  body.hov #cur .ring{transform:translate(-50%,-50%) scale(1);opacity:1;}
+}
+
+/* ───────────────────────────────────────────
+   4. PRIMITIVAS DE LAYOUT
+─────────────────────────────────────────── */
+.wrap{
+  width:min(100% - var(--gut) * 2,var(--maxw));
+  margin-inline:auto;
+}
+.section{padding:var(--sec) 0;position:relative;}
+.g12{display:grid;grid-template-columns:repeat(12,1fr);gap:clamp(16px,2vw,28px);}
+
+.rule{height:1px;background:var(--line);width:100%;}
+
+/* Encabezado de sección — numerado y consistente */
+.sec-head{margin-bottom:clamp(48px,6vw,84px);}
+.sec-idx{
+  display:flex;align-items:center;gap:16px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--red);margin-bottom:26px;
+}
+.sec-idx i{height:1px;width:44px;background:currentColor;flex:none;font-style:normal;}
+.sec-idx .of{color:var(--faint);}
+.sec-idx.neutral{color:var(--body);}
+
+.s-title{
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:clamp(38px,5.6vw,86px);
+  line-height:.94;letter-spacing:-.042em;
+  color:var(--ink);max-width:16ch;
+}
+.s-title em{font-style:italic;font-weight:900;color:var(--red);}
+/* Cuando los renglones ya vienen marcados con .rw, el tope en ch
+   sólo provoca un segundo salto inesperado. */
+.s-title[data-reveal="lines"]{max-width:none;}
+.s-lead{
+  margin-top:28px;max-width:56ch;
+  font-size:clamp(16px,1.35vw,19px);line-height:1.78;color:var(--body);
+}
+
+/* ───────────────────────────────────────────
+   5. BOTONES
+─────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:16px 34px;border:1px solid transparent;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10.5px;font-weight:400;letter-spacing:.2em;text-transform:uppercase;
+  position:relative;overflow:hidden;
+  transition:color 220ms,border-color 300ms,background 220ms;
+}
+.btn span{position:relative;z-index:1;}
+.btn.solid{background:var(--red);color:var(--cream);}
+.btn.solid::before{
+  content:'';position:absolute;inset:0;background:var(--ink);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 480ms var(--ease);
+}
+.btn.solid:hover::before{transform:scaleX(1);}
+.btn.outline{border-color:rgba(244,238,226,.34);color:rgba(244,238,226,.82);}
+.btn.outline:hover{border-color:rgba(244,238,226,.85);color:#F4EEE2;}
+.btn.outline-dark{border-color:var(--line-2);color:var(--body);}
+.btn.outline-dark:hover{border-color:var(--red);color:var(--red);}
+
+/* Enlace con subrayado que crece */
+.ln{
+  display:inline-flex;align-items:center;gap:9px;position:relative;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--red);
+  padding-bottom:5px;
+}
+.ln::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:currentColor;transform:scaleX(0);transform-origin:right;
+  transition:transform 460ms var(--ease);
+}
+.ln:hover::after{transform:scaleX(1);transform-origin:left;}
+
+/* ───────────────────────────────────────────
+   6. NAV — se esconde al bajar, vuelve al subir
+─────────────────────────────────────────── */
+.progress{
+  position:fixed;top:0;left:0;height:2px;width:0%;
   background:var(--red);z-index:1000;
+  transition:width 90ms linear;
 }
-
-/* ══════════════════════════════════════════
-   NAV
-══════════════════════════════════════════ */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:500;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:22px var(--pad-h);
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:800;
+  height:var(--nav-h);
+  display:flex;align-items:center;
   border-bottom:1px solid transparent;
-  background:transparent;
-  transition:background 400ms,border-color 400ms;
+  transition:transform 460ms var(--ease),background 360ms,border-color 360ms;
 }
-nav.scrolled{
-  background:rgba(243,237,224,0.95);
-  border-color:var(--border);
-  backdrop-filter:blur(12px);
+.nav-inner{
+  width:min(100% - var(--gut) * 2,var(--maxw));
+  margin-inline:auto;
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
 }
-.nav-logo{display:flex;align-items:center;gap:14px;}
-.nav-logo img{height:36px;width:36px;object-fit:contain;}
+.nav.scrolled{
+  background:rgba(244,238,226,.93);
+  border-bottom-color:var(--line);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.nav.hidden{transform:translateY(-100%);}
+
+/* Sobre el hero oscuro la barra va en crema; al bajar recupera la tinta */
+.nav:not(.scrolled) .nav-brand{color:#F4EEE2;}
+.nav:not(.scrolled) .nav-brand small{color:rgba(244,238,226,.5);}
+.nav:not(.scrolled) .nav-links a{color:rgba(244,238,226,.66);}
+.nav:not(.scrolled) .nav-links a:hover,
+.nav:not(.scrolled) .nav-links a.active{color:#F4EEE2;}
+.nav:not(.scrolled) .nav-cta{border-color:rgba(244,238,226,.42);color:#F4EEE2;}
+.nav:not(.scrolled) .burger i{background:#F4EEE2;}
+.nav-logo{display:flex;align-items:center;gap:13px;}
+.nav-logo img{height:34px;width:34px;object-fit:contain;}
 .nav-brand{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:17px;letter-spacing:0.05em;color:var(--ink);
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:17px;letter-spacing:.05em;color:var(--ink);line-height:1;
 }
 .nav-brand em{font-style:normal;color:var(--red);}
-.nav-links{display:flex;gap:40px;list-style:none;}
-.nav-links a{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.22em;text-transform:uppercase;
-  color:var(--ink-dim);text-decoration:none;
-  transition:color 200ms;
+.nav-brand small{
+  display:block;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:8px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--dim);margin-top:4px;
 }
-.nav-links a:hover{color:var(--ink);}
+.nav-links{display:flex;gap:clamp(18px,2.4vw,38px);list-style:none;align-items:center;}
+.nav-links a{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+  position:relative;padding:6px 0;transition:color 220ms;
+}
+.nav-links a::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:var(--red);transform:scaleX(0);transform-origin:left;
+  transition:transform 420ms var(--ease);
+}
+.nav-links a:hover,.nav-links a.active{color:var(--ink);}
+.nav-links a.active::after,.nav-links a:hover::after{transform:scaleX(1);}
 .nav-cta{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.18em;text-transform:uppercase;
-  padding:10px 22px;
-  border:1px solid var(--red);
-  color:var(--red);text-decoration:none;
-  position:relative;overflow:hidden;transition:color 200ms;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.18em;text-transform:uppercase;
+  padding:11px 22px;border:1px solid var(--red);color:var(--red);
+  position:relative;overflow:hidden;transition:color 220ms;
 }
 .nav-cta::before{
-  content:'';position:absolute;inset:0;
-  background:var(--red);transform:scaleX(0);
-  transform-origin:left;transition:transform 480ms cubic-bezier(0.16,1,0.3,1);
+  content:'';position:absolute;inset:0;background:var(--red);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 480ms var(--ease);
 }
 .nav-cta:hover::before{transform:scaleX(1);}
 .nav-cta:hover{color:var(--cream);}
 .nav-cta span{position:relative;z-index:1;}
 
-/* ══════════════════════════════════════════
-   EYEBROW — etiqueta editorial
-══════════════════════════════════════════ */
-.eyebrow{
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
-  color:var(--red);margin-bottom:24px;
-  display:flex;align-items:center;gap:14px;
+/* Botón hamburguesa */
+.burger{
+  display:none;width:44px;height:44px;background:none;border:0;
+  align-items:center;justify-content:center;flex-direction:column;gap:5px;
 }
-.eyebrow::before{content:'';width:32px;height:1px;background:var(--red);}
-.eyebrow.neutral{color:var(--ink-mid);}
-.eyebrow.neutral::before{background:var(--ink-mid);}
+.burger i{
+  display:block;width:22px;height:1.5px;background:var(--ink);
+  transition:transform 380ms var(--ease),opacity 200ms;
+}
+body.menu-open .burger i:nth-child(1){transform:translateY(6.5px) rotate(45deg);}
+body.menu-open .burger i:nth-child(2){opacity:0;}
+body.menu-open .burger i:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
+/* Con el panel abierto el fondo es crema: la hamburguesa vuelve a tinta */
+body.menu-open .nav .burger i{background:var(--ink);}
 
-/* ══════════════════════════════════════════
-   TÍTULO SECCIÓN
-══════════════════════════════════════════ */
-.s-title{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:clamp(38px,5vw,76px);
-  line-height:0.93;letter-spacing:-0.04em;
-  color:var(--ink);max-width:660px;margin-bottom:72px;
+/* Panel móvil */
+.drawer{
+  position:fixed;inset:0;z-index:790;
+  background:var(--cream);
+  padding:calc(var(--nav-h) + 32px) var(--gut) 40px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  transform:translateY(-101%);
+  visibility:hidden;
+  transition:transform 620ms var(--ease),visibility 0s linear 620ms;
+  overflow-y:auto;
 }
-.s-title em{
-  font-style:italic;font-weight:900;color:var(--red);
+body.menu-open .drawer{
+  transform:translateY(0);
+  visibility:visible;
+  transition:transform 620ms var(--ease),visibility 0s;
 }
+.drawer-links{list-style:none;display:flex;flex-direction:column;}
+.drawer-links li{border-bottom:1px solid var(--line);}
+.drawer-links a{
+  display:flex;align-items:baseline;gap:18px;padding:20px 0;
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:clamp(28px,7vw,40px);letter-spacing:-.035em;color:var(--ink);
+  opacity:0;transform:translateY(18px);
+}
+body.menu-open .drawer-links a{
+  opacity:1;transform:none;
+  transition:opacity 520ms var(--ease) var(--d),transform 520ms var(--ease) var(--d);
+}
+.drawer-links b{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:400;
+  font-size:10px;letter-spacing:.2em;color:var(--red);
+}
+.drawer-foot{
+  margin-top:44px;display:flex;flex-direction:column;gap:12px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;letter-spacing:.14em;color:var(--dim);
+}
+.drawer-foot a{color:var(--ink);}
+.drawer-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
 
-/* ══════════════════════════════════════════
-   REVEAL
-══════════════════════════════════════════ */
-.reveal{
-  opacity:0;transform:translateY(20px);
-  transition:opacity 550ms cubic-bezier(0.16,1,0.3,1),
-             transform 550ms cubic-bezier(0.16,1,0.3,1);
-}
-.reveal.in{opacity:1;transform:translateY(0);}
-
-/* ══════════════════════════════════════════
-   HERO
-══════════════════════════════════════════ */
+/* ───────────────────────────────────────────
+   7. HERO
+─────────────────────────────────────────── */
 .hero{
-  position:relative;min-height:100vh;
+  position:relative;min-height:100svh;
   display:flex;align-items:flex-end;overflow:hidden;
+  padding-top:var(--nav-h);
 }
-/* Ken Burns slideshow */
 .slides{position:absolute;inset:0;z-index:0;}
 .slide{
   position:absolute;inset:0;
@@ -184,917 +430,836 @@ nav.scrolled{
 .slide:nth-child(3){background-image:url('imgs/hero3-sm.webp');background-position:center 40%;animation:kb3 24s ease-in-out infinite -12s;}
 .slide:nth-child(4){background-image:url('imgs/hero4-sm.webp');background-position:center 45%;animation:kb4 24s ease-in-out infinite -18s;}
 @media(min-width:769px){
-.slide:nth-child(1){background-image:url('imgs/hero1-lg.webp');}
-.slide:nth-child(2){background-image:url('imgs/hero2-lg.webp');}
-.slide:nth-child(3){background-image:url('imgs/hero3-lg.webp');}
-.slide:nth-child(4){background-image:url('imgs/hero4-lg.webp');}
+  .slide:nth-child(1){background-image:url('imgs/hero1-lg.webp');}
+  .slide:nth-child(2){background-image:url('imgs/hero2-lg.webp');}
+  .slide:nth-child(3){background-image:url('imgs/hero3-lg.webp');}
+  .slide:nth-child(4){background-image:url('imgs/hero4-lg.webp');}
 }
-@keyframes kb1{0%{opacity:0;transform:scale(1.08) translate(1%,0.5%);}8%{opacity:1;}33%{opacity:1;transform:scale(1.14) translate(-0.5%,-0.5%);}41%{opacity:0;}100%{opacity:0;}}
-@keyframes kb2{0%{opacity:0;transform:scale(1.10) translate(-0.5%,0);}8%{opacity:1;}33%{opacity:1;transform:scale(1.16) translate(0.5%,0.5%);}41%{opacity:0;}100%{opacity:0;}}
-@keyframes kb3{0%{opacity:0;transform:scale(1.06) translate(0,0.5%);}8%{opacity:1;}33%{opacity:1;transform:scale(1.13) translate(-0.5%,-0.5%);}41%{opacity:0;}100%{opacity:0;}}
-@keyframes kb4{0%{opacity:0;transform:scale(1.09) translate(0.5%,0);}8%{opacity:1;}33%{opacity:1;transform:scale(1.15) translate(-0.5%,0.5%);}41%{opacity:0;}100%{opacity:0;}}
+@keyframes kb1{0%{opacity:0;transform:scale(1.08) translate(1%,.5%)}8%{opacity:1}33%{opacity:1;transform:scale(1.14) translate(-.5%,-.5%)}41%{opacity:0}100%{opacity:0}}
+@keyframes kb2{0%{opacity:0;transform:scale(1.10) translate(-.5%,0)}8%{opacity:1}33%{opacity:1;transform:scale(1.16) translate(.5%,.5%)}41%{opacity:0}100%{opacity:0}}
+@keyframes kb3{0%{opacity:0;transform:scale(1.06) translate(0,.5%)}8%{opacity:1}33%{opacity:1;transform:scale(1.13) translate(-.5%,-.5%)}41%{opacity:0}100%{opacity:0}}
+@keyframes kb4{0%{opacity:0;transform:scale(1.09) translate(.5%,0)}8%{opacity:1}33%{opacity:1;transform:scale(1.15) translate(-.5%,.5%)}41%{opacity:0}100%{opacity:0}}
 
-/* Overlay cálido — no negro puro */
 .hero-overlay{
   position:absolute;inset:0;z-index:1;
   background:
-    linear-gradient(to right,rgba(22,14,6,0.90) 42%,rgba(22,14,6,0.22) 100%),
-    linear-gradient(to top,rgba(22,14,6,0.72) 0%,transparent 48%);
+    linear-gradient(to right,rgba(20,13,6,.92) 0%,rgba(20,13,6,.74) 46%,rgba(20,13,6,.20) 100%),
+    linear-gradient(to top,rgba(20,13,6,.80) 0%,transparent 52%);
 }
-/* Línea vertical izquierda */
-.hero-accent-line{
-  position:absolute;left:0;top:0;bottom:0;width:2px;
+.hero-line{
+  position:absolute;left:0;top:0;bottom:0;width:2px;z-index:3;
   background:linear-gradient(to bottom,transparent,var(--red) 25%,var(--red) 75%,transparent);
-  z-index:3;transform:scaleY(0);transform-origin:center;
-  animation:lineGrow 1.4s cubic-bezier(0.16,1,0.3,1) 0.4s forwards;
+  transform:scaleY(0);transform-origin:center;
+  animation:lineGrow 1.4s var(--ease) .4s forwards;
 }
 @keyframes lineGrow{to{transform:scaleY(1);}}
 
-.hero-content{
-  position:relative;z-index:4;
-  padding:0 var(--pad-h) 96px;
-  max-width:860px;
+.hero-inner{
+  position:relative;z-index:4;width:100%;
+  padding-bottom:clamp(48px,7vw,104px);
+  padding-top:clamp(56px,10vw,120px);
 }
-
-/* Texto animado */
-.rw{overflow:hidden;display:block;}
-.rl{display:block;opacity:0;transform:translateY(110%) skewY(1.5deg);}
-.rl.go{
-  opacity:1;transform:translateY(0) skewY(0);
-  transition:opacity 900ms cubic-bezier(0.16,1,0.3,1),
-             transform 900ms cubic-bezier(0.16,1,0.3,1);
-}
+.hero-grid{align-items:end;}
+.hero-main{grid-column:1 / span 8;}
+.hero-side{grid-column:10 / span 3;}
 
 .hero-eyebrow{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.28em;text-transform:uppercase;
-  color:rgba(243,237,224,0.55);margin-bottom:32px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(244,238,226,.58);margin-bottom:30px;
   display:flex;align-items:center;gap:14px;
-  opacity:0;animation:fadeSlideX 800ms cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+  opacity:0;animation:fadeX 800ms var(--ease) .2s forwards;
 }
-.hero-eyebrow::before{content:'';width:32px;height:1px;background:var(--red);}
-@keyframes fadeSlideX{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.hero-eyebrow::before{content:'';width:34px;height:1px;background:var(--red);}
+@keyframes fadeX{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
 
 .hero-h1{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:clamp(52px,8.5vw,128px);
-  line-height:0.9;letter-spacing:-0.045em;
-  color:#F3EDE0;/* crema sobre oscuro */
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:clamp(50px,8.6vw,132px);
+  line-height:.9;letter-spacing:-.045em;color:#F4EEE2;
 }
-.hero-h1 em{
-  font-style:italic;font-weight:900;color:var(--red);
-}
-
+.hero-h1 em{font-style:italic;font-weight:900;color:var(--red);}
 .hero-sub{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:17px;line-height:1.75;
-  color:rgba(243,237,224,0.50);
-  max-width:480px;margin-top:32px;
+  font-size:clamp(16px,1.5vw,19px);line-height:1.75;
+  color:rgba(244,238,226,.72);max-width:46ch;margin-top:30px;
+}
+.hero-actions{margin-top:44px;display:flex;gap:12px;flex-wrap:wrap;}
+
+/* Cartucho técnico — las cifras como ficha de plano */
+.hero-spec{
+  border:1px solid rgba(244,238,226,.20);
+  background:rgba(20,13,6,.30);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  opacity:0;animation:fadeUp 900ms var(--ease) 1.1s forwards;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.hero-spec-head{
+  padding:12px 18px;border-bottom:1px solid rgba(244,238,226,.16);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  letter-spacing:.24em;text-transform:uppercase;color:rgba(244,238,226,.42);
+  display:flex;justify-content:space-between;gap:12px;
+}
+.hspec{padding:18px;border-bottom:1px solid rgba(244,238,226,.10);}
+.hspec:last-child{border-bottom:none;}
+.hspec-n{
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:clamp(30px,3.2vw,44px);line-height:1;letter-spacing:-.045em;color:#F4EEE2;
+}
+.hspec-n em{font-style:normal;color:var(--red);}
+.hspec-l{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  color:rgba(244,238,226,.42);letter-spacing:.2em;text-transform:uppercase;margin-top:7px;
 }
 
-.hero-actions{margin-top:52px;display:flex;gap:14px;}
-
-/* Botones */
-.btn{
-  display:inline-block;padding:15px 36px;
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px;font-weight:400;letter-spacing:0.18em;text-transform:uppercase;
-  text-decoration:none;cursor:none;
-  position:relative;overflow:hidden;
-  transition:color 200ms;
-}
-.btn.solid{background:var(--red);color:var(--cream);}
-.btn.solid::before{
-  content:'';position:absolute;inset:0;
-  background:var(--red-deep);transform:scaleX(0);
-  transform-origin:left;transition:transform 460ms cubic-bezier(0.16,1,0.3,1);
-}
-.btn.solid:hover::before{transform:scaleX(1);}
-.btn.outline{
-  border:1px solid rgba(243,237,224,0.35);
-  color:rgba(243,237,224,0.75);
-}
-.btn.outline:hover{border-color:rgba(243,237,224,0.7);color:#F3EDE0;}
-.btn.outline-dark{border:1px solid var(--border-mid);color:var(--ink-mid);}
-.btn.outline-dark:hover{border-color:var(--red);color:var(--red);}
-.btn span{position:relative;z-index:1;}
-
-/* Stats en hero — estilo Xencalli */
-.hero-stats-row{
-  margin-top:60px;display:flex;gap:0;
-  border:1px solid rgba(243,237,224,0.14);
-  max-width:520px;
-}
-.hstat{flex:1;padding:20px 24px;border-right:1px solid rgba(243,237,224,0.1);}
-.hstat:last-child{border-right:none;}
-.hstat-n{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:clamp(26px,3vw,42px);line-height:1;letter-spacing:-0.04em;
-  color:#F3EDE0;
-}
-.hstat-n em{font-style:normal;color:var(--red);}
-.hstat-l{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  color:rgba(243,237,224,0.38);letter-spacing:0.2em;text-transform:uppercase;margin-top:8px;
-}
-
-/* Slide dots */
 .slide-dots{
-  position:absolute;right:52px;top:50%;transform:translateY(-50%);
+  position:absolute;right:var(--gut);top:50%;transform:translateY(-50%);
   z-index:4;display:flex;flex-direction:column;gap:10px;
 }
-.sdot{width:1.5px;height:26px;background:rgba(243,237,224,0.15);position:relative;overflow:hidden;}
+.sdot{width:1.5px;height:26px;background:rgba(244,238,226,.16);position:relative;overflow:hidden;}
 .sdot-fill{position:absolute;top:0;left:0;right:0;background:var(--red);height:0;}
 .sdot.active .sdot-fill{animation:fillDot 6s linear forwards;}
 @keyframes fillDot{from{height:0}to{height:100%}}
 
 .scroll-cue{
-  position:absolute;bottom:36px;left:var(--pad-h);z-index:4;
+  position:absolute;bottom:26px;left:var(--gut);z-index:4;
   display:flex;align-items:center;gap:14px;
   opacity:0;animation:fadeIn 1s ease 2s forwards;
 }
-.sc-line{
-  width:48px;height:1px;
-  background:linear-gradient(to right,var(--red),transparent);
-}
+.sc-line{width:48px;height:1px;background:linear-gradient(to right,var(--red),transparent);}
 .sc-txt{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.3em;text-transform:uppercase;
-  color:rgba(243,237,224,0.25);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  letter-spacing:.3em;text-transform:uppercase;color:rgba(244,238,226,.3);
 }
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-/* ══════════════════════════════════════════
-   MARQUEE
-══════════════════════════════════════════ */
+/* ───────────────────────────────────────────
+   8. MARQUEE
+─────────────────────────────────────────── */
 .mq-wrap{
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-  overflow:hidden;padding:14px 0;
-  background:var(--cream-alt);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  overflow:hidden;padding:15px 0;background:var(--cream-2);
   position:relative;z-index:2;
 }
-.mq-track{display:flex;animation:mqScroll 34s linear infinite;white-space:nowrap;}
+.mq-track{display:flex;width:max-content;animation:mqScroll 38s linear infinite;}
+.mq-wrap:hover .mq-track{animation-play-state:paused;}
 .mq-item{
-  display:inline-flex;align-items:center;gap:20px;padding:0 44px;
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.26em;text-transform:uppercase;color:var(--ink-faint);
+  display:inline-flex;align-items:center;gap:20px;padding:0 40px;white-space:nowrap;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.26em;text-transform:uppercase;color:var(--faint);
 }
-.mq-dot{width:3px;height:3px;background:var(--red);border-radius:50%;flex-shrink:0;}
+.mq-dot{width:3px;height:3px;background:var(--red);border-radius:50%;flex:none;}
 @keyframes mqScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-/* ══════════════════════════════════════════
-   STATS ROW
-══════════════════════════════════════════ */
-.stats-section{position:relative;z-index:2;padding:80px var(--pad-h);}
+/* ───────────────────────────────────────────
+   9. CIFRAS
+─────────────────────────────────────────── */
+.stats{padding:clamp(56px,7vw,96px) 0;position:relative;z-index:2;}
 .stats-row{
   display:grid;grid-template-columns:repeat(4,1fr);
-  border:1px solid var(--border-mid);
+  border-top:1px solid var(--line-3);border-bottom:1px solid var(--line-3);
 }
 .stat{
-  padding:48px 36px;border-right:1px solid var(--border);
-  transition:background 300ms;
+  padding:clamp(30px,3.4vw,52px) clamp(18px,2vw,36px);
+  border-right:1px solid var(--line);position:relative;
+  transition:background 320ms;
 }
 .stat:last-child{border-right:none;}
-.stat:hover{background:var(--cream-alt);}
-.stat-number{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:clamp(48px,5vw,72px);line-height:1;letter-spacing:-0.045em;
-  color:var(--ink);
+.stat:hover{background:var(--cream-3);}
+.stat::before{
+  content:'';position:absolute;top:-1px;left:0;right:0;height:2px;
+  background:var(--red);transform:scaleX(0);transform-origin:left;
+  transition:transform 560ms var(--ease);
 }
-.stat-number span{color:var(--red);}
-.stat-label{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  color:var(--ink-dim);text-transform:uppercase;letter-spacing:0.18em;margin-top:14px;
+.stat:hover::before{transform:scaleX(1);}
+.stat-n{
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:clamp(42px,5vw,74px);line-height:1;letter-spacing:-.05em;
+  color:var(--ink);font-variant-numeric:tabular-nums;
 }
-.stat-delta{
-  font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:8px;color:var(--ink-faint);
+.stat-n span{color:var(--red);}
+.stat-l{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  color:var(--dim);text-transform:uppercase;letter-spacing:.18em;margin-top:16px;
+}
+.stat-d{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  margin-top:8px;color:var(--faint);
 }
 
-/* ══════════════════════════════════════════
-   NOSOTROS
-══════════════════════════════════════════ */
-#nosotros{position:relative;z-index:2;}
-.about-grid{display:grid;grid-template-columns:1fr 1fr;}
-.about-img{position:relative;overflow:hidden;min-height:600px;}
-.about-img img{
-  width:100%;height:110%;object-fit:cover;margin-top:-5%;
-  transition:transform 1400ms cubic-bezier(0.16,1,0.3,1);
-  filter:sepia(10%) saturate(90%);/* tonalidad cálida en imágenes */
+/* ───────────────────────────────────────────
+   10. NOSOTROS
+─────────────────────────────────────────── */
+#nosotros{position:relative;z-index:2;padding-bottom:var(--sec);}
+.about{align-items:center;row-gap:clamp(40px,5vw,72px);}
+.about-media{grid-column:1 / span 6;position:relative;}
+.about-frame{
+  position:relative;overflow:hidden;
+  aspect-ratio:4 / 5;
+  border:1px solid var(--line-2);
 }
-.about-img:hover img{transform:scale(1.05);}
-.about-img-overlay{
-  position:absolute;inset:0;
-  background:linear-gradient(to right,transparent 55%,var(--cream) 100%);
+/* <picture> es inline por defecto: sin esto la altura en % de la
+   imagen no resuelve y la foto no llena el marco. */
+.about-frame picture{display:block;width:100%;height:100%;}
+.about-frame img{
+  width:100%;height:112%;object-fit:cover;margin-top:-6%;
+  filter:sepia(10%) saturate(92%);
+  transition:transform 1400ms var(--ease);
+  will-change:transform;
 }
-.about-text{
-  background:var(--cream);
-  border-left:1px solid var(--border);
-  padding:104px 72px;
-  display:flex;flex-direction:column;justify-content:center;
+.about-frame:hover img{transform:scale(1.045);}
+/* Ficha flotante sobre la foto */
+.about-stamp{
+  position:absolute;right:-1px;bottom:-1px;z-index:2;
+  background:var(--cream);border:1px solid var(--line-2);
+  padding:20px 24px;max-width:250px;
 }
-.about-body{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:18px;color:var(--ink-mid);line-height:1.82;
-  margin-top:28px;max-width:480px;
+.about-stamp-n{
+  font-family:'Fraunces',Georgia,serif;font-weight:900;font-style:italic;
+  font-size:34px;line-height:1;color:var(--red);letter-spacing:-.04em;
 }
-.about-pills{margin-top:40px;display:flex;flex-wrap:wrap;gap:8px;}
+.about-stamp-l{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-top:10px;line-height:1.7;
+}
+.about-body{grid-column:8 / span 5;}
+.about-p{font-size:clamp(16px,1.4vw,19px);line-height:1.8;color:var(--body);margin-top:28px;}
+.about-pills{margin-top:36px;display:flex;flex-wrap:wrap;gap:8px;}
 .pill{
-  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.16em;
-  text-transform:uppercase;padding:8px 16px;
-  border:1px solid var(--border-mid);
-  color:var(--ink-dim);cursor:none;
-  transition:border-color 300ms,color 300ms,transform 360ms cubic-bezier(0.34,1.56,0.64,1);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;padding:9px 16px;border:1px solid var(--line-2);color:var(--dim);
+  transition:border-color 300ms,color 300ms,transform 380ms cubic-bezier(.34,1.56,.64,1);
 }
 .pill:hover{border-color:var(--red);color:var(--red);transform:translateY(-3px);}
+.about-badge{
+  margin-top:34px;padding:15px 20px;border:1px solid var(--line);
+  display:inline-flex;align-items:center;gap:13px;background:var(--cream-3);
+}
+.about-badge-check{
+  width:21px;height:21px;border-radius:50%;flex:none;background:var(--red);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;line-height:1;
+}
+.about-badge-text{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  color:var(--dim);letter-spacing:.14em;text-transform:uppercase;line-height:1.6;
+}
 
-/* ══════════════════════════════════════════
-   SERVICIOS
-══════════════════════════════════════════ */
+/* ───────────────────────────────────────────
+   11. SERVICIOS — asimétrico: 01 destacado
+─────────────────────────────────────────── */
 #servicios{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  background:var(--cream-alt);
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
+  position:relative;z-index:2;background:var(--cream-2);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
 }
-.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border-mid);}
+.svc-grid{gap:1px;background:var(--line-2);border:1px solid var(--line-2);}
 .svc-card{
-  background:var(--cream-card);
-  padding:56px 44px;cursor:none;
-  position:relative;overflow:hidden;
-  transition:background 300ms;
+  background:var(--cream-3);padding:clamp(32px,3.6vw,56px);
+  position:relative;overflow:hidden;transition:background 320ms;
+  display:flex;flex-direction:column;
 }
-.svc-card:hover{background:#FBF7F2;}
-/* Línea superior animada */
+.svc-card:hover{background:#FDFBF7;}
 .svc-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:var(--red);transform:scaleX(0);transform-origin:left;
-  transition:transform 560ms cubic-bezier(0.16,1,0.3,1);
+  transition:transform 580ms var(--ease);
 }
 .svc-card:hover::before{transform:scaleX(1);}
-/* Número grande fantasma */
+.svc-card.feature{grid-column:span 12;display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,4vw,64px);}
+.svc-card.half{grid-column:span 6;}
 .svc-ghost{
-  position:absolute;bottom:-20px;right:-10px;
-  font-family:'Fraunces',serif;font-weight:900;font-style:italic;
-  font-size:140px;line-height:1;letter-spacing:-0.06em;
-  color:var(--border);pointer-events:none;user-select:none;
-  transition:color 300ms;
+  position:absolute;bottom:-26px;right:-6px;
+  font-family:'Fraunces',Georgia,serif;font-weight:900;font-style:italic;
+  font-size:clamp(110px,13vw,170px);line-height:1;letter-spacing:-.06em;
+  color:var(--line);pointer-events:none;user-select:none;transition:color 320ms;
 }
-.svc-card:hover .svc-ghost{color:rgba(232,25,44,0.06);}
+.svc-card:hover .svc-ghost{color:var(--red-soft);}
+.svc-icon{width:38px;height:38px;margin-bottom:26px;color:var(--faint);transition:color 400ms;}
+.svc-card:hover .svc-icon{color:var(--red);}
 .svc-num{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.24em;color:var(--ink-faint);margin-bottom:32px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.24em;color:var(--faint);margin-bottom:20px;text-transform:uppercase;
 }
 .svc-name{
-  font-family:'Fraunces',serif;font-weight:400;
-  font-size:26px;color:var(--ink);margin-bottom:16px;
-  letter-spacing:-0.025em;transition:color 200ms;
+  font-family:'Fraunces',Georgia,serif;font-weight:400;
+  font-size:clamp(24px,2.5vw,34px);color:var(--ink);margin-bottom:16px;
+  letter-spacing:-.03em;line-height:1.05;transition:color 220ms;
 }
 .svc-card:hover .svc-name{color:var(--red);}
-.svc-desc{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:15px;color:var(--ink-mid);line-height:1.78;
-}
-.svc-list{margin-top:32px;list-style:none;display:flex;flex-direction:column;gap:11px;}
+.svc-desc{font-size:16px;color:var(--body);line-height:1.78;max-width:44ch;}
+.svc-list{margin-top:28px;list-style:none;display:flex;flex-direction:column;gap:12px;}
 .svc-list li{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  color:var(--ink-dim);display:flex;align-items:center;gap:14px;
-  transition:color 200ms;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;
+  color:var(--dim);display:flex;align-items:center;gap:14px;transition:color 220ms;
 }
-.svc-card:hover .svc-list li{color:var(--ink-mid);}
+.svc-card:hover .svc-list li{color:var(--body);}
 .svc-list li::before{
-  content:'';width:12px;height:1px;background:var(--red);flex-shrink:0;
-  transition:width 500ms cubic-bezier(0.16,1,0.3,1);
+  content:'';width:12px;height:1px;background:var(--red);flex:none;
+  transition:width 520ms var(--ease);
 }
-.svc-card:hover .svc-list li::before{width:20px;}
+.svc-card:hover .svc-list li::before{width:22px;}
 
-/* ══════════════════════════════════════════
-   PORTFOLIO
-══════════════════════════════════════════ */
-#proyectos{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h) 0;
-}
+/* ───────────────────────────────────────────
+   12. PORTAFOLIO — mosaico editorial
+─────────────────────────────────────────── */
+#proyectos{position:relative;z-index:2;}
+/* Filas explícitas: las dos tarjetas de una misma fila cierran a la
+   misma altura (aspect-ratio no lo consigue, porque ata la altura
+   al ancho y los anchos son distintos). */
 .port-grid{
-  margin-top:72px;
-  display:grid;grid-template-columns:1fr 1fr;
-  grid-template-rows:540px 360px 360px;gap:2px;
+  row-gap:clamp(16px,2vw,28px);
+  grid-template-rows:
+    clamp(300px,31vw,450px)
+    clamp(300px,31vw,450px)
+    clamp(220px,22vw,340px);
 }
 .port-card{
-  position:relative;overflow:hidden;cursor:none;
-  border:1px solid var(--border);transition:border-color 300ms;
+  position:relative;overflow:hidden;border:1px solid var(--line);
+  transition:border-color 320ms;display:block;
 }
-.port-card.span2{grid-column:span 2;}
 .port-card:hover{border-color:var(--red);}
-.port-bg{
-  position:absolute;inset:0;background-size:cover;background-position:center;
-  transition:transform 1400ms cubic-bezier(0.16,1,0.3,1);will-change:transform;
-  filter:sepia(8%) saturate(88%);
+.port-card.w7{grid-column:span 7;}
+.port-card.w5{grid-column:span 5;}
+.port-card.w12{grid-column:span 12;}
+.port-card img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  filter:sepia(8%) saturate(90%);
+  transition:transform 1500ms var(--ease),filter 600ms;
 }
-.port-card:hover .port-bg{transform:scale(1.06);}
-.pb1{background-image:url('imgs/port1-sm.webp');}
-.pb2{background-image:url('imgs/port2-sm.webp');}
-.pb3{background-image:url('imgs/port3-sm.webp');}
-.pb4{background-image:url('imgs/port4-sm.webp');}
-.pb5{background-image:url('imgs/port5-sm.webp');}
-@media(min-width:769px){
-.pb1{background-image:url('imgs/port1-lg.webp');}
-.pb2{background-image:url('imgs/port2-lg.webp');}
-.pb3{background-image:url('imgs/port3-lg.webp');}
-.pb4{background-image:url('imgs/port4-lg.webp');}
-.pb5{background-image:url('imgs/port5-lg.webp');}
-}
+.port-card:hover img{transform:scale(1.055);filter:sepia(0%) saturate(104%);}
 .port-grad{
   position:absolute;inset:0;
-  background:linear-gradient(to top,rgba(22,14,6,0.88) 0%,rgba(22,14,6,0.02) 55%,transparent);
+  background:linear-gradient(to top,rgba(20,13,6,.90) 0%,rgba(20,13,6,.30) 42%,transparent 72%);
 }
-.port-glass{
-  position:absolute;bottom:0;left:0;right:0;padding:32px 36px;
-  transform:translateY(16px);opacity:0;
-  transition:transform 560ms cubic-bezier(0.16,1,0.3,1),opacity 560ms;
-}
-.port-card:hover .port-glass{transform:translateY(0);opacity:1;}
+/* La ficha SIEMPRE es visible — en táctil no hay hover */
+.port-meta{position:absolute;left:0;right:0;bottom:0;padding:clamp(20px,2.4vw,34px);}
 .port-tag{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.22em;text-transform:uppercase;color:var(--red);margin-bottom:8px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;
+  letter-spacing:.26em;text-transform:uppercase;margin-bottom:9px;
+  /* Rojo de marca aclarado: el #E8192C sobre la foto oscura no da
+     contraste suficiente a este tamaño. */
+  color:#F4535F;
 }
 .port-name{
-  font-family:'Fraunces',serif;font-weight:400;
-  font-size:22px;color:#F3EDE0;letter-spacing:-0.02em;
+  font-family:'Fraunces',Georgia,serif;font-weight:700;font-style:italic;
+  font-size:clamp(18px,2.1vw,30px);color:#F4EEE2;letter-spacing:-.03em;line-height:1.1;
+  transform:translateY(0);transition:transform 520ms var(--ease);
 }
+.port-card:hover .port-name{transform:translateY(-4px);}
+.port-card.w12 .port-name{font-size:clamp(22px,3vw,42px);}
 
-/* ══════════════════════════════════════════
-   NAYARIT
-══════════════════════════════════════════ */
+/* ───────────────────────────────────────────
+   13. NAYARIT
+─────────────────────────────────────────── */
 #nayarit{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  background:var(--cream-alt);
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  position:relative;z-index:2;background:var(--cream-2);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
 }
-.nayarit-grid{
-  margin-top:72px;display:grid;grid-template-columns:1fr 1fr;
-  border:1px solid var(--border-mid);
+.nay-grid{border:1px solid var(--line-2);background:var(--line);gap:1px;}
+.nay-col{background:var(--cream-2);padding:clamp(30px,3.4vw,52px);grid-column:span 6;}
+.nay-col:last-child{background:var(--cream-3);}
+.nay-label{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.26em;text-transform:uppercase;color:var(--red);
+  margin-bottom:32px;display:flex;align-items:center;gap:12px;
 }
-.nay-col{padding:52px 48px;border-right:1px solid var(--border);}
-.nay-col:last-child{border-right:none;background:var(--cream-card);}
-.nay-col-label{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.26em;text-transform:uppercase;color:var(--red);
-  margin-bottom:36px;display:flex;align-items:center;gap:12px;
-}
-.nay-col-label::before{content:'';width:26px;height:1px;background:var(--red);}
-.nay-items{display:flex;flex-direction:column;}
+.nay-label::before{content:'';width:26px;height:1px;background:currentColor;}
 .nay-item{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:18px 0;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;gap:18px;
+  padding:17px 0;border-bottom:1px solid var(--line);
+  transition:padding-left 340ms var(--ease);
 }
 .nay-item:last-child{border-bottom:none;}
-.nay-place{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:16px;color:var(--ink);
-}
+.nay-item:hover{padding-left:10px;}
+.nay-place{font-size:16px;color:var(--ink);}
 .nay-dist{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  color:var(--red);letter-spacing:0.12em;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  color:var(--red);letter-spacing:.12em;flex:none;
 }
-.nay-hl{
-  padding:28px;border:1px solid var(--border-mid);margin-bottom:12px;
-  transition:border-color 300ms;
-}
-.nay-hl:hover{border-color:var(--red);}
+.nay-hl{padding:26px;border:1px solid var(--line-2);margin-bottom:12px;transition:border-color 320ms,background 320ms;}
+.nay-hl:hover{border-color:var(--red);background:var(--red-soft);}
 .nay-hl-n{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:clamp(40px,4.5vw,64px);line-height:1;letter-spacing:-0.04em;color:var(--ink);
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:clamp(38px,4.4vw,60px);line-height:1;letter-spacing:-.045em;color:var(--ink);
 }
+.nay-hl-n.sm{font-size:clamp(22px,2.2vw,28px);line-height:1.25;letter-spacing:-.03em;}
 .nay-hl-n em{font-style:normal;color:var(--red);}
 .nay-hl-l{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  color:var(--ink-dim);letter-spacing:0.16em;text-transform:uppercase;margin-top:8px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  color:var(--dim);letter-spacing:.16em;text-transform:uppercase;margin-top:10px;line-height:1.7;
 }
-.nay-desc{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:16px;color:var(--ink-mid);line-height:1.8;margin-top:24px;
-}
+.nay-desc{font-size:16px;color:var(--body);line-height:1.8;margin-top:24px;}
 
-/* ══════════════════════════════════════════
-   QUOTE — sección oscura cálida
-══════════════════════════════════════════ */
-#quote{
-  position:relative;z-index:2;overflow:hidden;
-  padding:160px var(--pad-h);
+/* ───────────────────────────────────────────
+   14. CITA — parallax que sí funciona en iOS
+─────────────────────────────────────────── */
+.quote{position:relative;z-index:2;overflow:hidden;padding:clamp(100px,14vw,190px) 0;}
+.quote-bg{
+  position:absolute;inset:-12% 0;z-index:0;
   background-image:url('imgs/quote-sm.webp');
   background-size:cover;background-position:center 30%;
-  background-attachment:fixed;
+  will-change:transform;
 }
-@media(min-width:769px){#quote{background-image:url('imgs/quote-lg.webp');}}
-#quote::before{
-  content:'';position:absolute;inset:0;
-  background:rgba(20,13,6,0.84);/* overlay cálido */
-}
-.quote-inner{position:relative;z-index:2;max-width:920px;}
+@media(min-width:769px){.quote-bg{background-image:url('imgs/quote-lg.webp');}}
+.quote::after{content:'';position:absolute;inset:0;background:rgba(20,13,6,.85);z-index:1;}
+.quote-inner{position:relative;z-index:2;max-width:60ch;}
 .quote-mark{
-  font-family:'Fraunces',serif;font-size:120px;line-height:0.7;
-  color:var(--red);opacity:0.28;margin-bottom:10px;
+  font-family:'Fraunces',Georgia,serif;font-size:110px;line-height:.62;
+  color:var(--red);opacity:.3;margin-bottom:12px;
 }
 .quote-text{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:clamp(28px,4vw,52px);color:#F3EDE0;
-  line-height:1.15;letter-spacing:-0.03em;
+  font-family:'Fraunces',Georgia,serif;font-weight:300;
+  font-size:clamp(27px,4.2vw,56px);color:#F4EEE2;line-height:1.12;letter-spacing:-.035em;
 }
 .quote-text em{font-style:italic;font-weight:900;color:var(--red);}
 .quote-sub{
-  margin-top:28px;font-family:'JetBrains Mono',monospace;
-  font-size:10px;letter-spacing:0.22em;text-transform:uppercase;
-  color:rgba(243,237,224,0.35);
+  margin-top:30px;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(244,238,226,.4);
 }
 
-/* ══════════════════════════════════════════
-   GARANTÍAS
-══════════════════════════════════════════ */
-#pilares{
-  position:relative;z-index:2;
-  background:var(--ink);
-  padding:var(--pad-section) var(--pad-h);
-}
-#pilares .eyebrow{color:rgba(243,237,224,0.4);}
+/* ───────────────────────────────────────────
+   15. GARANTÍAS — sección oscura
+─────────────────────────────────────────── */
+#pilares{position:relative;z-index:2;background:var(--ink);}
+#pilares .sec-idx.neutral{color:rgba(244,238,226,.42);}
 #pilares .s-title{color:var(--cream);}
-#pilares .s-title em{color:var(--red);}
-.garantias-grid{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:1px;background:rgba(243,237,224,0.07);
-  margin-top:64px;
+.gar-grid{gap:1px;background:var(--line-inv);border:1px solid var(--line-inv);}
+.gar{
+  grid-column:span 6;background:var(--ink);
+  padding:clamp(32px,3.6vw,58px);position:relative;overflow:hidden;
+  transition:background 320ms;
 }
-.garantia{
-  padding:56px 52px;background:var(--ink);
-  transition:background 300ms;
+.gar:hover{background:#251A0F;}
+.gar-ghost{
+  position:absolute;top:-14px;right:6px;
+  font-family:'Fraunces',Georgia,serif;font-weight:900;font-style:italic;
+  font-size:clamp(88px,10vw,132px);line-height:1;color:rgba(244,238,226,.045);
+  pointer-events:none;user-select:none;transition:color 320ms;
 }
-.garantia:hover{background:#1c1008;}
-.garantia-check{
-  font-family:'JetBrains Mono',monospace;font-size:11px;
-  letter-spacing:0.2em;text-transform:uppercase;
-  color:var(--red);margin-bottom:22px;
+.gar:hover .gar-ghost{color:rgba(232,25,44,.12);}
+.gar-check{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:22px;
+  display:flex;align-items:center;gap:10px;
 }
-.garantia-title{
-  font-family:'Fraunces',serif;font-weight:700;font-style:italic;
-  font-size:22px;color:var(--cream);margin-bottom:14px;letter-spacing:-0.02em;
+.gar-title{
+  font-family:'Fraunces',Georgia,serif;font-weight:700;font-style:italic;
+  font-size:clamp(20px,2.1vw,26px);color:var(--cream);margin-bottom:14px;letter-spacing:-.025em;
 }
-.garantia-body{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:15px;color:rgba(243,237,224,0.5);line-height:1.78;
+.gar-body{font-size:15.5px;color:rgba(244,238,226,.56);line-height:1.8;max-width:48ch;}
+
+/* ───────────────────────────────────────────
+   16. FAQ — accesible, sin tope de altura
+─────────────────────────────────────────── */
+#faq{
+  position:relative;z-index:2;background:var(--cream-2);
+  border-bottom:1px solid var(--line);
 }
-/* ══════════════════════════════════════════
-   FAQ
-══════════════════════════════════════════ */
-#insights{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  background:var(--cream-alt);
-  border-bottom:1px solid var(--border);
-}
-.faq-list{margin-top:56px;border-top:1px solid var(--border);}
-.faq-item{border-bottom:1px solid var(--border);}
+.faq-list{border-top:1px solid var(--line-2);}
+.faq-item{border-bottom:1px solid var(--line);}
 .faq-q{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:26px 0;cursor:pointer;gap:24px;
-  font-family:'Fraunces',serif;font-weight:400;
-  font-size:18px;color:var(--ink);letter-spacing:-0.01em;
-  transition:color 200ms;user-select:none;
+  width:100%;background:none;border:0;text-align:left;
+  display:flex;justify-content:space-between;align-items:center;gap:24px;
+  padding:26px 0;
+  font-family:'Fraunces',Georgia,serif;font-weight:400;
+  font-size:clamp(16px,1.6vw,20px);color:var(--ink);letter-spacing:-.015em;
+  transition:color 220ms;
 }
 .faq-q:hover{color:var(--red);}
 .faq-icon{
-  width:30px;height:30px;border-radius:50%;flex-shrink:0;
-  border:1px solid var(--border-mid);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;line-height:1;color:var(--red);
-  transition:transform 320ms cubic-bezier(0.16,1,0.3,1),background 200ms,border-color 200ms;
-  font-family:'JetBrains Mono',monospace;
+  width:32px;height:32px;border-radius:50%;flex:none;
+  border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:17px;line-height:1;color:var(--red);
+  transition:transform 340ms var(--ease),background 220ms,border-color 220ms,color 220ms;
 }
 .faq-item.open .faq-icon{transform:rotate(45deg);background:var(--red);color:var(--cream);border-color:var(--red);}
-.faq-a{max-height:0;overflow:hidden;transition:max-height 420ms cubic-bezier(0.16,1,0.3,1);}
-.faq-item.open .faq-a{max-height:280px;}
-.faq-a-inner{
-  padding-bottom:28px;max-width:700px;
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:15px;color:var(--ink-mid);line-height:1.8;
+/* grid-template-rows evita el clip de max-height con respuestas largas */
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows 460ms var(--ease);}
+.faq-item.open .faq-a{grid-template-rows:1fr;}
+.faq-a > div{overflow:hidden;}
+.faq-a p{
+  padding-bottom:28px;max-width:72ch;
+  font-size:15.5px;color:var(--body);line-height:1.82;
 }
 
-/* ══════════════════════════════════════════
-   PROCESO — TIMELINE
-══════════════════════════════════════════ */
-#proceso{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  border-bottom:1px solid var(--border);
+/* ───────────────────────────────────────────
+   17. PROCESO — la línea se dibuja al scrollear
+─────────────────────────────────────────── */
+#proceso{position:relative;z-index:2;border-bottom:1px solid var(--line);}
+.timeline{position:relative;column-gap:clamp(16px,2vw,28px);row-gap:44px;}
+.tl-rail{
+  position:absolute;top:16px;left:12.5%;right:12.5%;height:1px;
+  background:var(--line-2);z-index:0;
 }
-.timeline{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:0;margin-top:80px;position:relative;
+.tl-rail i{
+  display:block;height:100%;width:0%;background:var(--red);
+  transition:width 220ms linear;
 }
-.timeline::before{
-  content:'';position:absolute;
-  top:15px;left:calc(12.5% + 14px);right:calc(12.5% + 14px);
-  height:1px;background:var(--border-mid);z-index:0;
-}
-.tl-step{
-  position:relative;z-index:1;
-  padding:0 28px;text-align:center;
-}
+.tl-step{grid-column:span 3;position:relative;z-index:1;text-align:center;padding:0 14px;}
 .tl-circle{
-  width:30px;height:30px;border-radius:50%;
-  border:1.5px solid var(--border-mid);background:var(--cream);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 28px;
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  color:var(--ink-dim);letter-spacing:0.08em;
-  transition:background 300ms,border-color 300ms,color 300ms;
+  width:33px;height:33px;border-radius:50%;
+  border:1.5px solid var(--line-2);background:var(--cream);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 26px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  color:var(--dim);letter-spacing:.08em;
+  transition:background 340ms,border-color 340ms,color 340ms,transform 340ms var(--ease);
 }
-.tl-step:hover .tl-circle{background:var(--red);border-color:var(--red);color:#fff;}
+.tl-step.done .tl-circle,.tl-step:hover .tl-circle{
+  background:var(--red);border-color:var(--red);color:#fff;transform:scale(1.1);
+}
 .tl-tag{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.18em;text-transform:uppercase;
-  color:var(--red);margin-bottom:12px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--red);margin-bottom:12px;
 }
 .tl-name{
-  font-family:'Fraunces',serif;font-weight:700;
-  font-size:17px;color:var(--ink);margin-bottom:10px;letter-spacing:-0.02em;
+  font-family:'Fraunces',Georgia,serif;font-weight:700;
+  font-size:18px;color:var(--ink);margin-bottom:10px;letter-spacing:-.025em;
 }
-.tl-desc{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:13px;color:var(--ink-mid);line-height:1.72;
-}
+.tl-desc{font-size:14px;color:var(--body);line-height:1.75;}
 
-/* ══════════════════════════════════════════
-   CONTACTO
-══════════════════════════════════════════ */
-#contacto{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  background:var(--cream-alt);
-  border-top:1px solid var(--border);
-}
-.ct-wrap{display:grid;grid-template-columns:1fr 1fr;gap:96px;align-items:start;}
-.ct-logo-img{width:80px;height:80px;object-fit:contain;margin-bottom:44px;opacity:0.85;}
-.ci-block{margin-bottom:28px;}
+/* ───────────────────────────────────────────
+   18. CONTACTO
+─────────────────────────────────────────── */
+#contacto{position:relative;z-index:2;background:var(--cream-2);border-top:1px solid var(--line);}
+.ct-grid{row-gap:clamp(48px,6vw,80px);align-items:start;}
+.ct-info{grid-column:1 / span 5;}
+.ct-form{grid-column:7 / span 6;}
+.ct-logo{width:74px;height:74px;object-fit:contain;margin-bottom:38px;opacity:.88;}
+.ci-block{margin-bottom:26px;}
 .ci-label{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--faint);margin-bottom:8px;
 }
-.ci-val{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:18px;color:var(--ink);
-}
-.ci-val a{color:var(--ink);text-decoration:none;transition:color 200ms;}
+.ci-val{font-size:18px;color:var(--ink);}
+.ci-val a{transition:color 220ms;}
 .ci-val a:hover{color:var(--red);}
-
-/* Botones de canal */
-.ct-channels{margin-top:36px;}
-.ct-channels-label{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px;
-}
-.ct-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.ct-channels{margin-top:34px;}
+.ct-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
 .ct-btn{
-  display:inline-flex;align-items:center;gap:9px;
-  padding:11px 18px;border:1px solid var(--border-mid);
-  color:var(--ink-mid);text-decoration:none;cursor:none;
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.14em;text-transform:uppercase;
-  transition:border-color 300ms,color 300ms;
+  display:inline-flex;align-items:center;gap:9px;padding:12px 18px;
+  border:1px solid var(--line-2);color:var(--body);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;
+  transition:border-color 300ms,color 300ms,background 300ms;
 }
-.ct-btn:hover{border-color:var(--red);color:var(--red);}
-.ct-btn svg{width:13px;height:13px;flex-shrink:0;}
+.ct-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-soft);}
+.ct-btn svg{width:14px;height:14px;flex:none;}
 .ci-list{
-  margin-top:36px;font-family:'Fraunces',serif;
-  font-weight:300;font-size:16px;color:var(--ink-dim);line-height:2.4;
+  margin-top:34px;padding-top:26px;border-top:1px solid var(--line);
+  font-size:16px;color:var(--dim);line-height:2.3;
 }
 
-/* Form */
 .f-group{margin-bottom:18px;}
 .f-label{
-  display:block;font-family:'JetBrains Mono',monospace;
-  font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
-  color:var(--ink-dim);margin-bottom:10px;
+  display:block;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:10px;
 }
 .f-inp{
-  width:100%;padding:14px 18px;
-  background:var(--cream-card);
-  border:1px solid var(--border-mid);
-  color:var(--ink);font-family:'Fraunces',serif;font-weight:300;font-size:16px;
+  width:100%;padding:15px 18px;background:var(--cream-3);
+  border:1px solid var(--line-2);color:var(--ink);
+  font-family:'Fraunces',Georgia,serif;font-weight:300;font-size:16px;
   outline:none;transition:border-color 300ms,background 300ms;
 }
-.f-inp:focus{border-color:var(--red);background:#FBF7F2;}
-.f-inp::placeholder{color:var(--ink-faint);}
-textarea.f-inp{resize:vertical;min-height:120px;}
+.f-inp:focus{border-color:var(--red);background:#FDFBF7;outline:none;}
+.f-inp::placeholder{color:var(--faint);}
+textarea.f-inp{resize:vertical;min-height:124px;}
+select.f-inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23937F65' stroke-width='1.4' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 18px center;padding-right:44px;}
 .f-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-
-/* Selector canal */
 .f-method{display:flex;gap:6px;flex-wrap:wrap;}
 .f-method-btn{
-  flex:1;padding:11px 8px;text-align:center;
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.14em;text-transform:uppercase;
-  border:1px solid var(--border-mid);color:var(--ink-dim);
-  cursor:none;transition:border-color 300ms,color 300ms,background 300ms;
+  flex:1 1 90px;padding:12px 8px;text-align:center;background:none;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--line-2);color:var(--dim);
+  transition:border-color 300ms,color 300ms,background 300ms;
 }
-.f-method-btn:hover,.f-method-btn.active{
-  border-color:var(--red);color:var(--red);
-  background:rgba(232,25,44,0.04);
+.f-method-btn:hover,.f-method-btn[aria-pressed="true"]{
+  border-color:var(--red);color:var(--red);background:var(--red-soft);
 }
-
 .btn-sub{
-  width:100%;padding:17px;
-  background:var(--red);color:var(--cream);
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  font-weight:400;letter-spacing:0.2em;text-transform:uppercase;
-  border:none;cursor:none;position:relative;overflow:hidden;margin-top:10px;
-  transition:background 200ms;
+  width:100%;padding:18px;background:var(--red);color:var(--cream);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;
+  letter-spacing:.2em;text-transform:uppercase;border:none;
+  margin-top:10px;transition:background 220ms;
 }
-.btn-sub:hover{background:var(--red-deep);}
-.btn-sub span{position:relative;z-index:1;}
+.btn-sub:hover{background:var(--ink);}
+.f-note{
+  margin-top:14px;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:9.5px;letter-spacing:.1em;color:var(--faint);line-height:1.8;text-transform:uppercase;
+}
 .f-ok{
-  display:none;padding:16px;
-  border:1px solid var(--ink-mid);color:var(--ink-mid);
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.1em;text-align:center;margin-top:14px;
+  display:none;padding:16px;border:1px solid var(--red);color:var(--body);
+  background:var(--red-soft);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.08em;text-align:center;margin-top:14px;line-height:1.8;
 }
+.f-ok.show{display:block;}
 
-/* ══════════════════════════════════════════
-   CLOSING
-══════════════════════════════════════════ */
+/* ───────────────────────────────────────────
+   19. CIERRE · PRE-FOOTER · FOOTER
+─────────────────────────────────────────── */
 .closing{
-  position:relative;z-index:2;
-  padding:100px var(--pad-h);text-align:center;
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
+  position:relative;z-index:2;padding:clamp(72px,9vw,116px) 0;text-align:center;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;
 }
-/* Número de fondo decorativo */
 .closing::before{
-  content:'A+A';
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  font-family:'Fraunces',serif;font-weight:900;font-style:italic;
-  font-size:280px;line-height:1;letter-spacing:-0.06em;
-  color:var(--border);pointer-events:none;
-  z-index:0;white-space:nowrap;
+  content:'A+A';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Fraunces',Georgia,serif;font-weight:900;font-style:italic;
+  font-size:clamp(150px,26vw,300px);line-height:1;letter-spacing:-.06em;
+  color:var(--line);pointer-events:none;z-index:0;white-space:nowrap;
 }
 .closing-inner{position:relative;z-index:1;}
 .closing-quote{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:300;
-  font-size:clamp(22px,3.2vw,40px);line-height:1.3;max-width:840px;
-  margin:0 auto 32px;color:var(--ink);letter-spacing:-0.025em;
+  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:300;
+  font-size:clamp(21px,3.2vw,42px);line-height:1.3;max-width:24ch;
+  margin:0 auto 30px;color:var(--ink);letter-spacing:-.028em;
 }
-.closing-quote strong{font-weight:900;font-style:italic;color:var(--red);}
+.closing-quote strong{font-weight:900;color:var(--red);}
 .closing-attr{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.24em;text-transform:uppercase;color:var(--ink-faint);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.24em;text-transform:uppercase;color:var(--faint);
 }
-.closing-cta{margin-top:48px;display:flex;justify-content:center;gap:14px;}
+.closing-cta{margin-top:44px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
 
-/* ── FOOTER ── */
-footer{
-  position:relative;z-index:2;
-  border-top:1px solid var(--border);
-  background:var(--warm-dark);
-  padding:32px var(--pad-h);
-  display:flex;align-items:center;justify-content:space-between;
+.pre-footer{
+  position:relative;z-index:2;background:var(--ink-2);
+  padding:clamp(56px,7vw,92px) 0;
 }
+.pf-inner{display:flex;align-items:center;justify-content:space-between;gap:44px;flex-wrap:wrap;}
+.pf-text{
+  font-family:'Fraunces',Georgia,serif;font-weight:300;font-style:italic;
+  font-size:clamp(25px,3.8vw,54px);color:var(--cream);
+  letter-spacing:-.038em;line-height:1.04;max-width:18ch;
+}
+.pf-text strong{font-weight:900;color:var(--red);}
+.pf-actions{display:flex;gap:12px;flex-wrap:wrap;}
+
+footer{
+  position:relative;z-index:2;background:var(--ink);
+  border-top:1px solid var(--line-inv);padding:34px 0;
+}
+.f-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
 .f-logo{display:flex;align-items:center;gap:12px;}
-.f-logo img{height:30px;width:30px;object-fit:contain;filter:brightness(0) invert(1);opacity:0.7;}
-.f-brand{font-family:'Fraunces',serif;font-weight:300;font-size:16px;letter-spacing:0.05em;color:rgba(243,237,224,0.7);}
+.f-logo img{height:30px;width:30px;object-fit:contain;filter:brightness(0) invert(1);opacity:.7;}
+.f-brand{font-family:'Fraunces',Georgia,serif;font-weight:300;font-size:16px;letter-spacing:.05em;color:rgba(244,238,226,.72);}
 .f-brand em{font-style:normal;color:var(--red);}
-.f-copy{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(243,237,224,0.28);letter-spacing:0.12em;}
-.f-links{display:flex;gap:28px;list-style:none;}
+.f-copy{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;color:rgba(244,238,226,.3);letter-spacing:.12em;}
+.f-links{display:flex;gap:24px;list-style:none;flex-wrap:wrap;}
 .f-links a{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  color:rgba(243,237,224,0.28);text-decoration:none;
-  letter-spacing:0.16em;text-transform:uppercase;transition:color 200ms;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  color:rgba(244,238,226,.3);letter-spacing:.16em;text-transform:uppercase;transition:color 220ms;
 }
 .f-links a:hover{color:var(--red);}
 
-/* ── DIVISOR editorial ── */
-.divider{
-  display:block;width:100%;height:1px;
-  background:var(--border);margin:0;
+/* Barra de acción fija en móvil — llamar / WhatsApp siempre a mano */
+.mobile-bar{
+  display:none;position:fixed;left:0;right:0;bottom:0;z-index:700;
+  border-top:1px solid var(--line-2);background:rgba(244,238,226,.96);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  padding:10px var(--gut) calc(10px + env(safe-area-inset-bottom));
+  gap:8px;
 }
+/* Sin JS nunca llegaría el .show, así que sólo se esconde si hay JS */
+.js .mobile-bar{transform:translateY(110%);transition:transform 480ms var(--ease);}
+.js .mobile-bar.show{transform:translateY(0);}
+.mobile-bar a{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 8px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  letter-spacing:.16em;text-transform:uppercase;
+}
+.mobile-bar .mb-wa{background:var(--red);color:var(--cream);}
+.mobile-bar .mb-tel{border:1px solid var(--line-3);color:var(--ink);}
 
-/* ── RESPONSIVE ── */
-@media(max-width:1024px){
-  :root{--pad-section:100px;--pad-h:28px;}
-  nav{padding:16px 28px;} .nav-links{display:none;}
-  .hero-content{padding:0 28px 80px;}
-  .about-grid,.ct-wrap{grid-template-columns:1fr;}
-  .about-img{min-height:300px;} .about-img-overlay{background:linear-gradient(to bottom,transparent 55%,var(--cream) 100%);}
+/* ───────────────────────────────────────────
+   20. RESPONSIVE
+─────────────────────────────────────────── */
+@media(max-width:1080px){
+  .hero-main{grid-column:1 / span 12;}
+  .hero-side{grid-column:1 / span 12;max-width:420px;margin-top:40px;}
+  .about-media{grid-column:1 / span 12;}
+  .about-body{grid-column:1 / span 12;}
+  .about-frame{aspect-ratio:16 / 10;}
+  .svc-card.feature{grid-template-columns:1fr;}
+  .svc-card.half{grid-column:span 12;}
+  /* Apiladas: vuelve la proporción por tarjeta */
+  .port-grid{grid-template-rows:none;}
+  .port-card.w7,.port-card.w5{grid-column:span 12;aspect-ratio:16 / 10;}
+  .port-card.w12{aspect-ratio:16 / 9;}
+  .nay-col{grid-column:span 12;}
+  .gar{grid-column:span 12;}
+  .tl-step{grid-column:span 6;}
+  .tl-rail{display:none;}
+  .ct-info,.ct-form{grid-column:1 / span 12;}
+  .slide-dots{display:none;}
+}
+@media(max-width:860px){
+  .nav-links,.nav-cta{display:none;}
+  .burger{display:flex;}
+  .mobile-bar{display:flex;}
+  /* Deja aire bajo el footer para que la barra fija no lo tape */
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
+  .scroll-cue{display:none;}
   .stats-row{grid-template-columns:1fr 1fr;}
-  .svc-grid{grid-template-columns:1fr;}
-  .garantias-grid{grid-template-columns:1fr;}
-  .port-grid{grid-template-columns:1fr;grid-template-rows:auto;}
-  .port-card.span2{grid-column:auto;height:280px;} .port-card{height:240px;}
-  .nayarit-grid{grid-template-columns:1fr;}
-  .timeline{grid-template-columns:1fr 1fr;gap:40px;}
-  .timeline::before{display:none;}
-  footer{flex-direction:column;gap:20px;text-align:center;}
-  .closing-cta{flex-direction:column;align-items:center;}
-  .hero-stats-row{flex-wrap:wrap;}
-  .closing::before{font-size:160px;}
-  .faq-q{font-size:16px;}
+  .stat:nth-child(2n){border-right:none;}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--line);}
+  /* La ficha técnica pasa a tira horizontal para no alargar el hero */
+  .hero-side{max-width:none;margin-top:34px;}
+  .hero-spec{display:grid;grid-template-columns:repeat(3,1fr);}
+  .hero-spec-head{grid-column:1 / -1;}
+  .hspec{
+    border-bottom:none;border-right:1px solid rgba(244,238,226,.10);
+    padding:15px 12px;
+  }
+  .hspec:last-child{border-right:none;}
+  .hspec-n{font-size:26px;}
+  .hspec-l{font-size:8px;letter-spacing:.14em;margin-top:5px;}
+  .about-stamp{position:static;max-width:none;margin-top:-1px;border-top:none;}
+  .f-grid{grid-template-columns:1fr;}
+  .pf-inner{flex-direction:column;align-items:flex-start;}
 }
-@media(max-width:600px){
-  .timeline{grid-template-columns:1fr;}
-}
-
-/* ══════════════════════════════════════════
-   V2 — ELEVACIÓN VISUAL
-══════════════════════════════════════════ */
-
-/* Hero — H1 más imponente, subtítulo más legible */
-.hero-h1{font-size:clamp(58px,9.5vw,142px);}
-.hero-sub{font-size:18px;color:rgba(243,237,224,0.68);max-width:500px;}
-.btn.solid{padding:17px 42px;letter-spacing:0.2em;}
-.btn.outline{padding:17px 36px;}
-
-/* Herramienta de coordenadas — badge flotante en hero */
-.hero-badge{
-  position:absolute;top:50%;right:var(--pad-h);z-index:4;
-  transform:translateY(-50%);
-  display:flex;flex-direction:column;align-items:flex-end;gap:6px;
-  opacity:0;animation:fadeIn 1s ease 1.8s forwards;
-}
-.hb-line{width:1px;height:60px;background:linear-gradient(to bottom,transparent,rgba(243,237,224,0.2));margin-left:auto;}
-.hb-tag{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.22em;text-transform:uppercase;
-  color:rgba(243,237,224,0.28);writing-mode:vertical-rl;
-  text-orientation:mixed;transform:rotate(180deg);
+@media(max-width:560px){
+  .tl-step{grid-column:span 12;text-align:left;padding:0;}
+  .tl-circle{margin:0 0 18px;}
+  .closing-cta{flex-direction:column;}
+  .closing-cta .btn{width:100%;}
+  .hero{min-height:92svh;}
 }
 
-/* Servicios — iconos y tarjeta más premium */
-.svc-icon{
-  width:36px;height:36px;margin-bottom:28px;
-  color:var(--ink-faint);
-  transition:color 400ms;
-}
-.svc-card:hover .svc-icon{color:var(--red);}
-.svc-name{font-size:28px;}
-
-/* Portfolio — overlay siempre visible en tarjeta grande */
-.port-card.span2 .port-glass{transform:translateY(0);opacity:1;}
-.port-name{
-  font-family:'Fraunces',serif;font-weight:700;font-style:italic;
-  font-size:clamp(18px,2.2vw,28px);color:#F3EDE0;letter-spacing:-0.03em;line-height:1.1;
-}
-.port-card.span2 .port-name{font-size:clamp(22px,3vw,40px);}
-.port-tag{letter-spacing:0.26em;}
-
-/* About — badge credencial */
-.about-badge{
-  margin-top:32px;padding:14px 20px;
-  border:1px solid var(--border);
-  display:inline-flex;align-items:center;gap:12px;
-}
-.about-badge-check{
-  width:20px;height:20px;border-radius:50%;flex-shrink:0;
-  background:var(--red);display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:11px;line-height:1;
-}
-.about-badge-text{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  color:var(--ink-dim);letter-spacing:0.14em;text-transform:uppercase;
+/* ───────────────────────────────────────────
+   21. MOVIMIENTO REDUCIDO
+   Todo se muestra ya en su estado final.
+─────────────────────────────────────────── */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+  [data-reveal],[data-reveal].is-in{opacity:1!important;transform:none!important;}
+  [data-reveal="line"]{transform:scaleX(1)!important;}
+  .rl{transform:none!important;}
+  .slide:nth-child(1){opacity:1;}
+  .quote-bg{transform:none!important;}
 }
 
-/* Pre-footer — banda de CTA de impacto */
-.pre-footer{
-  position:relative;z-index:2;
-  background:var(--warm-dark);
-  padding:88px var(--pad-h);
-  display:flex;align-items:center;justify-content:space-between;gap:48px;
-  border-top:1px solid rgba(243,237,224,0.06);
-}
-.pf-text{
-  font-family:'Fraunces',serif;font-weight:300;font-style:italic;
-  font-size:clamp(26px,3.8vw,54px);
-  color:var(--cream);letter-spacing:-0.035em;line-height:1.0;
-  max-width:640px;
-}
-.pf-text strong{font-weight:900;font-style:italic;color:var(--red);}
-.pf-actions{display:flex;gap:14px;flex-shrink:0;}
-
-/* Sección título — ligeramente más grande */
-.s-title{font-size:clamp(38px,5.5vw,88px);}
-
-/* Responsive additions */
-@media(max-width:1024px){
-  .pre-footer{flex-direction:column;align-items:flex-start;gap:36px;}
-  .hero-badge{display:none;}
-}
-
-/* content-visibility: secciones debajo del fold se renderizan solo al llegar */
-#proyectos,#nayarit,#pilares,#insights,#proceso,#contacto{
-  content-visibility:auto;
-  contain-intrinsic-size:auto 600px;
-}
-
-/* prefers-reduced-motion: respeta preferencia del sistema */
-@media(prefers-reduced-motion:reduce){
-  .reveal{transition:none;opacity:1;transform:none;}
-  .rl{transition:none;opacity:1;transform:none;}
-  .slide{animation-duration:0.01ms!important;}
-  .mq-track{animation:none;}
-  .hero-accent-line{animation:none;transform:scaleY(1);}
+/* Impresión */
+@media print{
+  .nav,.drawer,.mobile-bar,.progress,#cur,.mq-wrap,.scroll-cue,.slide-dots{display:none!important;}
+  [data-reveal]{opacity:1!important;transform:none!important;}
+  body{background:#fff;color:#000;}
 }
 </style>
 </head>
 <body>
 
-<div class="scroll-progress" id="sp"></div>
-<div id="cur"><div class="dot"></div></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div id="cur" aria-hidden="true"><div class="ring"></div><div class="dot"></div></div>
 
-<!-- ═══ NAV ═══ -->
-<nav id="nav">
-  <div class="nav-logo">
-    <img src="imgs/logo.png" alt="LAB A+A"/>
-    <div class="nav-brand">LAB <em>A+A</em></div>
+<a href="#nosotros" class="skip">Saltar al contenido</a>
+
+<!-- ═══════════ NAV ═══════════ -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#inicio" aria-label="LAB A+A — Inicio">
+      <img src="imgs/logo.png" alt="" width="34" height="34"/>
+      <div class="nav-brand">LAB <em>A+A</em><small>Appraiser &amp; Architect</small></div>
+    </a>
+    <nav aria-label="Principal">
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#nosotros">Nosotros</a></li>
+        <li><a href="#servicios">Servicios</a></li>
+        <li><a href="#proyectos">Proyectos</a></li>
+        <li><a href="#nayarit">Nayarit</a></li>
+        <li><a href="#proceso">Proceso</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+    <a href="#contacto" class="nav-cta"><span>Iniciar proyecto</span></a>
+    <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="drawer">
+      <i></i><i></i><i></i>
+    </button>
   </div>
-  <ul class="nav-links">
-    <li><a href="#nosotros">Nosotros</a></li>
-    <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#proyectos">Proyectos</a></li>
-    <li><a href="#nayarit">Nayarit</a></li>
-    <li><a href="#proceso">Proceso</a></li>
-    <li><a href="#contacto">Contacto</a></li>
+</header>
+
+<!-- ═══════════ MENÚ MÓVIL ═══════════ -->
+<div class="drawer" id="drawer" aria-hidden="true">
+  <ul class="drawer-links">
+    <li><a href="#nosotros" style="--d:80ms"><b>01</b>Nosotros</a></li>
+    <li><a href="#servicios" style="--d:130ms"><b>02</b>Servicios</a></li>
+    <li><a href="#proyectos" style="--d:180ms"><b>03</b>Proyectos</a></li>
+    <li><a href="#nayarit" style="--d:230ms"><b>04</b>Nayarit</a></li>
+    <li><a href="#proceso" style="--d:280ms"><b>05</b>Proceso</a></li>
+    <li><a href="#contacto" style="--d:330ms"><b>06</b>Contacto</a></li>
   </ul>
-  <a href="#contacto" class="nav-cta"><span>Iniciar proyecto</span></a>
-</nav>
-
-<!-- ═══ HERO ═══ -->
-<section class="hero" id="inicio">
-  <div class="slides">
-    <div class="slide"></div>
-    <div class="slide"></div>
-    <div class="slide"></div>
-    <div class="slide"></div>
+  <div class="drawer-foot">
+    <span>Tepic, Nayarit · México</span>
+    <a href="tel:3111614155">311 161 4155</a>
+    <a href="mailto:arqlabaa@gmail.com">arqlabaa@gmail.com</a>
+    <div class="drawer-actions">
+      <a href="https://wa.me/523111614155" class="btn solid" target="_blank" rel="noopener"><span>WhatsApp</span></a>
+      <a href="#contacto" class="btn outline-dark"><span>Iniciar proyecto</span></a>
+    </div>
   </div>
-  <div class="hero-overlay"></div>
-  <div class="hero-accent-line"></div>
-  <div class="slide-dots" id="slideDots">
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="inicio">
+  <div class="slides" aria-hidden="true">
+    <div class="slide"></div><div class="slide"></div><div class="slide"></div><div class="slide"></div>
+  </div>
+  <div class="hero-overlay" aria-hidden="true"></div>
+  <div class="hero-line" aria-hidden="true"></div>
+
+  <div class="slide-dots" id="slideDots" aria-hidden="true">
     <div class="sdot active"><div class="sdot-fill"></div></div>
     <div class="sdot"><div class="sdot-fill"></div></div>
     <div class="sdot"><div class="sdot-fill"></div></div>
     <div class="sdot"><div class="sdot-fill"></div></div>
   </div>
-  <div class="hero-content">
-    <div class="hero-eyebrow">Appraiser & Architect · Tepic, Nayarit</div>
-    <h1 class="hero-h1">
-      <span class="rw"><span class="rl" data-d="280">No es solo</span></span>
-      <span class="rw"><span class="rl" data-d="400">un espacio.</span></span>
-      <span class="rw"><span class="rl" data-d="520">Es tu <em>legado.</em></span></span>
-    </h1>
-    <div class="hero-sub">
-      <span class="rw"><span class="rl" data-d="700">
-        Diseño con propósito. Construcción sin excusas.<br>
-        Valuación con precisión — todo bajo un mismo techo.
-      </span></span>
-    </div>
-    <div class="hero-actions">
-      <span class="rw"><span class="rl" data-d="900" style="display:flex;gap:14px;">
-        <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
-        <a href="#proyectos" class="btn outline"><span>Ver proyectos</span></a>
-      </span></span>
-    </div>
-    <div class="hero-stats-row">
-      <div class="hstat">
-        <div class="hstat-n">12<em>+</em></div>
-        <div class="hstat-l">Años de experiencia</div>
+
+  <div class="hero-inner">
+    <div class="wrap g12 hero-grid">
+      <div class="hero-main">
+        <p class="hero-eyebrow">Appraiser &amp; Architect · Tepic, Nayarit</p>
+        <h1 class="hero-h1">
+          <span class="rw"><span class="rl" style="--d:280ms">No es solo</span></span>
+          <span class="rw"><span class="rl" style="--d:400ms">un espacio.</span></span>
+          <span class="rw"><span class="rl" style="--d:520ms">Es tu <em>legado.</em></span></span>
+        </h1>
+        <div class="hero-sub">
+          <span class="rw"><span class="rl" style="--d:700ms">
+            Diseño con propósito. Construcción sin excusas.<br/>
+            Valuación con precisión — todo bajo un mismo techo.
+          </span></span>
+        </div>
+        <div class="hero-actions">
+          <span class="rw"><span class="rl" style="--d:900ms;display:flex;gap:12px;flex-wrap:wrap;">
+            <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
+            <a href="#proyectos" class="btn outline"><span>Ver proyectos</span></a>
+          </span></span>
+        </div>
       </div>
-      <div class="hstat">
-        <div class="hstat-n">200<em>+</em></div>
-        <div class="hstat-l">Proyectos entregados</div>
-      </div>
-      <div class="hstat">
-        <div class="hstat-n">98<em>%</em></div>
-        <div class="hstat-l">Clientes satisfechos</div>
-      </div>
+
+      <aside class="hero-side">
+        <div class="hero-spec">
+          <div class="hero-spec-head"><span>Ficha técnica</span><span>LAB A+A</span></div>
+          <div class="hspec"><div class="hspec-n">12<em>+</em></div><div class="hspec-l">Años de experiencia</div></div>
+          <div class="hspec"><div class="hspec-n">200<em>+</em></div><div class="hspec-l">Proyectos entregados</div></div>
+          <div class="hspec"><div class="hspec-n">98<em>%</em></div><div class="hspec-l">Clientes satisfechos</div></div>
+        </div>
+      </aside>
     </div>
   </div>
-  <div class="hero-badge">
-    <span class="hb-tag">Tepic · Nayarit · México</span>
-    <div class="hb-line"></div>
-  </div>
-  <div class="scroll-cue">
-    <div class="sc-line"></div>
-    <span class="sc-txt">Scroll</span>
+
+  <div class="scroll-cue" aria-hidden="true">
+    <div class="sc-line"></div><span class="sc-txt">Scroll</span>
   </div>
 </section>
 
-<!-- MARQUEE -->
-<div class="mq-wrap">
-  <div class="mq-track">
-    <div class="mq-item"><span class="mq-dot"></span>Diseño Arquitectónico</div>
-    <div class="mq-item"><span class="mq-dot"></span>Construcción Integral</div>
-    <div class="mq-item"><span class="mq-dot"></span>Valuación Inmobiliaria</div>
-    <div class="mq-item"><span class="mq-dot"></span>Supervisión de Obra</div>
-    <div class="mq-item"><span class="mq-dot"></span>Diseño de Interiores</div>
-    <div class="mq-item"><span class="mq-dot"></span>Tepic · Nayarit · Riviera</div>
-    <div class="mq-item"><span class="mq-dot"></span>Precisión en cada detalle</div>
+<!-- ═══════════ MARQUEE ═══════════ -->
+<div class="mq-wrap" aria-hidden="true">
+  <div class="mq-track" id="mqTrack">
     <div class="mq-item"><span class="mq-dot"></span>Diseño Arquitectónico</div>
     <div class="mq-item"><span class="mq-dot"></span>Construcción Integral</div>
     <div class="mq-item"><span class="mq-dot"></span>Valuación Inmobiliaria</div>
@@ -1105,50 +1270,61 @@ footer{
   </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-section">
-  <div class="stats-row reveal" id="statsRow">
-    <div class="stat">
-      <div class="stat-number" data-target="12" data-suffix="+">0<span>+</span></div>
-      <div class="stat-label">Años de experiencia</div>
-      <div class="stat-delta">Trayectoria consolidada</div>
-    </div>
-    <div class="stat">
-      <div class="stat-number" data-target="200" data-suffix="+">0<span>+</span></div>
-      <div class="stat-label">Proyectos entregados</div>
-      <div class="stat-delta">Residencial · Comercial</div>
-    </div>
-    <div class="stat">
-      <div class="stat-number" data-target="98" data-suffix="%">0<span>%</span></div>
-      <div class="stat-label">Clientes satisfechos</div>
-      <div class="stat-delta">Referidos y repetidos</div>
-    </div>
-    <div class="stat">
-      <div class="stat-number" data-target="3" data-suffix="">0</div>
-      <div class="stat-label">Especialidades</div>
-      <div class="stat-delta">Diseño · Construc. · Valuac.</div>
+<!-- ═══════════ CIFRAS ═══════════ -->
+<div class="stats">
+  <div class="wrap">
+    <div class="stats-row" id="statsRow" data-reveal>
+      <div class="stat">
+        <div class="stat-n" data-target="12" data-suffix="+">0<span>+</span></div>
+        <div class="stat-l">Años de experiencia</div>
+        <div class="stat-d">Trayectoria consolidada</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" data-target="200" data-suffix="+">0<span>+</span></div>
+        <div class="stat-l">Proyectos entregados</div>
+        <div class="stat-d">Residencial · Comercial</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" data-target="98" data-suffix="%">0<span>%</span></div>
+        <div class="stat-l">Clientes satisfechos</div>
+        <div class="stat-d">Referidos y repetidos</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" data-target="3" data-suffix="">0</div>
+        <div class="stat-l">Especialidades</div>
+        <div class="stat-d">Diseño · Construc. · Valuac.</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- NOSOTROS -->
-<section id="nosotros">
-  <div class="about-grid">
-    <div class="about-img">
-      <picture>
-        <source media="(min-width:769px)" srcset="imgs/about-lg.webp" type="image/webp"/>
-        <source srcset="imgs/about-sm.webp" type="image/webp"/>
-        <img src="imgs/about.jpg" alt="Interiores LAB A+A" id="parImg"/>
-      </picture>
-      <div class="about-img-overlay"></div>
+<!-- ═══════════ NOSOTROS ═══════════ -->
+<section class="section" id="nosotros">
+  <div class="wrap g12 about">
+    <div class="about-media" data-reveal="left">
+      <div class="about-frame">
+        <picture>
+          <source media="(min-width:769px)" srcset="imgs/about-lg.webp" type="image/webp"/>
+          <source srcset="imgs/about-sm.webp" type="image/webp"/>
+          <img src="imgs/about.jpg" alt="Interior residencial diseñado por LAB A+A" id="parImg" loading="lazy" decoding="async"/>
+        </picture>
+      </div>
+      <div class="about-stamp">
+        <div class="about-stamp-n">A+A</div>
+        <div class="about-stamp-l">Arquitectura · Construcción<br/>Valuación · Tepic, Nayarit</div>
+      </div>
     </div>
-    <div class="about-text">
-      <div class="eyebrow">Quiénes somos</div>
-      <h2 class="s-title reveal">Interiores que<br><em>enamoran.</em></h2>
-      <p class="about-body reveal">
+
+    <div class="about-body">
+      <div class="sec-idx" data-reveal><span>01</span><i></i><span>Quiénes somos</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">Interiores que</span></span>
+        <span class="rw"><span class="rl"><em>enamoran.</em></span></span>
+      </h2>
+      <p class="about-p" data-reveal>
         LAB A+A es un estudio especializado en arquitectura, construcción y valuación inmobiliaria en Tepic, Nayarit. Combinamos rigor técnico con visión creativa para entregar proyectos que trascienden lo ordinario — desde el primer trazo hasta la llave en mano.
       </p>
-      <div class="about-pills reveal">
+      <div class="about-pills" data-stagger data-reveal>
         <span class="pill">Diseño</span>
         <span class="pill">Construcción</span>
         <span class="pill">Supervisión</span>
@@ -1156,144 +1332,178 @@ footer{
         <span class="pill">Gestión</span>
         <span class="pill">Nayarit</span>
       </div>
-      <div class="about-badge reveal">
-        <div class="about-badge-check">✓</div>
+      <div class="about-badge" data-reveal>
+        <div class="about-badge-check" aria-hidden="true">✓</div>
         <div class="about-badge-text">Arquitectos titulados · Valuadores certificados SHF</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SERVICIOS -->
-<section id="servicios">
-  <div style="padding:0 var(--pad-h);">
-    <div class="eyebrow">Nuestros servicios</div>
-    <h2 class="s-title reveal">Todo lo que necesitas,<br>en un <em>solo lugar.</em></h2>
-  </div>
-  <div class="svc-grid">
-    <div class="svc-card reveal">
-      <div class="svc-ghost">01</div>
-      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="18" cy="18" r="15"/>
-        <line x1="18" y1="3" x2="18" y2="33"/>
-        <line x1="3" y1="18" x2="33" y2="18"/>
-        <circle cx="18" cy="18" r="4"/>
-      </svg>
-      <div class="svc-num">01 — Diseño</div>
-      <div class="svc-name">Diseño Arquitectónico</div>
-      <div class="svc-desc">Proyectos que equilibran estética, funcionalidad y sustentabilidad — desde la idea hasta los planos constructivos.</div>
-      <ul class="svc-list">
-        <li>Diseño residencial y comercial</li>
-        <li>Diseño de interiores</li>
-        <li>Renders y visualización 3D</li>
-        <li>Planos y memoria descriptiva</li>
-      </ul>
+<!-- ═══════════ SERVICIOS ═══════════ -->
+<section class="section" id="servicios">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-idx" data-reveal><span>02</span><i></i><span>Nuestros servicios</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">Todo lo que necesitas,</span></span>
+        <span class="rw"><span class="rl">en un <em>solo lugar.</em></span></span>
+      </h2>
+      <p class="s-lead" data-reveal>Tres especialidades que se contratan por separado o como un solo proceso continuo. Un mismo equipo responde por el diseño, la obra y el valor final.</p>
     </div>
-    <div class="svc-card reveal">
-      <div class="svc-ghost">02</div>
-      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="14" width="28" height="20"/>
-        <polyline points="2,14 18,4 34,14"/>
-        <rect x="11" y="22" width="6" height="12"/>
-        <rect x="20" y="22" width="6" height="8"/>
-      </svg>
-      <div class="svc-num">02 — Construcción</div>
-      <div class="svc-name">Construcción Integral</div>
-      <div class="svc-desc">Ejecutamos cada proyecto con los más altos estándares de calidad, en tiempo y forma, sin sorpresas.</div>
-      <ul class="svc-list">
-        <li>Construcción residencial</li>
-        <li>Edificios y locales comerciales</li>
-        <li>Remodelaciones</li>
-        <li>Supervisión de obra</li>
-      </ul>
-    </div>
-    <div class="svc-card reveal">
-      <div class="svc-ghost">03</div>
-      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
-        <line x1="18" y1="4" x2="18" y2="32"/>
-        <line x1="18" y1="12" x2="5" y2="20"/>
-        <line x1="18" y1="12" x2="31" y2="20"/>
-        <path d="M5 20 Q5 27 11.5 27 Q18 27 18 20"/>
-        <path d="M18 20 Q18 27 24.5 27 Q31 27 31 20"/>
-        <line x1="12" y1="32" x2="24" y2="32"/>
-      </svg>
-      <div class="svc-num">03 — Valuación</div>
-      <div class="svc-name">Valuación Inmobiliaria</div>
-      <div class="svc-desc">Dictámenes técnicos certificados para tomar decisiones informadas sobre tus activos inmobiliarios.</div>
-      <ul class="svc-list">
-        <li>Avalúos comerciales</li>
-        <li>Valuación hipotecaria</li>
-        <li>Peritaje inmobiliario</li>
-        <li>Análisis de mercado</li>
-      </ul>
+
+    <div class="g12 svc-grid" data-stagger>
+      <!-- 01 — destacado -->
+      <article class="svc-card feature" data-reveal="scale">
+        <div>
+          <div class="svc-ghost" aria-hidden="true">01</div>
+          <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+            <circle cx="18" cy="18" r="15"/><line x1="18" y1="3" x2="18" y2="33"/>
+            <line x1="3" y1="18" x2="33" y2="18"/><circle cx="18" cy="18" r="4"/>
+          </svg>
+          <div class="svc-num">01 — Diseño</div>
+          <h3 class="svc-name">Diseño Arquitectónico</h3>
+          <p class="svc-desc">Proyectos que equilibran estética, funcionalidad y sustentabilidad — desde la idea hasta los planos constructivos.</p>
+        </div>
+        <ul class="svc-list">
+          <li>Diseño residencial y comercial</li>
+          <li>Diseño de interiores</li>
+          <li>Renders y visualización 3D</li>
+          <li>Planos y memoria descriptiva</li>
+        </ul>
+      </article>
+
+      <!-- 02 -->
+      <article class="svc-card half" data-reveal="scale">
+        <div class="svc-ghost" aria-hidden="true">02</div>
+        <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+          <rect x="4" y="14" width="28" height="20"/><polyline points="2,14 18,4 34,14"/>
+          <rect x="11" y="22" width="6" height="12"/><rect x="20" y="22" width="6" height="8"/>
+        </svg>
+        <div class="svc-num">02 — Construcción</div>
+        <h3 class="svc-name">Construcción Integral</h3>
+        <p class="svc-desc">Ejecutamos cada proyecto con los más altos estándares de calidad, en tiempo y forma, sin sorpresas.</p>
+        <ul class="svc-list">
+          <li>Construcción residencial</li>
+          <li>Edificios y locales comerciales</li>
+          <li>Remodelaciones</li>
+          <li>Supervisión de obra</li>
+        </ul>
+      </article>
+
+      <!-- 03 -->
+      <article class="svc-card half" data-reveal="scale">
+        <div class="svc-ghost" aria-hidden="true">03</div>
+        <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+          <line x1="18" y1="4" x2="18" y2="32"/><line x1="18" y1="12" x2="5" y2="20"/>
+          <line x1="18" y1="12" x2="31" y2="20"/>
+          <path d="M5 20 Q5 27 11.5 27 Q18 27 18 20"/><path d="M18 20 Q18 27 24.5 27 Q31 27 31 20"/>
+          <line x1="12" y1="32" x2="24" y2="32"/>
+        </svg>
+        <div class="svc-num">03 — Valuación</div>
+        <h3 class="svc-name">Valuación Inmobiliaria</h3>
+        <p class="svc-desc">Dictámenes técnicos certificados para tomar decisiones informadas sobre tus activos inmobiliarios.</p>
+        <ul class="svc-list">
+          <li>Avalúos comerciales</li>
+          <li>Valuación hipotecaria</li>
+          <li>Peritaje inmobiliario</li>
+          <li>Análisis de mercado</li>
+        </ul>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- PORTFOLIO -->
-<section id="proyectos">
-  <div style="padding:0 var(--pad-h);">
-    <div class="eyebrow neutral">Portafolio</div>
-    <h2 class="s-title reveal">Proyectos que <em>hablan<br>por sí solos.</em></h2>
-  </div>
-  <div class="port-grid" style="margin:0 var(--pad-h);">
-    <!-- Proyecto 1 — gran tarjeta span2 -->
-    <div class="port-card span2 reveal">
-      <div class="port-bg pb1" style="background-position:center 50%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Arquitectura · Residencial · Nayarit</div>
-        <div class="port-name">Casa Contemporánea — Fachada Doble Nivel</div>
-      </div>
+<!-- ═══════════ PROYECTOS ═══════════ -->
+<section class="section" id="proyectos">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-idx neutral" data-reveal><span>03</span><i></i><span>Portafolio</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">Proyectos que <em>hablan</em></span></span>
+        <span class="rw"><span class="rl"><em>por sí solos.</em></span></span>
+      </h2>
     </div>
-    <!-- Proyecto 2 -->
-    <div class="port-card reveal">
-      <div class="port-bg pb2" style="background-position:center 55%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Diseño · Interiorismo · Residencial</div>
-        <div class="port-name">Sala — Comedor con Escalera Flotante</div>
-      </div>
-    </div>
-    <!-- Proyecto 3 -->
-    <div class="port-card reveal">
-      <div class="port-bg pb3" style="background-position:center 50%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Cocina · Minimalista · Interiorismo</div>
-        <div class="port-name">Cocina Integral — Mármol y Madera</div>
-      </div>
-    </div>
-    <!-- Proyecto 4 -->
-    <div class="port-card reveal">
-      <div class="port-bg pb4" style="background-position:center 50%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Suite · Diseño · Residencial</div>
-        <div class="port-name">Suite Principal — Vista al Jardín</div>
-      </div>
-    </div>
-    <!-- Proyecto 5 -->
-    <div class="port-card reveal">
-      <div class="port-bg pb5" style="background-position:center 40%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Paisajismo · Alberca · Exterior</div>
-        <div class="port-name">Jardín con Alberca — Terraza Lounge</div>
-      </div>
+
+    <div class="g12 port-grid" data-stagger>
+      <article class="port-card w7" data-reveal="scale">
+        <picture>
+          <source media="(min-width:769px)" srcset="imgs/port1-lg.webp" type="image/webp"/>
+          <img src="imgs/port1-sm.webp" alt="Casa contemporánea con fachada de doble nivel" loading="lazy" decoding="async"/>
+        </picture>
+        <div class="port-grad" aria-hidden="true"></div>
+        <div class="port-meta">
+          <div class="port-tag">Arquitectura · Residencial · Nayarit</div>
+          <h3 class="port-name">Casa Contemporánea — Fachada Doble Nivel</h3>
+        </div>
+      </article>
+
+      <article class="port-card w5" data-reveal="scale">
+        <picture>
+          <source media="(min-width:769px)" srcset="imgs/port2-lg.webp" type="image/webp"/>
+          <img src="imgs/port2-sm.webp" alt="Sala y comedor con escalera flotante" loading="lazy" decoding="async"/>
+        </picture>
+        <div class="port-grad" aria-hidden="true"></div>
+        <div class="port-meta">
+          <div class="port-tag">Diseño · Interiorismo</div>
+          <h3 class="port-name">Sala — Comedor con Escalera Flotante</h3>
+        </div>
+      </article>
+
+      <article class="port-card w5" data-reveal="scale">
+        <picture>
+          <source media="(min-width:769px)" srcset="imgs/port3-lg.webp" type="image/webp"/>
+          <img src="imgs/port3-sm.webp" alt="Cocina integral en mármol y madera" loading="lazy" decoding="async"/>
+        </picture>
+        <div class="port-grad" aria-hidden="true"></div>
+        <div class="port-meta">
+          <div class="port-tag">Cocina · Minimalista</div>
+          <h3 class="port-name">Cocina Integral — Mármol y Madera</h3>
+        </div>
+      </article>
+
+      <article class="port-card w7" data-reveal="scale">
+        <picture>
+          <source media="(min-width:769px)" srcset="imgs/port4-lg.webp" type="image/webp"/>
+          <img src="imgs/port4-sm.webp" alt="Suite principal con vista al jardín" loading="lazy" decoding="async"/>
+        </picture>
+        <div class="port-grad" aria-hidden="true"></div>
+        <div class="port-meta">
+          <div class="port-tag">Suite · Diseño · Residencial</div>
+          <h3 class="port-name">Suite Principal — Vista al Jardín</h3>
+        </div>
+      </article>
+
+      <article class="port-card w12" data-reveal="scale">
+        <picture>
+          <source media="(min-width:769px)" srcset="imgs/port5-lg.webp" type="image/webp"/>
+          <img src="imgs/port5-sm.webp" alt="Jardín con alberca y terraza lounge" loading="lazy" decoding="async" style="object-position:center 40%"/>
+        </picture>
+        <div class="port-grad" aria-hidden="true"></div>
+        <div class="port-meta">
+          <div class="port-tag">Paisajismo · Alberca · Exterior</div>
+          <h3 class="port-name">Jardín con Alberca — Terraza Lounge</h3>
+        </div>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- NAYARIT -->
-<section id="nayarit">
-  <div class="eyebrow">Raíces en Nayarit</div>
-  <h2 class="s-title reveal">Diseñamos para<br><em>este territorio.</em></h2>
-  <p class="pilares-intro reveal">Conocemos el clima, los materiales, los reglamentos y el mercado de Nayarit mejor que nadie. Esa ventaja se traduce en proyectos más inteligentes, más durables y con mayor valor a largo plazo.</p>
-  <div class="nayarit-grid reveal">
-    <div class="nay-col">
-      <div class="nay-col-label">Zona de influencia</div>
-      <div class="nay-items">
+<!-- ═══════════ NAYARIT ═══════════ -->
+<section class="section" id="nayarit">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-idx" data-reveal><span>04</span><i></i><span>Raíces en Nayarit</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">Diseñamos para</span></span>
+        <span class="rw"><span class="rl"><em>este territorio.</em></span></span>
+      </h2>
+      <p class="s-lead" data-reveal>Conocemos el clima, los materiales, los reglamentos y el mercado de Nayarit mejor que nadie. Esa ventaja se traduce en proyectos más inteligentes, más durables y con mayor valor a largo plazo.</p>
+    </div>
+
+    <div class="g12 nay-grid" data-reveal>
+      <div class="nay-col">
+        <div class="nay-label">Zona de influencia</div>
         <div class="nay-item"><span class="nay-place">Tepic (sede)</span><span class="nay-dist">Base principal</span></div>
         <div class="nay-item"><span class="nay-place">Xalisco · Compostela</span><span class="nay-dist">30 min</span></div>
         <div class="nay-item"><span class="nay-place">Bahía de Banderas</span><span class="nay-dist">1h 15min</span></div>
@@ -1301,383 +1511,690 @@ footer{
         <div class="nay-item"><span class="nay-place">San Blas · Novillero</span><span class="nay-dist">1h 10min</span></div>
         <div class="nay-item"><span class="nay-place">Puerto Vallarta</span><span class="nay-dist">1h 45min</span></div>
       </div>
-    </div>
-    <div class="nay-col">
-      <div class="nay-col-label">Por qué Nayarit</div>
-      <div class="nay-hl">
-        <div class="nay-hl-n" style="font-size:1.5rem;line-height:1.3">Cotiza sin<em> compromiso</em></div>
-        <div class="nay-hl-l">El costo varía según proyecto — te damos un estimado preciso y gratuito</div>
+      <div class="nay-col">
+        <div class="nay-label">Por qué Nayarit</div>
+        <div class="nay-hl">
+          <div class="nay-hl-n sm">Cotiza sin <em>compromiso</em></div>
+          <div class="nay-hl-l">El costo varía según proyecto — te damos un estimado preciso y gratuito</div>
+        </div>
+        <div class="nay-hl">
+          <div class="nay-hl-n">+18<em>%</em></div>
+          <div class="nay-hl-l">Plusvalía anual en Riviera Nayarit</div>
+        </div>
+        <p class="nay-desc">Nayarit vive un boom inmobiliario sin precedentes. El momento de construir o invertir es ahora — con el equipo local de mayor experiencia.</p>
       </div>
-      <div class="nay-hl">
-        <div class="nay-hl-n">+18<em>%</em></div>
-        <div class="nay-hl-l">Plusvalía anual en Riviera Nayarit</div>
-      </div>
-      <p class="nay-desc">Nayarit vive un boom inmobiliario sin precedentes. El momento de construir o invertir es ahora — con el equipo local de mayor experiencia.</p>
     </div>
   </div>
 </section>
 
-<!-- QUOTE -->
-<div id="quote">
-  <div class="quote-inner reveal">
-    <div class="quote-mark">"</div>
-    <div class="quote-text">Construimos espacios que<br><em>trascienden lo ordinario.</em></div>
-    <div class="quote-sub">LAB A+A — Appraiser & Architect · Tepic, Nayarit</div>
+<!-- ═══════════ CITA ═══════════ -->
+<div class="quote" id="quote">
+  <div class="quote-bg" id="quoteBg" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="quote-inner" data-reveal>
+      <div class="quote-mark" aria-hidden="true">"</div>
+      <p class="quote-text">Construimos espacios que<br/><em>trascienden lo ordinario.</em></p>
+      <div class="quote-sub">LAB A+A — Appraiser &amp; Architect · Tepic, Nayarit</div>
+    </div>
   </div>
 </div>
 
-<!-- GARANTÍAS -->
-<section id="pilares">
-  <div class="eyebrow neutral">Lo que garantizamos</div>
-  <h2 class="s-title reveal">Compromisos <em>por escrito.</em></h2>
-  <div class="garantias-grid reveal">
-    <div class="garantia">
-      <div class="garantia-check">✓ Garantía 01</div>
-      <div class="garantia-title">Presupuesto fijo</div>
-      <div class="garantia-body">El costo acordado no se mueve. Cualquier cambio de alcance requiere tu aprobación previa y por escrito — sin cargos sorpresa al cierre de obra.</div>
+<!-- ═══════════ GARANTÍAS ═══════════ -->
+<section class="section" id="pilares">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-idx neutral" data-reveal><span>05</span><i></i><span>Lo que garantizamos</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">Compromisos</span></span>
+        <span class="rw"><span class="rl"><em>por escrito.</em></span></span>
+      </h2>
     </div>
-    <div class="garantia">
-      <div class="garantia-check">✓ Garantía 02</div>
-      <div class="garantia-title">Plazo comprometido</div>
-      <div class="garantia-body">Cada proyecto tiene fecha de entrega en contrato. Si incumplimos por causas propias, aplicamos penalización económica — no pedimos disculpas, asumimos responsabilidad.</div>
-    </div>
-    <div class="garantia">
-      <div class="garantia-check">✓ Garantía 03</div>
-      <div class="garantia-title">Equipo directo, sin intermediarios</div>
-      <div class="garantia-body">No subcontratamos lo esencial. Quien diseña, construye y valúa forma parte de LAB A+A — eso protege la calidad y mantiene la comunicación directa contigo.</div>
-    </div>
-    <div class="garantia">
-      <div class="garantia-check">✓ Garantía 04</div>
-      <div class="garantia-title">Documentación completa al cierre</div>
-      <div class="garantia-body">Planos finales, memorias de cálculo, facturas de materiales y garantías de instalaciones — todo en tu poder el día de la entrega, sin trámites pendientes.</div>
+
+    <div class="g12 gar-grid" data-stagger>
+      <article class="gar" data-reveal>
+        <div class="gar-ghost" aria-hidden="true">01</div>
+        <div class="gar-check">✓ Garantía 01</div>
+        <h3 class="gar-title">Presupuesto fijo</h3>
+        <p class="gar-body">El costo acordado no se mueve. Cualquier cambio de alcance requiere tu aprobación previa y por escrito — sin cargos sorpresa al cierre de obra.</p>
+      </article>
+      <article class="gar" data-reveal>
+        <div class="gar-ghost" aria-hidden="true">02</div>
+        <div class="gar-check">✓ Garantía 02</div>
+        <h3 class="gar-title">Plazo comprometido</h3>
+        <p class="gar-body">Cada proyecto tiene fecha de entrega en contrato. Si incumplimos por causas propias, aplicamos penalización económica — no pedimos disculpas, asumimos responsabilidad.</p>
+      </article>
+      <article class="gar" data-reveal>
+        <div class="gar-ghost" aria-hidden="true">03</div>
+        <div class="gar-check">✓ Garantía 03</div>
+        <h3 class="gar-title">Equipo directo, sin intermediarios</h3>
+        <p class="gar-body">No subcontratamos lo esencial. Quien diseña, construye y valúa forma parte de LAB A+A — eso protege la calidad y mantiene la comunicación directa contigo.</p>
+      </article>
+      <article class="gar" data-reveal>
+        <div class="gar-ghost" aria-hidden="true">04</div>
+        <div class="gar-check">✓ Garantía 04</div>
+        <h3 class="gar-title">Documentación completa al cierre</h3>
+        <p class="gar-body">Planos finales, memorias de cálculo, facturas de materiales y garantías de instalaciones — todo en tu poder el día de la entrega, sin trámites pendientes.</p>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- FAQ -->
-<section id="insights">
-  <div class="eyebrow">Preguntas frecuentes</div>
-  <h2 class="s-title reveal">Lo que nos <em>preguntan.</em></h2>
-  <div class="faq-list reveal">
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        <span>¿Cuánto cuesta construir en Nayarit?</span>
-        <div class="faq-icon">+</div>
-      </div>
-      <div class="faq-a">
-        <div class="faq-a-inner">El costo varía según el tipo de proyecto, materiales y zona. Una construcción residencial de nivel medio puede ir de $10,000 a $18,000 por m² en Tepic. En zonas turísticas los costos suben por acabados y logística. La primera consulta es sin costo — ahí te damos un estimado real para tu proyecto.</div>
-      </div>
+<!-- ═══════════ FAQ ═══════════ -->
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-idx" data-reveal><span>06</span><i></i><span>Preguntas frecuentes</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">Lo que nos</span></span>
+        <span class="rw"><span class="rl"><em>preguntan.</em></span></span>
+      </h2>
     </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        <span>¿Cuánto tiempo tarda un proyecto residencial?</span>
-        <div class="faq-icon">+</div>
+
+    <div class="faq-list" data-reveal>
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="fa1">
+          <span>¿Cuánto cuesta construir en Nayarit?</span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="fa1"><div><p>El costo varía según el tipo de proyecto, materiales y zona. Una construcción residencial de nivel medio puede ir de $10,000 a $18,000 por m² en Tepic. En zonas turísticas los costos suben por acabados y logística. La primera consulta es sin costo — ahí te damos un estimado real para tu proyecto.</p></div></div>
       </div>
-      <div class="faq-a">
-        <div class="faq-a-inner">Una casa de 120 m² con diseño incluido suele tomar entre 8 y 14 meses desde el primer trazo hasta la entrega de llaves. Proyectos más grandes o en zonas con trámites complejos pueden extenderse. Siempre recibes un cronograma detallado antes de arrancar.</div>
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="fa2">
+          <span>¿Cuánto tiempo tarda un proyecto residencial?</span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="fa2"><div><p>Una casa de 120 m² con diseño incluido suele tomar entre 8 y 14 meses desde el primer trazo hasta la entrega de llaves. Proyectos más grandes o en zonas con trámites complejos pueden extenderse. Siempre recibes un cronograma detallado antes de arrancar.</p></div></div>
       </div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        <span>¿Puedo contratar solo el diseño o solo la valuación?</span>
-        <div class="faq-icon">+</div>
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="fa3">
+          <span>¿Puedo contratar solo el diseño o solo la valuación?</span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="fa3"><div><p>Sí. Los tres servicios — diseño arquitectónico, construcción y valuación — son contratables de forma independiente. Muchos clientes comienzan con una valuación antes de comprar un terreno, o contratan solo el diseño para construir en otra etapa. Adaptamos el alcance a tu necesidad.</p></div></div>
       </div>
-      <div class="faq-a">
-        <div class="faq-a-inner">Sí. Los tres servicios — diseño arquitectónico, construcción y valuación — son contratables de forma independiente. Muchos clientes comienzan con una valuación antes de comprar un terreno, o contratan solo el diseño para construir en otra etapa. Adaptamos el alcance a tu necesidad.</div>
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="fa4">
+          <span>¿Trabajan fuera de Tepic?</span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="fa4"><div><p>Sí. Cubrimos todo Nayarit: Riviera Nayarit, Bahía de Banderas, San Blas, Compostela y zonas aledañas. Los tiempos de traslado se reflejan con claridad en la propuesta — nada queda oculto en la logística.</p></div></div>
       </div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        <span>¿Trabajan fuera de Tepic?</span>
-        <div class="faq-icon">+</div>
-      </div>
-      <div class="faq-a">
-        <div class="faq-a-inner">Sí. Cubrimos todo Nayarit: Riviera Nayarit, Bahía de Banderas, San Blas, Compostela y zonas aledañas. Los tiempos de traslado se reflejan con claridad en la propuesta — nada queda oculto en la logística.</div>
-      </div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
-        <span>¿Cómo se manejan los pagos durante la obra?</span>
-        <div class="faq-icon">+</div>
-      </div>
-      <div class="faq-a">
-        <div class="faq-a-inner">Trabajamos con estimaciones por avance de obra. Cada pago corresponde a una etapa verificable y documentada. Recibes un reporte de avance antes de cada cobro para que sepas exactamente en qué se invirtió — sin anticipos desproporcionados ni pagos a ciegas.</div>
+      <div class="faq-item">
+        <button class="faq-q" type="button" aria-expanded="false" aria-controls="fa5">
+          <span>¿Cómo se manejan los pagos durante la obra?</span>
+          <span class="faq-icon" aria-hidden="true">+</span>
+        </button>
+        <div class="faq-a" id="fa5"><div><p>Trabajamos con estimaciones por avance de obra. Cada pago corresponde a una etapa verificable y documentada. Recibes un reporte de avance antes de cada cobro para que sepas exactamente en qué se invirtió — sin anticipos desproporcionados ni pagos a ciegas.</p></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PROCESO — TIMELINE -->
-<section id="proceso">
-  <div class="eyebrow neutral">Cómo trabajamos</div>
-  <h2 class="s-title reveal">De la idea a la <em>llave en mano.</em></h2>
-  <div class="timeline reveal">
-    <div class="tl-step">
-      <div class="tl-circle">01</div>
-      <div class="tl-tag">Sin costo</div>
-      <div class="tl-name">Consulta inicial</div>
-      <div class="tl-desc">Escuchamos tu proyecto, evaluamos viabilidad técnica y definimos el alcance exacto — sin compromiso.</div>
+<!-- ═══════════ PROCESO ═══════════ -->
+<section class="section" id="proceso">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-idx neutral" data-reveal><span>07</span><i></i><span>Cómo trabajamos</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">De la idea a la</span></span>
+        <span class="rw"><span class="rl"><em>llave en mano.</em></span></span>
+      </h2>
     </div>
-    <div class="tl-step">
-      <div class="tl-circle">02</div>
-      <div class="tl-tag">Esta semana</div>
-      <div class="tl-name">Propuesta detallada</div>
-      <div class="tl-desc">Tiempos, costos y especificaciones técnicas. Cada línea es un compromiso. Sin letra chica, sin sorpresas.</div>
-    </div>
-    <div class="tl-step">
-      <div class="tl-circle">03</div>
-      <div class="tl-tag">En obra</div>
-      <div class="tl-name">Ejecución supervisada</div>
-      <div class="tl-desc">Construcción con supervisión constante, reportes de avance y comunicación directa con el equipo.</div>
-    </div>
-    <div class="tl-step">
-      <div class="tl-circle">04</div>
-      <div class="tl-tag">Garantizado</div>
-      <div class="tl-name">Entrega llave en mano</div>
-      <div class="tl-desc">Inspección final de calidad, walkthrough completo y documentación total en tu poder.</div>
+
+    <div class="g12 timeline" id="timeline" data-stagger>
+      <div class="tl-rail" aria-hidden="true"><i id="tlFill"></i></div>
+      <div class="tl-step" data-reveal>
+        <div class="tl-circle">01</div>
+        <div class="tl-tag">Sin costo</div>
+        <h3 class="tl-name">Consulta inicial</h3>
+        <p class="tl-desc">Escuchamos tu proyecto, evaluamos viabilidad técnica y definimos el alcance exacto — sin compromiso.</p>
+      </div>
+      <div class="tl-step" data-reveal>
+        <div class="tl-circle">02</div>
+        <div class="tl-tag">Esta semana</div>
+        <h3 class="tl-name">Propuesta detallada</h3>
+        <p class="tl-desc">Tiempos, costos y especificaciones técnicas. Cada línea es un compromiso. Sin letra chica, sin sorpresas.</p>
+      </div>
+      <div class="tl-step" data-reveal>
+        <div class="tl-circle">03</div>
+        <div class="tl-tag">En obra</div>
+        <h3 class="tl-name">Ejecución supervisada</h3>
+        <p class="tl-desc">Construcción con supervisión constante, reportes de avance y comunicación directa con el equipo.</p>
+      </div>
+      <div class="tl-step" data-reveal>
+        <div class="tl-circle">04</div>
+        <div class="tl-tag">Garantizado</div>
+        <h3 class="tl-name">Entrega llave en mano</h3>
+        <p class="tl-desc">Inspección final de calidad, walkthrough completo y documentación total en tu poder.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- CONTACTO -->
-<section id="contacto">
-  <div class="eyebrow">Contacto</div>
-  <h2 class="s-title reveal" style="margin-bottom:60px;">¿Listo para <em>empezar?</em></h2>
-  <div class="ct-wrap">
-    <div class="reveal">
-      <img src="imgs/logo.png" alt="LAB A+A" class="ct-logo-img"/>
-      <div class="ci-block"><div class="ci-label">Ubicación</div><div class="ci-val">Tepic, Nayarit · México</div></div>
-      <div class="ci-block"><div class="ci-label">Teléfono</div><div class="ci-val"><a href="tel:3111614155">311 161 4155</a></div></div>
-      <div class="ci-block"><div class="ci-label">Email</div><div class="ci-val"><a href="mailto:arqlabaa@gmail.com">arqlabaa@gmail.com</a></div></div>
-      <div class="ct-channels">
-        <div class="ct-channels-label">Contáctanos por</div>
-        <div class="ct-btns">
-          <a href="https://wa.me/523111614155" class="ct-btn" target="_blank">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            WhatsApp
-          </a>
-          <a href="tel:3111614155" class="ct-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.09a16 16 0 006 6l.36-.35a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-            Llamada
-          </a>
-          <a href="mailto:arqlabaa@gmail.com" class="ct-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            Email
-          </a>
+<!-- ═══════════ CONTACTO ═══════════ -->
+<section class="section" id="contacto">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-idx" data-reveal><span>08</span><i></i><span>Contacto</span></div>
+      <h2 class="s-title" data-reveal="lines">
+        <span class="rw"><span class="rl">¿Listo para</span></span>
+        <span class="rw"><span class="rl"><em>empezar?</em></span></span>
+      </h2>
+    </div>
+
+    <div class="g12 ct-grid">
+      <div class="ct-info" data-reveal="left">
+        <img src="imgs/logo.png" alt="" class="ct-logo" width="74" height="74" loading="lazy"/>
+        <div class="ci-block"><div class="ci-label">Ubicación</div><div class="ci-val">Tepic, Nayarit · México</div></div>
+        <div class="ci-block"><div class="ci-label">Teléfono</div><div class="ci-val"><a href="tel:3111614155">311 161 4155</a></div></div>
+        <div class="ci-block"><div class="ci-label">Email</div><div class="ci-val"><a href="mailto:arqlabaa@gmail.com">arqlabaa@gmail.com</a></div></div>
+
+        <div class="ct-channels">
+          <div class="ci-label">Contáctanos por</div>
+          <div class="ct-btns">
+            <a href="https://wa.me/523111614155" class="ct-btn" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              WhatsApp
+            </a>
+            <a href="tel:3111614155" class="ct-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.09a16 16 0 006 6l.36-.35a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+              Llamada
+            </a>
+            <a href="mailto:arqlabaa@gmail.com" class="ct-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Email
+            </a>
+          </div>
         </div>
+
+        <div class="ci-list">Diseño Arquitectónico<br/>Construcción Integral<br/>Gestión y Supervisión<br/>Valuación Inmobiliaria</div>
       </div>
-      <div class="ci-list">Diseño Arquitectónico<br>Construcción Integral<br>Gestión y Supervisión<br>Valuación Inmobiliaria</div>
-    </div>
-    <form id="ctForm" class="reveal" onsubmit="onSub(event)">
-      <div class="f-grid">
-        <div class="f-group"><label class="f-label">Nombre</label><input type="text" class="f-inp" placeholder="Tu nombre" required/></div>
-        <div class="f-group"><label class="f-label">Teléfono</label><input type="tel" class="f-inp" placeholder="311 000 0000"/></div>
-      </div>
-      <div class="f-group"><label class="f-label">Email</label><input type="email" class="f-inp" placeholder="tu@email.com" required/></div>
-      <div class="f-group">
-        <label class="f-label">Servicio de interés</label>
-        <select class="f-inp" style="appearance:none;cursor:none;">
-          <option value="">Selecciona un servicio</option>
-          <option>Diseño Arquitectónico</option>
-          <option>Construcción Integral</option>
-          <option>Valuación Inmobiliaria</option>
-          <option>Diseño de Interiores</option>
-          <option>Gestión y Supervisión</option>
-        </select>
-      </div>
-      <div class="f-group">
-        <label class="f-label">Prefiero que me contacten por</label>
-        <div class="f-method" id="fMethod">
-          <div class="f-method-btn active" onclick="setMethod(this)">WhatsApp</div>
-          <div class="f-method-btn" onclick="setMethod(this)">Llamada</div>
-          <div class="f-method-btn" onclick="setMethod(this)">Email</div>
+
+      <form id="ctForm" class="ct-form" data-reveal="right" novalidate>
+        <div class="f-grid">
+          <div class="f-group">
+            <label class="f-label" for="fName">Nombre</label>
+            <input id="fName" name="nombre" type="text" class="f-inp" placeholder="Tu nombre" autocomplete="name" required/>
+          </div>
+          <div class="f-group">
+            <label class="f-label" for="fTel">Teléfono</label>
+            <input id="fTel" name="telefono" type="tel" class="f-inp" placeholder="311 000 0000" autocomplete="tel"/>
+          </div>
         </div>
-      </div>
-      <div class="f-group"><label class="f-label">Cuéntanos tu proyecto</label><textarea class="f-inp" placeholder="Describe tu proyecto, ubicación, presupuesto aproximado..."></textarea></div>
-      <button type="submit" class="btn-sub"><span>Enviar mensaje →</span></button>
-      <div class="f-ok" id="fOk">Mensaje enviado. Te contactamos en menos de 24 horas.</div>
-    </form>
+        <div class="f-group">
+          <label class="f-label" for="fMail">Email</label>
+          <input id="fMail" name="email" type="email" class="f-inp" placeholder="tu@email.com" autocomplete="email" required/>
+        </div>
+        <div class="f-group">
+          <label class="f-label" for="fSvc">Servicio de interés</label>
+          <select id="fSvc" name="servicio" class="f-inp">
+            <option value="">Selecciona un servicio</option>
+            <option>Diseño Arquitectónico</option>
+            <option>Construcción Integral</option>
+            <option>Valuación Inmobiliaria</option>
+            <option>Diseño de Interiores</option>
+            <option>Gestión y Supervisión</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <span class="f-label" id="fMethodLabel">Prefiero que me contacten por</span>
+          <div class="f-method" id="fMethod" role="group" aria-labelledby="fMethodLabel">
+            <button type="button" class="f-method-btn" data-method="whatsapp" aria-pressed="true">WhatsApp</button>
+            <button type="button" class="f-method-btn" data-method="tel" aria-pressed="false">Llamada</button>
+            <button type="button" class="f-method-btn" data-method="email" aria-pressed="false">Email</button>
+          </div>
+        </div>
+        <div class="f-group">
+          <label class="f-label" for="fMsg">Cuéntanos tu proyecto</label>
+          <textarea id="fMsg" name="mensaje" class="f-inp" placeholder="Describe tu proyecto, ubicación, presupuesto aproximado..."></textarea>
+        </div>
+        <button type="submit" class="btn-sub"><span>Enviar mensaje →</span></button>
+        <p class="f-note">Al enviar se abre WhatsApp o tu correo con el mensaje ya redactado — tú confirmas el envío.</p>
+        <div class="f-ok" id="fOk" role="status" aria-live="polite"></div>
+      </form>
+    </div>
   </div>
 </section>
 
-<!-- CLOSING -->
+<!-- ═══════════ CIERRE ═══════════ -->
 <div class="closing">
-  <div class="closing-inner">
-    <div class="closing-quote reveal">
-      "Los espacios que construimos hoy<br>son la <strong>memoria que habitan mañana.</strong>"
-    </div>
-    <div class="closing-attr">LAB A+A — Appraiser & Architect · Tepic, Nayarit</div>
-    <div class="closing-cta reveal">
+  <div class="wrap closing-inner">
+    <p class="closing-quote" data-reveal>
+      "Los espacios que construimos hoy<br/>son la <strong>memoria que habitan mañana.</strong>"
+    </p>
+    <div class="closing-attr">LAB A+A — Appraiser &amp; Architect · Tepic, Nayarit</div>
+    <div class="closing-cta" data-reveal>
       <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
-      <a href="https://wa.me/523111614155" class="btn outline-dark" target="_blank"><span>WhatsApp directo</span></a>
+      <a href="https://wa.me/523111614155" class="btn outline-dark" target="_blank" rel="noopener"><span>WhatsApp directo</span></a>
     </div>
   </div>
 </div>
 
-<!-- PRE-FOOTER CTA -->
+<!-- ═══════════ PRE-FOOTER ═══════════ -->
 <div class="pre-footer">
-  <div class="pf-text">¿Listo para construir algo <strong>extraordinario?</strong></div>
-  <div class="pf-actions">
-    <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
-    <a href="tel:3111614155" class="btn outline"><span>311 161 4155</span></a>
+  <div class="wrap pf-inner">
+    <p class="pf-text" data-reveal="left">¿Listo para construir algo <strong>extraordinario?</strong></p>
+    <div class="pf-actions" data-reveal="right">
+      <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
+      <a href="tel:3111614155" class="btn outline"><span>311 161 4155</span></a>
+    </div>
   </div>
 </div>
 
-<!-- FOOTER -->
+<!-- ═══════════ FOOTER ═══════════ -->
 <footer>
-  <div class="f-logo">
-    <img src="imgs/logo.png" alt="LAB A+A"/>
-    <div class="f-brand">LAB <em>A+A</em></div>
+  <div class="wrap f-inner">
+    <div class="f-logo">
+      <img src="imgs/logo.png" alt="" width="30" height="30" loading="lazy"/>
+      <div class="f-brand">LAB <em>A+A</em></div>
+    </div>
+    <div class="f-copy">© <span id="yr">2025</span> LAB A+A — Appraiser &amp; Architect · Tepic, Nayarit</div>
+    <ul class="f-links">
+      <li><a href="#inicio">Inicio</a></li>
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#proyectos">Proyectos</a></li>
+      <li><a href="#nayarit">Nayarit</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
   </div>
-  <div class="f-copy">© 2025 LAB A+A — Appraiser & Architect · Tepic, Nayarit</div>
-  <ul class="f-links">
-    <li><a href="#inicio">Inicio</a></li>
-    <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#proyectos">Proyectos</a></li>
-    <li><a href="#nayarit">Nayarit</a></li>
-    <li><a href="#contacto">Contacto</a></li>
-  </ul>
 </footer>
+
+<!-- Barra fija de acción en móvil -->
+<div class="mobile-bar" id="mobileBar">
+  <a class="mb-wa" href="https://wa.me/523111614155" target="_blank" rel="noopener">WhatsApp</a>
+  <a class="mb-tel" href="tel:3111614155">Llamar</a>
+</div>
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"GeneralContractor",
+  "name":"LAB A+A — Appraiser & Architect",
+  "description":"Arquitectura, construcción integral y valuación inmobiliaria en Tepic, Nayarit.",
+  "telephone":"+52-311-161-4155",
+  "email":"arqlabaa@gmail.com",
+  "address":{"@type":"PostalAddress","addressLocality":"Tepic","addressRegion":"Nayarit","addressCountry":"MX"},
+  "areaServed":["Tepic","Xalisco","Compostela","Bahía de Banderas","Sayulita","Punta Mita","San Blas","Puerto Vallarta"],
+  "knowsLanguage":"es-MX"
+}
+</script>
 
 <script>
 (function(){
 'use strict';
-function boot(){
-  try{initCursor();}catch(e){}
-  try{initScroll();}catch(e){}
-  try{initStagger();}catch(e){}
-  try{initObservers();}catch(e){}
-  try{initTextReveals();}catch(e){}
-  try{initSlideDots();}catch(e){}
-  setTimeout(function(){
-    document.querySelectorAll('.reveal:not(.in)').forEach(function(el){el.classList.add('in');});
-  },1800);
+
+var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var $  = function(s,c){return (c||document).querySelector(s);};
+var $$ = function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s));};
+
+/* Barrido de respaldo del reveal; lo rellena initReveal y lo
+   ejecuta el loop de scroll. */
+var revealSweep = function(){};
+
+/* ═══ 1. REVEAL AL SCROLL ═══
+   Un solo IntersectionObserver para todo lo que lleve [data-reveal].
+   Cada elemento se deja de observar en cuanto entra: cero trabajo después. */
+function initReveal(){
+  var nodes = $$('[data-reveal]');
+
+  if(REDUCED || !('IntersectionObserver' in window)){
+    nodes.forEach(function(el){el.classList.add('is-in');});
+    return;
+  }
+
+  /* Escalonado: los hijos de un [data-stagger] entran uno tras otro */
+  $$('[data-stagger]').forEach(function(group){
+    var kids = $$('[data-reveal]',group);
+    if(group.hasAttribute('data-reveal')) kids.unshift(group);
+    kids.forEach(function(el,i){
+      el.style.setProperty('--rev-delay',(i*90)+'ms');
+    });
+  });
+
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      e.target.classList.add('is-in');
+      io.unobserve(e.target);          // ya animó: liberamos recursos
+    });
+  },{
+    root:null,
+    rootMargin:'0px 0px -8% 0px',      // dispara un poco antes del borde
+    threshold:0.08
+  });
+
+  nodes.forEach(function(el){io.observe(el);});
+
+  /* Red de seguridad.
+     Con scroll muy rápido (inercia en móvil, saltar por un ancla, o la
+     rueda a fondo) el observer coalesce los cambios y puede reportar sólo
+     el estado final "ya no visible" — ese elemento se quedaría invisible
+     para siempre. Este barrido recorre lo que aún no ha entrado y lo
+     muestra en cuanto su borde superior cruza la pantalla. La lista se
+     vacía sola, así que deja de costar en cuanto todo entró. */
+  var pending = nodes.slice();
+  revealSweep = function(){
+    if(!pending.length) return;
+    var limit = window.innerHeight * 0.92;
+    pending = pending.filter(function(el){
+      if(el.classList.contains('is-in')) return false;
+      if(el.getBoundingClientRect().top < limit){
+        el.classList.add('is-in');
+        io.unobserve(el);
+        return false;
+      }
+      return true;
+    });
+  };
 }
 
-/* Cursor con event delegation — un solo listener en vez de N */
-function initCursor(){
-  var dot=document.querySelector('#cur .dot');
-  if(!dot)return;
-  document.addEventListener('mousemove',function(e){
-    dot.style.left=e.clientX+'px';dot.style.top=e.clientY+'px';
-  },{passive:true});
-  document.addEventListener('mouseover',function(e){
-    document.body.classList.toggle('hov',
-      !!e.target.closest('a,button,.svc-card,.port-card,.garantia,.tl-step,.pill,.btn,.ct-btn,.f-method-btn,.faq-q'));
+/* ═══ 2. HERO ═══ */
+function initHero(){
+  var hero = $('.hero');
+  if(!hero) return;
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){hero.classList.add('ready');});
   });
 }
 
-/* Un solo handler rAF para nav + barra de progreso + parallax */
+/* ═══ 3. UN SOLO LOOP DE SCROLL (rAF) ═══
+   Nav, barra de progreso, parallax, timeline y barra móvil
+   comparten un único listener pasivo. */
 function initScroll(){
-  var nav=document.getElementById('nav');
-  var sp=document.getElementById('sp');
-  var img=document.getElementById('parImg');
-  var ticking=false;
-  window.addEventListener('scroll',function(){
-    if(ticking)return;ticking=true;
-    requestAnimationFrame(function(){
-      var y=window.scrollY;
-      var sh=document.body.scrollHeight-window.innerHeight;
-      nav.classList.toggle('scrolled',y>50);
-      sp.style.width=(sh>0?Math.round(y/sh*100):0)+'%';
-      if(img){
-        var wrap=img.closest('.about-img');
-        if(wrap){var r=wrap.getBoundingClientRect();
-          if(r.top<window.innerHeight&&r.bottom>0)
-            img.style.transform='translateY('+(window.innerHeight/2-(r.top+r.height/2))*0.08+'px)';
+  var nav      = $('#nav');
+  var progress = $('#progress');
+  var parImg   = $('#parImg');
+  var quoteBg  = $('#quoteBg');
+  var tlFill   = $('#tlFill');
+  var timeline = $('#timeline');
+  var mBar     = $('#mobileBar');
+  var links    = $$('#navLinks a');
+  var sections = links.map(function(a){return $(a.hash);}).filter(Boolean);
+
+  var lastY = window.scrollY, ticking = false;
+
+  function frame(){
+    var y  = window.scrollY;
+    var vh = window.innerHeight;
+    var max = document.documentElement.scrollHeight - vh;
+
+    /* Rescata cualquier reveal que el observer se haya saltado */
+    revealSweep();
+
+    /* Progreso */
+    if(progress) progress.style.width = (max > 0 ? (y / max * 100) : 0) + '%';
+
+    /* Nav: fondo al bajar del hero; se oculta al descender, vuelve al subir */
+    if(nav){
+      nav.classList.toggle('scrolled', y > 40);
+      var goingDown = y > lastY && y > 320;
+      nav.classList.toggle('hidden', goingDown && !document.body.classList.contains('menu-open'));
+    }
+
+    /* Barra móvil: aparece pasado el hero */
+    if(mBar) mBar.classList.toggle('show', y > vh * 0.6);
+
+    if(!REDUCED){
+      /* Parallax de la foto de "Nosotros" */
+      if(parImg){
+        var w = parImg.closest('.about-frame');
+        if(w){
+          var r = w.getBoundingClientRect();
+          if(r.top < vh && r.bottom > 0){
+            parImg.style.transform = 'translateY(' + ((vh/2 - (r.top + r.height/2)) * 0.06) + 'px)';
+          }
         }
       }
-      ticking=false;
+      /* Parallax de la cita — sustituye a background-attachment:fixed,
+         que Safari en iOS no soporta. */
+      if(quoteBg){
+        var qr = quoteBg.parentElement.getBoundingClientRect();
+        if(qr.top < vh && qr.bottom > 0){
+          quoteBg.style.transform = 'translateY(' + ((vh/2 - (qr.top + qr.height/2)) * 0.12) + 'px)';
+        }
+      }
+    }
+
+    /* La línea del proceso se dibuja conforme avanzas por la sección */
+    if(tlFill && timeline){
+      var tr = timeline.getBoundingClientRect();
+      var p  = (vh * 0.8 - tr.top) / (tr.height + vh * 0.3);
+      p = Math.max(0, Math.min(1, p));
+      tlFill.style.width = (p * 100) + '%';
+      $$('.tl-step',timeline).forEach(function(s,i,arr){
+        s.classList.toggle('done', p >= (i + 0.5) / arr.length);
+      });
+    }
+
+    /* Enlace activo del nav */
+    var current = null;
+    sections.forEach(function(s){
+      if(s.getBoundingClientRect().top <= vh * 0.35) current = s.id;
     });
+    links.forEach(function(a){
+      a.classList.toggle('active', current && a.hash === '#' + current);
+    });
+
+    lastY = y;
+    ticking = false;
+  }
+
+  window.addEventListener('scroll',function(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(frame);
+  },{passive:true});
+
+  window.addEventListener('resize',frame,{passive:true});
+  frame();
+}
+
+/* ═══ 4. MENÚ MÓVIL ═══ */
+function initMenu(){
+  var burger = $('#burger'), drawer = $('#drawer');
+  if(!burger || !drawer) return;
+
+  function setOpen(open){
+    document.body.classList.toggle('menu-open',open);
+    burger.setAttribute('aria-expanded',String(open));
+    burger.setAttribute('aria-label',open ? 'Cerrar menú' : 'Abrir menú');
+    drawer.setAttribute('aria-hidden',String(!open));
+    document.body.style.overflow = open ? 'hidden' : '';
+    if(open) $('#nav').classList.remove('hidden');
+  }
+
+  burger.addEventListener('click',function(){
+    setOpen(!document.body.classList.contains('menu-open'));
+  });
+  $$('a',drawer).forEach(function(a){
+    a.addEventListener('click',function(){setOpen(false);});
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key === 'Escape' && document.body.classList.contains('menu-open')) setOpen(false);
+  });
+}
+
+/* ═══ 5. CONTADORES ═══ */
+function initCounters(){
+  var row = $('#statsRow');
+  if(!row) return;
+
+  function run(){
+    $$('[data-target]',row).forEach(function(n){
+      var target = +(n.dataset.target || 0);
+      var span   = n.querySelector('span');
+      var tail   = span ? span.outerHTML : '';
+      if(REDUCED){ n.innerHTML = target + tail; return; }
+      var dur = 1300, start = null;
+      requestAnimationFrame(function step(ts){
+        if(!start) start = ts;
+        var p = Math.min((ts - start)/dur, 1);
+        var ease = 1 - Math.pow(1 - p, 4);
+        n.innerHTML = Math.round(ease * target) + tail;
+        if(p < 1) requestAnimationFrame(step);
+      });
+    });
+  }
+
+  if(!('IntersectionObserver' in window)){ run(); return; }
+  var io = new IntersectionObserver(function(entries){
+    if(!entries[0].isIntersecting) return;
+    run(); io.disconnect();
+  },{threshold:0.35});
+  io.observe(row);
+}
+
+/* ═══ 6. FAQ (accesible por teclado) ═══ */
+function initFaq(){
+  $$('.faq-q').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var item = btn.parentElement;
+      var open = item.classList.contains('open');
+      $$('.faq-item.open').forEach(function(i){
+        i.classList.remove('open');
+        var b = $('.faq-q',i); if(b) b.setAttribute('aria-expanded','false');
+      });
+      if(!open){
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded','true');
+      }
+    });
+  });
+}
+
+/* ═══ 7. FORMULARIO — envía de verdad ═══
+   No hay backend, así que abrimos WhatsApp o el correo con el mensaje
+   ya redactado. El visitante confirma el envío y el mensaje llega. */
+function initForm(){
+  var form = $('#ctForm');
+  if(!form) return;
+  var method = 'whatsapp';
+
+  $$('.f-method-btn').forEach(function(b){
+    b.addEventListener('click',function(){
+      $$('.f-method-btn').forEach(function(x){x.setAttribute('aria-pressed','false');});
+      b.setAttribute('aria-pressed','true');
+      method = b.dataset.method;
+    });
+  });
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var ok = $('#fOk');
+
+    if(!form.checkValidity()){
+      form.reportValidity();
+      return;
+    }
+
+    var d = new FormData(form);
+    var val = function(k){return (d.get(k) || '').toString().trim();};
+
+    var lines = [
+      'Hola LAB A+A, quiero información.',
+      '',
+      'Nombre: '   + (val('nombre')   || '—'),
+      'Teléfono: ' + (val('telefono') || '—'),
+      'Email: '    + (val('email')    || '—'),
+      'Servicio: ' + (val('servicio') || 'Por definir'),
+      'Contacto preferido: ' + (method === 'tel' ? 'Llamada' : method === 'email' ? 'Email' : 'WhatsApp'),
+      '',
+      'Proyecto: ' + (val('mensaje') || '—')
+    ];
+    var body = lines.join('\n');
+    var url, dest;
+
+    if(method === 'email'){
+      url  = 'mailto:arqlabaa@gmail.com?subject=' +
+             encodeURIComponent('Nuevo proyecto — ' + (val('nombre') || 'Contacto web')) +
+             '&body=' + encodeURIComponent(body);
+      dest = 'tu correo';
+      window.location.href = url;
+    }else{
+      url  = 'https://wa.me/523111614155?text=' + encodeURIComponent(body);
+      dest = 'WhatsApp';
+      window.open(url,'_blank','noopener');
+    }
+
+    if(ok){
+      ok.textContent = 'Abrimos ' + dest + ' con tu mensaje listo. Confírmalo para enviarlo — respondemos en menos de 24 horas.';
+      ok.classList.add('show');
+    }
+  });
+}
+
+/* ═══ 8. CURSOR (sólo ratón real) ═══ */
+function initCursor(){
+  if(!window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  var cur = $('#cur');
+  if(!cur) return;
+  var dot = $('.dot',cur), ring = $('.ring',cur);
+  var x = 0, y = 0, rx = 0, ry = 0, running = false;
+
+  document.addEventListener('mousemove',function(e){
+    x = e.clientX; y = e.clientY;
+    dot.style.transform = 'translate(' + x + 'px,' + y + 'px) translate(-50%,-50%)';
+    if(!running){ running = true; requestAnimationFrame(loop); }
+  },{passive:true});
+
+  function loop(){
+    rx += (x - rx) * 0.18;
+    ry += (y - ry) * 0.18;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    if(Math.abs(x-rx) > 0.4 || Math.abs(y-ry) > 0.4){ requestAnimationFrame(loop); }
+    else { running = false; }
+  }
+
+  document.addEventListener('mouseover',function(e){
+    document.body.classList.toggle('hov',
+      !!e.target.closest('a,button,.svc-card,.port-card,.gar,.tl-step,.pill,.nay-hl,.stat'));
   },{passive:true});
 }
 
-/* Stagger solo en JS — sin duplicar en CSS */
-function initStagger(){
-  document.querySelectorAll('.svc-grid,.garantias-grid,.timeline').forEach(function(grid){
-    grid.querySelectorAll('.reveal').forEach(function(el,i){
-      el.style.transitionDelay=(i*80)+'ms';
-    });
-  });
-}
-
-/* Un solo IntersectionObserver para reveals + contadores */
-function initObservers(){
-  var row=document.getElementById('statsRow');
-  var revealIO=new IntersectionObserver(function(entries){
-    entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('in');});
-  },{threshold:0.07,rootMargin:'0px 0px -20px 0px'});
-  document.querySelectorAll('.reveal').forEach(function(el){revealIO.observe(el);});
-
-  if(row){
-    var counterIO=new IntersectionObserver(function(entries){
-      if(!entries[0].isIntersecting)return;
-      row.querySelectorAll('[data-target]').forEach(function(n){
-        var target=+(n.dataset.target||0),suffix=n.dataset.suffix||'',dur=1200,start=null;
-        var span=n.querySelector('span');
-        var color=span?span.outerHTML:'<span style="color:var(--red)">'+suffix+'</span>';
-        (function step(ts){
-          if(!start)start=ts;
-          var p=Math.min((ts-start)/dur,1),ease=1-Math.pow(1-p,4);
-          n.innerHTML=Math.round(ease*target)+color;
-          if(p<1)requestAnimationFrame(step);
-        })(performance.now());
-      });
-      counterIO.disconnect();
-    },{threshold:0.3});
-    counterIO.observe(row);
-  }
-}
-
-function initTextReveals(){
-  document.querySelectorAll('.rl').forEach(function(el){
-    setTimeout(function(){el.classList.add('go');},+(el.dataset.d||0));
-  });
-}
-
-function initSlideDots(){
-  var dots=document.querySelectorAll('.sdot');
-  if(!dots.length)return;
-  var idx=0;
+/* ═══ 9. CARRUSEL DEL HERO (puntos) ═══ */
+function initDots(){
+  if(REDUCED) return;
+  var dots = $$('.sdot');
+  if(!dots.length) return;
+  var i = 0;
   setInterval(function(){
-    dots[idx].classList.remove('active');
-    var f=dots[idx].querySelector('.sdot-fill');
-    if(f)f.style.animation='none';
-    idx=(idx+1)%dots.length;
-    dots[idx].classList.add('active');
-    var f2=dots[idx].querySelector('.sdot-fill');
-    if(f2){f2.style.animation='none';void f2.offsetWidth;f2.style.animation='fillDot 6s linear forwards';}
+    dots[i].classList.remove('active');
+    i = (i + 1) % dots.length;
+    dots[i].classList.add('active');
+    var f = $('.sdot-fill',dots[i]);
+    if(f){ f.style.animation = 'none'; void f.offsetWidth; f.style.animation = 'fillDot 6s linear forwards'; }
   },6000);
 }
 
-window.onSub=function(e){
-  e.preventDefault();
-  var s=e.target.querySelector('.btn-sub span');
-  if(s)s.textContent='Enviando…';
-  setTimeout(function(){
-    if(s)s.textContent='Enviar mensaje →';
-    var ok=document.getElementById('fOk');
-    if(ok)ok.style.display='block';
-    e.target.reset();
-    setTimeout(function(){if(ok)ok.style.display='none';},5000);
-  },1200);
-};
-
-window.setMethod=function(el){
-  document.querySelectorAll('.f-method-btn').forEach(function(b){b.classList.remove('active');});
-  el.classList.add('active');
-};
-
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',boot);}
-else{boot();}
-})();
-
-function toggleFaq(el){
-  var item=el.parentElement;
-  var isOpen=item.classList.contains('open');
-  document.querySelectorAll('.faq-item.open').forEach(function(i){i.classList.remove('open');});
-  if(!isOpen){item.classList.add('open');}
+/* ═══ 10. MARQUEE — duplica el contenido para un bucle sin costura ═══ */
+function initMarquee(){
+  var t = $('#mqTrack');
+  if(!t) return;
+  t.innerHTML += t.innerHTML;
 }
+
+/* ═══ BOOT ═══ */
+function boot(){
+  $('#yr').textContent = new Date().getFullYear();
+  initMarquee();
+  initReveal();
+  initHero();
+  initScroll();
+  initMenu();
+  initCounters();
+  initFaq();
+  initForm();
+  initCursor();
+  initDots();
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded',boot);
+}else{
+  boot();
+}
+})();
 </script>
 </body>
 </html>
