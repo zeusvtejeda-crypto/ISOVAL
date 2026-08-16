@@ -1,4 +1,10 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type TargetAndTransition } from "framer-motion";
+
+interface Blob {
+  className: string;
+  drift: TargetAndTransition;
+  duration: number;
+}
 
 /**
  * Fondo mesh gradient: manchas de color muy desenfocadas que derivan
@@ -8,7 +14,7 @@ import { motion, useReducedMotion } from "framer-motion";
  * al navegador a repintar el filtro en cada fotograma y es la causa
  * habitual de que estos fondos vayan a tirones.
  */
-const BLOBS = [
+const BLOBS: Blob[] = [
   {
     className: "bg-iris/40 h-[46rem] w-[46rem] -top-40 -left-32",
     drift: { x: [0, 60, -30, 0], y: [0, -40, 30, 0] },
@@ -30,7 +36,10 @@ export default function MeshBackground() {
   const reduced = useReducedMotion();
 
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden grain">
+    /* `fixed`, no `absolute`: anclado al documento, las manchas se quedan
+       arracimadas arriba y todo lo que viene después se ve apagado.
+       Fijo al viewport, la luz ambiental acompaña a la página entera. */
+    <div className="grain pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       {/* Base */}
       <div className="absolute inset-0 bg-ink-950" />
 

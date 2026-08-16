@@ -1,4 +1,17 @@
+import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { GLIDE, GLOW, type GlowColor } from "../lib/motion";
+
+export interface FloatingBadgeProps {
+  children: ReactNode;
+  /** Posicionamiento; el componente ya trae `absolute`. */
+  className?: string;
+  /** Desincroniza esta insignia respecto a las demás. */
+  delay?: number;
+  /** Recorrido vertical del bucle, en píxeles. */
+  amplitude?: number;
+  glow?: GlowColor;
+}
 
 /**
  * Insignia flotante con loop infinito.
@@ -13,8 +26,8 @@ export default function FloatingBadge({
   className = "",
   delay = 0,
   amplitude = 10,
-  glow = "56, 224, 208", // aqua
-}) {
+  glow = GLOW.aqua,
+}: FloatingBadgeProps) {
   const reduced = useReducedMotion();
 
   return (
@@ -22,7 +35,7 @@ export default function FloatingBadge({
       className={`absolute ${className}`}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.7, delay: delay + 0.5, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.7, delay: delay + 0.5, ease: GLIDE }}
     >
       <motion.div
         animate={

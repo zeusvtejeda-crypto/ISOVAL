@@ -1,12 +1,30 @@
-import { useRef } from "react";
+import { useRef, type ReactNode, type PointerEvent } from "react";
 import {
   motion,
   useMotionValue,
   useMotionTemplate,
   useSpring,
   useReducedMotion,
+  type HTMLMotionProps,
 } from "framer-motion";
-import { SPRING, SPRING_SOFT, fadeUpScale, respectMotion } from "../lib/motion";
+import {
+  SPRING,
+  SPRING_SOFT,
+  fadeUpScale,
+  respectMotion,
+  GLOW,
+  type GlowColor,
+} from "../lib/motion";
+
+export interface SpotlightCardProps
+  extends Omit<HTMLMotionProps<"div">, "children"> {
+  children: ReactNode;
+  /** Color del resplandor en RGB sin envolver: `"124, 92, 255"`. */
+  glow?: GlowColor;
+  /** Píxeles que sube la tarjeta en hover. */
+  lift?: number;
+  className?: string;
+}
 
 /**
  * Tarjeta glassmorphism con resplandor dinámico ligado al cursor.
@@ -30,11 +48,11 @@ import { SPRING, SPRING_SOFT, fadeUpScale, respectMotion } from "../lib/motion";
 export default function SpotlightCard({
   children,
   className = "",
-  glow = "124, 92, 255", // RGB del resplandor; por defecto, iris
+  glow = GLOW.iris,
   lift = -8,
   ...props
-}) {
-  const ref = useRef(null);
+}: SpotlightCardProps) {
+  const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
   const rawX = useMotionValue(0);
@@ -48,8 +66,8 @@ export default function SpotlightCard({
   const spotlight = useMotionTemplate`radial-gradient(260px circle at ${x}px ${y}px, rgba(${glow}, 0.55), transparent 70%)`;
   const bloom = useMotionTemplate`radial-gradient(340px circle at ${x}px ${y}px, rgba(${glow}, 0.14), transparent 65%)`;
 
-  function handlePointerMove(e) {
-    if (reduced) return;
+  function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
+    if (reduced || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     rawX.set(e.clientX - rect.left);
     rawY.set(e.clientY - rect.top);
@@ -89,7 +107,7 @@ export default function SpotlightCard({
         style={{ background: spotlight, opacity }}
       />
 
-      {/* Reflejo diagonal fijo, como el de un cristal real */}
+      {/* Reflejo superior fijo, como el de un cristal real */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"

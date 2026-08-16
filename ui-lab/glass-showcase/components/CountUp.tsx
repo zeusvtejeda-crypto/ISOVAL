@@ -1,5 +1,18 @@
 import { useEffect, useRef } from "react";
 import { useInView, useMotionValue, useReducedMotion, animate } from "framer-motion";
+import { GLIDE } from "../lib/motion";
+
+export interface CountUpProps {
+  to: number;
+  from?: number;
+  duration?: number;
+  decimals?: number;
+  prefix?: string;
+  suffix?: string;
+  /** Locale para el separador de miles. */
+  locale?: string;
+  className?: string;
+}
 
 /**
  * Contador que arranca al entrar en pantalla.
@@ -15,9 +28,10 @@ export default function CountUp({
   decimals = 0,
   prefix = "",
   suffix = "",
+  locale = "es-MX",
   className = "",
-}) {
-  const ref = useRef(null);
+}: CountUpProps) {
+  const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-15%" });
   const reduced = useReducedMotion();
   const value = useMotionValue(from);
@@ -25,8 +39,8 @@ export default function CountUp({
   useEffect(() => {
     if (!inView) return;
 
-    const format = (n) =>
-      `${prefix}${n.toLocaleString("es-MX", {
+    const format = (n: number) =>
+      `${prefix}${n.toLocaleString(locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
       })}${suffix}`;
@@ -40,16 +54,13 @@ export default function CountUp({
       if (ref.current) ref.current.textContent = format(n);
     });
 
-    const controls = animate(value, to, {
-      duration,
-      ease: [0.16, 1, 0.3, 1],
-    });
+    const controls = animate(value, to, { duration, ease: GLIDE });
 
     return () => {
       controls.stop();
       unsubscribe();
     };
-  }, [inView, to, duration, decimals, prefix, suffix, reduced, value]);
+  }, [inView, to, duration, decimals, prefix, suffix, locale, reduced, value]);
 
   return (
     <span ref={ref} className={className}>
