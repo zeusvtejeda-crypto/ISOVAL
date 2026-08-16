@@ -15,8 +15,7 @@ const { VERIFY_TOKEN } = require("./config");
 const { elegirNegocio } = require("./router");
 const { generarRespuesta } = require("./brain");
 const { enviarTexto } = require("./whatsapp");
-const { reporte, aTexto, sondeo } = require("./salud");
-const { porId } = require("../businesses");
+const { reporte, aTexto } = require("./salud");
 
 const app = express();
 app.use(express.json());
@@ -34,14 +33,6 @@ app.get("/salud", async (req, res) => {
   res.status(r.sano ? 200 : 503);
   if ("json" in req.query) return res.json(r);
   res.type("text/plain; charset=utf-8").send(aTexto(r));
-});
-
-// Sondeo crudo, para diagnosticar cuando /salud no alcanza a explicar
-// la causa. Temporal: quitar cuando el asistente esté funcionando.
-app.get("/salud/sondeo", async (req, res) => {
-  const negocio = porId[req.query.negocio || "camas"];
-  if (!negocio) return res.status(404).json({ error: "negocio desconocido" });
-  res.json(await sondeo(negocio));
 });
 
 // El rewrite de Vercel manda TODO aquí, incluido el favicon que pide el
