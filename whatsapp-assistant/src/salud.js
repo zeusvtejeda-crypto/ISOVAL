@@ -59,22 +59,41 @@ async function numerosVisibles(token) {
       tipo: d.type,
       app: d.application,
       permisos: (d.scopes || []).join(", "),
+      // Lista vacía de target_ids = "aplica a todos los objetos" (así lo
+      // muestra el depurador de Meta). No confundir con "a ninguno".
       alcances: (d.granular_scopes || []).map(
-        (s) => `${s.scope}: ${(s.target_ids || []).join(",") || "TODOS/ninguno"}`
+        (s) => `${s.scope}: ${(s.target_ids || []).join(",") || "aplica a todos"}`
       ),
     };
 
-    const scopes = d.granular_scopes;
-    if (!Array.isArray(scopes)) {
-      return { numeros: [], pudoConsultar: false, huella,
-        motivo: "El token no expone granular_scopes; no puedo listar las cuentas." };
-    }
-
+    // OJO: en granular_scopes, target_ids VACÍO significa "aplica a todos
+    // los objetos", NO "a ninguno". Por eso no sirve para enumerar: hay
+    // que recorrer los negocios del usuario y pedirles sus cuentas.
     const wabas = new Set();
-    for (const s of scopes) {
+    for (const s of d.granular_scopes || []) {
       if (/whatsapp_business/.test(s.scope || "")) {
         for (const id of s.target_ids || []) wabas.add(id);
       }
+    }
+
+    // Camino principal: negocios → cuentas de WhatsApp (propias y de cliente).
+    const negociosMeta = await g("me/businesses?fields=id,name&limit=50");
+    const portafolios = negociosMeta?.data || [];
+    for (const b of portafolios) {
+      for (const rel of ["owned_whatsapp_business_accounts", "client_whatsapp_business_accounts"]) {
+        const res = await g(`${b.id}/${rel}?fields=id,name&limit=50`);
+        for (const w of res?.data || []) wabas.add(w.id);
+      }
+    }
+
+    if (!wabas.size) {
+      return {
+        numeros: [], pudoConsultar: true, huella,
+        portafolios: portafolios.map((b) => `${b.name} (${b.id})`),
+        motivo: portafolios.length
+          ? "El usuario pertenece a portafolios, pero ninguno tiene cuentas de WhatsApp visibles para este token."
+          : "El token no ve ningún portafolio de negocio.",
+      };
     }
 
     const numeros = [];
@@ -84,7 +103,8 @@ async function numerosVisibles(token) {
         numeros.push({ id: n.id, display_phone_number: n.display_phone_number, waba });
       }
     }
-    return { numeros, pudoConsultar: true, cuentas: [...wabas], huella };
+    return { numeros, pudoConsultar: true, cuentas: [...wabas], huella,
+      portafolios: portafolios.map((b) => `${b.name} (${b.id})`) };
   } catch (e) {
     return { numeros: [], pudoConsultar: false, motivo: e.message };
   }
@@ -151,10 +171,11 @@ async function revisarNegocio(negocio) {
           .join(" | ")}. Copia el id correcto en la variable del negocio "${negocio.id}" en Vercel y redespliega.`;
     } else if (v.pudoConsultar) {
       comoArreglar =
-        "Confirmado: el token no tiene NINGUNA cuenta de WhatsApp asignada. " +
-        "En Meta Business › Usuarios del sistema › (tu usuario) › Agregar activos, " +
-        "asígnale la CUENTA DE WHATSAPP con control total. Tener el permiso no basta: " +
-        "hay que asignar la cuenta como activo. Después vuelve a generar el token.";
+        `Recorrí los portafolios del token y no encontré ninguna cuenta de WhatsApp. ${v.motivo || ""} ` +
+        "Lo más probable es que la cuenta de WhatsApp esté en otro portafolio de " +
+        "Meta Business, distinto al del usuario del sistema. Revisa en Meta Business › " +
+        "Cuentas › Cuentas de WhatsApp en cuál portafolio vive, y crea el usuario del " +
+        "sistema en ESE portafolio (o mueve la cuenta al que ya usas).";
     } else {
       comoArreglar =
         `No pude listar las cuentas del token (${v.motivo}), así que no sé si falta ` +
@@ -171,6 +192,7 @@ async function revisarNegocio(negocio) {
       numerosDisponibles: v.numeros,
       consultaCuentas: v.pudoConsultar ? "ok" : `falló: ${v.motivo}`,
       tokenEnUso: v.huella,
+      portafolios: v.portafolios,
       comoArreglar,
     };
   } catch (e) {
@@ -240,6 +262,10 @@ function aTexto(r) {
     if (n.tokenEnUso) {
       lineas.push(`      Token en uso: emitido ${n.tokenEnUso.emitido}, caduca ${n.tokenEnUso.caduca}, app "${n.tokenEnUso.app}"`);
       for (const a of n.tokenEnUso.alcances || []) lineas.push(`        alcance ${a}`);
+    }
+    if (n.portafolios?.length) {
+      lineas.push("      Portafolios que ve el token:");
+      for (const p of n.portafolios) lineas.push(`        - ${p}`);
     }
     if (n.numerosDisponibles?.length) {
       lineas.push("      Números que el token SÍ ve:");
