@@ -76,9 +76,19 @@ async function numerosVisibles(token) {
       }
     }
 
-    // Camino principal: negocios → cuentas de WhatsApp (propias y de cliente).
-    const negociosMeta = await g("me/businesses?fields=id,name&limit=50");
-    const portafolios = negociosMeta?.data || [];
+    // Camino que sí funciona con tokens de Usuario del Sistema: preguntar
+    // qué portafolio es DUEÑO de la app. /me/businesses viene vacío para
+    // estos tokens, así que por sí solo no dice nada.
+    const portafolios = [];
+    if (d.app_id) {
+      const app = await g(`${d.app_id}?fields=owner_business{id,name}`);
+      if (app?.owner_business) portafolios.push(app.owner_business);
+    }
+    const mios = await g("me/businesses?fields=id,name&limit=50");
+    for (const b of mios?.data || []) {
+      if (!portafolios.some((p) => p.id === b.id)) portafolios.push(b);
+    }
+
     for (const b of portafolios) {
       for (const rel of ["owned_whatsapp_business_accounts", "client_whatsapp_business_accounts"]) {
         const res = await g(`${b.id}/${rel}?fields=id,name&limit=50`);
