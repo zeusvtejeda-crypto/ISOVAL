@@ -293,4 +293,37 @@ function aTexto(r) {
   return lineas.join("\n");
 }
 
-module.exports = { reporte, aTexto };
+// ── Sondeo crudo contra Meta ────────────────────────────────────
+// Pregunta varias cosas a la vez y devuelve lo que conteste, tal cual.
+// Existe para dejar de deducir la causa a partir de respuestas
+// ambiguas: es más barato ver los datos reales una vez.
+async function sondeo(negocio) {
+  const token = negocio.whatsappToken || WHATSAPP_TOKEN;
+  if (!token) return { error: "sin token" };
+
+  const g = async (ruta) => {
+    try {
+      const r = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${ruta}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return await r.json();
+    } catch (e) {
+      return { error: { message: e.message } };
+    }
+  };
+
+  const id = negocio.phoneNumberId;
+  const dbg = await g(`debug_token?input_token=${encodeURIComponent(token)}`);
+  const appId = dbg?.data?.app_id;
+
+  const pruebas = {
+    "quien soy (/me)": await g("me?fields=id,name"),
+    "la app": appId ? await g(`${appId}?fields=id,name,owner_business,link`) : "sin app_id",
+    "el id configurado, tal cual": await g(`${id}`),
+    "el id configurado, ¿es una WABA?": await g(`${id}/phone_numbers?fields=id,display_phone_number`),
+    "mis portafolios": await g("me/businesses?fields=id,name"),
+  };
+  return { idConfigurado: id, pruebas };
+}
+
+module.exports = { reporte, aTexto, sondeo };
