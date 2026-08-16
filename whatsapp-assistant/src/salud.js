@@ -220,11 +220,18 @@ async function revisarNegocio(negocio) {
           "depurador de Meta) dicen qué puede hacer; los activos dicen sobre " +
           "qué, y esos están vacíos.",
         comoArreglar:
-          "En Meta Business Settings › Usuarios del sistema › selecciona el " +
-          "usuario › botón 'Agregar activos' › pestaña 'Cuentas de WhatsApp' › " +
-          "marca la cuenta del negocio y dale CONTROL TOTAL. Asigna también la " +
-          "app en la pestaña 'Apps'. Luego genera un token nuevo, ponlo en " +
-          `la variable del negocio "${negocio.id}" en Vercel y redespliega.`,
+          "OJO con el orden, porque aquí es donde se pierde el tiempo: el " +
+          "usuario del sistema tiene que estar DENTRO del mismo portafolio " +
+          "que es dueño de la cuenta de WhatsApp. Si está en otro portafolio, " +
+          "el botón 'Agregar activos' ni siquiera te muestra la cuenta, y " +
+          "parece que Meta está fallando cuando en realidad estás parado en " +
+          "el negocio equivocado. Así que: (1) en Meta Business Settings " +
+          "abre el portafolio dueño de la cuenta de WhatsApp; (2) Usuarios " +
+          "del sistema › Agregar, si ahí no hay ninguno; (3) selecciónalo › " +
+          "'Agregar activos' › pestaña 'Cuentas de WhatsApp' › marca la " +
+          "cuenta y dale CONTROL TOTAL; (4) repite en la pestaña 'Apps' con " +
+          "la app del asistente; (5) genera un token nuevo, ponlo en la " +
+          `variable del negocio "${negocio.id}" en Vercel y redespliega.`,
       };
     }
 
