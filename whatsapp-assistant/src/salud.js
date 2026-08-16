@@ -36,7 +36,23 @@ async function numerosVisibles(token) {
 
   try {
     const dbg = await g(`debug_token?input_token=${encodeURIComponent(token)}`);
-    const scopes = dbg?.data?.granular_scopes || [];
+
+    // Importante distinguir "el token no tiene ninguna cuenta asignada"
+    // de "no pude preguntar". Si devolviera lista vacía en ambos casos,
+    // mandaríamos a cambiar permisos que quizá ya están bien.
+    if (dbg?.error) {
+      return { numeros: [], pudoConsultar: false, motivo: dbg.error.message };
+    }
+    if (!dbg?.data) {
+      return { numeros: [], pudoConsultar: false, motivo: "debug_token no devolvió datos." };
+    }
+
+    const scopes = dbg.data.granular_scopes;
+    if (!Array.isArray(scopes)) {
+      return { numeros: [], pudoConsultar: false,
+        motivo: "El token no expone granular_scopes; no puedo listar las cuentas." };
+    }
+
     const wabas = new Set();
     for (const s of scopes) {
       if (/whatsapp_business/.test(s.scope || "")) {
@@ -51,9 +67,9 @@ async function numerosVisibles(token) {
         numeros.push({ id: n.id, display_phone_number: n.display_phone_number, waba });
       }
     }
-    return numeros;
-  } catch {
-    return [];
+    return { numeros, pudoConsultar: true, cuentas: [...wabas] };
+  } catch (e) {
+    return { numeros: [], pudoConsultar: false, motivo: e.message };
   }
 }
 
@@ -108,19 +124,36 @@ async function revisarNegocio(negocio) {
     // Sistema no le asignaron la cuenta de WhatsApp como activo.
     // En vez de que adivines cuál de las dos, le preguntamos al token
     // qué números SÍ puede ver y te los listamos.
-    const visibles = await numerosVisibles(token);
+    const v = await numerosVisibles(token);
+
+    let comoArreglar;
+    if (v.numeros.length) {
+      comoArreglar =
+        `El token sí ve estos números: ${v.numeros
+          .map((n) => `${n.display_phone_number} → id ${n.id}`)
+          .join(" | ")}. Copia el id correcto en la variable del negocio "${negocio.id}" en Vercel y redespliega.`;
+    } else if (v.pudoConsultar) {
+      comoArreglar =
+        "Confirmado: el token no tiene NINGUNA cuenta de WhatsApp asignada. " +
+        "En Meta Business › Usuarios del sistema › (tu usuario) › Agregar activos, " +
+        "asígnale la CUENTA DE WHATSAPP con control total. Tener el permiso no basta: " +
+        "hay que asignar la cuenta como activo. Después vuelve a generar el token.";
+    } else {
+      comoArreglar =
+        `No pude listar las cuentas del token (${v.motivo}), así que no sé si falta ` +
+        "asignar la cuenta de WhatsApp o si el phone_number_id está mal. " +
+        "Revísalo en Meta › tu app › WhatsApp › Configuración de la API, donde " +
+        "aparece el identificador del número de teléfono.";
+    }
+
     return {
       ...base,
       conectado: true,
       estado: "NUMERO_NO_VISIBLE",
       detalle: err.message || `Meta respondió ${resp.status}.`,
-      numerosDisponibles: visibles,
-      comoArreglar: visibles.length
-        ? `El token sí ve estos números: ${visibles
-            .map((n) => `${n.display_phone_number} → id ${n.id}`)
-            .join(" | ")}. Copia el id correcto en la variable del negocio "${negocio.id}" en Vercel y redespliega.`
-        : "El token no ve NINGÚN número. En Meta Business › Usuarios del sistema, " +
-          "asígnale a ese usuario la CUENTA DE WHATSAPP como activo (control total), no solo la app.",
+      numerosDisponibles: v.numeros,
+      consultaCuentas: v.pudoConsultar ? "ok" : `falló: ${v.motivo}`,
+      comoArreglar,
     };
   } catch (e) {
     return { ...base, conectado: true, estado: "SIN_CONEXION", detalle: e.message };
@@ -184,6 +217,8 @@ function aTexto(r) {
   for (const n of conectados) {
     lineas.push(`  • ${n.nombre} [${n.id}]: ${n.estado}${n.numero ? " (" + n.numero + ")" : ""}`);
     if (n.detalle) lineas.push(`      ${n.detalle}`);
+    if (n.consultaCuentas && n.consultaCuentas !== "ok")
+      lineas.push(`      (consulta de cuentas del token ${n.consultaCuentas})`);
     if (n.numerosDisponibles?.length) {
       lineas.push("      Números que el token SÍ ve:");
       for (const d of n.numerosDisponibles)
