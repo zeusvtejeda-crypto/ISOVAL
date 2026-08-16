@@ -22,6 +22,44 @@ const {
   ANTHROPIC_API_KEY,
 } = require("./config");
 
+// Pregunta qué CUENTAS de WhatsApp tiene asignadas el usuario del token.
+//
+// Este es el dato que de verdad decide si el asistente puede contestar, y
+// es distinto de los permisos. Los permisos dicen QUÉ puede hacer el token
+// (mandar mensajes); los activos dicen SOBRE QUÉ. Un token puede tener
+// todos los permisos en verde y aun así no poder mandar nada, porque no
+// tiene ninguna cuenta asignada. Eso es exactamente lo que pasaba aquí y
+// por qué el depurador de Meta se veía perfecto.
+//
+// La comprobamos con la arista "assigned_whatsapp_business_accounts", que
+// devuelve lista vacía de verdad cuando no hay ninguna (lo verifiqué
+// contra una arista inventada: esa da error, no lista vacía). Ojo con
+// esto, porque en la Graph API "vacío" no siempre significa "ninguno":
+// en granular_scopes, por ejemplo, vacío significa "aplica a todos".
+async function cuentasAsignadas(token) {
+  const g = (ruta) =>
+    fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${ruta}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((r) => r.json());
+
+  try {
+    const res = await g("me/assigned_whatsapp_business_accounts?fields=id,name&limit=50");
+    if (res?.error) return { pudoConsultar: false, motivo: res.error.message };
+
+    const cuentas = res.data || [];
+    const numeros = [];
+    for (const c of cuentas) {
+      const n = await g(`${c.id}/phone_numbers?fields=id,display_phone_number,verified_name`);
+      for (const t of n?.data || []) {
+        numeros.push({ id: t.id, display_phone_number: t.display_phone_number, waba: c.id });
+      }
+    }
+    return { pudoConsultar: true, cuentas, numeros };
+  } catch (e) {
+    return { pudoConsultar: false, motivo: e.message };
+  }
+}
+
 // Averigua qué números de WhatsApp puede ver realmente un token.
 // Truco: debug_token devuelve los "granular_scopes", y ahí vienen los
 // IDs de las cuentas de WhatsApp (WABA) a las que ese token tiene
@@ -164,6 +202,39 @@ async function revisarNegocio(negocio) {
           "(los de prueba del panel de desarrollador duran 24 h), actualiza " +
           `la variable del negocio "${negocio.id}" en Vercel y redespliega.`,
       };
+    }
+
+    // El token está vivo. Pero eso NO basta para contestar: hace falta que
+    // tenga asignada la cuenta de WhatsApp. Sin eso, todo envío falla con
+    // "missing permissions" aunque los permisos se vean perfectos.
+    const asignadas = await cuentasAsignadas(token);
+    if (asignadas.pudoConsultar && asignadas.cuentas.length === 0) {
+      return {
+        ...base,
+        conectado: true,
+        estado: "SIN_CUENTA_ASIGNADA",
+        detalle:
+          `El token es válido y permanente, pero el usuario del sistema no ` +
+          "tiene NINGUNA cuenta de WhatsApp asignada, así que no puede mandar " +
+          "mensajes desde ningún número. Los permisos (que se ven bien en el " +
+          "depurador de Meta) dicen qué puede hacer; los activos dicen sobre " +
+          "qué, y esos están vacíos.",
+        comoArreglar:
+          "En Meta Business Settings › Usuarios del sistema › selecciona el " +
+          "usuario › botón 'Agregar activos' › pestaña 'Cuentas de WhatsApp' › " +
+          "marca la cuenta del negocio y dale CONTROL TOTAL. Asigna también la " +
+          "app en la pestaña 'Apps'. Luego genera un token nuevo, ponlo en " +
+          `la variable del negocio "${negocio.id}" en Vercel y redespliega.`,
+      };
+    }
+
+    // Si sí tiene cuentas, podemos decirte el id bueno en vez de que adivines.
+    if (asignadas.pudoConsultar && asignadas.numeros.length) {
+      const coincide = asignadas.numeros.find((n) => n.id === String(negocio.phoneNumberId));
+      if (coincide) {
+        return { ...base, estado: "OK", conectado: true, tokenDe: me.name,
+          numero: coincide.display_phone_number };
+      }
     }
 
     // Token válido ⇒ el negocio PUEDE contestar. Lo que sigue es un extra:
