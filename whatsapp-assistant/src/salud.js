@@ -47,9 +47,26 @@ async function numerosVisibles(token) {
       return { numeros: [], pudoConsultar: false, motivo: "debug_token no devolvió datos." };
     }
 
-    const scopes = dbg.data.granular_scopes;
+    // Huella del token: sirve para saber si el token que está corriendo
+    // es el nuevo o quedó el viejo (el caso típico es actualizar la
+    // variable y que no se haya redesplegado, o al revés).
+    const d = dbg.data;
+    const fecha = (s) => (s ? new Date(s * 1000).toISOString() : "nunca");
+    const huella = {
+      emitido: fecha(d.issued_at),
+      caduca: d.expires_at ? fecha(d.expires_at) : "nunca",
+      valido: d.is_valid,
+      tipo: d.type,
+      app: d.application,
+      permisos: (d.scopes || []).join(", "),
+      alcances: (d.granular_scopes || []).map(
+        (s) => `${s.scope}: ${(s.target_ids || []).join(",") || "TODOS/ninguno"}`
+      ),
+    };
+
+    const scopes = d.granular_scopes;
     if (!Array.isArray(scopes)) {
-      return { numeros: [], pudoConsultar: false,
+      return { numeros: [], pudoConsultar: false, huella,
         motivo: "El token no expone granular_scopes; no puedo listar las cuentas." };
     }
 
@@ -67,7 +84,7 @@ async function numerosVisibles(token) {
         numeros.push({ id: n.id, display_phone_number: n.display_phone_number, waba });
       }
     }
-    return { numeros, pudoConsultar: true, cuentas: [...wabas] };
+    return { numeros, pudoConsultar: true, cuentas: [...wabas], huella };
   } catch (e) {
     return { numeros: [], pudoConsultar: false, motivo: e.message };
   }
@@ -153,6 +170,7 @@ async function revisarNegocio(negocio) {
       detalle: err.message || `Meta respondió ${resp.status}.`,
       numerosDisponibles: v.numeros,
       consultaCuentas: v.pudoConsultar ? "ok" : `falló: ${v.motivo}`,
+      tokenEnUso: v.huella,
       comoArreglar,
     };
   } catch (e) {
@@ -219,6 +237,10 @@ function aTexto(r) {
     if (n.detalle) lineas.push(`      ${n.detalle}`);
     if (n.consultaCuentas && n.consultaCuentas !== "ok")
       lineas.push(`      (consulta de cuentas del token ${n.consultaCuentas})`);
+    if (n.tokenEnUso) {
+      lineas.push(`      Token en uso: emitido ${n.tokenEnUso.emitido}, caduca ${n.tokenEnUso.caduca}, app "${n.tokenEnUso.app}"`);
+      for (const a of n.tokenEnUso.alcances || []) lineas.push(`        alcance ${a}`);
+    }
     if (n.numerosDisponibles?.length) {
       lineas.push("      Números que el token SÍ ve:");
       for (const d of n.numerosDisponibles)
