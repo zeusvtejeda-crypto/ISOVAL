@@ -15,12 +15,25 @@ const { VERIFY_TOKEN } = require("./config");
 const { elegirNegocio } = require("./router");
 const { generarRespuesta } = require("./brain");
 const { enviarTexto } = require("./whatsapp");
+const { reporte, aTexto } = require("./salud");
 
 const app = express();
 app.use(express.json());
 
 // ── Salud: para comprobar que el servidor está vivo ─────────────
 app.get("/", (_req, res) => res.send("Asistente de WhatsApp activo ✅"));
+
+// ── Salud REAL: ¿puede de verdad contestar? ─────────────────────
+// Ojo: la ruta "/" de arriba solo dice que el servidor encendió, y por
+// eso el token vencido pasó desapercibido más de un día. Esta ruta sí
+// le pregunta a Meta si el token sirve. Responde 503 si algo está roto
+// para que un monitor externo pueda avisarte solo.
+app.get("/salud", async (req, res) => {
+  const r = await reporte();
+  res.status(r.sano ? 200 : 503);
+  if ("json" in req.query) return res.json(r);
+  res.type("text/plain; charset=utf-8").send(aTexto(r));
+});
 
 // El rewrite de Vercel manda TODO aquí, incluido el favicon que pide el
 // navegador; sin esta ruta cada visita ensucia los logs con un 404.
