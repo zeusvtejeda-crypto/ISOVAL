@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────
+   Tokens del tema (Tailwind v4 se configura en CSS)
+   Se usan como bg-ink-950, text-mist, etc.
+───────────────────────────────────────────── */
+@theme {
+  --color-ink-950: #06060a;
+  --color-ink-900: #0b0b12;
+  --color-ink-800: #12121c;
+
+  --color-mist:    #e8e9f3;
+  --color-mist-dim:#9ea0b8;
+
+  --color-iris:    #7c5cff;
+  --color-aqua:    #38e0d0;
+  --color-rose:    #ff5c8a;
+
+  --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-ink-950);
+  color: var(--color-mist);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Foco visible y consistente sobre fondo oscuro */
+:focus-visible {
+  outline: 2px solid var(--color-iris);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ─────────────────────────────────────────────
+   Grano fino: rompe el banding de los degradados
+   grandes, que en pantallas oscuras se nota mucho.
+───────────────────────────────────────────── */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─────────────────────────────────────────────
+   Truco del borde luminoso.
+   Pinta un degradado y lo recorta a los 1px del
+   borde componiendo dos máscaras con XOR: así el
+   resplandor vive en el contorno, no en el relleno.
+───────────────────────────────────────────── */
+.ring-mask {
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Respeta la preferencia del sistema: sin movimiento,
+   todo aparece ya en su estado final. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
