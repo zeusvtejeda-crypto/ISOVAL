@@ -139,72 +139,92 @@ async function revisarNegocio(negocio) {
       detalle: "Tiene número pero le falta el token de acceso." };
   }
 
-  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${negocio.phoneNumberId}?fields=display_phone_number,verified_name`;
-
   try {
-    const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    const datos = await resp.json().catch(() => ({}));
+    // Lo que de verdad hay que comprobar es que el TOKEN sirva, porque es
+    // lo único que el envío necesita: al responder, el phone_number_id se
+    // toma del mensaje entrante de Meta (app.js), no de esta variable.
+    // Antes se comprobaba el número configurado y eso daba falsas alarmas:
+    // marcaba todo como roto por un dato que el envío ni siquiera usa.
+    const meResp = await fetch(
+      `https://graph.facebook.com/${GRAPH_VERSION}/me`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const me = await meResp.json().catch(() => ({}));
 
-    if (resp.ok) {
-      return { ...base, estado: "OK", conectado: true,
-        numero: datos.display_phone_number, verificado: datos.verified_name };
-    }
-
-    const err = datos.error || {};
-    // 190 = problema de token. El subcódigo 463 es específicamente "venció".
-    if (resp.status === 401 || err.code === 190) {
-      const vencido = err.error_subcode === 463 || /expired/i.test(err.message || "");
+    if (!meResp.ok) {
+      const e = me.error || {};
+      const vencido = e.error_subcode === 463 || /expired/i.test(e.message || "");
       return {
         ...base,
         conectado: true,
         estado: vencido ? "TOKEN_VENCIDO" : "TOKEN_INVALIDO",
-        detalle: err.message || "Meta rechazó el token.",
+        detalle: e.message || "Meta rechazó el token.",
         comoArreglar:
           "Genera un token PERMANENTE de Usuario del Sistema en Meta Business " +
-          "(los de prueba del panel de desarrollador duran 24 h) y actualiza " +
-          `la variable de entorno del negocio "${negocio.id}" en Vercel.`,
+          "(los de prueba del panel de desarrollador duran 24 h), actualiza " +
+          `la variable del negocio "${negocio.id}" en Vercel y redespliega.`,
       };
     }
 
-    // El token sirve, pero Meta no reconoce ese número. Casi siempre es
-    // que el phone_number_id está mal copiado, o que al Usuario del
-    // Sistema no le asignaron la cuenta de WhatsApp como activo.
-    // En vez de que adivines cuál de las dos, le preguntamos al token
-    // qué números SÍ puede ver y te los listamos.
+    // Token válido ⇒ el negocio PUEDE contestar. Lo que sigue es un extra:
+    // comprobar el id configurado. Que ese id esté mal NO impide responder,
+    // porque al contestar se usa el phone_number_id que viene en el mensaje
+    // entrante de Meta (app.js línea 76), no esta variable. Aquí solo sirve
+    // para enrutar, y con DEFAULT_BUSINESS el ruteo funciona igual. Por eso
+    // es un AVISO y no una falla: marcarlo en rojo sería gritar en falso.
+    const url = `https://graph.facebook.com/${GRAPH_VERSION}/${negocio.phoneNumberId}?fields=display_phone_number,verified_name`;
+    const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const datos = await resp.json().catch(() => ({}));
+
+    if (resp.ok) {
+      return { ...base, estado: "OK", conectado: true, tokenDe: me.name,
+        numero: datos.display_phone_number, verificado: datos.verified_name };
+    }
+
+    // El token sirve, pero Meta no reconoce ese id. Casi siempre es que el
+    // phone_number_id está mal copiado, o que al Usuario del Sistema no le
+    // asignaron la cuenta de WhatsApp como activo. En vez de que adivines
+    // cuál de las dos, le preguntamos al token qué números SÍ puede ver.
+    const err = datos.error || {};
     const v = await numerosVisibles(token);
 
-    let comoArreglar;
+    let queHacer;
     if (v.numeros.length) {
-      comoArreglar =
+      queHacer =
         `El token sí ve estos números: ${v.numeros
           .map((n) => `${n.display_phone_number} → id ${n.id}`)
           .join(" | ")}. Copia el id correcto en la variable del negocio "${negocio.id}" en Vercel y redespliega.`;
-    } else if (v.pudoConsultar) {
-      comoArreglar =
-        `No pude enumerar las cuentas por esta vía (${v.motivo || "sin datos"}), y en tokens de ` +
-        "Usuario del Sistema eso puede ser normal, así que NO concluyas nada de aquí. " +
-        "El dato bueno está en Meta › tu app › WhatsApp › Configuración de la API: ahí " +
-        "aparecen el 'Identificador del número de teléfono' y el 'Identificador de la cuenta " +
-        `de WhatsApp Business'. Compara ese número con el que está configurado (${negocio.phoneNumberId}); ` +
-        "si no coinciden, ese es el problema.";
     } else {
-      comoArreglar =
-        `No pude listar las cuentas del token (${v.motivo}), así que no sé si falta ` +
-        "asignar la cuenta de WhatsApp o si el phone_number_id está mal. " +
-        "Revísalo en Meta › tu app › WhatsApp › Configuración de la API, donde " +
-        "aparece el identificador del número de teléfono.";
+      queHacer =
+        "El dato bueno está en Meta › tu app › WhatsApp › Configuración de la API: " +
+        "ahí aparece el 'Identificador del número de teléfono'. Compáralo con el " +
+        `configurado (${negocio.phoneNumberId}) y corrígelo si no coinciden.`;
     }
 
+    // Estado intermedio a propósito. Decir "OK" aquí sería repetir el
+    // error que causó el apagón: un semáforo en verde que no prueba nada.
+    // Decir "ROTO" también sería mentir, porque el token sí sirve y el
+    // envío usa otro id. Así que lo dejamos en NO CONFIRMADO: no dispara
+    // la alarma (no es una falla demostrada) pero tampoco te deja creer
+    // que está probado. Se confirma solo cuando llegue un mensaje real.
     return {
       ...base,
+      estado: "SIN_CONFIRMAR",
       conectado: true,
-      estado: "NUMERO_NO_VISIBLE",
-      detalle: err.message || `Meta respondió ${resp.status}.`,
+      tokenDe: me.name,
+      detalle:
+        "El token está vivo y Meta lo acepta, así que la causa del apagón " +
+        "anterior (token vencido) ya no está. Pero no pude comprobar el " +
+        "envío de punta a punta, porque el id configurado " +
+        `${negocio.phoneNumberId} no lo reconoce Meta: ` +
+        `${err.message || `respondió ${resp.status}`}.`,
+      comoArreglar:
+        "Ese id NO se usa al contestar (el envío toma el phone_number_id del " +
+        "mensaje entrante), así que probablemente ya funciona. La prueba de " +
+        "verdad es mandarle un WhatsApp al número del negocio desde tu " +
+        "celular. Para dejarlo confirmado aquí también: " + queHacer,
       numerosDisponibles: v.numeros,
-      consultaCuentas: v.pudoConsultar ? "ok" : `falló: ${v.motivo}`,
       tokenEnUso: v.huella,
-      portafolios: v.portafolios,
-      comoArreglar,
     };
   } catch (e) {
     return { ...base, conectado: true, estado: "SIN_CONEXION", detalle: e.message };
@@ -229,22 +249,38 @@ async function reporte() {
   // Solo los negocios YA conectados cuentan para decidir si hay alarma.
   const conectados = revisados.filter((n) => n.conectado);
   const puedeContestar = conectados.filter((n) => n.estado === "OK");
-  const conProblema = conectados.filter((n) => n.estado !== "OK");
+  const sinConfirmar = conectados.filter((n) => n.estado === "SIN_CONFIRMAR");
+  const rotos = conectados.filter((n) => !["OK", "SIN_CONFIRMAR"].includes(n.estado));
   const pendientes = revisados.filter((n) => !n.conectado);
 
-  // Si no hay NINGÚN negocio conectado tampoco está sano: significa que
-  // se borró la configuración y nadie podría contestar.
-  const sano =
-    cerebro.estado === "OK" && conProblema.length === 0 && conectados.length > 0;
+  // Tres estados, no dos. La versión anterior solo tenía sano/roto y eso
+  // obligaba a mentir en los casos de en medio: o gritaba en falso, o
+  // pintaba de verde algo sin comprobar. Y un verde que no prueba nada es
+  // justo lo que dejó el asistente caído más de un día sin que se notara.
+  //   ROTO           → falla demostrada, alguien tiene que actuar (503).
+  //   SIN_CONFIRMAR  → no hay falla, pero tampoco prueba. No es alarma.
+  //   SANO           → comprobado de punta a punta.
+  const hayFalla =
+    cerebro.estado !== "OK" || rotos.length > 0 || conectados.length === 0;
+  const sano = !hayFalla;
+
+  const estado = hayFalla ? "ROTO" : sinConfirmar.length ? "SIN_CONFIRMAR" : "SANO";
+
+  const resumen = hayFalla
+    ? conectados.length === 0
+      ? "Atención: no hay ningún negocio conectado; nadie puede contestar."
+      : `Atención: ${rotos.length} de ${conectados.length} negocio(s) conectado(s) NO pueden contestar.`
+    : estado === "SIN_CONFIRMAR"
+      ? `Sin fallas, pero sin confirmar: ${sinConfirmar.length} negocio(s) tienen el token bueno, ` +
+        "aunque todavía no se ha comprobado un envío real. Mándale un WhatsApp al " +
+        "número del negocio desde tu celular y ahí se confirma."
+      : `Todo bien: ${puedeContestar.length} negocio(s) conectado(s) pueden contestar.` +
+        (pendientes.length ? ` (${pendientes.length} aún sin conectar, es normal.)` : "");
 
   return {
     sano,
-    resumen: sano
-      ? `Todo bien: ${puedeContestar.length} negocio(s) conectado(s) pueden contestar.` +
-        (pendientes.length ? ` (${pendientes.length} aún sin conectar, es normal.)` : "")
-      : conectados.length === 0
-        ? "Atención: no hay ningún negocio conectado; nadie puede contestar."
-        : `Atención: ${conProblema.length} de ${conectados.length} negocio(s) conectado(s) NO pueden contestar.`,
+    estado,
+    resumen,
     revisado: new Date().toISOString(),
     cerebro,
     negocios: revisados,
@@ -253,8 +289,13 @@ async function reporte() {
 
 // Versión en texto, para leerla de un vistazo en el navegador.
 function aTexto(r) {
+  const titulo = {
+    SANO: "ASISTENTE SANO ✅",
+    SIN_CONFIRMAR: "SIN FALLAS, PERO SIN CONFIRMAR 🟡",
+    ROTO: "ASISTENTE CON PROBLEMAS ⚠️",
+  };
   const lineas = [
-    r.sano ? "ASISTENTE SANO ✅" : "ASISTENTE CON PROBLEMAS ⚠️",
+    titulo[r.estado] || (r.sano ? "ASISTENTE SANO ✅" : "ASISTENTE CON PROBLEMAS ⚠️"),
     r.resumen,
     "",
     `Cerebro (${r.cerebro.proveedor}): ${r.cerebro.estado}${r.cerebro.detalle ? " — " + r.cerebro.detalle : ""}`,
@@ -268,15 +309,9 @@ function aTexto(r) {
   for (const n of conectados) {
     lineas.push(`  • ${n.nombre} [${n.id}]: ${n.estado}${n.numero ? " (" + n.numero + ")" : ""}`);
     if (n.detalle) lineas.push(`      ${n.detalle}`);
-    if (n.consultaCuentas && n.consultaCuentas !== "ok")
-      lineas.push(`      (consulta de cuentas del token ${n.consultaCuentas})`);
     if (n.tokenEnUso) {
       lineas.push(`      Token en uso: emitido ${n.tokenEnUso.emitido}, caduca ${n.tokenEnUso.caduca}, app "${n.tokenEnUso.app}"`);
       for (const a of n.tokenEnUso.alcances || []) lineas.push(`        alcance ${a}`);
-    }
-    if (n.portafolios?.length) {
-      lineas.push("      Portafolios que ve el token:");
-      for (const p of n.portafolios) lineas.push(`        - ${p}`);
     }
     if (n.numerosDisponibles?.length) {
       lineas.push("      Números que el token SÍ ve:");

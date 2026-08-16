@@ -96,12 +96,29 @@ app.post("/webhook", async (req, res) => {
             continue;
           }
 
-          console.log(`[${negocio.id}] ${usuario}: ${texto.slice(0, 80)}`);
+          // Registramos el phone_number_id que manda Meta: es el que de
+          // verdad se usa para contestar, y sirve para saber si el que
+          // está en la variable de entorno (solo para enrutar) coincide.
+          console.log(
+            `[${negocio.id}] (num ${phoneNumberId}) ${usuario}: ${texto.slice(0, 80)}`
+          );
 
           const respuesta = await generarRespuesta(negocio, usuario, texto);
-          await enviarTexto(phoneNumberId, usuario, respuesta, negocio.whatsappToken);
+          const envio = await enviarTexto(
+            phoneNumberId, usuario, respuesta, negocio.whatsappToken
+          );
 
-          console.log(`[${negocio.id}] → ${respuesta.slice(0, 80)}`);
+          // Dejamos constancia de si SALIÓ o NO. Antes solo se registraba
+          // la respuesta redactada, que se escribe igual aunque el envío
+          // falle: por eso los logs parecían normales con todo caído.
+          if (envio?.ok) {
+            console.log(`[${negocio.id}] ENVIADO → ${respuesta.slice(0, 80)}`);
+          } else {
+            console.error(
+              `[${negocio.id}] NO ENVIADO (${envio?.motivo || "motivo desconocido"}) ` +
+                `→ ${respuesta.slice(0, 80)}`
+            );
+          }
         }
       }
     }
