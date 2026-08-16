@@ -171,11 +171,12 @@ async function revisarNegocio(negocio) {
           .join(" | ")}. Copia el id correcto en la variable del negocio "${negocio.id}" en Vercel y redespliega.`;
     } else if (v.pudoConsultar) {
       comoArreglar =
-        `Recorrí los portafolios del token y no encontré ninguna cuenta de WhatsApp. ${v.motivo || ""} ` +
-        "Lo más probable es que la cuenta de WhatsApp esté en otro portafolio de " +
-        "Meta Business, distinto al del usuario del sistema. Revisa en Meta Business › " +
-        "Cuentas › Cuentas de WhatsApp en cuál portafolio vive, y crea el usuario del " +
-        "sistema en ESE portafolio (o mueve la cuenta al que ya usas).";
+        `No pude enumerar las cuentas por esta vía (${v.motivo || "sin datos"}), y en tokens de ` +
+        "Usuario del Sistema eso puede ser normal, así que NO concluyas nada de aquí. " +
+        "El dato bueno está en Meta › tu app › WhatsApp › Configuración de la API: ahí " +
+        "aparecen el 'Identificador del número de teléfono' y el 'Identificador de la cuenta " +
+        `de WhatsApp Business'. Compara ese número con el que está configurado (${negocio.phoneNumberId}); ` +
+        "si no coinciden, ese es el problema.";
     } else {
       comoArreglar =
         `No pude listar las cuentas del token (${v.motivo}), así que no sé si falta ` +
