@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800mm" height="2800mm" viewBox="0 0 800 2800"
+     font-family="'Anton','Archivo Black','Arial Black',Impact,sans-serif">
+  <title>Bandera tipo vela 80 × 280 cm — Bases Box Tepic</title>
+  <!-- MEDIDA REAL: 80 × 280 cm (tela · impresión por ambos lados)
+       1 unidad = 1 mm · área segura: 60 mm a los lados.
+       Ojo: los primeros 200 mm de arriba se curvan con el asta y los
+       últimos 300 mm de abajo los tapa la base → nada importante ahí. -->
+
+  <rect width="800" height="2800" fill="#1A1A1A"/>
+  <g stroke="#F4F2ED" stroke-width="1.5" opacity=".07">
+    <path d="M0 200H800M0 400H800M0 600H800M0 800H800M0 1000H800M0 1200H800M0 1400H800M0 1600H800M0 1800H800M0 2000H800M0 2200H800M0 2400H800M0 2600H800"/>
+    <path d="M200 0V2800M400 0V2800M600 0V2800"/>
+  </g>
+  <rect y="200" width="800" height="26" fill="#F2591F"/>
+
+  <!-- marca -->
+  <g transform="translate(400,330) scale(0.72)">
+    <g fill="#F2591F">
+      <polygon points="-103.9,190 -83.9,201.5 -83.9,214 -103.9,202.5"/>
+      <polygon points="103.9,190 83.9,201.5 83.9,214 103.9,202.5"/>
+      <rect x="-6" y="250" width="12" height="12"/>
+    </g>
+    <polygon points="103.9,60 0,120 0,250 103.9,190" fill="#2A2A2A"/>
+    <polygon points="-103.9,60 0,120 0,250 -103.9,190" fill="#111111"/>
+    <g transform="matrix(103.9,60,0,130,-103.9,60)"><text x="0.20" y="0.76" font-size="0.9" fill="#F4F2ED">B</text></g>
+    <polygon points="0,0 103.9,60 0,120 -103.9,60" fill="#ECEAE4" stroke="#1A1A1A" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+  <text x="400" y="700" font-size="185" fill="#F4F2ED" letter-spacing="4" text-anchor="middle">BASES</text>
+  <text x="400" y="880" font-size="230" fill="#F2591F" letter-spacing="4" text-anchor="middle">BOX</text>
+  <text x="400" y="980" font-size="80" fill="#B7B5AF" letter-spacing="20" text-anchor="middle"
+        font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700">TEPIC</text>
+
+  <rect x="150" y="1050" width="500" height="8" fill="#F2591F"/>
+
+  <text x="400" y="1250" font-size="138" fill="#F4F2ED" letter-spacing="3" text-anchor="middle">MACIZAS</text>
+  <text x="400" y="1390" font-size="95" fill="#F4F2ED" letter-spacing="6" text-anchor="middle"
+        font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700">A LA MEDIDA</text>
+
+  <!-- producto -->
+  <g transform="translate(400,1560) scale(1.35)">
+    <g fill="#9aa0a6">
+      <rect x="-118" y="150" width="10" height="34" rx="3"/><rect x="108" y="150" width="10" height="34" rx="3"/><rect x="-6" y="196" width="12" height="34" rx="3"/>
+    </g>
+    <polygon points="120,52 0,110 0,200 120,150" fill="#532f80"/>
+    <polygon points="-120,52 0,110 0,200 -120,150" fill="#6B3FA0"/>
+    <polygon points="0,0 120,52 0,104 -120,52" fill="#FBFAF7" stroke="#d9d7d1" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+
+  <!-- tonos -->
+  <g stroke="#F4F2ED" stroke-width="4">
+    <circle cx="215" cy="2010" r="44" fill="#6F4E37"/>
+    <circle cx="338" cy="2010" r="44" fill="#6B3FA0"/>
+    <circle cx="461" cy="2010" r="44" fill="#E84E8A"/>
+    <circle cx="584" cy="2010" r="44" fill="#2E5AAC"/>
+  </g>
+  <text x="400" y="2130" font-size="72" fill="#B7B5AF" letter-spacing="10" text-anchor="middle"
+        font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700">+8 TONOS</text>
+
+  <!-- contacto -->
+  <rect x="0" y="2210" width="800" height="290" fill="#F2591F"/>
+  <text x="400" y="2340" font-size="72" fill="#5c1f06" letter-spacing="12" text-anchor="middle"
+        font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700">WHATSAPP</text>
+  <text x="400" y="2455" font-size="115" fill="#1A1A1A" letter-spacing="3" text-anchor="middle">311 121 6033</text>
+</svg>

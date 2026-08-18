@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="6000mm" height="3000mm" viewBox="0 0 6000 3000"
+     font-family="'Anton','Archivo Black','Arial Black',Impact,sans-serif">
+  <title>Lona libramiento 6 × 3 m — Bases Box Tepic (versión A: MACIZAS)</title>
+  <!-- ════════════════════════════════════════════════════════════
+       MEDIDA REAL: 600 × 300 cm · 1 unidad del archivo = 1 mm
+       Área segura: 250 mm por lado (todo el texto va dentro).
+       Dobladillo perimetral + ojillos cada 50 cm.
+       Antes de imprimir: convertir textos a curvas.
+       Tipografías: Anton + Barlow Condensed (Google Fonts, gratis).
+       ════════════════════════════════════════════════════════════ -->
+
+  <!-- fondo -->
+  <rect width="6000" height="3000" fill="#1A1A1A"/>
+  <g stroke="#F4F2ED" stroke-width="2" opacity=".06">
+    <path d="M0 300H6000M0 600H6000M0 900H6000M0 1200H6000M0 1500H6000M0 1800H6000M0 2100H6000M0 2400H6000M0 2700H6000"/>
+    <path d="M300 0V3000M600 0V3000M900 0V3000M1200 0V3000M1500 0V3000M1800 0V3000M2100 0V3000M2400 0V3000M2700 0V3000M3000 0V3000M3300 0V3000M3600 0V3000M3900 0V3000M4200 0V3000M4500 0V3000M4800 0V3000M5100 0V3000M5400 0V3000M5700 0V3000"/>
+  </g>
+  <rect width="6000" height="60" fill="#F2591F"/>
+
+  <!-- ══════ MARCA (centrada arriba) ══════ -->
+  <g transform="translate(3000,280) scale(0.78)">
+    <g fill="#F2591F">
+      <polygon points="-103.9,190 -83.9,201.5 -83.9,214 -103.9,202.5"/>
+      <polygon points="103.9,190 83.9,201.5 83.9,214 103.9,202.5"/>
+      <rect x="-6" y="250" width="12" height="12"/>
+    </g>
+    <polygon points="103.9,60 0,120 0,250 103.9,190" fill="#2A2A2A"/>
+    <polygon points="-103.9,60 0,120 0,250 -103.9,190" fill="#111111"/>
+    <g transform="matrix(103.9,60,0,130,-103.9,60)">
+      <text x="0.20" y="0.76" font-size="0.9" fill="#F4F2ED">B</text>
+    </g>
+    <polygon points="0,0 103.9,60 0,120 -103.9,60" fill="#ECEAE4" stroke="#1A1A1A" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+  <text x="3000" y="710" font-size="250" fill="#F4F2ED" letter-spacing="6" text-anchor="middle">BASES BO<tspan fill="#F2591F">X</tspan></text>
+  <text x="3000" y="800" font-size="120" fill="#B7B5AF" letter-spacing="26" text-anchor="middle"
+        font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700">TEPIC · DIRECTO DE FÁBRICA</text>
+
+  <!-- ══════ MENSAJE (lo que se lee a 100 m) ══════ -->
+  <text x="3000" y="1500" font-size="760" fill="#F4F2ED" letter-spacing="10" text-anchor="middle">BASES</text>
+  <text x="3000" y="2140" font-size="760" fill="#F2591F" letter-spacing="10" text-anchor="middle">MACIZAS</text>
+
+  <!-- ══════ PRODUCTO (flanqueando el mensaje) ══════ -->
+  <g transform="translate(760,1240) scale(2.7)">
+    <g fill="#9aa0a6">
+      <rect x="-118" y="150" width="10" height="34" rx="3"/><rect x="108" y="150" width="10" height="34" rx="3"/><rect x="-6" y="196" width="12" height="34" rx="3"/>
+    </g>
+    <polygon points="120,52 0,110 0,200 120,150" fill="#532f80"/>
+    <polygon points="-120,52 0,110 0,200 -120,150" fill="#6B3FA0"/>
+    <polygon points="0,0 120,52 0,104 -120,52" fill="#FBFAF7" stroke="#d9d7d1" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(5240,1240) scale(2.7)">
+    <g fill="#9aa0a6">
+      <rect x="-118" y="150" width="10" height="34" rx="3"/><rect x="108" y="150" width="10" height="34" rx="3"/><rect x="-6" y="196" width="12" height="34" rx="3"/>
+    </g>
+    <polygon points="120,52 0,110 0,200 120,150" fill="#8f2f52"/>
+    <polygon points="-120,52 0,110 0,200 -120,150" fill="#E84E8A"/>
+    <polygon points="0,0 120,52 0,104 -120,52" fill="#FBFAF7" stroke="#d9d7d1" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+
+  <!-- ══════ CONTACTO ══════ -->
+  <rect x="0" y="2220" width="6000" height="600" fill="#F2591F"/>
+  <g transform="translate(430,2380) scale(10)">
+    <path fill="#1A1A1A" d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/>
+  </g>
+  <text x="3000" y="2620" font-size="400" fill="#1A1A1A" letter-spacing="8" text-anchor="middle">311 121 6033</text>
+  <text x="3000" y="2745" font-size="150" fill="#5c1f06" letter-spacing="18" text-anchor="middle"
+        font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-weight="700">A LA MEDIDA · +8 TONOS · ENTREGA A DOMICILIO</text>
+</svg>

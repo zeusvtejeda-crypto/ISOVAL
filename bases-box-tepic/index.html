@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Bases Box Tepic — Bases tipo box a la medida · Fábrica propia en Tepic, Nayarit</title>
-<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit. Más de 8 tonos, estructura durable y patas cromadas. Cotiza directo por WhatsApp."/>
-<meta property="og:title" content="Bases Box Tepic — Fábrica de bases para cama"/>
-<meta property="og:description" content="Bases tipo box a la medida, +8 tonos, fabricación propia en Tepic. Cotiza por WhatsApp."/>
+<title>Bases Box Tepic — Bases macizas tipo box a la medida · Fábrica propia en Tepic, Nayarit</title>
+<meta name="description" content="Fabricamos bases para cama tipo box en Tepic, Nayarit: macizas, de calidad, 1.90 de largo, 28 cm de alto y patas cromadas o de plástico. Más de 8 tonos. Cotiza directo por WhatsApp."/>
+<meta property="og:title" content="Bases Box Tepic — Bases macizas, de calidad, hechas en Tepic"/>
+<meta property="og:description" content="Bases tipo box macizas y a la medida. +8 tonos, patas cromadas o de plástico, fabricación propia en Tepic. Cotiza por WhatsApp."/>
 <meta property="og:type" content="website"/>
 <link rel="icon" href="assets/logo-icon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -55,7 +55,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(244,242,237,.92);backdro
 .brand .name{font-family:'Anton',sans-serif;font-size:26px;letter-spacing:.5px;line-height:1}
 .brand .name .x{color:var(--orange)}
 .brand .sub{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:5px;font-size:11px;color:var(--steel);margin-top:2px}
-.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links{display:flex;align-items:center;gap:26px}
 .nav-links a{font-family:'Barlow Condensed',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;font-size:16px}
 .nav-links a:hover{color:var(--orange)}
 .nav-cta{display:flex;align-items:center;gap:14px}
@@ -64,7 +64,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(244,242,237,.92);backdro
 /* hero */
 .hero{position:relative;background:var(--graphite);color:var(--paper);overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:42px 42px;opacity:.09}
-.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;padding:80px 0 90px;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;padding:80px 24px 90px;position:relative}
 .hero h1{font-size:clamp(46px,7vw,92px);color:var(--paper)}
 .hero h1 .o{color:var(--orange)}
 .hero p.lead{font-size:20px;color:#cfcdc7;max-width:520px;margin:22px 0 32px}
@@ -85,7 +85,7 @@ section{padding:96px 0}
 .divider-label::after{content:"";flex:1;height:2px;background:var(--border)}
 
 /* tonos */
-#tonos{background:var(--concrete)}
+#tonos{background:var(--concrete);padding-bottom:0}
 .tonos-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
 .base-stage{display:flex;justify-content:center;align-items:center;min-height:320px}
 .base-stage svg{width:100%;max-width:440px}
@@ -98,6 +98,38 @@ section{padding:96px 0}
 .sw .lbl{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;white-space:nowrap;color:var(--steel);text-transform:uppercase}
 .tone-name{font-family:'Anton',sans-serif;font-size:40px;margin-bottom:6px}
 .note{font-size:14px;color:var(--muted);margin-top:44px}
+
+/* ===== MACIZAS — banda debajo del selector de tonos ===== */
+.macizas{background:var(--graphite);color:var(--paper);position:relative;overflow:hidden;margin-top:80px}
+.macizas::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(244,242,237,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(244,242,237,.07) 1px,transparent 1px);background-size:42px 42px}
+.macizas::after{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:var(--orange)}
+.macizas-inner{position:relative;display:grid;grid-template-columns:1.1fr .9fr;gap:54px;align-items:center;padding:74px 24px 78px}
+.macizas .kicker{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:5px;text-transform:uppercase;font-size:14px;color:var(--orange);margin-bottom:16px}
+.macizas h2{font-size:clamp(40px,6.6vw,86px);color:var(--paper);line-height:.92}
+.macizas h2 .o{color:var(--orange)}
+.macizas h2 .stroke{-webkit-text-stroke:2px var(--paper);color:transparent}
+.macizas p{color:#cfcdc7;font-size:19px;max-width:540px;margin-top:20px}
+.macizas .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.macizas .chip{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;font-size:14px;border:1px solid #3a3a3a;padding:9px 14px;color:#e6e4de}
+.macizas .chip b{color:var(--orange);font-weight:700}
+.macizas-art{display:flex;justify-content:center}
+.macizas-art svg{width:100%;max-width:420px}
+
+/* ===== FICHA TÉCNICA ===== */
+#ficha{background:var(--paper)}
+.ficha-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.spec-list{border-top:2px solid var(--graphite)}
+.spec{display:flex;justify-content:space-between;align-items:baseline;gap:18px;padding:16px 0;border-bottom:1px solid var(--border)}
+.spec .k{font-family:'Barlow Condensed',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;font-size:16px;color:var(--steel)}
+.spec .v{font-family:'Anton',sans-serif;font-size:26px;letter-spacing:.5px}
+.spec .v small{font-family:'Barlow',sans-serif;font-weight:600;font-size:14px;color:var(--muted);letter-spacing:0;text-transform:none;margin-left:8px}
+.diagram{background:#fff;border:1px solid var(--border);padding:26px}
+.patas{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}
+.pata{border:1px solid var(--border);background:#fff;padding:22px;display:flex;gap:16px;align-items:flex-start}
+.pata svg{width:44px;height:64px;flex:none}
+.pata h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.pata p{font-size:15px;color:var(--steel)}
+.pata .tagx{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--orange);margin-top:8px}
 
 /* features */
 .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border)}
@@ -116,7 +148,13 @@ section{padding:96px 0}
 .med .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-size:14px;font-weight:700}
 .med .name{font-family:'Anton',sans-serif;font-size:30px;margin:8px 0 4px}
 .med .dim{font-family:'Barlow',monospace;color:#b7b5af;font-size:16px}
-.med-custom{margin-top:22px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;border:1px dashed #444;padding:22px 26px}
+.med .plus{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.35}
+.med-king{border-color:var(--orange)}
+.king-note{margin-top:22px;border:1px solid #333;background:#202020;padding:24px 26px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.king-note svg{width:190px;height:auto}
+.king-note .t{font-family:'Anton',sans-serif;font-size:24px;color:var(--paper);margin-bottom:6px}
+.king-note p{color:#b7b5af;font-size:16px}
+.med-custom{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;border:1px dashed #444;padding:22px 26px}
 .med-custom b{color:var(--orange)}
 
 /* infantil */
@@ -125,6 +163,17 @@ section{padding:96px 0}
 .kids .chips{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 28px}
 .kids .chip{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .kids-art{background:#fff;border:1px solid var(--border);padding:34px;display:flex;justify-content:center}
+
+/* faq */
+#faq{background:var(--concrete)}
+.faq-list{border-top:2px solid var(--graphite);max-width:900px}
+.faq-item{border-bottom:1px solid rgba(26,26,26,.18)}
+.faq-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 0;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.8px;font-size:20px}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:hover{color:var(--orange)}
+.faq-item .ico{flex:none;width:30px;height:30px;border:2px solid var(--graphite);display:flex;align-items:center;justify-content:center;font-family:'Barlow',sans-serif;font-weight:600;line-height:1;transition:.15s}
+.faq-item[open] .ico{background:var(--orange);border-color:var(--orange);color:#fff;transform:rotate(45deg)}
+.faq-item .a{padding:0 0 24px;color:var(--steel);max-width:760px}
 
 /* contacto */
 #contacto{background:var(--graphite);color:var(--paper)}
@@ -135,6 +184,7 @@ section{padding:96px 0}
 .contact-card .ic{width:26px;height:26px;color:var(--orange);flex:none;margin-top:2px}
 .contact-card .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:var(--muted)}
 .contact-card .v{font-size:19px;font-weight:600}
+.contact-card .v small{display:block;font-size:15px;font-weight:400;color:#b7b5af;margin-top:4px}
 .contact-cta{display:flex;flex-direction:column;gap:14px;justify-content:center}
 .contact-cta .btn{justify-content:center;font-size:19px;padding:18px}
 
@@ -154,18 +204,20 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 .wa-float svg{width:32px;height:32px;fill:#fff}
 
 @media(max-width:900px){
-  .hero-grid,.tonos-grid,.kids,.contact-grid{grid-template-columns:1fr}
+  .hero-grid,.tonos-grid,.kids,.contact-grid,.macizas-inner,.ficha-grid{grid-template-columns:1fr}
   .hero-art{order:-1}
   .feat-grid{grid-template-columns:1fr 1fr}
   .med-grid{grid-template-columns:1fr 1fr}
+  .king-note{grid-template-columns:1fr}
   .nav-links{display:none}
   .menu-btn{display:block}
   .nav-links.open{display:flex;position:absolute;top:74px;left:0;right:0;flex-direction:column;background:var(--paper);padding:20px 24px;gap:16px;border-bottom:1px solid var(--border)}
 }
 @media(max-width:560px){
-  .feat-grid,.med-grid{grid-template-columns:1fr}
+  .feat-grid,.med-grid,.patas{grid-template-columns:1fr}
   .hero-stats{gap:20px}
   section{padding:70px 0}
+  .macizas-inner{padding:56px 24px 60px}
 }
 </style>
 </head>
@@ -183,8 +235,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
     </a>
     <nav class="nav-links" id="navlinks">
       <a href="#tonos">Tonos</a>
-      <a href="#porque">Por qué</a>
+      <a href="#ficha">Ficha técnica</a>
       <a href="#medidas">Medidas</a>
+      <a href="#faq">Preguntas</a>
       <a href="#contacto">Contacto</a>
     </nav>
     <div class="nav-cta">
@@ -206,8 +259,8 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   <div class="wrap hero-grid">
     <div>
       <span class="eyebrow">Fábrica propia · Tepic, Nayarit</span>
-      <h1>Bases que <span class="o">aguantan.</span><br/>Diseño que combina.</h1>
-      <p class="lead">Fabricamos bases para cama tipo <b>box</b> a la medida, en más de 8 tonos, con estructura durable y patas cromadas. Directo de fábrica, sin intermediarios.</p>
+      <h1>Bases <span class="o">macizas.</span><br/>Diseño que combina.</h1>
+      <p class="lead">Fabricamos bases para cama tipo <b>box</b> a la medida: bases de calidad, macizas de verdad, con patas cromadas o de plástico y más de 8 tonos. Directo de fábrica, sin intermediarios.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
@@ -216,9 +269,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <a class="btn btn-ghost" href="#tonos" style="border-color:#555;color:var(--paper)">Ver tonos</a>
       </div>
       <div class="hero-stats">
+        <div class="s"><div class="n">1.90</div><div class="l">De largo, todas</div></div>
+        <div class="s"><div class="n">38 cm</div><div class="l">De altura total</div></div>
         <div class="s"><div class="n">+8</div><div class="l">Tonos</div></div>
-        <div class="s"><div class="n">100%</div><div class="l">Fabricación local</div></div>
-        <div class="s"><div class="n">A tu</div><div class="l">Medida</div></div>
       </div>
     </div>
     <div class="hero-art">
@@ -276,13 +329,171 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       </div>
     </div>
   </div>
+
+  <!-- ===== BANDA MACIZAS (justo debajo de la selección de colores) ===== -->
+  <div class="macizas">
+    <div class="wrap macizas-inner">
+      <div>
+        <div class="kicker">Lo que no se ve es lo que aguanta</div>
+        <h2>Nuestras bases<br/>vienen <span class="o">macizas.</span></h2>
+        <p>El color lo eliges tú; lo macizo va de fábrica. Cajón relleno y reforzado en toda la superficie —no hueco, no de relleno blando—: no se hunde, no se vence y no rechina. Bases de calidad, hechas para durar años.</p>
+        <div class="chips">
+          <span class="chip">Base <b>firme</b></span>
+          <span class="chip">Cajón de <b>28 cm</b></span>
+          <span class="chip">Patas de <b>10 cm</b></span>
+          <span class="chip">Largo <b>1.90</b></span>
+        </div>
+      </div>
+      <div class="macizas-art">
+        <!-- corte del cajón: interior macizo -->
+        <svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Corte del cajón: interior macizo y reforzado">
+          <defs>
+            <pattern id="solidfill" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="14" height="14" fill="#2A2A2A"/>
+              <rect width="6" height="14" fill="#3a3a3a"/>
+            </pattern>
+          </defs>
+          <!-- tapa superior -->
+          <polygon points="40,54 300,54 380,20 120,20" fill="#ECEAE4"/>
+          <polygon points="300,54 380,20 380,58 300,92" fill="#cdcbc5"/>
+          <!-- cuerpo -->
+          <rect x="40" y="54" width="260" height="150" fill="url(#solidfill)"/>
+          <rect x="40" y="54" width="260" height="150" fill="none" stroke="#F2591F" stroke-width="4"/>
+          <!-- refuerzos internos -->
+          <g stroke="#F2591F" stroke-width="2.5" opacity=".9">
+            <line x1="88" y1="54" x2="88" y2="204"/>
+            <line x1="140" y1="54" x2="140" y2="204"/>
+            <line x1="192" y1="54" x2="192" y2="204"/>
+            <line x1="244" y1="54" x2="244" y2="204"/>
+            <line x1="40" y1="129" x2="300" y2="129"/>
+          </g>
+          <!-- lateral derecho -->
+          <polygon points="300,54 380,20 380,170 300,204" fill="#232323" stroke="#F2591F" stroke-width="3"/>
+          <!-- pata cromada -->
+          <rect x="60" y="204" width="16" height="46" rx="4" fill="#9aa0a6"/>
+          <rect x="264" y="204" width="16" height="46" rx="4" fill="#9aa0a6"/>
+          <!-- etiqueta -->
+          <g font-family="'Barlow Condensed',sans-serif" font-weight="700" fill="#F4F2ED">
+            <text x="210" y="284" font-size="17" letter-spacing="2" text-anchor="middle">CORTE DEL CAJÓN · INTERIOR MACIZO</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FICHA TÉCNICA ============ -->
+<section id="ficha">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">02 / FICHA TÉCNICA</span></div>
+      <h2>Medidas exactas, sin sorpresas</h2>
+      <p>Estas son las medidas con las que sale cada base de la fábrica. Si necesitas otra, la hacemos a tu medida.</p>
+    </div>
+    <div class="ficha-grid">
+      <div>
+        <div class="spec-list">
+          <div class="spec"><span class="k">Altura del cajón</span><span class="v">28 cm</span></div>
+          <div class="spec"><span class="k">Altura de las patas</span><span class="v">10 cm</span></div>
+          <div class="spec"><span class="k">Altura total</span><span class="v">38 cm <small>cajón + patas</small></span></div>
+          <div class="spec"><span class="k">Largo (todas las medidas)</span><span class="v">1.90 m</span></div>
+          <div class="spec"><span class="k">Ancho (individual)</span><span class="v">1.00 m</span></div>
+          <div class="spec"><span class="k">Estructura</span><span class="v">Maciza <small>cajón reforzado</small></span></div>
+        </div>
+
+        <div class="patas">
+          <div class="pata">
+            <svg viewBox="0 0 40 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="4" y="0" width="32" height="8" fill="#1A1A1A"/>
+              <linearGradient id="chr" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#6f7477"/><stop offset=".45" stop-color="#e8ecef"/><stop offset="1" stop-color="#8b9195"/>
+              </linearGradient>
+              <rect x="13" y="8" width="14" height="46" rx="4" fill="url(#chr)"/>
+              <rect x="10" y="54" width="20" height="6" rx="3" fill="#6f7477"/>
+            </svg>
+            <div>
+              <h3>Pata cromada</h3>
+              <p>Metálica cromada de 10 cm. La que mejor se ve y la que más aguanta el jaloneo.</p>
+              <span class="tagx">Opción 1</span>
+            </div>
+          </div>
+          <div class="pata">
+            <svg viewBox="0 0 40 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="4" y="0" width="32" height="8" fill="#1A1A1A"/>
+              <path d="M12 8h16l-3 46H15z" fill="#2f3336"/>
+              <rect x="12" y="54" width="16" height="6" rx="2" fill="#202325"/>
+            </svg>
+            <div>
+              <h3>Pata de plástico</h3>
+              <p>La opción económica de 10 cm, en color oscuro. Misma altura, mismo nivel de piso.</p>
+              <span class="tagx">Opción 2</span>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="margin-top:20px">Tú eliges el tipo de pata al momento de cotizar. Ambas van a 10 cm de altura.</p>
+      </div>
+
+      <div class="diagram">
+        <!-- diagrama de alturas -->
+        <svg viewBox="0 0 520 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama: cajón de 28 cm más patas de 10 cm igual a 38 cm de altura total">
+          <!-- colchón indicativo -->
+          <rect x="94" y="32" width="282" height="28" rx="4" fill="#FBFAF7" stroke="#d9d7d1" stroke-width="2"/>
+          <!-- cajón -->
+          <rect x="100" y="60" width="270" height="150" fill="#6B3FA0" stroke="#1A1A1A" stroke-width="3"/>
+          <!-- patas -->
+          <rect x="120" y="210" width="16" height="54" rx="4" fill="#9aa0a6" stroke="#1A1A1A" stroke-width="2"/>
+          <rect x="334" y="210" width="16" height="54" rx="4" fill="#9aa0a6" stroke="#1A1A1A" stroke-width="2"/>
+          <!-- piso -->
+          <line x1="70" y1="264" x2="430" y2="264" stroke="#1A1A1A" stroke-width="3"/>
+          <g stroke="#8C8C88" stroke-width="2">
+            <line x1="80" y1="272" x2="94" y2="286"/><line x1="120" y1="272" x2="134" y2="286"/>
+            <line x1="160" y1="272" x2="174" y2="286"/><line x1="200" y1="272" x2="214" y2="286"/>
+            <line x1="240" y1="272" x2="254" y2="286"/><line x1="280" y1="272" x2="294" y2="286"/>
+            <line x1="320" y1="272" x2="334" y2="286"/><line x1="360" y1="272" x2="374" y2="286"/>
+            <line x1="400" y1="272" x2="414" y2="286"/>
+          </g>
+          <!-- cotas izquierda (cajón y patas) -->
+          <g stroke="#F2591F" stroke-width="2.5" fill="none">
+            <line x1="82" y1="60" x2="82" y2="210"/>
+            <line x1="74" y1="60" x2="90" y2="60"/><line x1="74" y1="210" x2="90" y2="210"/>
+            <line x1="82" y1="210" x2="82" y2="264"/>
+            <line x1="74" y1="264" x2="90" y2="264"/>
+          </g>
+          <!-- cota derecha (total) -->
+          <g stroke="#F2591F" stroke-width="2.5" fill="none">
+            <line x1="398" y1="60" x2="398" y2="264"/>
+            <line x1="390" y1="60" x2="406" y2="60"/><line x1="390" y1="264" x2="406" y2="264"/>
+          </g>
+          <g font-family="'Anton',sans-serif" fill="#1A1A1A" text-anchor="end">
+            <text x="66" y="132" font-size="22">28 cm</text>
+            <text x="66" y="238" font-size="22">10 cm</text>
+          </g>
+          <g font-family="'Barlow Condensed',sans-serif" font-weight="600" fill="#3E4A54" font-size="15" letter-spacing="1.5" text-anchor="end">
+            <text x="66" y="152">CAJÓN</text>
+            <text x="66" y="258">PATAS</text>
+          </g>
+          <g font-family="'Anton',sans-serif" fill="#F2591F">
+            <text x="416" y="158" font-size="26">38 cm</text>
+          </g>
+          <text x="416" y="180" font-family="'Barlow Condensed',sans-serif" font-weight="600" font-size="15" letter-spacing="1.5" fill="#F2591F">TOTAL</text>
+          <text x="235" y="20" font-family="'Barlow Condensed',sans-serif" font-weight="600" font-size="15" letter-spacing="1.5" fill="#3E4A54" text-anchor="middle">TU COLCHÓN VA ENCIMA</text>
+          <!-- cota largo -->
+          <g stroke="#1A1A1A" stroke-width="2" fill="none">
+            <line x1="100" y1="330" x2="370" y2="330"/>
+            <line x1="100" y1="322" x2="100" y2="338"/><line x1="370" y1="322" x2="370" y2="338"/>
+          </g>
+          <text x="235" y="360" font-family="'Anton',sans-serif" font-size="20" fill="#1A1A1A" text-anchor="middle">1.90 m de largo</text>
+        </svg>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ============ POR QUÉ ============ -->
 <section id="porque">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num">02 / POR QUÉ BASES BOX</span></div>
+      <div class="divider-label"><span class="tag-num">03 / POR QUÉ BASES BOX</span></div>
       <h2>Hechas para durar, pensadas para verse bien</h2>
     </div>
   </div>
@@ -290,8 +501,8 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
     <div class="feat-grid">
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>
-        <h3>Estructura durable</h3>
-        <p>Armazón reforzado que aguanta el uso diario sin hundirse ni rechinar.</p>
+        <h3>Base firme y maciza</h3>
+        <p>Cajón macizo y reforzado que aguanta el uso diario sin hundirse ni rechinar.</p>
       </div>
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18"/></svg>
@@ -300,8 +511,8 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       </div>
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.2L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>
-        <h3>Diseño minimalista</h3>
-        <p>Silueta limpia, tapizado uniforme y patas cromadas. Se ve caro sin serlo.</p>
+        <h3>Dos opciones de pata</h3>
+        <p>Cromada o de plástico, ambas de 10 cm. Tú decides con cuál se ve mejor tu recámara.</p>
       </div>
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V8l8-4 8 4v12"/><path d="M4 20h16M9 20v-6h6v6"/></svg>
@@ -311,7 +522,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M12 3v18" stroke-dasharray="3 2"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
         <h3>A la medida</h3>
-        <p>¿Medida especial? La fabricamos exacta para tu colchón o tu espacio.</p>
+        <p>¿Medida especial? La fabricamos exacta para tu espacio, con el mismo acabado.</p>
       </div>
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
@@ -326,16 +537,34 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 <section id="medidas">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">03 / MEDIDAS</span></div>
-      <h2>Todas las medidas estándar</h2>
-      <p>Y si necesitas una diferente, la hacemos a tu medida.</p>
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">04 / MEDIDAS</span></div>
+      <h2>Todas miden 1.90 de largo</h2>
+      <p>Cambia el ancho, no el largo: todas nuestras bases salen a 1.90 m. Y si necesitas otra, la hacemos a tu medida.</p>
     </div>
     <div class="med-grid">
-      <div class="med"><div class="k">Individual</div><div class="name">1 Plaza</div><div class="dim">1.00 × 1.90 m</div></div>
-      <div class="med"><div class="k">Matrimonial</div><div class="name">Full</div><div class="dim">1.35 × 1.90 m</div></div>
-      <div class="med"><div class="k">Queen</div><div class="name">Queen Size</div><div class="dim">1.50 × 2.00 m</div></div>
-      <div class="med"><div class="k">King</div><div class="name">King Size</div><div class="dim">2.00 × 2.00 m</div></div>
+      <div class="med"><div class="k">Individual</div><div class="name">1 Plaza</div><div class="dim">1.00 × 1.90 m</div><div class="plus">La base de siempre: una sola pieza.</div></div>
+      <div class="med"><div class="k">Matrimonial</div><div class="name">Full</div><div class="dim">1.35 × 1.90 m</div><div class="plus">Una sola pieza.</div></div>
+      <div class="med"><div class="k">Queen</div><div class="name">Queen Size</div><div class="dim">1.50 × 1.90 m</div><div class="plus">Una sola pieza.</div></div>
+      <div class="med med-king"><div class="k">King</div><div class="name">King Size</div><div class="dim">2.00 × 1.90 m</div><div class="plus"><b style="color:#F2591F">Son dos bases individuales</b> de 1.00 × 1.90 que se juntan.</div></div>
     </div>
+
+    <div class="king-note">
+      <svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="La King se arma con dos bases individuales de 1.00 por 1.90">
+        <rect x="6" y="20" width="130" height="100" fill="#2A2A2A" stroke="#F2591F" stroke-width="3"/>
+        <rect x="150" y="20" width="130" height="100" fill="#2A2A2A" stroke="#F2591F" stroke-width="3"/>
+        <g font-family="'Barlow Condensed',sans-serif" font-weight="700" fill="#b7b5af" font-size="15" letter-spacing="1">
+          <text x="24" y="76">1.00 × 1.90</text>
+          <text x="168" y="76">1.00 × 1.90</text>
+          <text x="104" y="142" fill="#F2591F" font-size="17">= 2.00 × 1.90</text>
+        </g>
+        <text x="138" y="78" font-family="'Anton',sans-serif" font-size="26" fill="#F2591F">+</text>
+      </svg>
+      <div>
+        <div class="t">Aclaración importante sobre la King</div>
+        <p>La King size no es una sola pieza: <b style="color:#F4F2ED">son dos bases individuales de 1.00 × 1.90</b> que se colocan juntas para dar los 2.00 m de ancho. Así entran por puertas y escaleras, se acomodan mejor en el cuarto y, si algún día cambias de colchón, las puedes usar por separado.</p>
+      </div>
+    </div>
+
     <div class="med-custom">
       <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:20px">¿Necesitas una <b>medida especial</b>? También la fabricamos.</div>
       <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20necesito%20una%20base%20a%20la%20medida" target="_blank" rel="noopener">Cotizar a la medida</a>
@@ -348,9 +577,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   <div class="wrap">
     <div class="kids">
       <div>
-        <div class="divider-label"><span class="tag-num">04 / LÍNEA INFANTIL</span></div>
+        <div class="divider-label"><span class="tag-num">05 / LÍNEA INFANTIL</span></div>
         <h2 style="font-size:clamp(30px,4vw,48px)">La habitación que tus pequeños merecen</h2>
-        <p style="color:var(--steel);margin-top:14px">Bases individuales en colores alegres, seguras y resistentes para el uso rudo de los niños. Combínalas con su cuarto.</p>
+        <p style="color:var(--steel);margin-top:14px">Bases individuales de 1.00 × 1.90 en colores alegres, macizas y resistentes para el uso rudo de los niños. Combínalas con su cuarto.</p>
         <div class="chips">
           <span class="chip" style="background:#E84E8A"></span>
           <span class="chip" style="background:#2E5AAC"></span>
@@ -372,28 +601,76 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   </div>
 </section>
 
+<!-- ============ PREGUNTAS FRECUENTES ============ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">06 / PREGUNTAS FRECUENTES</span></div>
+      <h2>Lo que más nos preguntan</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>¿De qué medidas las manejan?<span class="ico">+</span></summary>
+        <div class="a">Todas nuestras bases miden <b>1.90 m de largo</b>. Cambia el ancho: individual 1.00, matrimonial 1.35, queen 1.50 y king 2.00 m. Si necesitas otra medida, la fabricamos a la medida exacta de tu espacio.</div>
+      </details>
+      <details class="faq-item">
+        <summary>¿La king size es una sola base?<span class="ico">+</span></summary>
+        <div class="a">No. La king <b>son dos bases individuales de 1.00 × 1.90</b> que se colocan juntas para dar los 2.00 m de ancho. Entran mejor por puertas y escaleras, y se acomodan más fácil dentro del cuarto.</div>
+      </details>
+      <details class="faq-item">
+        <summary>¿Qué altura tiene la base?<span class="ico">+</span></summary>
+        <div class="a">El cajón mide <b>28 cm</b> y las patas <b>10 cm</b>: <b>38 cm de altura total</b> del piso a la parte de arriba de la base.</div>
+      </details>
+      <details class="faq-item">
+        <summary>¿Las patas de qué son?<span class="ico">+</span></summary>
+        <div class="a">Manejamos <b>dos opciones, ambas de 10 cm</b>: pata <b>cromada</b> (metálica, la más vistosa y resistente) o pata de <b>plástico</b>. Tú eliges cuál quieres al momento de cotizar.</div>
+      </details>
+      <details class="faq-item">
+        <summary>¿Por qué dicen que son macizas?<span class="ico">+</span></summary>
+        <div class="a">Porque el cajón va <b>relleno y reforzado</b> en toda su superficie, no hueco. Por eso no se hunde en las orillas, no se vence a la mitad y no rechina con el uso diario.</div>
+      </details>
+      <details class="faq-item">
+        <summary>¿Hacen medidas especiales?<span class="ico">+</span></summary>
+        <div class="a">Sí. Somos fábrica: nos dices el ancho y el largo que necesitas y te la hacemos exacta, en el tono que elijas y con el mismo acabado.</div>
+      </details>
+      <details class="faq-item">
+        <summary>¿Entregan a domicilio?<span class="ico">+</span></summary>
+        <div class="a">Sí, entregamos en Tepic y zonas cercanas. El costo y el tiempo de entrega dependen de tu zona: mándanos tu dirección por WhatsApp y te lo confirmamos junto con la cotización.</div>
+      </details>
+      <details class="faq-item">
+        <summary>¿Cómo cotizo?<span class="ico">+</span></summary>
+        <div class="a">Escríbenos por WhatsApp al <b>311 121 6033</b> con la medida, el tono y el tipo de pata que quieres. Te pasamos precio y tiempo de entrega el mismo día.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
 <!-- ============ CONTACTO ============ -->
 <section id="contacto">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">05 / CONTACTO</span></div>
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">07 / CONTACTO</span></div>
       <h2>Cotiza hoy tu base</h2>
     </div>
     <div class="contact-grid">
       <div class="contact-card">
         <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-          <div><div class="k">Dirección</div><div class="v">Querétaro #285, Col. Centro<br/>Tepic, Nayarit</div></div>
-        </div>
-        <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2A19.8 19.8 0 013 4.2 2 2 0 015 2h3a2 2 0 012 1.7l.5 3a2 2 0 01-.6 1.9L8.1 10a16 16 0 006 6l1.4-1.4a2 2 0 011.9-.5l3 .5a2 2 0 011.7 2z"/></svg>
           <div><div class="k">Teléfono / WhatsApp</div><div class="v">311 121 6033</div></div>
         </div>
         <div class="row">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           <div><div class="k">Horario</div><div class="v">Lun a Sáb · 9:00 – 19:00</div></div>
         </div>
-        <a class="btn btn-ghost" style="border-color:#444;color:var(--paper);width:100%;justify-content:center" href="https://maps.google.com/?q=Quer%C3%A9taro%20285%20Col%20Centro%20Tepic%20Nayarit" target="_blank" rel="noopener">Ver en el mapa</a>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 16V7h11v9M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg>
+          <div><div class="k">Entregas</div><div class="v">Entrega a domicilio<small>Tepic y zonas cercanas. Costo según tu zona.</small></div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <div><div class="k">Fábrica</div><div class="v">Tepic, Nayarit<small>Estamos cambiando de domicilio: pregúntanos por WhatsApp la dirección actualizada antes de venir.</small></div></div>
+        </div>
+        <a class="btn btn-ghost" style="border-color:#444;color:var(--paper);width:100%;justify-content:center" href="https://wa.me/523111216033?text=Hola%2C%20%C2%BFcu%C3%A1l%20es%20su%20direcci%C3%B3n%20actual%3F" target="_blank" rel="noopener">Pedir dirección por WhatsApp</a>
       </div>
       <div class="contact-cta">
         <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
@@ -419,15 +696,16 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       </div>
       <nav class="foot-links">
         <a href="#tonos">Tonos</a>
-        <a href="#porque">Por qué</a>
+        <a href="#ficha">Ficha técnica</a>
         <a href="#medidas">Medidas</a>
+        <a href="#faq">Preguntas</a>
         <a href="#contacto">Contacto</a>
         <a href="https://wa.me/523111216033" target="_blank" rel="noopener">WhatsApp</a>
       </nav>
     </div>
     <div class="copy">
       <span>© <span id="yr"></span> Bases Box Tepic. Todos los derechos reservados.</span>
-      <span>Querétaro #285, Col. Centro, Tepic · 311 121 6033</span>
+      <span>Tepic, Nayarit · 311 121 6033</span>
     </div>
   </div>
 </footer>
