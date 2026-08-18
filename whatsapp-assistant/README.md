@@ -158,13 +158,31 @@ equivocado.
 > ⚠️ Un token generado ANTES de asignar los activos no sirve aunque asignes
 > los activos después. Hay que generarlo de nuevo.
 
-### Ojo con el celular que ya usan
+### ⚠️ El número NO va en `PHONE_ID_BASESBOX`
 
-El número **311 121 6033** hoy está en la app de WhatsApp Business del
-celular. Al pasarlo a la API de Meta (que es lo que usa este asistente),
-**deja de funcionar en esa app**: las conversaciones se atienden desde el
-servidor o desde el Inbox de Meta. Si no quieren perder el celular, conecta
-un número nuevo y desvía a ese los mensajes de la publicidad.
+Es el error más fácil de cometer y deja todo sin funcionar sin decir por qué.
+Son dos cosas distintas:
+
+| | Qué es | Ejemplo | Dónde va |
+|---|---|---|---|
+| **Número** | El teléfono del negocio, el que marca la gente | `311 108 3374` | En la página y en el perfil `businesses/camas.js` |
+| **`phone_number_id`** | Un id largo que **Meta inventa** al conectar ese número | `109371365...` (15 dígitos) | En `PHONE_ID_BASESBOX` |
+
+El `phone_number_id` **no existe hasta que conectas el número en Meta**. Lo
+sacas de *tu app → WhatsApp → Configuración de la API*, donde dice
+"Identificador del número de teléfono". Si pones ahí el 3111083374, el
+asistente no podrá contestar.
+
+### Ojo con el celular
+
+El número del negocio es el **311 108 3374**. Al pasarlo a la API de Meta
+(que es lo que usa este asistente), **deja de funcionar en la app de WhatsApp
+Business** del celular: a partir de ahí las conversaciones se atienden desde
+el servidor o desde el Inbox de Meta. No se pueden las dos cosas a la vez.
+
+Si necesitan seguir contestando a mano desde el celular, la salida es tener
+dos números: uno en el celular y otro (el de la publicidad y la página)
+conectado al asistente.
 
 ### Que te avise solo si se cae
 

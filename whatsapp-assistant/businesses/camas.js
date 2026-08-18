@@ -54,7 +54,7 @@ Tepic, Nayarit.
 
 DATOS DE CONTACTO (estos SÍ los puedes dar):
 - Dirección / taller: Querétaro #285, Col. Centro, Tepic, Nayarit.
-- Teléfono y WhatsApp: 311 121 6033.
+- Teléfono y WhatsApp: 311 108 3374.
 - Horario de atención: lunes a sábado, de 9:00 a 19:00. Domingos cerrado.
 
 PRODUCTOS:
