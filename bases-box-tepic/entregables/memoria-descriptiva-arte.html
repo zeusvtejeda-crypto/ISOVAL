@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Memoria descriptiva del arte — Bases para cama tipo box</title>
+<style>
+  :root{
+    --verde:#123F1A;
+    --verde-2:#1D4A24;
+    --verde-3:#2C6B36;
+    --lima:#A9D400;
+    --lima-2:#C6E82A;
+    --amarillo:#FFC800;
+    --amarillo-2:#FFD400;
+    --carbon:#3A3A3C;
+    --cromo:#C8CBD0;
+    --vino:#8E2523;
+    --tinta:#16210F;
+    --gris:#5E6A5C;
+    --linea:#DCE3D8;
+    --papel:#FFFFFF;
+    --crema:#F7F9F4;
+  }
+
+  @page{ size:A4; margin:16mm 15mm 18mm 15mm; }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Liberation Sans","DejaVu Sans",Arial,sans-serif;
+    color:var(--tinta);
+    font-size:10pt;
+    line-height:1.55;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  /* ---------- PORTADA ---------- */
+  .cover{
+    background:var(--verde);
+    color:#fff;
+    margin:0 0 9mm 0;
+    padding:13mm 13mm 15mm 13mm;
+    border-radius:2mm;
+    position:relative;
+    overflow:hidden;
+  }
+  .cover::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:7mm;
+    background:linear-gradient(90deg,var(--lima) 0%,var(--lima-2) 45%,var(--amarillo) 100%);
+  }
+  .cover .kicker{
+    font-size:8.5pt; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--lima-2); font-weight:bold; margin:0 0 5mm 0;
+  }
+  .cover h1{
+    font-size:28pt; line-height:1.02; margin:0; font-weight:bold;
+    letter-spacing:-0.01em; text-transform:uppercase;
+  }
+  .cover h1 em{ font-style:normal; color:var(--amarillo); display:block; }
+  .cover .sub{
+    margin:6mm 0 0 0; font-size:11pt; color:#E6F0E2; max-width:135mm; line-height:1.45;
+  }
+  .cover .meta{
+    margin:8mm 0 0 0; display:flex; gap:11mm; font-size:8.5pt;
+    border-top:1px solid rgba(255,255,255,.22); padding-top:5mm;
+  }
+  .cover .meta div span{
+    display:block; color:var(--lima-2); text-transform:uppercase;
+    letter-spacing:.14em; font-size:7pt; margin-bottom:1.5mm;
+  }
+  .cover .meta div b{ font-weight:bold; font-size:9.5pt; }
+
+  /* ---------- ESTRUCTURA ---------- */
+  section{ margin:0 0 9mm 0; }
+  .sec-head{
+    display:flex; align-items:baseline; gap:4mm;
+    border-bottom:2px solid var(--verde); padding-bottom:2.5mm; margin-bottom:5mm;
+    break-after:avoid;
+  }
+  .sec-head .num{
+    background:var(--verde); color:var(--amarillo); font-weight:bold;
+    font-size:10pt; width:8mm; height:8mm; border-radius:2mm;
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  .sec-head h2{
+    margin:0; font-size:14pt; text-transform:uppercase; letter-spacing:.02em;
+    color:var(--verde); font-weight:bold;
+  }
+  h3{
+    font-size:10.5pt; margin:6mm 0 2.5mm 0; color:var(--verde-2);
+    text-transform:uppercase; letter-spacing:.06em; break-after:avoid;
+  }
+  p{ margin:0 0 3mm 0; }
+  .lead{ font-size:10.5pt; color:#2A3A26; }
+  strong{ color:var(--verde); }
+  ul{ margin:0 0 3mm 0; padding-left:5mm; }
+  li{ margin-bottom:2mm; }
+
+  .rule-box{
+    background:var(--crema); border-left:3px solid var(--lima);
+    padding:4mm 5mm; margin:4mm 0; break-inside:avoid;
+  }
+  .rule-box p:last-child{ margin-bottom:0; }
+
+  /* ---------- SWATCHES ---------- */
+  .swatches{
+    display:grid; grid-template-columns:repeat(8,1fr); gap:2mm; margin:0 0 5mm 0;
+    break-inside:avoid;
+  }
+  .sw{ border:1px solid var(--linea); border-radius:1.5mm; overflow:hidden; }
+  .sw .chip{ height:14mm; }
+  .sw .info{ padding:1.8mm 2mm 2.2mm 2mm; }
+  .sw .info b{ display:block; font-size:7pt; line-height:1.25; min-height:2.6em; }
+  .sw .info code{
+    display:block; font-family:"Liberation Mono","DejaVu Sans Mono",monospace;
+    font-size:6.5pt; color:var(--gris); margin-top:.6mm; letter-spacing:0;
+  }
+
+  table{ width:100%; border-collapse:collapse; font-size:8.7pt; margin:0 0 4mm 0; }
+  thead th{
+    background:var(--verde); color:#fff; text-align:left; padding:2.5mm 3mm;
+    font-size:7.5pt; text-transform:uppercase; letter-spacing:.1em;
+  }
+  tbody td{ padding:2.8mm 3mm; border-bottom:1px solid var(--linea); vertical-align:top; }
+  tbody tr:nth-child(even){ background:var(--crema); }
+  td.hex{ font-family:"Liberation Mono","DejaVu Sans Mono",monospace; white-space:nowrap; font-size:8pt; }
+  .dot{ display:inline-block; width:3.2mm; height:3.2mm; border-radius:50%; margin-right:1.5mm; vertical-align:-0.4mm; border:1px solid rgba(0,0,0,.15); }
+
+  /* ---------- BARRA DE PROPORCION ---------- */
+  .ratio{ display:flex; height:9mm; border-radius:1.5mm; overflow:hidden; margin:3mm 0 2mm 0; }
+  .ratio div{
+    display:flex; align-items:center; justify-content:center;
+    font-size:7.5pt; font-weight:bold; letter-spacing:.04em;
+  }
+  .ratio-legend{ font-size:8pt; color:var(--gris); margin:0; }
+
+  /* ---------- JERARQUIA TIPOGRAFICA ---------- */
+  .hier{ border:1px solid var(--linea); border-radius:2mm; overflow:hidden; margin:3mm 0 4mm 0; break-inside:avoid; }
+  .hier .row{ display:flex; align-items:center; gap:4mm; padding:3mm 4mm; border-bottom:1px solid var(--linea); }
+  .hier .row:last-child{ border-bottom:0; }
+  .hier .lvl{
+    flex:0 0 23mm; font-size:7pt; text-transform:uppercase; letter-spacing:.12em;
+    color:var(--gris); font-weight:bold;
+  }
+  .hier .demo{ flex:0 0 52mm; background:var(--verde); color:#fff; padding:2mm 3mm; border-radius:1.5mm; text-align:center; }
+  .hier .demo .l1{ font-size:17pt; font-weight:bold; color:var(--amarillo); line-height:1; letter-spacing:-.01em; }
+  .hier .demo .l2{ font-size:9pt; font-weight:bold; line-height:1.15; }
+  .hier .demo .l3{ font-size:8.5pt; font-weight:bold; line-height:1.2; }
+  .hier .demo .l3 span{ color:var(--amarillo); }
+  .hier .demo .l4{ font-size:11pt; font-weight:bold; line-height:1.1; }
+  .hier .why{ flex:1; font-size:8.7pt; line-height:1.45; }
+
+  /* ---------- MAPA DE COMPOSICION ---------- */
+  .map{ background:var(--verde); border-radius:2mm; padding:4mm; margin:3mm 0 4mm 0; break-inside:avoid; }
+  .map-grid{ display:grid; grid-template-columns:1fr 1.15fr 1fr; gap:3mm; }
+  .zone{
+    border:1px dashed rgba(255,255,255,.35); border-radius:1.5mm; padding:3mm;
+    color:#fff; font-size:8pt; line-height:1.4; min-height:26mm;
+  }
+  .zone b{ display:block; color:var(--amarillo); font-size:8pt; text-transform:uppercase; letter-spacing:.08em; margin-bottom:1.5mm; }
+  .zone.prod{ border-color:var(--lima); background:rgba(169,212,0,.12); }
+  .map-wave{ height:4mm; margin-top:3mm; border-radius:2mm; background:linear-gradient(90deg,var(--lima) 0%,var(--lima-2) 60%,var(--amarillo) 100%); }
+  .map-cap{ font-size:7.5pt; color:#CFE0C9; margin:2.5mm 0 0 0; text-align:center; letter-spacing:.04em; }
+
+  ol.flow{ counter-reset:step; list-style:none; padding:0; margin:0 0 4mm 0; }
+  ol.flow li{
+    position:relative; padding-left:9mm; margin-bottom:3mm; break-inside:avoid;
+  }
+  ol.flow li::before{
+    counter-increment:step; content:counter(step);
+    position:absolute; left:0; top:0.2mm;
+    width:6mm; height:6mm; border-radius:50%;
+    background:var(--amarillo); color:var(--verde);
+    font-size:8pt; font-weight:bold;
+    display:flex; align-items:center; justify-content:center;
+  }
+  ol.flow li b{ color:var(--verde); }
+
+  /* ---------- ICONOS ---------- */
+  .icons{ display:grid; grid-template-columns:repeat(4,1fr); gap:3mm; margin:3mm 0 4mm 0; break-inside:avoid; }
+  .ic{ border:1px solid var(--linea); border-radius:2mm; padding:3mm; text-align:center; }
+  .ic .glyph{ background:var(--verde); border-radius:1.5mm; padding:3mm 0; margin:-3mm -3mm 2.5mm -3mm; }
+  .ic svg{ width:11mm; height:11mm; }
+  .ic b{ display:block; font-size:8pt; color:var(--verde); }
+  .ic span{ display:block; font-size:7.5pt; color:var(--gris); line-height:1.35; margin-top:.8mm; }
+
+  /* ---------- NOTAS ---------- */
+  .note{
+    border:1px solid var(--linea); border-left:4px solid var(--amarillo);
+    border-radius:0 2mm 2mm 0; padding:3.5mm 4mm; margin-bottom:3mm; break-inside:avoid;
+  }
+  .note b{ color:var(--verde); }
+  .note .tag{
+    display:inline-block; background:var(--amarillo); color:var(--verde);
+    font-size:6.8pt; font-weight:bold; text-transform:uppercase; letter-spacing:.1em;
+    padding:.6mm 2mm; border-radius:1mm; margin-right:2mm; vertical-align:.3mm;
+  }
+
+  .closing{
+    margin-top:8mm; background:var(--verde); color:#fff; border-radius:2mm;
+    padding:6mm 7mm; break-inside:avoid;
+  }
+  .closing h3{ color:var(--amarillo); margin:0 0 2.5mm 0; font-size:11pt; }
+  .closing p{ color:#E6F0E2; margin:0; font-size:9.5pt; }
+
+  .pb{ break-before:page; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <p class="kicker">Memoria descriptiva del arte publicitario</p>
+  <h1>Bases para cama<em>Tipo Box</em></h1>
+  <p class="sub">Descripción completa de la pieza gráfica: paleta de color, tonos, jerarquía tipográfica, composición y el criterio detrás de la ubicación de cada elemento.</p>
+  <div class="meta">
+    <div><span>Documento</span><b>Memoria de diseño</b></div>
+    <div><span>Formato</span><b>Valla / mural exterior</b></div>
+    <div><span>Versiones</span><b>2 aplicaciones</b></div>
+    <div><span>Contacto en pieza</span><b>311 108 3374</b></div>
+  </div>
+</div>
+
+<section>
+  <div class="sec-head"><div class="num">1</div><h2>Concepto general</h2></div>
+  <p class="lead">Es una valla publicitaria montada sobre pared de lámina acanalada. El concepto visual es <strong>&laquo;naturaleza + solidez&raquo;</strong>: el verde bosque comunica madera, pino y origen natural; el amarillo comunica energía, garantía y llamado a la acción.</p>
+  <p>El producto —la base tipo box en gris carbón— es el único elemento oscuro y neutro de toda la composición. Por eso la vista cae en él <strong>por contraste, no por tamaño</strong>: no compite con ningún color, así que se lee como un objeto real dentro de un entorno gráfico.</p>
+  <div class="rule-box">
+    <p><strong>La regla que gobierna toda la pieza:</strong> fondo oscuro y sobrio + texto claro + un solo color de acento. Eso es exactamente lo que la hace legible desde lejos, con poca luz y desde un vehículo en movimiento.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="num">2</div><h2>Paleta de color y tonos</h2></div>
+  <p>Los valores son de referencia, leídos directamente del arte. Sirven para replicar la pieza en impresión, en redes o en cualquier aplicación futura sin que la marca se desvíe.</p>
+
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#123F1A"></div><div class="info"><b>Verde bosque</b><code>#123F1A</code></div></div>
+    <div class="sw"><div class="chip" style="background:#FFC800"></div><div class="info"><b>Amarillo dorado</b><code>#FFC800</code></div></div>
+    <div class="sw"><div class="chip" style="background:#A9D400"></div><div class="info"><b>Verde lima</b><code>#A9D400</code></div></div>
+    <div class="sw"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid #DCE3D8"></div><div class="info"><b>Blanco puro</b><code>#FFFFFF</code></div></div>
+    <div class="sw"><div class="chip" style="background:#3A3A3C"></div><div class="info"><b>Gris carbón</b><code>#3A3A3C</code></div></div>
+    <div class="sw"><div class="chip" style="background:#C8CBD0"></div><div class="info"><b>Cromo / plata</b><code>#C8CBD0</code></div></div>
+    <div class="sw"><div class="chip" style="background:#C6E82A"></div><div class="info"><b>Lima claro</b><code>#C6E82A</code></div></div>
+    <div class="sw"><div class="chip" style="background:#8E2523"></div><div class="info"><b>Rojo vino</b><code>#8E2523</code></div></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th style="width:23%">Rol en la pieza</th><th style="width:15%">Color</th><th style="width:20%">Tono / carácter</th><th>Dónde y por qué</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Base / fondo</b></td>
+        <td class="hex"><span class="dot" style="background:#123F1A"></span>#123F1A<br>#1D4A24</td>
+        <td>Oscuro, poco saturado, mate</td>
+        <td>Ocupa cerca del 70&nbsp;% de la pieza. Es el lienzo: baja el ruido visual y hace que el blanco y el amarillo salten. Evoca pino y bosque sin necesidad de decirlo.</td>
+      </tr>
+      <tr>
+        <td><b>Acento principal</b></td>
+        <td class="hex"><span class="dot" style="background:#FFC800"></span>#FFC800<br>#FFD400</td>
+        <td>Alta luminosidad, cálido, saturado al máximo</td>
+        <td>Reservado a lo que debe leerse primero o a lo que vende: <b>TIPO BOX</b>, los íconos, la garantía y el marco del teléfono. Es el color de mayor contraste posible contra el verde oscuro.</td>
+      </tr>
+      <tr>
+        <td><b>Acento secundario</b></td>
+        <td class="hex"><span class="dot" style="background:#A9D400"></span>#A9D400<br>#C6E82A</td>
+        <td>Medio, muy saturado, fresco</td>
+        <td>Sólo en formas (ondas, óvalo bajo el producto) y en una palabra. Funciona como <b>puente tonal</b> entre el verde oscuro y el amarillo: sin él, el salto entre ambos sería brusco.</td>
+      </tr>
+      <tr>
+        <td><b>Texto principal</b></td>
+        <td class="hex"><span class="dot" style="background:#FFFFFF"></span>#FFFFFF</td>
+        <td>Neutro, máxima luminancia</td>
+        <td>Toda la información descriptiva. Lleva sombra suave para despegarlo del fondo y ganar cuerpo a distancia.</td>
+      </tr>
+      <tr>
+        <td><b>Producto</b></td>
+        <td class="hex"><span class="dot" style="background:#3A3A3C"></span>#3A3A3C<br>#45464A</td>
+        <td>Oscuro, neutro, textura de tela</td>
+        <td>Único neutro frío de la pieza. Al no competir con ningún color, se percibe como fotografía real y no como ilustración.</td>
+      </tr>
+      <tr>
+        <td><b>Detalle del producto</b></td>
+        <td class="hex"><span class="dot" style="background:#C8CBD0"></span>#C8CBD0</td>
+        <td>Brillante, metálico</td>
+        <td>Las patas. Aportan el reflejo que da sensación de calidad y refuerza que la fotografía es real.</td>
+      </tr>
+      <tr>
+        <td><b>Estructura (versión 2)</b></td>
+        <td class="hex"><span class="dot" style="background:#8E2523"></span>#8E2523<br>#A32C29</td>
+        <td>Oscuro, cálido, terroso</td>
+        <td>Techo y esquineros de la bodega. No es parte del arte, pero enmarca el mensaje y aporta el complemento cálido al verde.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Proporción de uso (peso visual)</h3>
+  <div class="ratio">
+    <div style="background:#123F1A;color:#fff;flex:70">70 % VERDE</div>
+    <div style="background:#FFFFFF;color:#123F1A;flex:15;border-top:1px solid #DCE3D8;border-bottom:1px solid #DCE3D8">15 % BLANCO</div>
+    <div style="background:#FFC800;color:#123F1A;flex:10">10 %</div>
+    <div style="background:#A9D400;color:#123F1A;flex:5">5 %</div>
+  </div>
+  <p class="ratio-legend">Esta jerarquía de proporciones es la que evita que el anuncio se vea cargado. Si el amarillo creciera, dejaría de ser acento y perdería su función de guiar la mirada.</p>
+</section>
+
+<section>
+  <div class="sec-head"><div class="num">3</div><h2>Tipografía y jerarquía</h2></div>
+  <p>Toda la pieza usa una <strong>sans serif condensada, pesada, en mayúsculas</strong> (familia tipo Anton / Bebas / Impact). La elección responde a una sola razón técnica: en formato exterior, una condensada mete más letra por metro sin perder altura de lectura.</p>
+  <p>La información está organizada en cuatro niveles bien diferenciados, de mayor a menor peso:</p>
+
+  <div class="hier">
+    <div class="row">
+      <div class="lvl">Nivel 1<br>El producto</div>
+      <div class="demo"><div class="l1">TIPO BOX</div></div>
+      <div class="why">El tipo más grande de toda la pieza, en amarillo y con sombra dura tipo 3D. Es lo único que debe quedar en la cabeza si el cliente sólo mira un segundo.</div>
+    </div>
+    <div class="row">
+      <div class="lvl">Nivel 2<br>Qué es</div>
+      <div class="demo"><div class="l2">BASES PARA CAMA</div></div>
+      <div class="why">En blanco, colocado justo encima del nivel 1 y a menor tamaño. Da el contexto que hace que &laquo;TIPO BOX&raquo; signifique algo.</div>
+    </div>
+    <div class="row">
+      <div class="lvl">Nivel 3<br>Argumentos</div>
+      <div class="demo"><div class="l3"><span>100&nbsp;% MADERA</span><br>DE PINO</div></div>
+      <div class="why">Tamaño medio, con la palabra clave en amarillo y el resto en blanco. Ese juego de dos colores dentro de una misma frase guía el ojo hacia lo importante sin necesidad de subrayar nada.</div>
+    </div>
+    <div class="row">
+      <div class="lvl">Nivel 4<br>Acción</div>
+      <div class="demo"><div class="l4">311 108 3374</div></div>
+      <div class="why">El teléfono, en blanco sobre verde y encapsulado en marco amarillo. Es el cierre del recorrido y el único dato que el cliente necesita retener o anotar.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="num">4</div><h2>Composición: por qué está cada cosa donde está</h2></div>
+  <p>La lectura está armada en <strong>Z</strong> —izquierda-arriba, derecha-arriba, izquierda-abajo, derecha-abajo—, que es la forma natural en que el ojo recorre un anuncio exterior.</p>
+
+  <div class="map">
+    <div class="map-grid">
+      <div class="zone">
+        <b>Izquierda</b>
+        Claim emocional + diferenciador de material. Es lo primero que se lee.
+      </div>
+      <div class="zone">
+        <b>Centro</b>
+        Titular de mayor peso, fila de beneficios y cierre con el teléfono.
+      </div>
+      <div class="zone prod">
+        <b>Derecha</b>
+        Fotografía del producto en ángulo 3/4 sobre óvalo lima.
+      </div>
+    </div>
+    <div class="map-wave"></div>
+    <p class="map-cap">La onda inferior nace a la izquierda y sube hacia la derecha: literalmente conduce el ojo hacia la mercancía.</p>
+  </div>
+
+  <h3>Versión 1 — Pared del escenario (toma nocturna)</h3>
+  <ol class="flow">
+    <li><b>Zona izquierda &mdash; &laquo;BASES SÓLIDAS / DESCANSO SEGURO&raquo;.</b> Es la promesa emocional y va primero porque leemos de izquierda a derecha. La línea amarilla que separa &laquo;SÓLIDAS&raquo; de &laquo;DESCANSO&raquo; divide dos ideas sin necesidad de un párrafo. La palabra <b>DESCANSO</b> en lima es la única en ese tono: rompe el bloque blanco y le da respiro.</li>
+    <li><b>Abajo a la izquierda &mdash; pino + 100&nbsp;% MADERA DE PINO.</b> Es el diferenciador técnico. Se coloca al final del bloque izquierdo porque es el argumento que convence <i>después</i> de que el anuncio ya despertó interés.</li>
+    <li><b>Centro &mdash; el titular.</b> Punto de mayor peso tipográfico, situado en el eje visual de la pared y alineado con los reflectores del techo.</li>
+    <li><b>Centro medio &mdash; tres íconos (CALIDAD · RESISTENCIA · CONFORT).</b> Van en fila justo debajo del titular, con separadores verticales delgados. Resumen tres beneficios de un vistazo, sin texto corrido, y la fila funciona además como descanso visual entre el titular y el teléfono.</li>
+    <li><b>Centro bajo &mdash; teléfono con marco amarillo.</b> Es el cierre. Va encapsulado en una caja de borde redondeado porque el marco funciona como botón: le dice al cerebro &laquo;aquí se hace clic&raquo;. El ícono de WhatsApp en amarillo indica el canal, no sólo el número.</li>
+    <li><b>Derecha &mdash; la fotografía del producto.</b> Siempre al final del recorrido de lectura. En ángulo 3/4, no de frente, para que se vean tapa, costado y patas cromadas de un solo golpe. Flota sobre un óvalo lima que hace de piso y sombra de contacto: sin ese óvalo, la base parecería recortada y pegada encima.</li>
+    <li><b>Ondas lima inferiores.</b> Cierran la composición y evitan que el verde oscuro se sienta como un bloque plano.</li>
+    <li><b>El entorno.</b> La toma nocturna, con los cuatro reflectores cálidos del techo y la luminaria de la calle, demuestra que <b>el anuncio también funciona de noche</b>. Las bancas de madera y el piso de concreto dan escala real: se entiende de inmediato qué tan grande es la pieza.</li>
+  </ol>
+
+  <h3>Versión 2 — Fachada de bodega (toma diurna)</h3>
+  <p>Misma familia gráfica, con la distribución reorganizada para un lienzo más ancho:</p>
+  <ol class="flow">
+    <li><b>Titular a la izquierda, claim a la derecha.</b> &laquo;BASES PARA CAMA / TIPO BOX&raquo; abre la lectura; &laquo;TU DESCANSO / COMIENZA / DESDE LA BASE&raquo; la cierra arriba, con <b>COMIENZA</b> en amarillo y un trazo curvo del mismo color como subrayado. El claim sube a la derecha porque el producto se movió al centro y hacía falta equilibrio en la parte superior.</li>
+    <li><b>Franja central de credenciales.</b> Pino + &laquo;100&nbsp;% MADERA DE PINO&raquo; a la izquierda, separador vertical amarillo, escudo + &laquo;1 AÑO DE GARANTÍA&raquo; con cinco estrellas amarillas. Las estrellas son señal de confianza pura y no cuestan nada visualmente.</li>
+    <li><b>Producto sobre óvalo amarillo</b> —en lugar de lima— apoyado en una onda que va de lima a amarillo y cruza toda la pieza. Esa onda divide el arte en dos tercios: arriba el mensaje, abajo los atributos y el contacto.</li>
+    <li><b>Pie de pieza.</b> Tres íconos (RESISTENTES · DURABLES · HECHAS EN MÉXICO) a la izquierda y WhatsApp + teléfono a la derecha, en el punto final del recorrido en Z. Aquí el número va sin marco, en blanco grande, apoyado sólo en el ícono amarillo: funciona porque tiene verde limpio alrededor.</li>
+    <li><b>El marco rojo vino</b> del techo y los esquineros no forma parte del arte, pero el diseño lo aprovecha: encuadra el mensaje como si fuera un cuadro.</li>
+  </ol>
+</section>
+
+<section>
+  <div class="sec-head"><div class="num">5</div><h2>Iconografía</h2></div>
+  <p>Todos los íconos son de <strong>línea (outline) en amarillo, con trazo uniforme y sin relleno</strong>. La decisión es deliberada por tres razones: el trazo delgado no compite con la tipografía pesada; al compartir estilo y grosor se leen como <strong>un sistema</strong> y no como imágenes sueltas; y el amarillo los mantiene a todos en el mismo nivel jerárquico entre sí.</p>
+
+  <div class="icons">
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 5 13 21h6L10 34h11v9h6v-9h11l-9-13h6z"/></svg></div>
+      <b>Pino</b><span>Origen y material</span>
+    </div>
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6 9 12v11c0 10 6.5 16.5 15 19 8.5-2.5 15-9 15-19V12z"/><path d="M17 24l5 5 10-10"/></svg></div>
+      <b>Escudo</b><span>Resistencia y garantía</span>
+    </div>
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="20" r="12"/><path d="M18 20l4 4 8-8"/><path d="M16 30l-3 13 11-5 11 5-3-13"/></svg></div>
+      <b>Sello / roseta</b><span>Calidad, hecho en México</span>
+    </div>
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 35a8 8 0 0 1-.6-16A11 11 0 0 1 34 20a7.5 7.5 0 0 1 .6 15z"/></svg></div>
+      <b>Nube</b><span>Confort</span>
+    </div>
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 27a7 7 0 0 0 10 0l6-6a7 7 0 0 0-10-10l-2 2"/><path d="M27 21a7 7 0 0 0-10 0l-6 6a7 7 0 0 0 10 10l2-2"/></svg></div>
+      <b>Eslabón</b><span>Durabilidad</span>
+    </div>
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 8l4.8 9.7 10.7 1.6-7.8 7.5 1.9 10.7L24 32.4l-9.6 5.1 1.9-10.7-7.8-7.5 10.7-1.6z"/></svg></div>
+      <b>Estrellas</b><span>Valoración</span>
+    </div>
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 39l2.6-8.2A15.5 15.5 0 1 1 18 37.2z"/><path d="M18.5 19.5c0 6 4 10 10 10 2 0 3-1.5 2.5-3l-3-1.4-1.8 1.9a11 11 0 0 1-5.2-5.2l1.9-1.8-1.4-3c-1.5-.5-3 .5-3 2.5z" fill="#FFC800" stroke="none"/></svg></div>
+      <b>WhatsApp</b><span>Canal de contacto</span>
+    </div>
+    <div class="ic">
+      <div class="glyph"><svg viewBox="0 0 48 48" fill="none" stroke="#FFC800" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="17" width="34" height="14" rx="3"/><path d="M12 31v5M36 31v5"/></svg></div>
+      <b>Base box</b><span>Producto</span>
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <p>Cualquier ícono que se agregue en el futuro debe respetar el mismo grosor de trazo, el mismo tamaño de caja y el mismo amarillo. Un solo ícono relleno o de otro color rompe la sensación de sistema.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="num">6</div><h2>Notas de revisión antes de imprimir</h2></div>
+  <p>Tres puntos que conviene verificar en el archivo original antes de mandar a producción:</p>
+
+  <div class="note">
+    <p><span class="tag">Texto</span><b>Revisar la palabra &laquo;DURABLES&raquo; en la versión 2.</b> Parece traer un carácter extraño en la letra L (se lee como &laquo;DURABŁES&raquo;). Conviene revisar la fuente o volver a escribir la palabra: un error tipográfico en una valla se vuelve permanente y es costoso de corregir.</p>
+  </div>
+
+  <div class="note">
+    <p><span class="tag">Consistencia</span><b>Unificar los atributos entre versiones.</b> La versión 1 dice CALIDAD · RESISTENCIA · CONFORT y la versión 2 dice RESISTENTES · DURABLES · HECHAS EN MÉXICO. Conviene definir cuáles son los tres atributos oficiales de la marca y usarlos siempre iguales. Lo mismo aplica a &laquo;1 AÑO DE GARANTÍA&raquo;, que sólo aparece en la versión 2: es un argumento de venta fuerte y debería estar en ambas.</p>
+  </div>
+
+  <div class="note">
+    <p><span class="tag">Legibilidad</span><b>Jerarquía del teléfono.</b> El número es el único dato que el cliente tiene que copiar. Si la pieza se ve desde carretera o desde una avenida de tránsito rápido, vale la pena subirle un punto de tamaño respecto al claim, aunque eso implique reducir ligeramente el texto secundario.</p>
+  </div>
+
+  <div class="closing">
+    <h3>En una frase</h3>
+    <p>Un fondo verde profundo que aporta calma y naturaleza, un amarillo que sólo aparece donde hay que mirar, un lima que suaviza el salto entre ambos, y un producto neutro que gana la atención por contraste. Nada está puesto por decoración: cada color y cada posición cumplen una función de lectura.</p>
+  </div>
+</section>
+
+</body>
+</html>
