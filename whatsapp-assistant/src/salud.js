@@ -161,7 +161,10 @@ async function numerosVisibles(token) {
 // Le pregunta a Meta por el número del negocio. Es la forma más
 // barata de saber si el token sirve: si venció, responde 401/190.
 async function revisarNegocio(negocio) {
-  const base = { id: negocio.id, nombre: negocio.nombre || negocio.id };
+  // Todos los perfiles traen "nombreInterno"; ninguno trae "nombre".
+  // Antes se leía solo "nombre", así que el reporte mostraba el id
+  // ("camas") en vez del negocio de verdad ("Bases Box Tepic").
+  const base = { id: negocio.id, nombre: negocio.nombreInterno || negocio.id };
   const token = negocio.whatsappToken || WHATSAPP_TOKEN;
 
   // Sin número de Meta, el negocio está preparado en el código pero

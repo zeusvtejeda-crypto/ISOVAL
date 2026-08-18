@@ -9,7 +9,7 @@ API)** para los mensajes y una IA para redactar las respuestas — por defecto
 Negocios incluidos de fábrica (los editas tú):
 
 - 🏗️ **Isoval** — `businesses/isoval.js` (arquitectura y construcción, Tepic)
-- 🛏️ **Bases y camas** — `businesses/camas.js` (nombre oficial aún sin decidir; el asistente no menciona ninguna marca hasta que la definas)
+- 🛏️ **Bases Box Tepic** — `businesses/camas.js` (bases para cama tipo box; el perfil ya trae dirección, horario, tonos y medidas reales)
 - 💪 **The Fithouse** — `businesses/fithouse.js`
 - 🏠 **Inmobiliaria** — `businesses/inmobiliaria.js` (viene apagada; enciéndela cuando abras el negocio)
 
@@ -117,13 +117,70 @@ por ejemplo **Render** o **Railway** (ambos tienen plan gratis para empezar):
 
 ---
 
+## ✅ Encender Bases Box Tepic (lo que falta)
+
+El código ya está listo: el perfil tiene los datos reales del negocio y el
+asistente contesta texto, audios, fotos y ubicaciones. Lo que falta es del
+lado de **Meta**, y es donde se atora todo el mundo.
+
+**Revisa primero en qué punto vas.** Abre `https://tu-servidor/salud` y te
+lo dice en español. Los estados que puede dar para Bases Box:
+
+| Lo que dice /salud | Qué significa | Qué hacer |
+|---|---|---|
+| `NO_CONECTADO` | Falta el `phone_number_id` | Ponlo en `PHONE_ID_BASESBOX` |
+| `TOKEN_VENCIDO` | El token caducó (los de prueba duran 24 h) | Genera uno permanente de Usuario del Sistema |
+| `SIN_CUENTA_ASIGNADA` | El token sirve, pero no tiene la cuenta de WhatsApp | Asignar el activo (ver abajo) |
+| `SIN_CONFIRMAR` | El token está bien; falta probarlo de verdad | Mándale un WhatsApp al número |
+| `OK` | Ya puede contestar | Nada 🎉 |
+
+### El paso que más tiempo hace perder
+
+Si `/salud` dice **`SIN_CUENTA_ASIGNADA`**, el token es válido y los permisos
+se ven perfectos en el depurador de Meta, pero aun así no puede mandar nada.
+La razón: los *permisos* dicen **qué** puede hacer el token; los *activos*
+dicen **sobre qué**, y esos están vacíos.
+
+Lo importante es el **orden**: el Usuario del Sistema tiene que estar dentro
+del **mismo portafolio que es dueño de la cuenta de WhatsApp**. Si está en
+otro, el botón "Agregar activos" ni siquiera te muestra la cuenta, y parece
+que Meta está fallando cuando en realidad estás parado en el negocio
+equivocado.
+
+1. En Meta Business Settings, abre el **portafolio dueño** de la cuenta de WhatsApp.
+2. **Usuarios del sistema** → agrégalo si no hay ninguno.
+3. Selecciónalo → **Agregar activos** → pestaña **Cuentas de WhatsApp** →
+   marca la cuenta → **Control total**.
+4. Repite en la pestaña **Apps** con la app del asistente.
+5. Genera un **token nuevo** (ya con los activos asignados), ponlo en
+   `WHATSAPP_TOKEN_BASESBOX` en Vercel y **redespliega**.
+
+> ⚠️ Un token generado ANTES de asignar los activos no sirve aunque asignes
+> los activos después. Hay que generarlo de nuevo.
+
+### Ojo con el celular que ya usan
+
+El número **311 121 6033** hoy está en la app de WhatsApp Business del
+celular. Al pasarlo a la API de Meta (que es lo que usa este asistente),
+**deja de funcionar en esa app**: las conversaciones se atienden desde el
+servidor o desde el Inbox de Meta. Si no quieren perder el celular, conecta
+un número nuevo y desvía a ese los mensajes de la publicidad.
+
+### Que te avise solo si se cae
+
+`/salud` responde **503** cuando algo está roto. Apúntale un monitor gratuito
+(UptimeRobot y similares) cada 15 minutos y te avisa por correo. Así no se
+repite lo de agosto, que estuvo caído más de un día sin que nadie se enterara.
+
+---
+
 ## 🔀 Cómo se asigna cada número a un negocio
 
 Cada número de WhatsApp tiene un **Phone number ID** único en Meta. Pones ese
 id en la variable del negocio correspondiente:
 
 ```
-PHONE_ID_CAMAS=123456789        -> los WhatsApp de ese número los atiende "camas"
+PHONE_ID_BASESBOX=123456789     -> los WhatsApp de ese número los atiende Bases Box
 PHONE_ID_FITHOUSE=987654321     -> los de ese otro número, "fithouse"
 ```
 
@@ -142,10 +199,13 @@ whatsapp-assistant/
 │   ├── inmobiliaria.js
 │   └── index.js        ← registro de negocios
 ├── src/
-│   ├── server.js       ← recibe los WhatsApp de Meta
+│   ├── app.js          ← recibe los WhatsApp de Meta y los atiende
+│   ├── server.js       ← arranca el servidor (Render / tu compu)
 │   ├── router.js       ← decide qué negocio atiende
 │   ├── brain.js        ← redacta la respuesta (Gemini o Claude)
 │   ├── whatsapp.js     ← envía la respuesta por WhatsApp
+│   ├── adjuntos.js     ← qué contestar a audios, fotos y ubicaciones
+│   ├── salud.js        ← /salud: dice si de verdad puede contestar
 │   ├── memory.js       ← recuerda el hilo de cada conversación
 │   ├── config.js       ← lee las variables de entorno
 │   └── simulator.js    ← chat de prueba en la terminal
@@ -160,8 +220,13 @@ whatsapp-assistant/
 - **Memoria:** hoy se guarda en la memoria del servidor y se borra tras 6 h de
   inactividad (o si reinicias). Para varios servidores/producción seria,
   conviene una base de datos o Redis. Para arrancar, así está bien.
-- **Solo texto:** por ahora responde mensajes de texto. Imágenes, audios o
-  botones se pueden agregar después.
+- **Qué entiende:** lee texto, el pie de una foto y los botones que toque el
+  cliente. Los audios, fotos, videos y ubicaciones **sí reciben respuesta**,
+  pero una de aviso ("no puedo escucharlo, ¿me lo escribes?"), porque todavía
+  no transcribe audio ni ve imágenes. A las reacciones (👍) no contesta, a
+  propósito.
+- **Mensajes repetidos:** si Meta reintenta la entrega, el asistente reconoce
+  el mensaje y no contesta dos veces.
 - **Costo:** Meta Cloud API es gratis hasta cierto volumen de conversaciones al
   mes. Con `AI_PROVIDER=gemini` el cerebro no cuesta nada (límite de
   peticiones por minuto). Si cambias a Claude, cobra por uso.

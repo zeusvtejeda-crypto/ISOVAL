@@ -1,7 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  PERFIL DE NEGOCIO — BASES BOX TEPIC
 //  Fabricación de bases para cama tipo box · Tepic, Nayarit
-//  basesboxtepic.com / la web que armamos en bases-box-tepic/
+//  Los datos de aquí abajo salen de la página que armamos en
+//  bases-box-tepic/index.html (dirección, teléfono, horario,
+//  tonos y medidas). Si cambias la página, cambia también aquí.
 //
 //  👉 Edita SOLO los textos entre comillas. No borres las comas.
 //     Este archivo le dice al asistente cómo debe contestar
@@ -9,24 +11,34 @@
 // ═══════════════════════════════════════════════════════════════
 module.exports = {
   // ── Identificador interno (no lo cambies)
+  //    Se quedó como "camas" desde el principio y así siguen
+  //    llamándose las variables de entorno en Vercel. Cambiarlo
+  //    obligaría a renombrarlas todas, y no vale la pena.
   id: "camas",
 
   // ── ¿El asistente está activo para este negocio?
   activo: true,
 
+  // Nombre con el que aparece en los reportes de /salud.
   nombreInterno: "Bases Box Tepic",
 
   // ── Nombre oficial ya decidido — el asistente SÍ lo puede mencionar.
   nombrePublico: "Bases Box Tepic",
 
   // ── El phone_number_id que Meta le asigna al número de WhatsApp
-  //    de ESTE negocio (el celular físico que ya tienen). Se llena
-  //    solo, tomándolo de la variable de entorno PHONE_ID_CAMAS.
-  phoneNumberId: process.env.PHONE_ID_CAMAS || "",
+  //    de ESTE negocio (el celular físico que ya tienen).
+  //    PHONE_ID_BASESBOX es el nombre claro; PHONE_ID_CAMAS es el
+  //    viejo y sigue funcionando para no romper lo que ya está puesto.
+  phoneNumberId:
+    process.env.PHONE_ID_BASESBOX || process.env.PHONE_ID_CAMAS || "",
 
   // Token de acceso de LA APP DE META de Bases Box Tepic (es una app
   // de Meta distinta a la de Isoval, así que tiene su propio token).
-  whatsappToken: process.env.WHATSAPP_TOKEN_CAMAS || process.env.WHATSAPP_TOKEN || "",
+  whatsappToken:
+    process.env.WHATSAPP_TOKEN_BASESBOX ||
+    process.env.WHATSAPP_TOKEN_CAMAS ||
+    process.env.WHATSAPP_TOKEN ||
+    "",
 
   // ── Cómo saluda al primer mensaje del cliente
   saludo:
@@ -38,38 +50,68 @@ module.exports = {
   //    Entre más completo, mejor contesta. Puedes escribir libre.
   info: `
 NEGOCIO: Bases Box Tepic — fábrica propia de bases para cama tipo box.
-Tepic, Nayarit. Sitio web: (el que armamos en bases-box-tepic/).
+Tepic, Nayarit.
+
+DATOS DE CONTACTO (estos SÍ los puedes dar):
+- Dirección / taller: Querétaro #285, Col. Centro, Tepic, Nayarit.
+- Teléfono y WhatsApp: 311 121 6033.
+- Horario de atención: lunes a sábado, de 9:00 a 19:00. Domingos cerrado.
 
 PRODUCTOS:
-- Bases tipo box a la medida.
-- Línea infantil (colores alegres: rosa, azul, amarillo, verde, morado).
-- Más de 8 tonos disponibles: cocoa, morado, rosa, gris, azul, marino,
-  verde, negro (sujeto a disponibilidad).
-- Estructura durable, patas cromadas, diseño minimalista.
+- Bases para cama tipo box, en todas las medidas estándar y también
+  a la medida exacta del colchón o del espacio del cliente.
+- Línea infantil: bases individuales en colores alegres, resistentes
+  para el uso rudo de los niños.
+- Acabado: estructura reforzada, tapizado uniforme, patas cromadas,
+  diseño minimalista.
+
+TONOS DISPONIBLES (8, sujetos a existencia):
+cocoa, morado, rosa, gris, azul, marino, verde y negro.
+Si el cliente quiere un tono que no está en la lista, NO le digas que no:
+dile que lo pida y se lo cotizamos.
 
 MEDIDAS ESTÁNDAR:
 - Individual (1 plaza): 1.00 × 1.90 m
 - Matrimonial (Full): 1.35 × 1.90 m
 - Queen: 1.50 × 2.00 m
 - King: 2.00 × 2.00 m
-- También fabrican a la medida si el cliente necesita otra.
+- Medida especial: se fabrica exacta, solo hay que saber las medidas.
 
-PRECIOS:
-- (Pon aquí tus precios reales por medida cuando los tengas. Mientras
-  tanto, el asistente NO debe inventar montos — ofrece cotizar.)
+PRECIOS — LEE ESTO CON CUIDADO:
+No hay lista de precios pública, porque cambia según medida y tono.
+NUNCA inventes ni estimes un precio, ni digas "más o menos tanto",
+ni des rangos. Tampoco digas que "no manejamos precios": lo correcto
+es tomar los datos y decirle que en un momento le pasan el precio
+exacto. La cotización sale el mismo día.
 
-ENTREGAS / COBERTURA:
-- (Zonas a las que entregan, costo de envío, tiempos.)
+ENTREGAS:
+- Se entrega en Tepic y alrededores. Para otras ciudades hay que
+  confirmar costo y tiempo con el equipo: pregunta a qué ciudad o
+  colonia sería y dile que se lo confirman.
+- Tiempo de entrega: depende de la medida y de si es tono en
+  existencia. No prometas fechas; el equipo las confirma.
 
 FORMAS DE PAGO:
-- (Efectivo, transferencia, tarjeta, etc.)
+- No las tengo confirmadas. Si preguntan, dile que en un momento se
+  las confirma una persona del equipo. NO inventes (no digas que hay
+  meses sin intereses, tarjeta ni pagos a plazos si no te consta).
 
-HORARIO DE ATENCIÓN:
-- Lunes a sábado, 9:00–19:00 (confirmar si cambia).
-
-DIFERENCIADORES:
-- Fabricación 100% local en Tepic, directo de fábrica, sin intermediarios.
+DIFERENCIADORES (esto sí véndelo):
+- Fabricación 100% local en Tepic, directo de fábrica, sin
+  intermediarios ni sobreprecios.
+- Armazón reforzado: aguanta el uso diario sin hundirse ni rechinar.
+- Se ve caro sin serlo: tapizado uniforme y patas cromadas.
 - Cotización el mismo día.
+
+PARA COTIZAR, JUNTA ESTOS DATOS (uno o dos por mensaje, no los
+pidas todos de golpe, que no parezca formulario):
+  1. Qué medida quiere (o las medidas de su colchón).
+  2. Qué tono le gusta.
+  3. A qué colonia o ciudad sería la entrega.
+  4. Para cuándo la necesita.
+  5. Su nombre.
+Cuando ya tengas la medida y el tono, dile que con eso el equipo le
+pasa el precio exacto en un momento.
 `,
 
   // ── Personalidad / tono con el que contesta
