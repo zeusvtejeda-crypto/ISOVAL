@@ -4,9 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Bases Box Tepic — Bases tipo box a la medida · Fábrica propia en Tepic, Nayarit</title>
-<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit. Más de 8 tonos, estructura durable y patas cromadas. Cotiza directo por WhatsApp."/>
+<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit: barras de madera por dentro, estructura que no rechina ni se vence, patas cromadas atornilladas y más de 8 tonos. Cotiza directo por WhatsApp."/>
 <meta property="og:title" content="Bases Box Tepic — Fábrica de bases para cama"/>
-<meta property="og:description" content="Bases tipo box a la medida, +8 tonos, fabricación propia en Tepic. Cotiza por WhatsApp."/>
+<meta property="og:description" content="Bases tipo box a la medida: barras de madera por dentro, sin rechinidos y fabricación propia en Tepic. Cotiza por WhatsApp."/>
 <meta property="og:type" content="website"/>
 <link rel="icon" href="assets/logo-icon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -77,12 +77,55 @@ header{position:sticky;top:0;z-index:50;background:rgba(244,242,237,.92);backdro
 .hero-art svg{filter:drop-shadow(0 30px 40px rgba(0,0,0,.45));width:100%;max-width:360px}
 
 /* section base */
-section{padding:96px 0}
+section{padding:96px 0;scroll-margin-top:84px}
 .sec-head{margin-bottom:48px}
 .sec-head h2{font-size:clamp(32px,4.4vw,54px)}
 .sec-head p{color:var(--steel);max-width:560px;margin-top:12px}
 .divider-label{display:flex;align-items:center;gap:14px;margin-bottom:10px}
 .divider-label::after{content:"";flex:1;height:2px;background:var(--border)}
+
+/* por qué somos la mejor opción */
+#mejor-opcion .sec-head{margin-bottom:44px}
+#mejor-opcion .sec-head h2{max-width:900px}
+.mo-lead{font-size:20px;color:var(--steel);max-width:680px;margin-top:16px}
+.mo-lead b{color:var(--graphite);font-weight:600}
+.sleep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:34px}
+.sleep-card{border-top:3px solid var(--graphite);padding-top:18px}
+.sleep-card .k{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;font-size:13px;color:var(--orange);text-transform:uppercase}
+.sleep-card h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;letter-spacing:.3px;text-transform:uppercase;line-height:1.06;margin:10px 0}
+.sleep-card p{color:var(--steel);font-size:16px}
+
+/* anatomía (lo que va por dentro) */
+.anatomy{background:var(--graphite);color:var(--paper);padding:78px 0;margin:78px 0 0}
+.anat-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:stretch}
+.anat-art{background:#151515;border:1px solid #333;padding:26px 18px;display:flex;flex-direction:column;justify-content:center;gap:20px}
+.anat-art svg{width:100%;max-width:560px;margin:0 auto}
+.anat-art .cap{font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;font-size:12px;color:var(--muted);text-align:center}
+.anat-copy h3{font-size:clamp(28px,3.6vw,42px);color:var(--paper);margin-top:8px}
+.anat-list{list-style:none;display:grid;gap:20px;margin-top:28px}
+.anat-list li{display:flex;gap:16px;align-items:flex-start}
+.anat-list .n{flex:none;width:36px;height:36px;border:2px solid var(--orange);color:var(--orange);display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:17px;line-height:1}
+.anat-list b{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:20px;color:var(--paper);line-height:1.1;margin-bottom:3px}
+.anat-list p{color:#b7b5af;font-size:16px;line-height:1.45}
+
+/* comparativa */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--border);margin-top:78px}
+.vs-col{padding:34px 30px}
+.vs-bad{background:var(--concrete)}
+.vs-good{background:#fff;border-top:4px solid var(--orange)}
+.vs-col .tag{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.vs-good .tag{color:var(--orange)}
+.vs-col h3{font-size:26px;margin:8px 0 22px}
+.vs-col ul{list-style:none;display:grid;gap:14px}
+.vs-col li{display:flex;gap:12px;font-size:16px;color:var(--steel);line-height:1.4}
+.vs-col .m{flex:none;font-weight:700;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;margin-top:2px}
+.vs-bad .m{background:#d5d2ca;color:#6f6c66}
+.vs-good .m{background:var(--orange);color:#fff}
+.vs-good li{color:var(--graphite)}
+
+.mo-cta{display:flex;align-items:center;justify-content:space-between;gap:26px;flex-wrap:wrap;border:2px solid var(--graphite);padding:26px 30px;margin-top:26px}
+.mo-cta .t{font-family:'Barlow Condensed',sans-serif;font-weight:600;text-transform:uppercase;font-size:22px;letter-spacing:.4px;line-height:1.15;max-width:700px}
+.mo-cta .t b{color:var(--orange);font-weight:700}
 
 /* tonos */
 #tonos{background:var(--concrete)}
@@ -155,6 +198,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 
 @media(max-width:900px){
   .hero-grid,.tonos-grid,.kids,.contact-grid{grid-template-columns:1fr}
+  .sleep-grid,.anat-grid,.vs{grid-template-columns:1fr}
+  .anatomy{padding:60px 0;margin-top:60px}
+  .vs{margin-top:60px}
   .hero-art{order:-1}
   .feat-grid{grid-template-columns:1fr 1fr}
   .med-grid{grid-template-columns:1fr 1fr}
@@ -164,6 +210,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 }
 @media(max-width:560px){
   .feat-grid,.med-grid{grid-template-columns:1fr}
+  .vs-col{padding:26px 22px}
+  .mo-cta{padding:22px}
+  .mo-cta .t{font-size:20px}
   .hero-stats{gap:20px}
   section{padding:70px 0}
 }
@@ -182,8 +231,8 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       </div>
     </a>
     <nav class="nav-links" id="navlinks">
+      <a href="#mejor-opcion">Por qué nosotros</a>
       <a href="#tonos">Tonos</a>
-      <a href="#porque">Por qué</a>
       <a href="#medidas">Medidas</a>
       <a href="#contacto">Contacto</a>
     </nav>
@@ -213,7 +262,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
           Cotiza por WhatsApp
         </a>
-        <a class="btn btn-ghost" href="#tonos" style="border-color:#555;color:var(--paper)">Ver tonos</a>
+        <a class="btn btn-ghost" href="#mejor-opcion" style="border-color:#555;color:var(--paper)">Por qué elegirnos</a>
       </div>
       <div class="hero-stats">
         <div class="s"><div class="n">+8</div><div class="l">Tonos</div></div>
@@ -244,11 +293,188 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   </div>
 </section>
 
+<!-- ============ POR QUÉ SOMOS LA MEJOR OPCIÓN ============ -->
+<section id="mejor-opcion">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">01 / POR QUÉ SOMOS LA MEJOR OPCIÓN</span></div>
+      <h2>Tu descanso empieza debajo del colchón</h2>
+      <p class="mo-lead">Pasas <b>un tercio de tu vida</b> encima de una base. No es un mueble más del cuarto: es lo que sostiene tu colchón, tu espalda y las horas que deciden cómo te levantas mañana. Por eso no empezamos por el precio ni por el color —empezamos por cómo está hecha por dentro.</p>
+    </div>
+    <div class="sleep-grid">
+      <article class="sleep-card">
+        <div class="k">Descanso</div>
+        <h3>Un buen colchón sobre una base floja no sirve</h3>
+        <p>El colchón copia la forma de lo que tiene debajo. Si la base se vence, tu colchón se vence con ella —y ahí se va el dinero que invertiste en dormir bien.</p>
+      </article>
+      <article class="sleep-card">
+        <div class="k">Silencio</div>
+        <h3>El rechinido te despierta aunque no lo recuerdes</h3>
+        <p>Cada vuelta en la noche sobre un armazón que truena te corta el sueño profundo. No lo notas de madrugada; lo notas al día siguiente.</p>
+      </article>
+      <article class="sleep-card">
+        <div class="k">Soporte</div>
+        <h3>Tu espalda descansa en lo que está abajo</h3>
+        <p>Una superficie pareja reparte tu peso de forma uniforme. Una base hundida en el centro te deja durmiendo en una hamaca, noche tras noche.</p>
+      </article>
+    </div>
+  </div>
+
+  <!-- ---- anatomía: lo que va por dentro ---- -->
+  <div class="anatomy">
+    <div class="wrap anat-grid">
+      <div class="anat-art">
+        <svg viewBox="0 52 520 238" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Corte del interior de una base box: barras de madera, marco reforzado, caja sólida sin bisagras, patas cromadas atornilladas y tapizado tensado">
+          <!-- colchón, como referencia -->
+          <text x="56" y="70" font-family="'Barlow Condensed',sans-serif" font-size="12" letter-spacing="2.5" fill="#7d7d7d">TU COLCHÓN</text>
+          <rect x="56" y="76" width="408" height="24" fill="#FBFAF7" opacity=".08"/>
+          <rect x="56" y="76" width="408" height="24" fill="none" stroke="#5a5a5a" stroke-width="1.5" stroke-dasharray="6 5"/>
+
+          <!-- tapizado superior -->
+          <rect x="40" y="104" width="440" height="14" fill="#55606B"/>
+          <!-- cuerpo tapizado -->
+          <rect x="40" y="118" width="440" height="112" fill="#3E4A54" stroke="#2A3238" stroke-width="2"/>
+
+          <!-- corte: interior a la vista -->
+          <rect x="112" y="126" width="296" height="96" fill="#121212"/>
+          <!-- rieles de madera -->
+          <rect x="112" y="126" width="296" height="17" fill="#B4813F" stroke="#8A5F2A" stroke-width="1.5"/>
+          <rect x="112" y="205" width="296" height="17" fill="#B4813F" stroke="#8A5F2A" stroke-width="1.5"/>
+          <!-- barras de madera -->
+          <g fill="#C4924E" stroke="#8A5F2A" stroke-width="1.5">
+            <rect x="122" y="143" width="16" height="62"/>
+            <rect x="175" y="143" width="16" height="62"/>
+            <rect x="228" y="143" width="16" height="62"/>
+            <rect x="281" y="143" width="16" height="62"/>
+            <rect x="334" y="143" width="16" height="62"/>
+            <rect x="387" y="143" width="16" height="62"/>
+          </g>
+          <!-- tornillería -->
+          <g fill="#7a5a30">
+            <circle cx="130" cy="134" r="2.4"/><circle cx="183" cy="134" r="2.4"/><circle cx="236" cy="134" r="2.4"/>
+            <circle cx="289" cy="134" r="2.4"/><circle cx="342" cy="134" r="2.4"/><circle cx="395" cy="134" r="2.4"/>
+            <circle cx="130" cy="213" r="2.4"/><circle cx="183" cy="213" r="2.4"/><circle cx="236" cy="213" r="2.4"/>
+            <circle cx="289" cy="213" r="2.4"/><circle cx="342" cy="213" r="2.4"/><circle cx="395" cy="213" r="2.4"/>
+          </g>
+          <!-- esquineros reforzados -->
+          <g fill="#9aa0a6">
+            <path d="M112 126h30v6h-24v22h-6z"/>
+            <path d="M408 126h-30v6h24v22h6z"/>
+          </g>
+          <!-- marca de corte -->
+          <rect x="112" y="126" width="296" height="96" fill="none" stroke="#F2591F" stroke-width="2" stroke-dasharray="7 5"/>
+
+          <!-- patas cromadas atornilladas -->
+          <g>
+            <rect x="58" y="230" width="34" height="9" fill="#8b9196"/>
+            <rect x="67" y="239" width="16" height="34" rx="3" fill="#9aa0a6"/>
+            <circle cx="64" cy="234.5" r="2.4" fill="#F2591F"/><circle cx="86" cy="234.5" r="2.4" fill="#F2591F"/>
+            <rect x="243" y="230" width="34" height="9" fill="#8b9196"/>
+            <rect x="252" y="239" width="16" height="34" rx="3" fill="#9aa0a6"/>
+            <circle cx="249" cy="234.5" r="2.4" fill="#F2591F"/><circle cx="271" cy="234.5" r="2.4" fill="#F2591F"/>
+            <rect x="428" y="230" width="34" height="9" fill="#8b9196"/>
+            <rect x="437" y="239" width="16" height="34" rx="3" fill="#9aa0a6"/>
+            <circle cx="434" cy="234.5" r="2.4" fill="#F2591F"/><circle cx="456" cy="234.5" r="2.4" fill="#F2591F"/>
+          </g>
+
+          <!-- numeritos -->
+          <g font-family="'Anton',Impact,sans-serif" font-size="15" fill="#fff" text-anchor="middle">
+            <circle cx="255" cy="174" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="255" y="174" dy=".35em">1</text>
+            <circle cx="158" cy="134" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="158" y="134" dy=".35em">2</text>
+            <circle cx="76" cy="172" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="76" y="172" dy=".35em">3</text>
+            <circle cx="75" cy="262" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="75" y="262" dy=".35em">4</text>
+            <circle cx="446" cy="111" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="446" y="111" dy=".35em">5</text>
+          </g>
+        </svg>
+        <div class="cap">Corte interior · así va armada por dentro</div>
+      </div>
+      <div class="anat-copy">
+        <span class="eyebrow">Por dentro</span>
+        <h3>Lo que no se ve es lo que dura</h3>
+        <ul class="anat-list">
+          <li>
+            <span class="n">1</span>
+            <div>
+              <b>Barras de madera por dentro</b>
+              <p>El interior lleva barras de madera que reparten el peso a lo largo de toda la base, no nada más en las orillas. Es la diferencia entre una base igual de firme en cinco años y una que se hunde en el primero.</p>
+            </div>
+          </li>
+          <li>
+            <span class="n">2</span>
+            <div>
+              <b>Marco reforzado en las esquinas</b>
+              <p>Las esquinas son donde más carga aguanta una base —y donde más se ahorra el que fabrica barato. Las nuestras van reforzadas y ensambladas para que no se abran con el uso.</p>
+            </div>
+          </li>
+          <li>
+            <span class="n">3</span>
+            <div>
+              <b>Sin bisagras que rechinen</b>
+              <p>No es un armazón de fierro atornillado que se afloja con los meses: es una caja sólida. Si nada se mueve, nada truena. Te das vuelta en la noche y no se entera nadie.</p>
+            </div>
+          </li>
+          <li>
+            <span class="n">4</span>
+            <div>
+              <b>Patas cromadas atornilladas a la madera</b>
+              <p>Van fijas a la estructura, no engrapadas a la tela. Puedes recorrer la cama para limpiar sin que se safe una pata.</p>
+            </div>
+          </li>
+          <li>
+            <span class="n">5</span>
+            <div>
+              <b>Tapizado tensado a mano</b>
+              <p>Tela bien estirada, grapa oculta y esquinas parejas. Se ve caro porque está bien hecho, no porque traiga adornos de más.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- comparativa ---- -->
+  <div class="wrap">
+    <div class="vs">
+      <div class="vs-col vs-bad">
+        <div class="tag">Lo que hay allá afuera</div>
+        <h3>La base de siempre</h3>
+        <ul>
+          <li><span class="m">✕</span><span>Armazón de fierro con bisagras que rechinan a cada vuelta.</span></li>
+          <li><span class="m">✕</span><span>Interior de cartón o triplay que se vence en unos meses.</span></li>
+          <li><span class="m">✕</span><span>Patas engrapadas a la tela: se safan al mover la cama.</span></li>
+          <li><span class="m">✕</span><span>Tela floja que se arruga y se abre en las esquinas.</span></li>
+          <li><span class="m">✕</span><span>Te la entregan en caja, hecha quién sabe dónde.</span></li>
+          <li><span class="m">✕</span><span>¿Falló? El problema es de un proveedor a cientos de kilómetros.</span></li>
+        </ul>
+      </div>
+      <div class="vs-col vs-good">
+        <div class="tag">Lo que hacemos aquí</div>
+        <h3>Una base box de nosotros</h3>
+        <ul>
+          <li><span class="m">✓</span><span>Caja sólida: nada se mueve, nada rechina.</span></li>
+          <li><span class="m">✓</span><span>Barras de madera por dentro que reparten el peso parejo.</span></li>
+          <li><span class="m">✓</span><span>Patas cromadas atornilladas a la estructura, no a la tela.</span></li>
+          <li><span class="m">✓</span><span>Tapizado tensado a mano, costuras y esquinas parejas.</span></li>
+          <li><span class="m">✓</span><span>Sale de nuestro taller en Tepic: puedes venir a verla antes.</span></li>
+          <li><span class="m">✓</span><span>¿Algo salió mal? Aquí estamos, en Querétaro #285.</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mo-cta">
+      <div class="t">No somos la base más barata del mercado. Somos <b>la que vas a seguir usando</b> cuando la barata ya se venció.</div>
+      <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20una%20base%20que%20aguante" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+        Quiero una que aguante
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- ============ TONOS ============ -->
 <section id="tonos">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num">01 / TONOS</span></div>
+      <div class="divider-label"><span class="tag-num">02 / TONOS</span></div>
       <h2>Elige el tono que combina con tu cuarto</h2>
       <p>Toca un color y la base se transforma. Manejamos gran variedad de tonos para que combine con cualquier estilo.</p>
     </div>
@@ -282,7 +508,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 <section id="porque">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num">02 / POR QUÉ BASES BOX</span></div>
+      <div class="divider-label"><span class="tag-num">03 / VENTAJAS</span></div>
       <h2>Hechas para durar, pensadas para verse bien</h2>
     </div>
   </div>
@@ -326,7 +552,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 <section id="medidas">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">03 / MEDIDAS</span></div>
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">04 / MEDIDAS</span></div>
       <h2>Todas las medidas estándar</h2>
       <p>Y si necesitas una diferente, la hacemos a tu medida.</p>
     </div>
@@ -348,7 +574,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   <div class="wrap">
     <div class="kids">
       <div>
-        <div class="divider-label"><span class="tag-num">04 / LÍNEA INFANTIL</span></div>
+        <div class="divider-label"><span class="tag-num">05 / LÍNEA INFANTIL</span></div>
         <h2 style="font-size:clamp(30px,4vw,48px)">La habitación que tus pequeños merecen</h2>
         <p style="color:var(--steel);margin-top:14px">Bases individuales en colores alegres, seguras y resistentes para el uso rudo de los niños. Combínalas con su cuarto.</p>
         <div class="chips">
@@ -376,7 +602,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 <section id="contacto">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">05 / CONTACTO</span></div>
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">06 / CONTACTO</span></div>
       <h2>Cotiza hoy tu base</h2>
     </div>
     <div class="contact-grid">
@@ -418,8 +644,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         </div>
       </div>
       <nav class="foot-links">
+        <a href="#mejor-opcion">Por qué nosotros</a>
         <a href="#tonos">Tonos</a>
-        <a href="#porque">Por qué</a>
+        <a href="#porque">Ventajas</a>
         <a href="#medidas">Medidas</a>
         <a href="#contacto">Contacto</a>
         <a href="https://wa.me/523111216033" target="_blank" rel="noopener">WhatsApp</a>
