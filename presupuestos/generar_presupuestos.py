@@ -300,7 +300,19 @@ def portada():
     story.append(kicker("Comparativa"))
     story.append(titulo("Tres formas de trabajar juntos", 16))
     story.append(Spacer(1, 8))
+    story.append(tabla_comparativa())
+    story.append(Spacer(1, 6))
+    story.append(p("Los precios pueden ajustarse según el alcance y los "
+                   "objetivos de cada negocio. La cotización personalizada no "
+                   "tiene costo.", 7.5, color=MUTED))
+    story.append(Spacer(1, 10))
+    story.append(p(PORTAFOLIO, 8, leading=13, color=MUTED))
+    return story
 
+
+def tabla_comparativa(incluir_ideal=False):
+    """La rejilla de planes. Con incluir_ideal agrega el renglón de a quién le
+    sirve cada uno — útil cuando la tabla va sola, sin las tarjetas."""
     encabezados = [p("", 8)]
     for plan in PLANES:
         etiqueta = plan["nombre"].upper()
@@ -315,6 +327,10 @@ def portada():
             color = GREEN if valor == "De regalo" else MUTED
             fila.append(p(valor, 8.5, align=TA_CENTER, color=color))
         filas.append(fila)
+    if incluir_ideal:
+        filas.append([p("Ideal para", 8.5)] +
+                     [p(x["ideal"], 8, align=TA_CENTER, color=MUTED,
+                        leading=11) for x in PLANES])
     filas.append([p("Inversión mensual", 9, font="Helvetica-Bold")] +
                  [p(money(x["precio"]), 12, align=TA_CENTER, font=SERIF,
                     color=INK) for x in PLANES])
@@ -334,13 +350,7 @@ def portada():
         ("GRID", (0, 1), (-1, -1), 0.4, LINE),
         ("BOX", (2, 1), (2, -1), 0.9, GOLD),
     ]))
-    story += [tabla, Spacer(1, 6)]
-    story.append(p("Los precios pueden ajustarse según el alcance y los "
-                   "objetivos de cada negocio. La cotización personalizada no "
-                   "tiene costo.", 7.5, color=MUTED))
-    story.append(Spacer(1, 10))
-    story.append(p(PORTAFOLIO, 8, leading=13, color=MUTED))
-    return story
+    return tabla
 
 
 def tarjeta(plan):

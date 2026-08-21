@@ -1,11 +1,22 @@
 # Presupuestos — LYM Villeda
 
-PDF de propuesta económica para presentar a clientes: los tres planes de
-gestión de redes, promociones vigentes, servicios adicionales, el método de
-trabajo y las condiciones comerciales.
+Dos documentos para clientes, con los mismos precios y el mismo estilo:
 
-- **PDF listo:** `Presupuestos-Paquetes-LYM-Villeda.pdf`
-- **Generador:** `generar_presupuestos.py`
+| Documento | Para qué sirve | Generador |
+|---|---|---|
+| `Cotizacion-LYM-Villeda.pdf` (8 págs) | La propuesta completa, para mandarle a cualquier cliente: el problema, qué hacemos, cómo trabajamos, qué recibe cada mes, portafolio y **hasta el final, el precio**. | `generar_cotizacion.py` |
+| `Presupuestos-Paquetes-LYM-Villeda.pdf` (4 págs) | La hoja de precios directa, para quien ya conoce el trabajo y solo quiere números. El precio va desde la primera página. | `generar_presupuestos.py` |
+
+Los precios, los planes, las promociones y las condiciones se editan **solo en
+`generar_presupuestos.py`**: la cotización los toma de ahí, así que las dos
+nunca se contradicen. Después de cambiar un precio hay que regenerar los dos
+PDFs.
+
+```bash
+pip install reportlab
+python3 generar_presupuestos.py
+python3 generar_cotizacion.py
+```
 
 ## Precios vigentes
 
@@ -46,11 +57,8 @@ Todo lo editable está en el bloque `CONFIGURACIÓN`, hasta arriba del script:
 
 La fecha se pone sola con el día en que se genera el PDF.
 
-Después de editar:
+Los textos de venta de la cotización larga —el problema, la explicación de
+cada servicio, el método, el calendario de ejemplo y el portafolio— sí viven
+en `generar_cotizacion.py`, en su propio bloque de textos.
 
-```bash
-pip install reportlab
-python3 generar_presupuestos.py
-```
-
-El PDF se regenera en esta misma carpeta.
+Después de editar, regenera los dos PDFs con los comandos de arriba.
