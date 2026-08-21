@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Genera el PDF de presupuestos de los paquetes de servicios digitales.
+Genera el PDF de presupuestos de los paquetes de LYM Villeda.
 
     pip install reportlab
     python3 generar_presupuestos.py
 
-Todo lo editable vive en el bloque CONFIGURACIÓN de abajo: nombre del estudio,
-datos de contacto, precios, plazos y condiciones. Cambia los números, vuelve a
-correr el script y el PDF se regenera.
+Todo lo editable vive en el bloque CONFIGURACIÓN de abajo: datos de contacto,
+precios, contenido de cada plan, promociones y condiciones. Cambia lo que
+necesites, vuelve a correr el script y el PDF se regenera.
 """
 
 import datetime
@@ -28,193 +28,186 @@ from reportlab.platypus import (
 # CONFIGURACIÓN — edita de aquí para abajo
 # ─────────────────────────────────────────────────────────────────────────────
 
-ESTUDIO   = "Estudio Digital"                  # ← tu nombre comercial
-CIUDAD    = "Tepic, Nayarit"
-CONTACTO  = "311 000 0000  ·  hola@tudominio.com  ·  tudominio.com"
+MARCA      = "LYM Villeda"
+MARCA_LARGA = "Logística y Marketing Villeda"
+LEMA       = "Más visibilidad, más clientes, más ventas"
+CIUDAD     = "Tepic, Nayarit"
+TELEFONO   = "311 495 7286"
+CORREO     = "lmvdmex@gmail.com"
+REDES      = "@lymvilleda"
 
-MONEDA    = "MXN"
-IVA_TEXTO = "Los precios no incluyen IVA (16%). Se agrega solo si se requiere factura."
-VIGENCIA  = 30                                 # días naturales de vigencia
-FECHA     = datetime.date.today().strftime("%d/%m/%Y")
+MONEDA     = "MXN"
+VIGENCIA   = 30                       # días naturales de vigencia
+MOSTRAR_IVA = False                   # ponlo en True si facturas con IVA
+IVA_TEXTO  = "Los precios no incluyen IVA. Se agrega solo si se requiere factura."
+FECHA      = datetime.date.today().strftime("%d/%m/%Y")
 
-SALIDA    = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         "Presupuestos-Paquetes-Servicios-Digitales.pdf")
+SALIDA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                      "Presupuestos-Paquetes-LYM-Villeda.pdf")
 
-# ── Paquetes (combos con descuento) ──────────────────────────────────────────
-PAQUETES = [
+# ── Los tres planes ──────────────────────────────────────────────────────────
+PLANES = [
     {
-        "nombre": "Paquete Arranque",
-        "lema": "Para el negocio que todavía no existe en internet y necesita "
-                "que lo encuentren y le escriban.",
-        "precio": 10900,
-        "mensualidad": 600,
-        "plazo": "10 días hábiles",
-        "ideal": "Negocio nuevo, taller o fábrica que hoy solo vende de boca en boca.",
+        "nombre": "Esencial",
+        "precio": 3900,
+        "destacado": False,
+        "lema": "Presencia constante y bien hecha, para el negocio que necesita "
+                "dejar de improvisar y verse profesional cada semana.",
+        "ideal": "Negocios que van empezando en redes o que publican sin un plan.",
         "incluye": [
-            "Sitio web de una sola página (one-page), responsivo",
-            "Hasta 6 secciones: inicio, productos o servicios, "
-            "por qué nosotros, medidas o catálogo, contacto",
-            "Botón de WhatsApp con mensaje precargado",
-            "Formulario de contacto que llega a tu correo",
-            "Alta y configuración de la ficha de Google Business",
-            "Optimización de imágenes y velocidad de carga",
+            "12 publicaciones al mes",
+            "Historias 4 días por semana",
+            "Diseño con identidad propia",
+            "Textos con llamada a la acción",
+            "Calendario mensual por adelantado",
+            "Reporte mensual básico",
         ],
-        "entregables": [
-            "Sitio publicado y funcionando en tu dominio",
-            "Ficha de Google Business verificada",
-            "Manual de una hoja para cambiar textos y fotos",
-            "Archivos fuente del sitio",
-        ],
-        "ahorro": "Suma por separado: $12,000 · ahorras $1,100",
     },
     {
-        "nombre": "Paquete Crecimiento",
-        "lema": "Sitio web, imagen de marca y un asistente de WhatsApp con IA "
-                "que contesta solo, a cualquier hora.",
-        "precio": 19900,
-        "mensualidad": 1800,
-        "plazo": "15 días hábiles",
-        "ideal": "Negocio que ya recibe mensajes y pierde clientes por no "
-                 "contestar a tiempo.",
+        "nombre": "Crecimiento",
+        "precio": 6900,
+        "destacado": True,
+        "lema": "El plan que mueve la aguja: video, historias diarias y "
+                "seguimiento de cada mensaje que llega.",
+        "ideal": "Negocios que ya venden y quieren que las redes les traigan "
+                 "clientes nuevos de forma constante.",
         "incluye": [
-            "Todo lo del Paquete Arranque",
-            "Asistente de WhatsApp con IA: responde precios, horarios, "
-            "medidas y ubicación con la información real de tu negocio",
-            "Alta en la API oficial de Meta (WhatsApp Cloud API)",
-            "Perfil del negocio redactado y afinado con pruebas reales",
-            "Pase a persona: el asistente avisa cuando conviene que "
-            "conteste alguien del equipo",
-            "Identidad de marca básica: logotipo, versión horizontal, "
-            "isotipo, paleta de color y tipografías",
+            "20 publicaciones + reels al mes",
+            "Historias diarias",
+            "4 reels producidos al mes",
+            "Identidad visual completa",
+            "Gestión de mensajes y comentarios",
+            "Google Business · de regalo",
+            "Reputación online en Google · de regalo",
+            "Reporte mensual completo",
         ],
-        "entregables": [
-            "Asistente en línea sobre tu número de WhatsApp",
-            "Perfil del negocio editable (precios, horarios, promociones)",
-            "Kit de marca en SVG y PNG, fondo claro y oscuro",
-            "Capacitación de 1 hora para el equipo",
-        ],
-        "ahorro": "Suma por separado: $24,500 · ahorras $4,600",
     },
     {
-        "nombre": "Paquete Integral",
-        "lema": "Presencia completa: sitio a la medida, asistente con IA, "
-                "identidad y contenido publicándose cada semana.",
-        "precio": 31500,
-        "mensualidad": 5900,
-        "plazo": "25 días hábiles",
-        "ideal": "Empresa establecida que compite por posicionamiento y quiere "
-                 "todo bajo un mismo estilo.",
+        "nombre": "Completo",
+        "precio": 12900,
+        "destacado": False,
+        "lema": "Operación 360°: contenido, publicidad pagada, sitio web y "
+                "seguimiento de leads hasta la venta.",
+        "ideal": "Negocios que quieren escalar y competir por el primer lugar "
+                 "de su giro en la ciudad.",
         "incluye": [
-            "Todo lo del Paquete Crecimiento",
-            "Sitio web multi-sección (hasta 10 secciones) con galería de "
-            "proyectos, preguntas frecuentes y proceso de trabajo",
-            "SEO local: metadatos, datos estructurados y mapa del sitio",
-            "Primer mes de contenido: 12 publicaciones con diseño y textos",
-            "Calendario de contenido en PDF, listo para revisar y aprobar",
-            "Sesión de fotografía de producto u obra (hasta 25 fotos editadas)",
+            "Todo el plan Crecimiento",
+            "Publicidad en Meta y TikTok Ads",
+            "$2,000 en pauta incluidos",
+            "Sitio web incluido",
+            "Gestión de reputación en Google · de regalo",
+            "Seguimiento de leads y ventas",
+            "WhatsApp directo prioritario",
         ],
-        "entregables": [
-            "Sitio corporativo publicado y indexado en Google",
-            "Calendario del primer mes con las 12 piezas aprobadas",
-            "Banco de fotos editadas, en alta y en web",
-            "Reporte de arranque con métricas base para comparar",
-        ],
-        "ahorro": "Suma por separado: $37,800 · ahorras $6,300",
     },
 ]
 
 # ── Tabla comparativa de la portada ──────────────────────────────────────────
 COMPARATIVA = [
-    # concepto,                          Arranque, Crecimiento, Integral
-    ("Sitio web",                        "One-page", "One-page", "Multi-sección"),
-    ("Asistente de WhatsApp con IA",     "—", "Sí", "Sí"),
-    ("Identidad de marca",               "—", "Básica", "Básica"),
-    ("Contenido para redes",             "—", "—", "12 piezas"),
-    ("Fotografía de producto",           "—", "—", "25 fotos"),
-    ("SEO local y Google Business",      "Ficha", "Ficha", "Ficha + SEO"),
-    ("Plazo de entrega",                 "10 días", "15 días", "25 días"),
+    # concepto,                        Esencial,    Crecimiento,  Completo
+    ("Publicaciones al mes",           "12",        "20 + reels", "20 + reels"),
+    ("Historias",                      "4 días/sem", "Diarias",   "Diarias"),
+    ("Reels producidos al mes",        "—",         "4",          "4"),
+    ("Identidad visual",               "Propia",    "Completa",   "Completa"),
+    ("Calendario mensual por adelantado", "Sí",     "Sí",         "Sí"),
+    ("Gestión de mensajes y comentarios", "—",      "Sí",         "Sí"),
+    ("Google Business y reputación",   "—",         "De regalo",  "De regalo"),
+    ("Publicidad Meta y TikTok Ads",   "—",         "—",          "Sí"),
+    ("Pauta incluida",                 "—",         "—",          "$2,000"),
+    ("Sitio web",                      "—",         "—",          "Incluido"),
+    ("Seguimiento de leads y ventas",  "—",         "—",          "Sí"),
+    ("Reporte mensual",                "Básico",    "Completo",   "Completo"),
 ]
 
-# ── Servicios sueltos (a la carta) ───────────────────────────────────────────
-SERVICIOS = [
-    ("Sitio web de una página (one-page)",                        9500),
-    ("Sitio web multi-sección (hasta 10 secciones)",             18000),
-    ("Sección o página adicional",                                1800),
-    ("Asistente de WhatsApp con IA — implementación",             8500),
-    ("Negocio adicional dentro del mismo asistente",              3200),
-    ("Identidad de marca básica (logotipo + kit de archivos)",    6500),
-    ("Calendario de contenido: 12 publicaciones",                 4800),
-    ("Sesión de fotografía de producto u obra (25 fotos)",        3500),
-    ("Alta y configuración de Google Business",                   2500),
-    ("Correo corporativo con tu dominio (hasta 5 cuentas)",       1900),
-    ("Compra de dominio, DNS y certificado SSL",                  1200),
+# ── Promociones vigentes ─────────────────────────────────────────────────────
+PROMOCIONES = [
+    ("Arranque sin costo",
+     "Al firmar este mes, el setup y el onboarding — valor $1,500 — van "
+     "totalmente gratis."),
+    ("Sexto mes a mitad de precio",
+     "Contrata 5 meses seguidos y el sexto te sale al 50%. Premiamos la "
+     "consistencia, que es lo que hace crecer una cuenta."),
+    ("Te recomiendan, ganas",
+     "Por cada cliente que nos refieras y firme, recibes un mes con 25% de "
+     "descuento."),
+    ("3 empresas o más: 20% de descuento",
+     "Cada empresa se maneja con su propio paquete — puedes elegir uno distinto "
+     "para cada una. Al gestionar 3 o más, se aplica 20% sobre el total."),
 ]
 
-# ── Mensualidades ────────────────────────────────────────────────────────────
-MENSUALIDADES = [
-    ("Hosting, respaldos y una actualización al mes",              600),
-    ("Operación del asistente de WhatsApp (ajustes y monitoreo)", 1200),
-    ("Contenido: 12 publicaciones al mes con diseño y textos",    4800),
-    ("Soporte prioritario (respuesta en menos de 24 horas)",       900),
-    ("Reporte mensual de métricas y recomendaciones",              700),
+# ── Servicios adicionales, se cotizan según alcance ──────────────────────────
+ADICIONALES = [
+    ("Sitio web propio",
+     "Diseño, contenido y publicación, como el de isoval.com.mx"),
+    ("Identidad de marca completa",
+     "Logotipo, paleta, tipografías y aplicación en todas las piezas"),
+    ("Campañas de publicidad",
+     "Meta Ads, Google Ads y TikTok Ads con segmentación local"),
+    ("Producción de video y fotografía",
+     "Sesiones de producto, obra o presentador frente a cámara"),
+    ("Asistente de WhatsApp con inteligencia artificial",
+     "Contesta precios, horarios y ubicación solo, y avisa cuando conviene "
+     "que entre una persona"),
+    ("Email marketing y automatización",
+     "Campañas, secuencias y respuestas automáticas"),
+    ("Menú QR o digital y plataforma de satisfacción al cliente",
+     "Para restaurantes y negocios con atención en piso"),
+    ("Gestión bilingüe",
+     "Contenido y atención en español e inglés para clientes en Estados Unidos"),
 ]
 
-# ── Costos de terceros (no incluidos) ────────────────────────────────────────
-TERCEROS = [
-    ("Dominio .com o .mx",
-     "$250 a $700 al año, se paga al registrador"),
-    ("Hosting del sitio",
-     "Plan gratuito suficiente para empezar; plan de paga desde $400 al mes"),
-    ("WhatsApp Cloud API (Meta)",
-     "Meta da un volumen mensual sin costo para conversaciones que inicia el "
-     "cliente; las plantillas de marketing se cobran por mensaje"),
-    ("Motor de IA del asistente",
-     "Con el plan gratuito alcanza para un negocio chico; el modelo de paga "
-     "se cobra por uso, aproximadamente $150 a $400 al mes"),
-    ("Pauta publicitaria",
-     "Se define contigo y se paga directo a la plataforma"),
+# ── Cómo trabajamos ──────────────────────────────────────────────────────────
+PROCESO = [
+    "<b>Diagnóstico.</b> Revisamos tu cuenta, la de tu competencia y tu "
+    "mercado local para encontrar la oportunidad que nadie está aprovechando.",
+    "<b>Estrategia y pilares de contenido.</b> Definimos los temas de tu marca "
+    "y el tono de voz, para que cada publicación tenga un propósito.",
+    "<b>Calendario mensual por adelantado.</b> Antes de que arranque el mes "
+    "recibes el documento con qué día, qué formato, qué tema y qué objetivo. "
+    "Lo apruebas y trabajamos sin sorpresas.",
+    "<b>Producción y publicación.</b> Grabamos, diseñamos y editamos; "
+    "publicamos en los mejores horarios y respondemos mensajes y comentarios.",
+    "<b>Medición y reporte.</b> Al cierre del mes entregamos métricas reales "
+    "y el aprendizaje para el mes siguiente.",
 ]
 
 # ── Condiciones comerciales ──────────────────────────────────────────────────
 CONDICIONES = [
-    "Anticipo del 50% para iniciar y 50% contra entrega. Las mensualidades se "
-    "cobran por adelantado cada mes.",
-    "Los plazos corren en días hábiles a partir del anticipo y de recibir la "
-    "información del negocio: textos, fotos, logotipo y accesos.",
-    "Cada entregable incluye dos rondas de ajustes. Las rondas adicionales o "
-    "los cambios pedidos después de aprobado el diseño se cotizan aparte.",
-    "Al liquidar, el sitio, los archivos fuente y las cuentas quedan a nombre "
-    "y en propiedad del cliente.",
-    "No incluye: los costos de terceros listados arriba, pauta publicitaria, "
-    "producción de video ni licencias de fotografía de banco.",
+    "Los planes son mensuales y se pagan por adelantado al inicio de cada mes.",
+    "Las redes necesitan consistencia para dar resultados: trabajamos en "
+    "ciclos de varios meses. Los primeros resultados se ven a los 30 días.",
+    "El calendario de contenido se envía antes de que arranque el mes para tu "
+    "aprobación; los cambios se hacen sobre ese documento, no sobre la marcha.",
+    "La pauta publicitaria del plan Completo incluye $2,000 al mes. Si quieres "
+    "invertir más, ese monto se paga directo a la plataforma.",
+    "Los precios pueden ajustarse según el alcance y los objetivos de cada "
+    "negocio. La cotización personalizada no tiene costo.",
     "Vigencia de esta cotización: %d días naturales a partir del %s." % (VIGENCIA, FECHA),
 ]
 
-SIGUIENTE_PASO = [
-    "Me dices qué paquete quieres o qué servicios sueltos te sirven.",
-    "Te mando el contrato con alcance, plazos y precio cerrado.",
-    "Con el anticipo del 50% arranca el reloj de entrega.",
-    "Te comparto avances para revisión antes de publicar cualquier cosa.",
-]
-
-REFERENCIAS = (
-    "Trabajos de referencia: <b>isoval.com.mx</b> — sitio multi-sección para "
-    "despacho de arquitectura y construcción · <b>Bases Box Tepic</b> — sitio, "
-    "identidad y calendario de contenido para fábrica local · "
-    "<b>asistente de WhatsApp multi-negocio</b> — un solo sistema atendiendo "
-    "cuatro negocios a la vez."
+PORTAFOLIO = (
+    "Marcas que ya trabajan con nosotros: <b>LAB A+A</b> — arquitectura y "
+    "peritajes · <b>Isoval</b> — arquitectura y construcción, con sitio web "
+    "propio · <b>D Fit House</b> — comida alta en proteína · "
+    "<b>Brite Choice Dental</b> — clínica dental en California, gestión "
+    "bilingüe · <b>Yoguyum</b> — frozen yogurt en Tepic."
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
 # De aquí para abajo es el armado del documento
 # ─────────────────────────────────────────────────────────────────────────────
 
-INK    = colors.HexColor("#17171A")
-MUTED  = colors.HexColor("#6E6E75")
-ACCENT = colors.HexColor("#D64518")
-LINE   = colors.HexColor("#DCD8D0")
-PAPER  = colors.HexColor("#F6F4EF")
-WHITE  = colors.white
+INK   = colors.HexColor("#1A1613")
+MUTED = colors.HexColor("#6E675C")
+GOLD  = colors.HexColor("#A8842F")
+SOFT  = colors.HexColor("#F6EFDF")
+CREAM = colors.HexColor("#FBF8F1")
+LINE  = colors.HexColor("#E3DACA")
+GREEN = colors.HexColor("#4A7A3F")
+WHITE = colors.white
+
+SERIF = "Times-Bold"
+SANS  = "Helvetica"
 
 M  = 1.9 * cm
 CW = letter[0] - 2 * M
@@ -224,7 +217,7 @@ def money(n):
     return "$ {:,.0f}".format(n)
 
 
-def p(text, size=9, leading=None, color=INK, align=TA_LEFT, font="Helvetica",
+def p(text, size=9, leading=None, color=INK, align=TA_LEFT, font=SANS,
       space_after=0, space_before=0):
     style = ParagraphStyle(
         "s%d" % id(text), fontName=font, fontSize=size,
@@ -234,30 +227,23 @@ def p(text, size=9, leading=None, color=INK, align=TA_LEFT, font="Helvetica",
     return Paragraph(text, style)
 
 
-def bullets(items, size=8.5, color=INK):
-    """Lista con sangría francesa: la segunda línea alinea con el texto."""
+def bullets(items, size=8.5, color=INK, bullet_color=GOLD):
     style = ParagraphStyle(
-        "bul%d" % size, fontName="Helvetica", fontSize=size,
-        leading=size * 1.45, textColor=color,
-        leftIndent=11, bulletIndent=1, spaceAfter=size * 0.5,
+        "bul%s" % size, fontName=SANS, fontSize=size, leading=size * 1.45,
+        textColor=color, leftIndent=11, bulletIndent=1,
+        bulletColor=bullet_color, spaceAfter=size * 0.32,
     )
-    return [Paragraph(i, style, bulletText="\u2022") for i in items]
+    return [Paragraph(i, style, bulletText="•") for i in items]
 
 
-def titulo(text, size=15, space_before=0):
-    return p(text, size=size, leading=size * 1.2, font="Helvetica-Bold",
+def titulo(text, size=16, space_before=0, color=INK):
+    return p(text, size=size, leading=size * 1.18, font=SERIF, color=color,
              space_before=space_before, space_after=4)
 
 
 def kicker(text):
-    return p(text.upper(), size=7.5, leading=11, color=ACCENT,
-             font="Helvetica-Bold", space_after=3)
-
-
-def regla(space_after=10):
-    t = Table([[""]], colWidths=[CW], rowHeights=[0.6])
-    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), LINE)]))
-    return KeepTogether([t, Spacer(1, space_after)])
+    return p(text.upper(), size=7.5, leading=11, color=GOLD, font="Helvetica-Bold",
+             space_after=3)
 
 
 def chrome(canvas, doc):
@@ -267,29 +253,30 @@ def chrome(canvas, doc):
     canvas.setStrokeColor(LINE)
     canvas.setLineWidth(0.6)
     canvas.line(M, h - 1.55 * cm, w - M, h - 1.55 * cm)
-    canvas.setFont("Helvetica-Bold", 7.5)
+    canvas.setFont("Helvetica-Bold", 8)
     canvas.setFillColor(INK)
-    canvas.drawString(M, h - 1.32 * cm, ESTUDIO.upper())
-    canvas.setFont("Helvetica", 7.5)
+    canvas.drawString(M, h - 1.32 * cm, MARCA.upper())
+    canvas.setFont(SANS, 7.5)
     canvas.setFillColor(MUTED)
     canvas.drawRightString(w - M, h - 1.32 * cm,
-                           "PRESUPUESTO DE PAQUETES  ·  %s" % FECHA)
+                           "PLANES DE CRECIMIENTO DIGITAL  ·  %s" % FECHA)
     canvas.line(M, 1.65 * cm, w - M, 1.65 * cm)
-    canvas.setFont("Helvetica", 7)
+    canvas.setFont(SANS, 7)
     canvas.drawString(M, 1.32 * cm,
-                      "Precios en %s, más IVA  ·  Vigencia de %d días" % (MONEDA, VIGENCIA))
+                      "%s  ·  Precios en %s  ·  Vigencia de %d días"
+                      % (CIUDAD, MONEDA, VIGENCIA))
     canvas.drawRightString(w - M, 1.32 * cm, str(doc.page))
     canvas.restoreState()
 
 
 def portada():
-    story = [Spacer(1, 0.5 * cm), kicker("Propuesta económica")]
-    story.append(p("Paquetes de<br/>servicios digitales", size=30, leading=33,
-                   font="Helvetica-Bold"))
+    story = [Spacer(1, 0.4 * cm), kicker("Propuesta económica")]
+    story.append(p("Planes de<br/>crecimiento digital", size=30, leading=33,
+                   font=SERIF))
     story.append(Spacer(1, 6))
-    story.append(p("Sitio web, asistente de WhatsApp con inteligencia "
-                   "artificial, identidad de marca y contenido — para negocios "
-                   "de %s." % CIUDAD, size=10.5, leading=16, color=MUTED))
+    story.append(p("Estrategia, contenido y redes que convierten seguidores en "
+                   "clientes — con un plan claro mes a mes.", size=10.5,
+                   leading=16, color=MUTED))
     story.append(Spacer(1, 14))
 
     datos = Table(
@@ -298,201 +285,198 @@ def portada():
           p("VIGENCIA", 7, color=MUTED, font="Helvetica-Bold"),
           p("MONEDA", 7, color=MUTED, font="Helvetica-Bold")],
          [p("_______________________", 9.5),
-          p(FECHA, 9.5), p("%d días" % VIGENCIA, 9.5),
-          p("%s + IVA" % MONEDA, 9.5)]],
+          p(FECHA, 9.5), p("%d días" % VIGENCIA, 9.5), p(MONEDA, 9.5)]],
         colWidths=[CW * 0.40, CW * 0.20, CW * 0.20, CW * 0.20])
     datos.setStyle(TableStyle([
         ("TOPPADDING", (0, 0), (-1, -1), 5),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ("LEFTPADDING", (0, 0), (-1, -1), 8),
-        ("BACKGROUND", (0, 0), (-1, -1), PAPER),
+        ("BACKGROUND", (0, 0), (-1, -1), SOFT),
         ("LINEBELOW", (0, 0), (-1, 0), 0.5, LINE),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
     ]))
-    story += [datos, Spacer(1, 20)]
+    story += [datos, Spacer(1, 18)]
 
-    story.append(kicker("Comparativa rápida"))
-    story.append(titulo("Tres formas de empezar", 15))
+    story.append(kicker("Comparativa"))
+    story.append(titulo("Tres formas de trabajar juntos", 16))
     story.append(Spacer(1, 8))
 
-    filas = [[p("", 8),
-              p("ARRANQUE", 8.5, color=WHITE, font="Helvetica-Bold", align=TA_CENTER),
-              p("CRECIMIENTO", 8.5, color=WHITE, font="Helvetica-Bold", align=TA_CENTER),
-              p("INTEGRAL", 8.5, color=WHITE, font="Helvetica-Bold", align=TA_CENTER)]]
+    encabezados = [p("", 8)]
+    for plan in PLANES:
+        etiqueta = plan["nombre"].upper()
+        if plan["destacado"]:
+            etiqueta += "  ★"
+        encabezados.append(p(etiqueta, 8.5, color=WHITE, font="Helvetica-Bold",
+                             align=TA_CENTER))
+    filas = [encabezados]
     for concepto, a, b, c in COMPARATIVA:
-        filas.append([p(concepto, 8.5),
-                      p(a, 8.5, align=TA_CENTER, color=MUTED),
-                      p(b, 8.5, align=TA_CENTER, color=MUTED),
-                      p(c, 8.5, align=TA_CENTER, color=MUTED)])
-    filas.append([p("Inversión inicial", 9, font="Helvetica-Bold")] +
-                 [p(money(x["precio"]), 10.5, align=TA_CENTER,
-                    font="Helvetica-Bold", color=ACCENT) for x in PAQUETES])
-    filas.append([p("Mensualidad sugerida", 8.5)] +
-                 [p("%s / mes" % money(x["mensualidad"]), 8.5, align=TA_CENTER)
-                  for x in PAQUETES])
+        fila = [p(concepto, 8.5)]
+        for valor in (a, b, c):
+            color = GREEN if valor == "De regalo" else MUTED
+            fila.append(p(valor, 8.5, align=TA_CENTER, color=color))
+        filas.append(fila)
+    filas.append([p("Inversión mensual", 9, font="Helvetica-Bold")] +
+                 [p(money(x["precio"]), 12, align=TA_CENTER, font=SERIF,
+                    color=INK) for x in PLANES])
 
     tabla = Table(filas, colWidths=[CW * 0.34, CW * 0.22, CW * 0.22, CW * 0.22],
                   repeatRows=1)
     tabla.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), INK),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ("LEFTPADDING", (0, 0), (-1, -1), 8),
         ("RIGHTPADDING", (0, 0), (-1, -1), 8),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -3), [WHITE, PAPER]),
-        ("BACKGROUND", (0, -2), (-1, -1), colors.HexColor("#FBF1EC")),
-        ("LINEABOVE", (0, -2), (-1, -2), 0.8, ACCENT),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -2), [WHITE, CREAM]),
+        ("BACKGROUND", (0, -1), (-1, -1), SOFT),
+        ("LINEABOVE", (0, -1), (-1, -1), 0.9, GOLD),
         ("GRID", (0, 1), (-1, -1), 0.4, LINE),
-        ("LINEAFTER", (0, 0), (0, 0), 0.4, INK),
+        ("BOX", (2, 1), (2, -1), 0.9, GOLD),
     ]))
-    story += [tabla, Spacer(1, 14)]
-    story.append(p(REFERENCIAS, 8, leading=13, color=MUTED))
+    story += [tabla, Spacer(1, 6)]
+    story.append(p("Los precios pueden ajustarse según el alcance y los "
+                   "objetivos de cada negocio. La cotización personalizada no "
+                   "tiene costo.", 7.5, color=MUTED))
+    story.append(Spacer(1, 10))
+    story.append(p(PORTAFOLIO, 8, leading=13, color=MUTED))
     return story
 
 
-def tarjeta(paq):
+def tarjeta(plan):
+    destacado = plan["destacado"]
+    etiqueta = "RECOMENDADO" if destacado else ""
     encabezado = Table(
-        [[p(paq["nombre"], 13.5, color=WHITE, font="Helvetica-Bold"),
-          p("%s <font size=7>%s + IVA</font>" % (money(paq["precio"]), MONEDA),
-            13.5, color=WHITE, font="Helvetica-Bold", align=TA_RIGHT)]],
-        colWidths=[CW * 0.58, CW * 0.42])
+        [[p(plan["nombre"], 15, color=WHITE, font=SERIF),
+          p("%s <font size=7 face='Helvetica'>%s / mes</font>"
+            % (money(plan["precio"]), MONEDA),
+            15, color=WHITE, font=SERIF, align=TA_RIGHT)]],
+        colWidths=[CW * 0.55, CW * 0.45])
     encabezado.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), INK),
-        ("TOPPADDING", (0, 0), (-1, -1), 9),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
         ("LEFTPADDING", (0, 0), (-1, -1), 12),
         ("RIGHTPADDING", (0, 0), (-1, -1), 12),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
     ]))
 
+    bloques = []
+    if etiqueta:
+        banda = Table([[p("★  %s" % etiqueta, 7.5, color=WHITE,
+                          font="Helvetica-Bold")]], colWidths=[CW])
+        banda.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), GOLD),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ]))
+        bloques.append(banda)
+    bloques.append(encabezado)
+
+    mitad = (len(plan["incluye"]) + 1) // 2
     cuerpo = Table(
-        [[p(paq["lema"], 9.5, leading=14, color=MUTED), ""],
-         [p("QUÉ INCLUYE", 7.5, color=ACCENT, font="Helvetica-Bold"),
-          p("QUÉ RECIBES", 7.5, color=ACCENT, font="Helvetica-Bold")],
-         [bullets(paq["incluye"]), bullets(paq["entregables"])]],
-        colWidths=[CW * 0.58, CW * 0.42])
+        [[p(plan["lema"], 9.5, leading=14, color=MUTED), ""],
+         [bullets(plan["incluye"][:mitad]), bullets(plan["incluye"][mitad:])]],
+        colWidths=[CW * 0.50, CW * 0.50])
     cuerpo.setStyle(TableStyle([
         ("SPAN", (0, 0), (1, 0)),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LEFTPADDING", (0, 0), (-1, -1), 12),
         ("RIGHTPADDING", (0, 0), (-1, -1), 12),
-        ("TOPPADDING", (0, 0), (-1, 0), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-        ("TOPPADDING", (0, 1), (-1, 1), 2),
-        ("BOTTOMPADDING", (0, 2), (-1, 2), 10),
-        ("LINEBEFORE", (1, 1), (1, 2), 0.5, LINE),
+        ("TOPPADDING", (0, 0), (-1, 0), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+        ("BOTTOMPADDING", (0, 1), (-1, 1), 6),
         ("BACKGROUND", (0, 0), (-1, -1), WHITE),
+        ("LINEBEFORE", (1, 1), (1, 1), 0.5, LINE),
     ]))
+    bloques.append(cuerpo)
 
-    pie = Table(
-        [[p("<font color='#6E6E75' size=7>PLAZO</font><br/><b>%s</b>" % paq["plazo"], 8.5, leading=12),
-          p("<font color='#6E6E75' size=7>MENSUALIDAD</font><br/><b>%s / mes</b>" % money(paq["mensualidad"]), 8.5, leading=12),
-          p("<font color='#6E6E75' size=7>IDEAL PARA</font><br/>%s" % paq["ideal"], 8.5, leading=12)]],
-        colWidths=[CW * 0.20, CW * 0.24, CW * 0.56])
+    pie = Table([[p("<font color='#6E675C' size=7>IDEAL PARA</font><br/>%s"
+                    % plan["ideal"], 8.5, leading=12)]], colWidths=[CW])
     pie.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), PAPER),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("BACKGROUND", (0, 0), (-1, -1), CREAM),
         ("LEFTPADDING", (0, 0), (-1, -1), 12),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("LINEBEFORE", (1, 0), (2, 0), 0.5, LINE),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
         ("LINEABOVE", (0, 0), (-1, 0), 0.5, LINE),
     ]))
-
-    return KeepTogether([encabezado, cuerpo, pie, Spacer(1, 5),
-                         p(paq["ahorro"], 7.5, color=MUTED, align=TA_RIGHT),
-                         Spacer(1, 12)])
+    bloques += [pie, Spacer(1, 10)]
+    return KeepTogether(bloques)
 
 
-def tabla_precios(filas, titulo_col, sufijo=""):
-    data = [[p(titulo_col, 8.5, color=WHITE, font="Helvetica-Bold"),
-             p("PRECIO", 8.5, color=WHITE, font="Helvetica-Bold", align=TA_RIGHT)]]
-    for concepto, precio in filas:
-        data.append([p(concepto, 9),
-                     p(money(precio) + sufijo, 9.5, align=TA_RIGHT,
-                       font="Helvetica-Bold")])
-    t = Table(data, colWidths=[CW * 0.72, CW * 0.28], repeatRows=1)
+def bloque_promociones():
+    story = [kicker("Vigente ahora"), titulo("Promociones", 16)]
+    story.append(p("Aplican al contratar cualquiera de los tres planes.", 9.5,
+                   leading=14, color=MUTED, space_after=8))
+    data = []
+    for nombre, detalle in PROMOCIONES:
+        data.append([p("<b>%s</b>" % nombre, 9.5, color=GOLD),
+                     p(detalle, 8.5, leading=12.5, color=INK)])
+    t = Table(data, colWidths=[CW * 0.32, CW * 0.68])
     t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), INK),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, PAPER]),
-        ("GRID", (0, 1), (-1, -1), 0.4, LINE),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("LEFTPADDING", (0, 0), (-1, -1), 9),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+        ("ROWBACKGROUNDS", (0, 0), (-1, -1), [SOFT, CREAM]),
+        ("GRID", (0, 0), (-1, -1), 0.4, LINE),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
     ]))
-    return t
+    story.append(t)
+    return [KeepTogether(story)]
 
 
-def pagina_carta():
-    story = [kicker("A la carta"), titulo("Servicios por separado", 15)]
-    story.append(p("Si no quieres un paquete completo, cada pieza se puede "
-                   "contratar sola. Estos son precios de una sola vez.",
-                   9.5, leading=14, color=MUTED, space_after=10))
-    story.append(tabla_precios(SERVICIOS, "CONCEPTO"))
-    story.append(Spacer(1, 20))
-
-    story.append(kicker("Cada mes"))
-    story.append(titulo("Mensualidades", 15))
-    story.append(p("Se contratan sueltas o combinadas. Sin plazo forzoso: se "
-                   "avisa con 30 días para dar de baja.", 9.5, leading=14,
-                   color=MUTED, space_after=10))
-    story.append(tabla_precios(MENSUALIDADES, "SERVICIO MENSUAL", " / mes"))
-    story.append(Spacer(1, 18))
-    story += bloque_terceros()
-    return story
-
-
-def bloque_terceros():
-    story = [kicker("Transparencia"), titulo("Costos que no cobro yo", 15)]
-    story.append(p("Estos servicios se pagan directo al proveedor y no van "
-                   "incluidos en los precios de arriba. Los dejo por escrito "
-                   "para que no haya sorpresas.", 9.5, leading=14, color=MUTED,
-                   space_after=8))
-
-    data = [[p("CONCEPTO", 8.5, color=WHITE, font="Helvetica-Bold"),
-             p("COSTO APROXIMADO", 8.5, color=WHITE, font="Helvetica-Bold")]]
-    for concepto, detalle in TERCEROS:
-        data.append([p("<b>%s</b>" % concepto, 9),
-                     p(detalle, 8.5, leading=12.5, color=MUTED)])
-    t = Table(data, colWidths=[CW * 0.34, CW * 0.66], repeatRows=1)
+def bloque_adicionales():
+    story = [kicker("Fuera de plan"), titulo("Servicios adicionales", 16)]
+    story.append(p("Se pueden sumar a cualquier plan o contratarse por "
+                   "separado. Cada uno se cotiza según el alcance del proyecto.",
+                   9.5, leading=14, color=MUTED, space_after=8))
+    data = [[p("SERVICIO", 8.5, color=WHITE, font="Helvetica-Bold"),
+             p("QUÉ INCLUYE", 8.5, color=WHITE, font="Helvetica-Bold"),
+             p("PRECIO", 8.5, color=WHITE, font="Helvetica-Bold",
+               align=TA_RIGHT)]]
+    for nombre, detalle in ADICIONALES:
+        data.append([p("<b>%s</b>" % nombre, 9, leading=12),
+                     p(detalle, 8.5, leading=12, color=MUTED),
+                     p("Según<br/>alcance", 8, align=TA_RIGHT, color=GOLD,
+                       leading=10)])
+    t = Table(data, colWidths=[CW * 0.34, CW * 0.51, CW * 0.15], repeatRows=1)
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), INK),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, PAPER]),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [WHITE, CREAM]),
         ("GRID", (0, 1), (-1, -1), 0.4, LINE),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING", (0, 0), (-1, -1), 7),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
         ("LEFTPADDING", (0, 0), (-1, -1), 9),
         ("RIGHTPADDING", (0, 0), (-1, -1), 9),
     ]))
     story.append(t)
-    return story
+    return [KeepTogether(story)]
 
 
-def pagina_condiciones():
-    story = [kicker("Letras claras"), titulo("Condiciones comerciales", 15)]
-    story.append(Spacer(1, 8))
-    story += bullets(CONDICIONES, size=9)
-    story.append(Spacer(1, 4))
-    story.append(p(IVA_TEXTO, 8.5, color=MUTED))
-    story.append(Spacer(1, 22))
+def cierre():
+    metodo = [kicker("Cómo trabajamos"), titulo("El método, mes con mes", 16),
+              Spacer(1, 6)]
+    metodo += bullets(PROCESO, size=9)
 
-    story.append(kicker("Siguiente paso"))
-    story.append(titulo("Cómo arrancamos", 15))
-    story.append(Spacer(1, 6))
-    story += bullets(SIGUIENTE_PASO, size=9)
-    story.append(Spacer(1, 26))
+    condiciones = [kicker("Letras claras"), titulo("Condiciones", 16),
+                   Spacer(1, 6)]
+    condiciones += bullets(CONDICIONES, size=9)
+    if MOSTRAR_IVA:
+        condiciones.append(Spacer(1, 4))
+        condiciones.append(p(IVA_TEXTO, 8.5, color=MUTED))
+
+    story = [KeepTogether(metodo), Spacer(1, 18),
+             KeepTogether(condiciones), Spacer(1, 24)]
 
     hueco = p("", 9)
     firma = Table(
-        [[p("Paquete elegido", 7.5, color=MUTED, font="Helvetica-Bold"), hueco,
+        [[p("Plan elegido", 7.5, color=MUTED, font="Helvetica-Bold"), hueco,
           p("Nombre y firma del cliente", 7.5, color=MUTED, font="Helvetica-Bold"),
-          hueco,
-          p("Fecha", 7.5, color=MUTED, font="Helvetica-Bold")],
+          hueco, p("Fecha", 7.5, color=MUTED, font="Helvetica-Bold")],
          [hueco, hueco, hueco, hueco, hueco]],
         colWidths=[CW * 0.31, CW * 0.05, CW * 0.38, CW * 0.05, CW * 0.21],
         rowHeights=[16, 34])
@@ -504,9 +488,28 @@ def pagina_condiciones():
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
     ]))
-    story += [firma, Spacer(1, 16)]
-    story.append(p("%s  ·  %s<br/>%s" % (ESTUDIO, CIUDAD, CONTACTO), 8.5,
-                   leading=13, color=MUTED))
+    cierre_visual = [firma, Spacer(1, 18)]
+
+    contacto = Table(
+        [[p("%s<br/><font size=8 color='#6E675C'>%s · %s</font>"
+            % (MARCA, MARCA_LARGA, CIUDAD), 12, leading=16, font=SERIF),
+          p("%s<br/>%s<br/>%s" % (TELEFONO, CORREO, REDES), 9, leading=13,
+            align=TA_RIGHT, color=MUTED)]],
+        colWidths=[CW * 0.58, CW * 0.42])
+    contacto.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), SOFT),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+        ("LEFTPADDING", (0, 0), (-1, -1), 14),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+        ("LINEABOVE", (0, 0), (-1, 0), 1.2, GOLD),
+    ]))
+    cierre_visual.append(contacto)
+    cierre_visual.append(Spacer(1, 8))
+    cierre_visual.append(p('"%s"' % LEMA, 9, color=GOLD, align=TA_CENTER,
+                           font=SERIF))
+    story.append(KeepTogether(cierre_visual))
     return story
 
 
@@ -514,21 +517,23 @@ def construir():
     doc = SimpleDocTemplate(
         SALIDA, pagesize=letter,
         leftMargin=M, rightMargin=M, topMargin=2.4 * cm, bottomMargin=2.2 * cm,
-        title="Presupuestos — Paquetes de servicios digitales",
-        author=ESTUDIO, subject="Propuesta económica")
+        title="%s — Planes de crecimiento digital" % MARCA,
+        author=MARCA_LARGA, subject="Propuesta económica")
 
     story = portada()
     story.append(PageBreak())
 
     story.append(kicker("Detalle"))
-    story.append(titulo("Qué incluye cada paquete", 15))
+    story.append(titulo("Qué incluye cada plan", 16))
     story.append(Spacer(1, 12))
-    for paq in PAQUETES:
-        story.append(tarjeta(paq))
+    for plan in PLANES:
+        story.append(tarjeta(plan))
 
-    story += pagina_carta()
-    story.append(PageBreak())
-    story += pagina_condiciones()
+    story += bloque_promociones()
+    story.append(Spacer(1, 20))
+    story += bloque_adicionales()
+    story.append(Spacer(1, 20))
+    story += cierre()
 
     doc.build(story, onFirstPage=chrome, onLaterPages=chrome)
     print("PDF generado: %s" % SALIDA)
