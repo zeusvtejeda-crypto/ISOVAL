@@ -4,9 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Bases Box Tepic — Bases tipo box a la medida · Fábrica propia en Tepic, Nayarit</title>
-<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit: barras de madera por dentro, estructura que no rechina ni se vence, patas cromadas y más de 8 tonos. Cotiza directo por WhatsApp."/>
+<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit: aguantan hasta 500 kg, 1 año de garantía, barras de madera por dentro y sin rechinidos. Más de 8 tonos. Cotiza directo por WhatsApp."/>
 <meta property="og:title" content="Bases Box Tepic — Fábrica de bases para cama"/>
-<meta property="og:description" content="Bases tipo box a la medida: barras de madera por dentro, sin rechinidos y fabricación propia en Tepic. Cotiza por WhatsApp."/>
+<meta property="og:description" content="Bases tipo box a la medida: aguantan hasta 500 kg, 1 año de garantía, barras de madera por dentro y sin rechinidos. Fabricación propia en Tepic."/>
 <meta property="og:type" content="website"/>
 <link rel="icon" href="assets/logo-icon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -94,6 +94,13 @@ section{padding:96px 0;scroll-margin-top:84px}
 .sleep-card .k{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;font-size:13px;color:var(--orange);text-transform:uppercase}
 .sleep-card h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;letter-spacing:.3px;text-transform:uppercase;line-height:1.06;margin:10px 0}
 .sleep-card p{color:var(--steel);font-size:16px}
+
+/* datos duros */
+.mo-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border);border:1px solid var(--border);margin-bottom:48px}
+.mo-stats .st{background:#fff;padding:26px 28px}
+.mo-stats .n{font-family:'Anton',sans-serif;font-size:clamp(30px,3.4vw,42px);color:var(--orange);line-height:1;text-transform:uppercase}
+.mo-stats .l{font-family:'Barlow Condensed',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:2px;font-size:14px;color:var(--steel);margin-top:8px}
+.mo-stats .sub{font-size:14px;color:var(--muted);margin-top:4px}
 
 /* anatomía (lo que va por dentro) */
 .anatomy{background:var(--graphite);color:var(--paper);padding:78px 0;margin:78px 0 0}
@@ -209,7 +216,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   .nav-links.open{display:flex;position:absolute;top:74px;left:0;right:0;flex-direction:column;background:var(--paper);padding:20px 24px;gap:16px;border-bottom:1px solid var(--border)}
 }
 @media(max-width:560px){
-  .feat-grid,.med-grid{grid-template-columns:1fr}
+  .feat-grid,.med-grid,.mo-stats{grid-template-columns:1fr}
   .vs-col{padding:26px 22px}
   .mo-cta{padding:22px}
   .mo-cta .t{font-size:20px}
@@ -265,6 +272,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <a class="btn btn-ghost" href="#mejor-opcion" style="border-color:#555;color:var(--paper)">Por qué elegirnos</a>
       </div>
       <div class="hero-stats">
+        <div class="s"><div class="n">500 kg</div><div class="l">Aguanta hasta</div></div>
         <div class="s"><div class="n">+8</div><div class="l">Tonos</div></div>
         <div class="s"><div class="n">100%</div><div class="l">Fabricación local</div></div>
         <div class="s"><div class="n">A tu</div><div class="l">Medida</div></div>
@@ -300,6 +308,23 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <div class="divider-label"><span class="tag-num">01 / POR QUÉ SOMOS LA MEJOR OPCIÓN</span></div>
       <h2>Tu descanso empieza debajo del colchón</h2>
       <p class="mo-lead">Pasas <b>un tercio de tu vida</b> encima de una base. No es un mueble más del cuarto: es lo que sostiene tu colchón, tu espalda y las horas que deciden cómo te levantas mañana. Por eso no empezamos por el precio ni por el color —empezamos por cómo está hecha por dentro.</p>
+    </div>
+    <div class="mo-stats">
+      <div class="st">
+        <div class="n">500 kg</div>
+        <div class="l">Aguanta hasta</div>
+        <div class="sub">Media tonelada repartida sobre la base.</div>
+      </div>
+      <div class="st">
+        <div class="n">1 año</div>
+        <div class="l">De garantía</div>
+        <div class="sub">Por escrito, y quien responde está en Tepic.</div>
+      </div>
+      <div class="st">
+        <div class="n">Cero</div>
+        <div class="l">Rechinidos</div>
+        <div class="sub">Caja sólida: si nada se mueve, nada truena.</div>
+      </div>
     </div>
     <div class="sleep-grid">
       <article class="sleep-card">
@@ -403,7 +428,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
             <span class="n">2</span>
             <div>
               <b>Armazón reforzado donde más carga</b>
-              <p>Las esquinas y el centro son donde más peso aguanta una base —y donde más se ahorra el que fabrica barato. El nuestro va reforzado para que no se abra ni se venza con el uso.</p>
+              <p>Las esquinas y el centro son donde más peso aguanta una base —y donde más se ahorra el que fabrica barato. El nuestro va reforzado para aguantar hasta media tonelada sin abrirse ni vencerse.</p>
             </div>
           </li>
           <li>
@@ -444,7 +469,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
           <li><span class="m">✕</span><span>Patas que se safan en cuanto mueves la cama.</span></li>
           <li><span class="m">✕</span><span>Tela floja que se arruga y se abre en las esquinas.</span></li>
           <li><span class="m">✕</span><span>Te la entregan en caja, hecha quién sabe dónde.</span></li>
-          <li><span class="m">✕</span><span>¿Falló? El problema es de un proveedor a cientos de kilómetros.</span></li>
+          <li><span class="m">✕</span><span>¿Falló? La garantía es de un proveedor a cientos de kilómetros.</span></li>
         </ul>
       </div>
       <div class="vs-col vs-good">
@@ -456,7 +481,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
           <li><span class="m">✓</span><span>Patas cromadas fijas a la estructura, no a la tela.</span></li>
           <li><span class="m">✓</span><span>Tapizado parejo, sin arrugas ni esquinas abiertas.</span></li>
           <li><span class="m">✓</span><span>Sale de nuestro taller en Tepic: puedes venir a verla antes.</span></li>
-          <li><span class="m">✓</span><span>¿Algo salió mal? Aquí estamos, en Querétaro #285.</span></li>
+          <li><span class="m">✓</span><span>1 año de garantía —y quien responde está en Querétaro #285.</span></li>
         </ul>
       </div>
     </div>

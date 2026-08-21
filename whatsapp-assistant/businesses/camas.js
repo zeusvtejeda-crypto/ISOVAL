@@ -47,6 +47,13 @@ PRODUCTOS:
   verde, negro (sujeto a disponibilidad).
 - Estructura durable, patas cromadas, diseño minimalista.
 
+RESISTENCIA Y GARANTÍA (dato confirmado por el dueño):
+- Aguantan hasta media tonelada (500 kg) repartida sobre la base.
+- 1 año de garantía.
+- Llevan barras de madera por dentro, que reparten el peso a lo largo
+  de toda la base.
+- Caja sólida, sin bisagras: no rechinan.
+
 MEDIDAS ESTÁNDAR:
 - Individual (1 plaza): 1.00 × 1.90 m
 - Matrimonial (Full): 1.35 × 1.90 m
@@ -70,6 +77,8 @@ HORARIO DE ATENCIÓN:
 DIFERENCIADORES:
 - Fabricación 100% local en Tepic, directo de fábrica, sin intermediarios.
 - Cotización el mismo día.
+- Aguantan hasta 500 kg y llevan 1 año de garantía: es el argumento
+  más fuerte cuando el cliente compara contra una base más barata.
 `,
 
   // ── Personalidad / tono con el que contesta
