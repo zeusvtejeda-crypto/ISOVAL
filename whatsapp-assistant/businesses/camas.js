@@ -42,23 +42,29 @@ Tepic, Nayarit. Sitio web: (el que armamos en bases-box-tepic/).
 
 PRODUCTOS:
 - Bases tipo box a la medida.
-- Línea infantil (colores alegres: rosa, azul, amarillo, verde, morado).
-- Más de 8 tonos disponibles: cocoa, morado, rosa, gris, azul, marino,
-  verde, negro (sujeto a disponibilidad).
-- Estructura durable, patas cromadas, diseño minimalista.
+- Línea infantil (bases individuales de 1.00 x 1.90 m).
+- 8 acabados: cocoa, morado, rosa, chocolate (en vinipiel), gris, azul,
+  azul marino y negro (sujeto a disponibilidad).
+- Diseño minimalista, patas de 10 cm en metal o plástico.
 
-RESISTENCIA Y GARANTÍA (dato confirmado por el dueño):
-- Aguantan hasta media tonelada (500 kg) repartida sobre la base.
-- 1 año de garantía.
-- Llevan barras de madera por dentro, que reparten el peso a lo largo
-  de toda la base.
+CÓMO ESTÁ HECHA (esto es lo que la distingue, úsalo cuando comparen
+precio contra una base más barata):
+- Estructura de madera de pino y triplay en TODA la caja, sin espacios
+  vacíos. No es una base hueca.
+- Acolchado de espuma de alta densidad.
+- Tela tipo Oxford en 7 tonos; el chocolate va en vinipiel.
+- Altura total 38 cm: 28 cm de caja más 10 cm de pata.
+- Aguanta hasta media tonelada (500 kg) repartida sobre la base.
+- 1 año de garantía en estructura y fabricación, directo con quien la
+  fabrica.
 - Caja sólida, sin bisagras: no rechinan.
 
-MEDIDAS ESTÁNDAR:
+MEDIDAS ESTÁNDAR (todas de 1.90 m de largo):
 - Individual (1 plaza): 1.00 × 1.90 m
 - Matrimonial (Full): 1.35 × 1.90 m
-- Queen: 1.50 × 2.00 m
-- King: 2.00 × 2.00 m
+- Queen: 1.50 × 1.90 m
+- King: 2.00 × 1.90 m — OJO: son dos bases individuales de
+  1.00 × 1.90 m que se juntan, no es una sola pieza.
 - También fabrican a la medida si el cliente necesita otra.
 
 PRECIOS:
@@ -66,7 +72,16 @@ PRECIOS:
   tanto, el asistente NO debe inventar montos — ofrece cotizar.)
 
 ENTREGAS / COBERTURA:
-- (Zonas a las que entregan, costo de envío, tiempos.)
+- Tepic y alrededores.
+- Los tiempos son cortos por ser fabricación propia; la fecha exacta se
+  confirma al cotizar (depende del modelo y la temporada).
+- (Falta: costo de envío.)
+
+DÓNDE ESTÁN:
+- Libramiento Carretero Tepic-Guadalajara Mz. N Lt. 04,
+  Col. Lomas de San Juan, Tepic, Nayarit.
+- Teléfono / WhatsApp: 311 108 3374.
+- Sitio web: basestipobox.com
 
 FORMAS DE PAGO:
 - (Efectivo, transferencia, tarjeta, etc.)
@@ -79,6 +94,7 @@ DIFERENCIADORES:
 - Cotización el mismo día.
 - Aguantan hasta 500 kg y llevan 1 año de garantía: es el argumento
   más fuerte cuando el cliente compara contra una base más barata.
+- Caja de pino y triplay sin espacios vacíos, contra las bases huecas.
 `,
 
   // ── Personalidad / tono con el que contesta

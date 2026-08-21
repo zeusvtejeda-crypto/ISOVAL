@@ -4,9 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Bases Box Tepic — Bases tipo box a la medida · Fábrica propia en Tepic, Nayarit</title>
-<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit: aguantan hasta 500 kg, 1 año de garantía, barras de madera por dentro y sin rechinidos. Más de 8 tonos. Cotiza directo por WhatsApp."/>
+<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit: madera de pino y triplay sin espacios vacíos, aguantan hasta 500 kg, 1 año de garantía y 8 acabados. Cotiza directo por WhatsApp."/>
 <meta property="og:title" content="Bases Box Tepic — Fábrica de bases para cama"/>
-<meta property="og:description" content="Bases tipo box a la medida: aguantan hasta 500 kg, 1 año de garantía, barras de madera por dentro y sin rechinidos. Fabricación propia en Tepic."/>
+<meta property="og:description" content="Bases tipo box a la medida: madera de pino y triplay sin espacios vacíos, aguantan hasta 500 kg y llevan 1 año de garantía. Fabricación propia en Tepic."/>
 <meta property="og:type" content="website"/>
 <link rel="icon" href="assets/logo-icon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -104,7 +104,7 @@ section{padding:96px 0;scroll-margin-top:84px}
 
 /* anatomía (lo que va por dentro) */
 .anatomy{background:var(--graphite);color:var(--paper);padding:78px 0;margin:78px 0 0}
-.anat-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:stretch}
+.anat-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
 .anat-art{background:#151515;border:1px solid #333;padding:26px 18px;display:flex;flex-direction:column;justify-content:center;gap:20px}
 .anat-art svg{width:100%;max-width:560px;margin:0 auto}
 .anat-art .cap{font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;font-size:12px;color:var(--muted);text-align:center}
@@ -166,6 +166,7 @@ section{padding:96px 0;scroll-margin-top:84px}
 .med .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-size:14px;font-weight:700}
 .med .name{font-family:'Anton',sans-serif;font-size:30px;margin:8px 0 4px}
 .med .dim{font-family:'Barlow',monospace;color:#b7b5af;font-size:16px}
+.med .sub{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.35}
 .med-custom{margin-top:22px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;border:1px dashed #444;padding:22px 26px}
 .med-custom b{color:var(--orange)}
 
@@ -175,6 +176,13 @@ section{padding:96px 0;scroll-margin-top:84px}
 .kids .chips{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 28px}
 .kids .chip{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .kids-art{background:#fff;border:1px solid var(--border);padding:34px;display:flex;justify-content:center}
+
+/* preguntas frecuentes */
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--border);border:1px solid var(--border)}
+.faq-item{background:#fff;padding:30px 28px}
+.faq-item h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;text-transform:uppercase;letter-spacing:.4px;line-height:1.1;margin-bottom:10px}
+.faq-item h3 .q{color:var(--orange)}
+.faq-item p{color:var(--steel);font-size:16px}
 
 /* contacto */
 #contacto{background:var(--graphite);color:var(--paper)}
@@ -204,7 +212,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 .wa-float svg{width:32px;height:32px;fill:#fff}
 
 @media(max-width:900px){
-  .hero-grid,.tonos-grid,.kids,.contact-grid{grid-template-columns:1fr}
+  .hero-grid,.tonos-grid,.kids,.contact-grid,.faq-grid{grid-template-columns:1fr}
   .sleep-grid,.anat-grid,.vs{grid-template-columns:1fr}
   .anatomy{padding:60px 0;margin-top:60px}
   .vs{margin-top:60px}
@@ -216,7 +224,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   .nav-links.open{display:flex;position:absolute;top:74px;left:0;right:0;flex-direction:column;background:var(--paper);padding:20px 24px;gap:16px;border-bottom:1px solid var(--border)}
 }
 @media(max-width:560px){
-  .feat-grid,.med-grid,.mo-stats{grid-template-columns:1fr}
+  .feat-grid,.med-grid,.mo-stats,.faq-grid{grid-template-columns:1fr}
   .vs-col{padding:26px 22px}
   .mo-cta{padding:22px}
   .mo-cta .t{font-size:20px}
@@ -244,7 +252,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <a href="#contacto">Contacto</a>
     </nav>
     <div class="nav-cta">
-      <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
+      <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
         Cotizar
       </a>
@@ -263,9 +271,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
     <div>
       <span class="eyebrow">Fábrica propia · Tepic, Nayarit</span>
       <h1>Bases que <span class="o">aguantan.</span><br/>Diseño que combina.</h1>
-      <p class="lead">Fabricamos bases para cama tipo <b>box</b> a la medida, en más de 8 tonos, con estructura durable y patas cromadas. Directo de fábrica, sin intermediarios.</p>
+      <p class="lead">Fabricamos bases para cama tipo <b>box</b> a la medida, en 8 acabados, con estructura de madera de pino y triplay en toda la caja —sin espacios vacíos—. Directo de fábrica, sin intermediarios.</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
+        <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
           Cotiza por WhatsApp
         </a>
@@ -349,69 +357,75 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   <div class="anatomy">
     <div class="wrap anat-grid">
       <div class="anat-art">
-        <svg viewBox="0 52 520 238" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Corte del interior de una base box: barras de madera, armazón reforzado, caja sólida sin bisagras, patas cromadas fijas a la estructura y tapizado parejo">
+        <svg viewBox="0 55 560 265" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Corte de una base tipo box: tela Oxford, espuma de alta densidad y una caja de madera de pino y triplay sin espacios vacíos, sobre patas de 10 cm, con 38 cm de altura total">
           <!-- colchón, como referencia -->
-          <text x="56" y="70" font-family="'Barlow Condensed',sans-serif" font-size="12" letter-spacing="2.5" fill="#7d7d7d">TU COLCHÓN</text>
-          <rect x="56" y="76" width="408" height="24" fill="#FBFAF7" opacity=".08"/>
-          <rect x="56" y="76" width="408" height="24" fill="none" stroke="#5a5a5a" stroke-width="1.5" stroke-dasharray="6 5"/>
+          <text x="76" y="72" font-family="'Barlow Condensed',sans-serif" font-size="12" letter-spacing="2.5" fill="#7d7d7d">TU COLCHÓN</text>
+          <rect x="76" y="78" width="388" height="24" fill="#FBFAF7" opacity=".08"/>
+          <rect x="76" y="78" width="388" height="24" fill="none" stroke="#5a5a5a" stroke-width="1.5" stroke-dasharray="6 5"/>
 
-          <!-- tapizado superior -->
-          <rect x="40" y="104" width="440" height="14" fill="#55606B"/>
-          <!-- cuerpo tapizado -->
-          <rect x="40" y="118" width="440" height="112" fill="#3E4A54" stroke="#2A3238" stroke-width="2"/>
+          <!-- lado acabado (derecha del corte) -->
+          <rect x="360" y="110" width="120" height="140" fill="#3E4A54"/>
+          <rect x="360" y="110" width="120" height="12" fill="#55606B"/>
 
-          <!-- corte: interior a la vista -->
-          <rect x="112" y="126" width="296" height="96" fill="#121212"/>
-          <!-- rieles de madera -->
-          <rect x="112" y="126" width="296" height="17" fill="#B4813F" stroke="#8A5F2A" stroke-width="1.5"/>
-          <rect x="112" y="205" width="296" height="17" fill="#B4813F" stroke="#8A5F2A" stroke-width="1.5"/>
-          <!-- barras de madera -->
-          <g fill="#C4924E" stroke="#8A5F2A" stroke-width="1.5">
-            <rect x="122" y="143" width="16" height="62"/>
-            <rect x="175" y="143" width="16" height="62"/>
-            <rect x="228" y="143" width="16" height="62"/>
-            <rect x="281" y="143" width="16" height="62"/>
-            <rect x="334" y="143" width="16" height="62"/>
-            <rect x="387" y="143" width="16" height="62"/>
+          <!-- corte: capa por capa -->
+          <!-- tela tipo Oxford -->
+          <rect x="60" y="110" width="300" height="12" fill="#55606B"/>
+          <!-- espuma de alta densidad -->
+          <rect x="60" y="122" width="300" height="20" fill="#E6DFD1"/>
+          <g fill="#cfc7b6">
+            <circle cx="90" cy="132" r="2.6"/><circle cx="130" cy="132" r="2.6"/><circle cx="170" cy="132" r="2.6"/>
+            <circle cx="210" cy="132" r="2.6"/><circle cx="250" cy="132" r="2.6"/><circle cx="290" cy="132" r="2.6"/>
+            <circle cx="330" cy="132" r="2.6"/>
           </g>
-          <!-- tornillería -->
-          <g fill="#7a5a30">
-            <circle cx="130" cy="134" r="2.4"/><circle cx="183" cy="134" r="2.4"/><circle cx="236" cy="134" r="2.4"/>
-            <circle cx="289" cy="134" r="2.4"/><circle cx="342" cy="134" r="2.4"/><circle cx="395" cy="134" r="2.4"/>
-            <circle cx="130" cy="213" r="2.4"/><circle cx="183" cy="213" r="2.4"/><circle cx="236" cy="213" r="2.4"/>
-            <circle cx="289" cy="213" r="2.4"/><circle cx="342" cy="213" r="2.4"/><circle cx="395" cy="213" r="2.4"/>
+          <!-- triplay que cierra la caja arriba y abajo -->
+          <rect x="60" y="142" width="300" height="16" fill="#C9A472"/>
+          <rect x="60" y="234" width="300" height="16" fill="#C9A472"/>
+          <g stroke="#A97F4E" stroke-width="1">
+            <line x1="60" y1="147" x2="360" y2="147"/><line x1="60" y1="153" x2="360" y2="153"/>
+            <line x1="60" y1="239" x2="360" y2="239"/><line x1="60" y1="245" x2="360" y2="245"/>
           </g>
-          <!-- esquineros reforzados -->
+          <!-- madera de pino: postes pegados, sin huecos -->
+          <rect x="60" y="158" width="300" height="76" fill="#B4813F"/>
+          <g stroke="#8A5F2A" stroke-width="1.5">
+            <line x1="100" y1="158" x2="100" y2="234"/><line x1="140" y1="158" x2="140" y2="234"/>
+            <line x1="180" y1="158" x2="180" y2="234"/><line x1="220" y1="158" x2="220" y2="234"/>
+            <line x1="260" y1="158" x2="260" y2="234"/><line x1="300" y1="158" x2="300" y2="234"/>
+            <line x1="340" y1="158" x2="340" y2="234"/>
+          </g>
+          <g stroke="#9E6E33" stroke-width="1" opacity=".7">
+            <line x1="60" y1="176" x2="360" y2="176"/><line x1="60" y1="196" x2="360" y2="196"/><line x1="60" y1="216" x2="360" y2="216"/>
+          </g>
+
+          <!-- contorno de la caja y marca de corte -->
+          <rect x="60" y="110" width="420" height="140" fill="none" stroke="#2A3238" stroke-width="2"/>
+          <line x1="360" y1="102" x2="360" y2="258" stroke="#F2591F" stroke-width="2" stroke-dasharray="7 5"/>
+
+          <!-- patas de 10 cm -->
           <g fill="#9aa0a6">
-            <path d="M112 126h30v6h-24v22h-6z"/>
-            <path d="M408 126h-30v6h24v22h6z"/>
+            <rect x="76" y="250" width="18" height="50" rx="3"/>
+            <rect x="261" y="250" width="18" height="50" rx="3"/>
+            <rect x="446" y="250" width="18" height="50" rx="3"/>
           </g>
-          <!-- marca de corte -->
-          <rect x="112" y="126" width="296" height="96" fill="none" stroke="#F2591F" stroke-width="2" stroke-dasharray="7 5"/>
 
-          <!-- patas cromadas -->
-          <g>
-            <rect x="58" y="230" width="34" height="9" fill="#8b9196"/>
-            <rect x="67" y="239" width="16" height="34" rx="3" fill="#9aa0a6"/>
-            <circle cx="64" cy="234.5" r="2.4" fill="#F2591F"/><circle cx="86" cy="234.5" r="2.4" fill="#F2591F"/>
-            <rect x="243" y="230" width="34" height="9" fill="#8b9196"/>
-            <rect x="252" y="239" width="16" height="34" rx="3" fill="#9aa0a6"/>
-            <circle cx="249" cy="234.5" r="2.4" fill="#F2591F"/><circle cx="271" cy="234.5" r="2.4" fill="#F2591F"/>
-            <rect x="428" y="230" width="34" height="9" fill="#8b9196"/>
-            <rect x="437" y="239" width="16" height="34" rx="3" fill="#9aa0a6"/>
-            <circle cx="434" cy="234.5" r="2.4" fill="#F2591F"/><circle cx="456" cy="234.5" r="2.4" fill="#F2591F"/>
+          <!-- cota de altura -->
+          <g stroke="#6f6f6f" stroke-width="1.5">
+            <line x1="502" y1="110" x2="502" y2="300"/>
+            <line x1="496" y1="110" x2="508" y2="110"/>
+            <line x1="496" y1="300" x2="508" y2="300"/>
+            <line x1="496" y1="250" x2="508" y2="250" stroke-dasharray="3 3"/>
           </g>
+          <text transform="rotate(-90 530 205)" x="530" y="205" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-size="12" letter-spacing="2.5" fill="#8C8C88">38 CM DE ALTURA</text>
 
           <!-- numeritos -->
           <g font-family="'Anton',Impact,sans-serif" font-size="15" fill="#fff" text-anchor="middle">
-            <circle cx="255" cy="174" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="255" y="174" dy=".35em">1</text>
-            <circle cx="158" cy="134" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="158" y="134" dy=".35em">2</text>
-            <circle cx="76" cy="172" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="76" y="172" dy=".35em">3</text>
-            <circle cx="75" cy="262" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="75" y="262" dy=".35em">4</text>
-            <circle cx="446" cy="111" r="14" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="446" y="111" dy=".35em">5</text>
+            <circle cx="150" cy="196" r="15" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="150" y="196" dy=".35em">1</text>
+            <circle cx="240" cy="150" r="15" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="240" y="150" dy=".35em">2</text>
+            <circle cx="310" cy="130" r="15" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="310" y="130" dy=".35em">3</text>
+            <circle cx="420" cy="168" r="15" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="420" y="168" dy=".35em">4</text>
+            <circle cx="85" cy="278" r="15" fill="#F2591F" stroke="#151515" stroke-width="3"/><text x="85" y="278" dy=".35em">5</text>
           </g>
         </svg>
-        <div class="cap">Corte interior · así va armada por dentro</div>
+        <div class="cap">Corte de la caja · pino y triplay, sin espacios vacíos</div>
       </div>
       <div class="anat-copy">
         <span class="eyebrow">Por dentro</span>
@@ -420,36 +434,36 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
           <li>
             <span class="n">1</span>
             <div>
-              <b>Barras de madera por dentro</b>
-              <p>El interior lleva barras de madera que reparten el peso a lo largo de toda la base, no nada más en las orillas. Es la diferencia entre una base que sigue firme con los años y una que se hunde al poco tiempo.</p>
+              <b>Madera de pino, no relleno</b>
+              <p>La estructura es de madera de pino: es lo que aguanta el peso —hasta media tonelada— y lo que mantiene la base derecha con los años, en lugar de hundirse al poco tiempo.</p>
             </div>
           </li>
           <li>
             <span class="n">2</span>
             <div>
-              <b>Armazón reforzado donde más carga</b>
-              <p>Las esquinas y el centro son donde más peso aguanta una base —y donde más se ahorra el que fabrica barato. El nuestro va reforzado para aguantar hasta media tonelada sin abrirse ni vencerse.</p>
+              <b>Triplay en toda la caja, sin espacios vacíos</b>
+              <p>La caja va cerrada con triplay en todas sus caras. No es una base hueca con aire adentro —que es donde el que fabrica barato se ahorra la madera— y por eso no se pandea ni truena cuando te acomodas.</p>
             </div>
           </li>
           <li>
             <span class="n">3</span>
             <div>
-              <b>Sin bisagras que rechinen</b>
-              <p>No es un armazón de fierro atornillado que se afloja con los meses: es una caja sólida. Si nada se mueve, nada truena. Te das vuelta en la noche y no se entera nadie.</p>
+              <b>Espuma de alta densidad</b>
+              <p>El acolchado no es relleno esponjoso que se aplasta al mes: es espuma de alta densidad, la que mantiene la forma y el filo de la base con el uso diario.</p>
             </div>
           </li>
           <li>
             <span class="n">4</span>
             <div>
-              <b>Patas cromadas que no se safan</b>
-              <p>Van fijas a la estructura, no a la tela. Puedes recorrer la cama para limpiar sin que se safe una pata.</p>
+              <b>Tela tipo Oxford (o vinipiel)</b>
+              <p>Siete tonos en tela tipo Oxford, que aguanta el roce de todos los días, más el chocolate en vinipiel, que se limpia de una pasada con un trapo.</p>
             </div>
           </li>
           <li>
             <span class="n">5</span>
             <div>
-              <b>Tapizado parejo, sin arrugas</b>
-              <p>Tela bien estirada y esquinas parejas. Se ve caro porque está bien hecho, no porque traiga adornos de más.</p>
+              <b>Patas de 10 cm</b>
+              <p>En metal o en plástico, como las prefieras. Con ellas la base queda a 38 cm de altura total: 28 de caja más 10 de pata.</p>
             </div>
           </li>
         </ul>
@@ -465,8 +479,8 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <h3>La base de siempre</h3>
         <ul>
           <li><span class="m">✕</span><span>Armazón de fierro con bisagras que rechinan a cada vuelta.</span></li>
-          <li><span class="m">✕</span><span>Interiores de material corriente que se vencen al poco tiempo.</span></li>
-          <li><span class="m">✕</span><span>Patas que se safan en cuanto mueves la cama.</span></li>
+          <li><span class="m">✕</span><span>Cajas huecas por dentro: puro aire donde debería haber madera.</span></li>
+          <li><span class="m">✕</span><span>Relleno esponjoso que se aplasta y pierde el filo en unos meses.</span></li>
           <li><span class="m">✕</span><span>Tela floja que se arruga y se abre en las esquinas.</span></li>
           <li><span class="m">✕</span><span>Te la entregan en caja, hecha quién sabe dónde.</span></li>
           <li><span class="m">✕</span><span>¿Falló? La garantía es de un proveedor a cientos de kilómetros.</span></li>
@@ -477,17 +491,17 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <h3>Una base box de nosotros</h3>
         <ul>
           <li><span class="m">✓</span><span>Caja sólida: nada se mueve, nada rechina.</span></li>
-          <li><span class="m">✓</span><span>Barras de madera por dentro que reparten el peso parejo.</span></li>
-          <li><span class="m">✓</span><span>Patas cromadas fijas a la estructura, no a la tela.</span></li>
-          <li><span class="m">✓</span><span>Tapizado parejo, sin arrugas ni esquinas abiertas.</span></li>
+          <li><span class="m">✓</span><span>Madera de pino y triplay en toda la caja, sin espacios vacíos.</span></li>
+          <li><span class="m">✓</span><span>Espuma de alta densidad que no se aplasta con el uso.</span></li>
+          <li><span class="m">✓</span><span>Tela tipo Oxford en 7 tonos, más chocolate en vinipiel.</span></li>
           <li><span class="m">✓</span><span>Sale de nuestro taller en Tepic: puedes venir a verla antes.</span></li>
-          <li><span class="m">✓</span><span>1 año de garantía —y quien responde está en Querétaro #285.</span></li>
+          <li><span class="m">✓</span><span>1 año de garantía directo con quien la fabrica.</span></li>
         </ul>
       </div>
     </div>
     <div class="mo-cta">
       <div class="t">No somos la base más barata del mercado. Somos <b>la que vas a seguir usando</b> cuando la barata ya se venció.</div>
-      <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20una%20base%20que%20aguante" target="_blank" rel="noopener">
+      <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20una%20base%20que%20aguante" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
         Quiero una que aguante
       </a>
@@ -523,7 +537,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <div>
         <div class="tone-name" id="toneName">Morado</div>
         <div class="swatches" id="swatches" role="group" aria-label="Selector de tonos"></div>
-        <p class="note">*Colores sujetos a disponibilidad. ¿Buscas un tono especial? Pídelo por WhatsApp y lo cotizamos.</p>
+        <p class="note">*Siete tonos en tela tipo Oxford, más el chocolate en vinipiel. Colores sujetos a disponibilidad; si buscas un tono especial, pídelo por WhatsApp y lo cotizamos.</p>
       </div>
     </div>
   </div>
@@ -542,17 +556,17 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>
         <h3>Estructura durable</h3>
-        <p>Armazón reforzado que aguanta el uso diario sin hundirse ni rechinar.</p>
+        <p>Madera de pino y triplay en toda la caja, sin espacios vacíos. Aguanta hasta 500 kg sin hundirse ni rechinar.</p>
       </div>
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18"/></svg>
-        <h3>+8 tonos disponibles</h3>
-        <p>Del cocoa al negro, pasando por morado, azul y rosa. El que combine con tu recámara.</p>
+        <h3>8 acabados disponibles</h3>
+        <p>Cocoa, morado, rosa, gris, azul, marino y negro en tela Oxford, más chocolate en vinipiel.</p>
       </div>
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.2L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>
         <h3>Diseño minimalista</h3>
-        <p>Silueta limpia, tapizado uniforme y patas cromadas. Se ve caro sin serlo.</p>
+        <p>Silueta limpia, tapizado parejo y patas de 10 cm. Se ve caro sin serlo.</p>
       </div>
       <div class="feat">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V8l8-4 8 4v12"/><path d="M4 20h16M9 20v-6h6v6"/></svg>
@@ -579,17 +593,17 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
     <div class="sec-head">
       <div class="divider-label"><span class="tag-num" style="color:#8C8C88">04 / MEDIDAS</span></div>
       <h2>Todas las medidas estándar</h2>
-      <p>Y si necesitas una diferente, la hacemos a tu medida.</p>
+      <p>Todas de 1.90 m de largo. Y si necesitas una diferente, la hacemos a tu medida.</p>
     </div>
     <div class="med-grid">
       <div class="med"><div class="k">Individual</div><div class="name">1 Plaza</div><div class="dim">1.00 × 1.90 m</div></div>
       <div class="med"><div class="k">Matrimonial</div><div class="name">Full</div><div class="dim">1.35 × 1.90 m</div></div>
-      <div class="med"><div class="k">Queen</div><div class="name">Queen Size</div><div class="dim">1.50 × 2.00 m</div></div>
-      <div class="med"><div class="k">King</div><div class="name">King Size</div><div class="dim">2.00 × 2.00 m</div></div>
+      <div class="med"><div class="k">Queen</div><div class="name">Queen Size</div><div class="dim">1.50 × 1.90 m</div></div>
+      <div class="med"><div class="k">King</div><div class="name">King Size</div><div class="dim">2.00 × 1.90 m</div><div class="sub">Son dos individuales de 1.00 × 1.90 que se juntan.</div></div>
     </div>
     <div class="med-custom">
       <div style="font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:20px">¿Necesitas una <b>medida especial</b>? También la fabricamos.</div>
-      <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20necesito%20una%20base%20a%20la%20medida" target="_blank" rel="noopener">Cotizar a la medida</a>
+      <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20necesito%20una%20base%20a%20la%20medida" target="_blank" rel="noopener">Cotizar a la medida</a>
     </div>
   </div>
 </section>
@@ -601,15 +615,15 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <div>
         <div class="divider-label"><span class="tag-num">05 / LÍNEA INFANTIL</span></div>
         <h2 style="font-size:clamp(30px,4vw,48px)">La habitación que tus pequeños merecen</h2>
-        <p style="color:var(--steel);margin-top:14px">Bases individuales en colores alegres, seguras y resistentes para el uso rudo de los niños. Combínalas con su cuarto.</p>
+        <p style="color:var(--steel);margin-top:14px">Bases individuales de 1.00 × 1.90 m, seguras y resistentes para el uso rudo de los niños. En los mismos 8 acabados, para que combine con su cuarto.</p>
         <div class="chips">
           <span class="chip" style="background:#E84E8A"></span>
           <span class="chip" style="background:#2E5AAC"></span>
-          <span class="chip" style="background:#F2A900"></span>
-          <span class="chip" style="background:#39A85B"></span>
           <span class="chip" style="background:#6B3FA0"></span>
+          <span class="chip" style="background:#8A8D8F"></span>
+          <span class="chip" style="background:#1E2A52"></span>
         </div>
-        <a class="btn btn-dark" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base%20infantil" target="_blank" rel="noopener">Cotizar base infantil</a>
+        <a class="btn btn-dark" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20cotizar%20una%20base%20infantil" target="_blank" rel="noopener">Cotizar base infantil</a>
       </div>
       <div class="kids-art">
         <svg viewBox="-150 -20 300 250" xmlns="http://www.w3.org/2000/svg" style="max-width:360px">
@@ -623,35 +637,71 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   </div>
 </section>
 
+<!-- ============ PREGUNTAS ============ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">06 / PREGUNTAS FRECUENTES</span></div>
+      <h2>Lo que más nos preguntan</h2>
+    </div>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <h3><span class="q">¿</span>Puedo elegir cualquier color?</h3>
+        <p>Sí. Manejamos 8 acabados: cocoa, morado, rosa, chocolate en vinipiel, gris, azul, azul marino y negro.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">¿</span>Las bases tienen garantía?</h3>
+        <p>Sí. Cada base incluye 1 año de garantía en su estructura y fabricación, directo con quien la fabrica.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">¿</span>Cuánto peso aguanta una base?</h3>
+        <p>Hasta media tonelada —500 kg— repartida sobre la base. Por eso la caja va de madera de pino y triplay, sin espacios vacíos.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">¿</span>Hacen medidas especiales?</h3>
+        <p>Claro. Además de las medidas estándar (individual, matrimonial, queen y king, todas de 1.90 m de largo) fabricamos a la medida exacta que necesites.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">¿</span>La king size es una sola base?</h3>
+        <p>No. La king size son dos bases individuales de 1.00 × 1.90 m que se juntan para formar los 2.00 × 1.90 m.</p>
+      </div>
+      <div class="faq-item">
+        <h3><span class="q">¿</span>Cuánto tardan en entregar?</h3>
+        <p>Depende del modelo y la temporada, pero al ser fabricación propia en Tepic los tiempos son cortos. Te confirmamos la fecha exacta al cotizar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ CONTACTO ============ -->
 <section id="contacto">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">06 / CONTACTO</span></div>
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">07 / CONTACTO</span></div>
       <h2>Cotiza hoy tu base</h2>
     </div>
     <div class="contact-grid">
       <div class="contact-card">
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-          <div><div class="k">Dirección</div><div class="v">Querétaro #285, Col. Centro<br/>Tepic, Nayarit</div></div>
+          <div><div class="k">Dirección</div><div class="v">Libramiento Carretero Tepic–Guadalajara<br/>Mz. N Lt. 04, Col. Lomas de San Juan<br/>Tepic, Nayarit</div></div>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2A19.8 19.8 0 013 4.2 2 2 0 015 2h3a2 2 0 012 1.7l.5 3a2 2 0 01-.6 1.9L8.1 10a16 16 0 006 6l1.4-1.4a2 2 0 011.9-.5l3 .5a2 2 0 011.7 2z"/></svg>
-          <div><div class="k">Teléfono / WhatsApp</div><div class="v">311 121 6033</div></div>
+          <div><div class="k">Teléfono / WhatsApp</div><div class="v">311 108 3374</div></div>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
           <div><div class="k">Horario</div><div class="v">Lun a Sáb · 9:00 – 19:00</div></div>
         </div>
-        <a class="btn btn-ghost" style="border-color:#444;color:var(--paper);width:100%;justify-content:center" href="https://maps.google.com/?q=Quer%C3%A9taro%20285%20Col%20Centro%20Tepic%20Nayarit" target="_blank" rel="noopener">Ver en el mapa</a>
+        <a class="btn btn-ghost" style="border-color:#444;color:var(--paper);width:100%;justify-content:center" href="https://maps.google.com/?q=Libramiento%20Carretero%20Tepic-Guadalajara%20Lomas%20de%20San%20Juan%20Tepic%20Nayarit" target="_blank" rel="noopener">Ver en el mapa</a>
       </div>
       <div class="contact-cta">
-        <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
+        <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
           Cotizar por WhatsApp
         </a>
-        <a class="btn btn-dark" style="border-color:#444" href="tel:+523111216033">Llamar ahora</a>
+        <a class="btn btn-dark" style="border-color:#444" href="tel:+523111083374">Llamar ahora</a>
       </div>
     </div>
   </div>
@@ -673,19 +723,20 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <a href="#tonos">Tonos</a>
         <a href="#porque">Ventajas</a>
         <a href="#medidas">Medidas</a>
+        <a href="#faq">Preguntas</a>
         <a href="#contacto">Contacto</a>
-        <a href="https://wa.me/523111216033" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="https://wa.me/523111083374" target="_blank" rel="noopener">WhatsApp</a>
       </nav>
     </div>
     <div class="copy">
       <span>© <span id="yr"></span> Bases Box Tepic. Todos los derechos reservados.</span>
-      <span>Querétaro #285, Col. Centro, Tepic · 311 121 6033</span>
+      <span>Libramiento Carretero Tepic–Guadalajara Mz. N Lt. 04, Col. Lomas de San Juan, Tepic · 311 108 3374</span>
     </div>
   </div>
 </footer>
 
 <!-- floating whatsapp -->
-<a class="wa-float" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener" aria-label="WhatsApp">
+<a class="wa-float" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener" aria-label="WhatsApp">
   <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
 </a>
 
@@ -698,10 +749,10 @@ var tones = [
   {name:'Cocoa',  c:'#6F4E37', d:'#573c2b'},
   {name:'Morado', c:'#6B3FA0', d:'#532f80'},
   {name:'Rosa',   c:'#E84E8A', d:'#c93b73'},
+  {name:'Chocolate', c:'#4A2E1C', d:'#33200f'},
   {name:'Gris',   c:'#8A8D8F', d:'#6f7274'},
   {name:'Azul',   c:'#2E5AAC', d:'#244a8f'},
   {name:'Marino', c:'#1E2A52', d:'#141d3b'},
-  {name:'Verde',  c:'#39A85B', d:'#2c8747'},
   {name:'Negro',  c:'#1A1A1A', d:'#000000'}
 ];
 
