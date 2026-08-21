@@ -36,6 +36,8 @@ TELEFONO   = "311 495 7286"
 CORREO     = "lmvdmex@gmail.com"
 REDES      = "@lymvilleda"
 
+ETIQUETA_DOC = "Lista general de planes y precios"
+
 MONEDA     = "MXN"
 VIGENCIA   = 30                       # días naturales de vigencia
 MOSTRAR_IVA = False                   # ponlo en True si facturas con IVA
@@ -280,11 +282,11 @@ def portada():
     story.append(Spacer(1, 14))
 
     datos = Table(
-        [[p("CLIENTE", 7, color=MUTED, font="Helvetica-Bold"),
+        [[p("DOCUMENTO", 7, color=MUTED, font="Helvetica-Bold"),
           p("FECHA", 7, color=MUTED, font="Helvetica-Bold"),
           p("VIGENCIA", 7, color=MUTED, font="Helvetica-Bold"),
           p("MONEDA", 7, color=MUTED, font="Helvetica-Bold")],
-         [p("_______________________", 9.5),
+         [p(ETIQUETA_DOC, 9.5),
           p(FECHA, 9.5), p("%d días" % VIGENCIA, 9.5), p(MONEDA, 9.5)]],
         colWidths=[CW * 0.40, CW * 0.20, CW * 0.20, CW * 0.20])
     datos.setStyle(TableStyle([

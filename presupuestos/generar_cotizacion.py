@@ -39,6 +39,8 @@ SALIDA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 # TEXTOS DE VENTA — edita de aquí para abajo
 # ─────────────────────────────────────────────────────────────────────────────
 
+ETIQUETA_DOC = "Propuesta general de servicios"
+
 TITULO_PORTADA = "Marcas que se ven<br/>bien y que venden"
 BAJADA_PORTADA = ("Estrategia, contenido y redes que convierten seguidores en "
                   "clientes — con un plan claro mes a mes.")
@@ -277,11 +279,11 @@ def portada():
     story.append(Spacer(1, 14))
 
     datos = Table(
-        [[p("PREPARADO PARA", 7, color=MUTED, font="Helvetica-Bold"),
+        [[p("DOCUMENTO", 7, color=MUTED, font="Helvetica-Bold"),
           p("FECHA", 7, color=MUTED, font="Helvetica-Bold"),
           p("VIGENCIA", 7, color=MUTED, font="Helvetica-Bold"),
           p("MONEDA", 7, color=MUTED, font="Helvetica-Bold")],
-         [p("_______________________", 9.5), p(FECHA, 9.5),
+         [p(ETIQUETA_DOC, 9.5), p(FECHA, 9.5),
           p("%d días" % VIGENCIA, 9.5), p(MONEDA, 9.5)]],
         colWidths=[CW * 0.40, CW * 0.20, CW * 0.20, CW * 0.20])
     datos.setStyle(TableStyle([
