@@ -49,7 +49,7 @@ SALIDA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 PLANES = [
     {
         "nombre": "Esencial",
-        "precio": 3900,
+        "precio": 4900,
         "destacado": False,
         "lema": "Presencia constante y bien hecha, para el negocio que necesita "
                 "dejar de improvisar y verse profesional cada semana.",
@@ -65,7 +65,7 @@ PLANES = [
     },
     {
         "nombre": "Crecimiento",
-        "precio": 6900,
+        "precio": 7900,
         "destacado": True,
         "lema": "El plan que mueve la aguja: video, historias diarias y "
                 "seguimiento de cada mensaje que llega.",
@@ -84,7 +84,7 @@ PLANES = [
     },
     {
         "nombre": "Completo",
-        "precio": 12900,
+        "precio": 14900,
         "destacado": False,
         "lema": "Operación 360°: contenido, publicidad pagada, sitio web y "
                 "seguimiento de leads hasta la venta.",

@@ -11,12 +11,16 @@ trabajo y las condiciones comerciales.
 
 | Plan | Inversión mensual |
 |---|---|
-| Esencial | $3,900 MXN / mes |
-| Crecimiento *(recomendado)* | $6,900 MXN / mes |
-| Completo | $12,900 MXN / mes |
+| Esencial | $4,900 MXN / mes |
+| Crecimiento *(recomendado)* | $7,900 MXN / mes |
+| Completo | $14,900 MXN / mes |
 
-El Esencial subió de $2,900 a $3,900. Los precios de la propuesta anterior
-(Essential $1,500 · Impulse $3,000 · Pro $5,000) ya no aplican.
+Escalón nuevo, con el piso arriba de $4,000. Referencias anteriores, ya sin
+efecto: Esencial $2,900 → $3,900 · Crecimiento $6,900 · Completo $12,900, y
+antes de eso Essential $1,500 · Impulse $3,000 · Pro $5,000.
+
+El Completo trae $2,000 de pauta adentro, así que en servicio puro sigue
+valiendo $12,900 — lo mismo que costaba antes.
 
 Los servicios adicionales —sitio web, identidad, campañas, video, asistente de
 WhatsApp con IA, email marketing, menú QR, gestión bilingüe— van sin precio
