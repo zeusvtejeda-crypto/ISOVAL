@@ -1,0 +1,677 @@
+<title>Bitácora de Redes ISOVAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+<style>
+/* ═══════════════════════════════════════════════════════════
+   BITÁCORA DE REDES — ISOVAL
+   Sistema tomado del sitio isoval.com.mx
+   Concepto: juego de láminas de obra (cajetín, cotas, ticks)
+   ═══════════════════════════════════════════════════════════ */
+
+:root{
+  color-scheme: light;
+  --paper:        #F5F3EE;
+  --paper-2:      #EBE7DE;
+  --card:         #FFFFFF;
+  --ink:          #1B1E1F;
+  --ink-soft:     #4B4F52;
+  --ink-dim:      #5A5C5F;
+  --line:         #DBD6C9;
+  --line-strong:  #C7C1B1;
+  --accent:       #2B7D89;
+  --accent-text:  #256B75;
+  --accent-deep:  #194A52;
+  --accent-soft:  #DEEAEA;
+
+  --font-d: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --font-b: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-m: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --paper:       #101416;
+    --paper-2:     #171C1E;
+    --card:        #1A1F21;
+    --ink:         #EDEAE2;
+    --ink-soft:    #A9AFB1;
+    --ink-dim:     #8E9698;
+    --line:        #2E3538;
+    --line-strong: #3E4649;
+    --accent:      #58B6C4;
+    --accent-text: #7ACAD6;
+    --accent-deep: #8FD4DE;
+    --accent-soft: #17343A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --paper:       #101416;
+  --paper-2:     #171C1E;
+  --card:        #1A1F21;
+  --ink:         #EDEAE2;
+  --ink-soft:    #A9AFB1;
+  --ink-dim:     #8E9698;
+  --line:        #2E3538;
+  --line-strong: #3E4649;
+  --accent:      #58B6C4;
+  --accent-text: #7ACAD6;
+  --accent-deep: #8FD4DE;
+  --accent-soft: #17343A;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-b);
+  font-weight:400;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+.deck{
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 40px) clamp(12px, 3vw, 28px) clamp(40px, 6vw, 88px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 2.6vw, 32px);
+}
+
+/* ── Lámina ───────────────────────────────────────────────── */
+.sheet{
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  padding: clamp(24px, 3.4vw, 52px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 2.2vw, 28px);
+}
+@media (min-width: 940px){
+  .sheet{ aspect-ratio: 16 / 9; }
+}
+
+/* marcas de registro en las esquinas — como lámina de obra */
+.sheet::before,
+.sheet::after{
+  content:'';
+  position:absolute;
+  width:13px; height:13px;
+  border:1px solid var(--line-strong);
+  pointer-events:none;
+}
+.sheet::before{ top:9px;    left:9px;  border-right:0; border-bottom:0; }
+.sheet::after { bottom:9px; right:9px; border-left:0;  border-top:0;    }
+
+.sheet-body{ flex:1; display:flex; flex-direction:column; gap:clamp(16px,2vw,26px); min-height:0; }
+
+/* ── Tipografía ───────────────────────────────────────────── */
+.eyebrow{
+  font-family: var(--font-m);
+  font-size: .68rem;
+  font-weight: 400;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin:0;
+}
+.eyebrow.muted{ color: var(--ink-dim); }
+
+h1, h2{
+  font-family: var(--font-d);
+  font-weight: 600;
+  line-height: .96;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+  margin: 0;
+  color: var(--ink);
+}
+h1{ font-size: clamp(2.6rem, 6.4vw, 4.6rem); }
+h2{ font-size: clamp(1.9rem, 3.9vw, 3rem); }
+
+.lede{
+  font-size: clamp(.98rem, 1.25vw, 1.1rem);
+  color: var(--ink-soft);
+  max-width: 62ch;
+  margin: 0;
+}
+.note{
+  font-family: var(--font-m);
+  font-size: .74rem;
+  line-height: 1.62;
+  color: var(--ink-dim);
+  margin: 0;
+}
+strong{ font-weight:600; color: var(--ink); }
+
+/* ── Cajetín (title block) ────────────────────────────────── */
+.titleblock{
+  margin-top:auto;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  display:flex;
+  flex-wrap:wrap;
+  gap: 6px 20px;
+  align-items:baseline;
+  justify-content:space-between;
+  font-family: var(--font-m);
+  font-size: .64rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.titleblock b{ color: var(--accent-text); font-weight:500; }
+
+/* ── Rejilla de cifras ────────────────────────────────────── */
+.stats{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+@media (min-width: 760px){
+  .stats:not(.two){ grid-template-columns: repeat(4, minmax(0,1fr)); }
+}
+.stats.anchor{ margin-top:auto; }
+
+.stat{
+  background: var(--card);
+  padding: clamp(14px, 1.7vw, 22px);
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.stat .k{
+  font-family: var(--font-m);
+  font-size: .64rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.stat .v{
+  font-family: var(--font-d);
+  font-weight: 700;
+  font-size: clamp(2.1rem, 4.4vw, 3.1rem);
+  line-height: .9;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.stat .v.accent{ color: var(--accent-text); }
+.stat .d{
+  font-family: var(--font-m);
+  font-size: .68rem;
+  color: var(--ink-soft);
+  line-height:1.45;
+}
+.up::before{
+  content:'↑ ';
+  color: var(--accent-text);
+  font-weight:500;
+}
+
+/* ── Barras ───────────────────────────────────────────────── */
+.bars{ display:flex; flex-direction:column; gap:9px; }
+.bar-row{
+  display:grid;
+  grid-template-columns: minmax(0,1fr);
+  gap:5px;
+}
+@media (min-width: 700px){
+  .bar-row{ grid-template-columns: 15.5rem minmax(0,1fr); align-items:center; gap:16px; }
+}
+.bar-label{
+  font-size: .84rem;
+  color: var(--ink-soft);
+  line-height:1.35;
+}
+.bar-track{ display:flex; align-items:center; gap:10px; min-width:0; }
+.bar-fill{
+  height: 22px;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+  min-width: 3px;
+  transition: filter .18s ease;
+}
+.bar-row:hover .bar-fill{ filter: brightness(1.12); }
+.bar-val{
+  font-family: var(--font-m);
+  font-size: .84rem;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space:nowrap;
+}
+
+/* barra destacada — contenido pagado */
+.paid{
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  background: var(--paper-2);
+  padding: clamp(13px, 1.6vw, 18px);
+  display:flex;
+  flex-wrap:wrap;
+  gap: 4px 18px;
+  align-items:baseline;
+}
+.paid .v{
+  font-family: var(--font-d);
+  font-weight:700;
+  font-size: clamp(1.9rem, 3.4vw, 2.5rem);
+  line-height:.9;
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+.paid .t{ font-size:.86rem; color: var(--ink-soft); }
+.tag{
+  font-family: var(--font-m);
+  font-size:.6rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  border-radius: 2px;
+  padding: 3px 7px;
+  white-space:nowrap;
+}
+
+/* ── Cascada vista → contacto ─────────────────────────────── */
+.cascade{ display:flex; flex-direction:column; gap:0; }
+.step{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap: 4px 14px;
+  padding: 10px 0 10px 0;
+  border-top: 1px solid var(--line);
+  position:relative;
+}
+.step:first-child{ border-top:0; }
+.step .n{
+  font-family: var(--font-d);
+  font-weight:700;
+  font-size: clamp(1.5rem, 2.9vw, 2.15rem);
+  line-height:.92;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 5.2ch;
+}
+.step .l{ font-size:.9rem; color: var(--ink); font-weight:500; }
+.step .r{
+  font-family: var(--font-m);
+  font-size:.72rem;
+  color: var(--ink-dim);
+  margin-left:auto;
+  text-align:right;
+}
+/* el escalón: sangría creciente = embudo, sin escala engañosa */
+.step:nth-child(2){ padding-left: clamp(10px, 2.2vw, 30px); }
+.step:nth-child(3){ padding-left: clamp(20px, 4.4vw, 60px); }
+.step:nth-child(4){ padding-left: clamp(30px, 6.6vw, 90px); }
+.step:nth-child(5){ padding-left: clamp(40px, 8.8vw, 120px); }
+.step:nth-child(6){ padding-left: clamp(50px, 11vw, 150px); }
+.step:nth-child(n+4) .n{ color: var(--accent-text); }
+
+/* ── Dos columnas ─────────────────────────────────────────── */
+.cols{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap: clamp(18px, 2.4vw, 34px);
+}
+@media (min-width: 820px){
+  .cols{ grid-template-columns: 1fr 1fr; }
+  .cols.wide-left{ grid-template-columns: 1.35fr 1fr; }
+}
+
+.findings{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:13px; }
+.findings li{
+  display:grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items:start;
+  font-size:.92rem;
+  color: var(--ink-soft);
+  line-height:1.55;
+}
+.findings .mark{
+  font-family: var(--font-m);
+  font-size:.66rem;
+  letter-spacing:.1em;
+  color: var(--accent-text);
+  border:1px solid var(--line-strong);
+  border-radius:2px;
+  padding: 2px 6px;
+  margin-top:2px;
+  white-space:nowrap;
+}
+
+.divider{ border:0; border-top:1px solid var(--line); margin:0; }
+
+/* ── Impresión: cada lámina, una diapositiva ──────────────── */
+@page{ size: 297mm 167mm; margin: 0; }
+@media print{
+  body{ background:#fff; }
+  .deck{ max-width:none; padding:0; gap:0; }
+  .sheet{
+    border:0;
+    aspect-ratio:auto;
+    width:297mm; height:167mm;
+    padding:14mm;
+    page-break-after: always;
+    break-after: page;
+  }
+  .sheet:last-child{ page-break-after:auto; break-after:auto; }
+  .print-hint{ display:none !important; }
+}
+
+.print-hint{
+  font-family: var(--font-m);
+  font-size:.68rem;
+  letter-spacing:.08em;
+  color: var(--ink-dim);
+  text-align:center;
+  margin:0;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; }
+}
+</style>
+
+<div class="deck">
+
+  <!-- ══ LÁMINA 01 · PORTADA ══════════════════════════════ -->
+  <section class="sheet">
+    <div class="sheet-body">
+      <p class="eyebrow">ISOVAL · Arquitectura &amp; Construcción · Tepic, Nayarit</p>
+      <h1>Bitácora de redes<br/>Primeros 60 días</h1>
+      <p class="lede">La cuenta arrancó de cero. Este es el registro de lo que produjo el primer ciclo
+        de contenido: cuánta gente vio a ISOVAL, cuánta se quedó, y cuánta levantó la mano.</p>
+
+      <div class="stats anchor">
+        <div class="stat">
+          <span class="k">Visualizaciones Facebook</span>
+          <span class="v accent">8.546</span>
+          <span class="d up">100% · 28 días</span>
+        </div>
+        <div class="stat">
+          <span class="k">Visualizaciones Instagram</span>
+          <span class="v accent">1.300</span>
+          <span class="d up">100% · 60 días</span>
+        </div>
+        <div class="stat">
+          <span class="k">Personas alcanzadas</span>
+          <span class="v">6.400</span>
+          <span class="d">espectadores únicos</span>
+        </div>
+        <div class="stat">
+          <span class="k">Piezas publicadas</span>
+          <span class="v">22</span>
+          <span class="d up">633% · 15 posts + 7 historias</span>
+        </div>
+      </div>
+    </div>
+    <div class="titleblock">
+      <span><b>ISOVAL</b> · Resultados en redes</span>
+      <span>22 jun – 20 ago 2026</span>
+      <span>Lám. <b>01</b>/06</span>
+    </div>
+  </section>
+
+  <!-- ══ LÁMINA 02 · ALCANCE ══════════════════════════════ -->
+  <section class="sheet">
+    <div class="sheet-body">
+      <p class="eyebrow">01 · Alcance</p>
+      <h2>Ocho mil quinientas vistas,<br/>casi todas de gente nueva</h2>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="k">Visualizaciones</span>
+          <span class="v accent">8.546</span>
+          <span class="d up">100%</span>
+        </div>
+        <div class="stat">
+          <span class="k">Espectadores únicos</span>
+          <span class="v">6.400</span>
+          <span class="d">1,34 vistas por persona</span>
+        </div>
+        <div class="stat">
+          <span class="k">Reproducciones ≥ 3 s</span>
+          <span class="v">4.700</span>
+          <span class="d">55% del alcance se quedó</span>
+        </div>
+        <div class="stat">
+          <span class="k">De no seguidores</span>
+          <span class="v">99,95%</span>
+          <span class="d">8.542 de 8.546</span>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+      <p class="note">Solo <strong>4</strong> de las 8.546 vistas vinieron de alguien que ya seguía la página.
+        Para una cuenta que empieza esto es la señal correcta: el contenido está saliendo a buscar
+        público, no reciclando el que ya estaba. El grueso del alcance se concentró entre el
+        <strong>18 y el 20 de agosto</strong>.</p>
+    </div>
+    <div class="titleblock">
+      <span><b>ISOVAL</b> · Facebook</span>
+      <span>28 días · al 20 ago 2026</span>
+      <span>Lám. <b>02</b>/06</span>
+    </div>
+  </section>
+
+  <!-- ══ LÁMINA 03 · INSTAGRAM ════════════════════════════ -->
+  <section class="sheet">
+    <div class="sheet-body">
+      <p class="eyebrow">02 · Instagram</p>
+      <h2>Mucha vista,<br/>poca vuelta al perfil</h2>
+
+      <div class="cols wide-left">
+        <div class="stats two">
+          <div class="stat">
+            <span class="k">Visualizaciones · 60 d</span>
+            <span class="v accent">1.300</span>
+            <span class="d up">100%</span>
+          </div>
+          <div class="stat">
+            <span class="k">Interacciones · 28 d</span>
+            <span class="v">17</span>
+            <span class="d up">88,9%</span>
+          </div>
+          <div class="stat">
+            <span class="k">Visitas al perfil</span>
+            <span class="v">4</span>
+            <span class="d">0,3% de las vistas</span>
+          </div>
+          <div class="stat">
+            <span class="k">Me gusta</span>
+            <span class="v">11</span>
+            <span class="d">1 compartido · 0 comentarios</span>
+          </div>
+        </div>
+
+        <div>
+          <p class="eyebrow muted">Contenido con más interacciones</p>
+          <div class="bars" style="margin-top:12px;">
+            <div class="bar-row">
+              <span class="bar-label">Plano arquitectónico</span>
+              <span class="bar-track"><span class="bar-fill" style="width:100%"></span><span class="bar-val">3</span></span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Metodología: tu obra en 5 pasos</span>
+              <span class="bar-track"><span class="bar-fill" style="width:100%"></span><span class="bar-val">3</span></span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">5 pasos de nuestro proceso</span>
+              <span class="bar-track"><span class="bar-fill" style="width:66.7%"></span><span class="bar-val">2</span></span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Antes de construir, hay que pensar</span>
+              <span class="bar-track"><span class="bar-fill" style="width:33.3%"></span><span class="bar-val">1</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+      <p class="note">1.300 personas vieron una publicación y solo <strong>4</strong> entraron al perfil.
+        Lo que se ve funciona; lo que invita a seguir la conversación, todavía no. Es el punto más
+        barato de arreglar de toda la operación.</p>
+    </div>
+    <div class="titleblock">
+      <span><b>ISOVAL</b> · Instagram</span>
+      <span>22 jun – 20 ago 2026</span>
+      <span>Lám. <b>03</b>/06</span>
+    </div>
+  </section>
+
+  <!-- ══ LÁMINA 04 · CONTENIDO ════════════════════════════ -->
+  <section class="sheet">
+    <div class="sheet-body">
+      <p class="eyebrow">03 · Contenido</p>
+      <h2>Qué jaló, y con qué ayuda</h2>
+
+      <div class="paid">
+        <span class="v">8.100</span>
+        <span class="t">vistas — video de fachada</span>
+        <span class="tag">Promocionado</span>
+        <span class="t" style="width:100%; margin-top:2px;">Una sola pieza pagada concentró el
+          <strong>95%</strong> del alcance total del periodo.</span>
+      </div>
+
+      <div>
+        <p class="eyebrow muted">Alcance orgánico por pieza — sin pauta</p>
+        <div class="bars" style="margin-top:12px;">
+          <div class="bar-row">
+            <span class="bar-label">Plano arquitectónico</span>
+            <span class="bar-track"><span class="bar-fill" style="width:100%"></span><span class="bar-val">233</span></span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Reel — apertura en negro</span>
+            <span class="bar-track"><span class="bar-fill" style="width:58.4%"></span><span class="bar-val">136</span></span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Pieza en claro</span>
+            <span class="bar-track"><span class="bar-fill" style="width:49.4%"></span><span class="bar-val">115</span></span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Video a cuadro</span>
+            <span class="bar-track"><span class="bar-fill" style="width:48.5%"></span><span class="bar-val">113</span></span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Los 3 servicios en 60 segundos</span>
+            <span class="bar-track"><span class="bar-fill" style="width:17.2%"></span><span class="bar-val">40</span></span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+      <p class="note">El <strong>plano</strong> es la pieza que gana en las dos listas: primer lugar en
+        alcance orgánico y primer lugar en interacciones. Es el contenido que ya funciona sin
+        empujarlo — y el que todavía no se ha promocionado.</p>
+    </div>
+    <div class="titleblock">
+      <span><b>ISOVAL</b> · Facebook + Instagram</span>
+      <span>28 días · al 20 ago 2026</span>
+      <span>Lám. <b>04</b>/06</span>
+    </div>
+  </section>
+
+  <!-- ══ LÁMINA 05 · DE LA VISTA AL CONTACTO ══════════════ -->
+  <section class="sheet">
+    <div class="sheet-body">
+      <p class="eyebrow">04 · Conversión</p>
+      <h2>De la vista al contacto</h2>
+
+      <div class="cascade">
+        <div class="step">
+          <span class="n">8.546</span>
+          <span class="l">Visualizaciones</span>
+          <span class="r">impresiones totales</span>
+        </div>
+        <div class="step">
+          <span class="n">6.400</span>
+          <span class="l">Espectadores únicos</span>
+          <span class="r">1,34 vistas por persona</span>
+        </div>
+        <div class="step">
+          <span class="n">4.700</span>
+          <span class="l">Se quedaron ≥ 3 segundos</span>
+          <span class="r">55% del alcance</span>
+        </div>
+        <div class="step">
+          <span class="n">9</span>
+          <span class="l">Interacciones</span>
+          <span class="r">0,11% de las vistas</span>
+        </div>
+        <div class="step">
+          <span class="n">5</span>
+          <span class="l">Nuevos seguimientos</span>
+          <span class="r">↑ 100%</span>
+        </div>
+        <div class="step">
+          <span class="n">1</span>
+          <span class="l">Clic de contacto</span>
+          <span class="r">↑ 100%</span>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+      <p class="note">La caída real no está arriba — está entre <strong>quedarse</strong> e
+        <strong>interactuar</strong>. 4.700 personas aguantaron el video y solo 9 hicieron algo
+        después. El alcance ya se compró; falta pedirle algo a quien lo ve.</p>
+    </div>
+    <div class="titleblock">
+      <span><b>ISOVAL</b> · Facebook</span>
+      <span>28 días · al 20 ago 2026</span>
+      <span>Lám. <b>05</b>/06</span>
+    </div>
+  </section>
+
+  <!-- ══ LÁMINA 06 · LECTURA ══════════════════════════════ -->
+  <section class="sheet">
+    <div class="sheet-body">
+      <p class="eyebrow">05 · Lectura</p>
+      <h2>Qué dice esto<br/>y qué sigue</h2>
+
+      <div class="cols">
+        <div>
+          <p class="eyebrow muted">Lo que ya está resuelto</p>
+          <ul class="findings" style="margin-top:14px;">
+            <li><span class="mark">Ritmo</span><span>De 3 a <strong>22 piezas</strong> en 28 días — 633% más producción. La operación de contenido ya camina sola.</span></li>
+            <li><span class="mark">Alcance</span><span><strong>6.400 personas</strong> nuevas vieron la marca. Hace 60 días ese número era cero.</span></li>
+            <li><span class="mark">Retención</span><span><strong>55%</strong> se queda más de 3 segundos. El material aguanta; el problema no es la calidad del video.</span></li>
+          </ul>
+        </div>
+        <div>
+          <p class="eyebrow muted">Lo que falta</p>
+          <ul class="findings" style="margin-top:14px;">
+            <li><span class="mark">01</span><span><strong>Pedir la acción en cada pieza.</strong> El post de «comenta CONSTRUCCIÓN» es el único con instrucción clara. Ese patrón debe ser el estándar, no la excepción.</span></li>
+            <li><span class="mark">02</span><span><strong>Promocionar lo que ya gana solo.</strong> La pauta fue al render; el plano ganó orgánico y en interacciones. Ahí va el siguiente presupuesto.</span></li>
+            <li><span class="mark">03</span><span><strong>Arreglar la entrada al perfil.</strong> 1.300 vistas → 4 visitas. Bio, foto y primer cuadro son el cuello de botella más barato de corregir.</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="divider"/>
+      <p class="note">Periodo medido: <strong>22 jun – 20 ago 2026</strong>. Facebook e Instagram en
+        ventanas de 28 y 60 días según lo que reporta cada panel de Meta. Cifras tomadas directo
+        de Estadísticas; «8,5 mil» aparece como 8.546 al desglosarse por seguidores.</p>
+    </div>
+    <div class="titleblock">
+      <span><b>ISOVAL</b> · Cierre de periodo</span>
+      <span>22 jun – 20 ago 2026</span>
+      <span>Lám. <b>06</b>/06</span>
+    </div>
+  </section>
+
+  <p class="print-hint">Imprimir → PDF en horizontal exporta cada lámina como una diapositiva.</p>
+
+</div>
