@@ -21,6 +21,7 @@ const {
   GEMINI_API_KEY,
   ANTHROPIC_API_KEY,
 } = require("./config");
+const { estadoAlmacen } = require("./almacen");
 
 // Pregunta qué CUENTAS de WhatsApp tiene asignadas el usuario del token.
 //
@@ -161,7 +162,13 @@ async function numerosVisibles(token) {
 // Le pregunta a Meta por el número del negocio. Es la forma más
 // barata de saber si el token sirve: si venció, responde 401/190.
 async function revisarNegocio(negocio) {
-  const base = { id: negocio.id, nombre: negocio.nombre || negocio.id };
+  const base = {
+    id: negocio.id,
+    nombre: negocio.nombre || negocio.nombreInterno || negocio.id,
+    // A quién le llega el aviso cuando hay que pasar la charla a una
+    // persona. Sin esto, la escalación se queda a medias.
+    avisaA: (negocio.avisarA || "").replace(/\D/g, ""),
+  };
   const token = negocio.whatsappToken || WHATSAPP_TOKEN;
 
   // Sin número de Meta, el negocio está preparado en el código pero
@@ -323,6 +330,15 @@ async function reporte() {
   const activos = negocios.filter((n) => n.activo);
   const revisados = await Promise.all(activos.map(revisarNegocio));
   const cerebro = revisarCerebro();
+  const almacen = await estadoAlmacen();
+
+  // Negocios ya conectados a los que NO se les puede avisar cuando un
+  // cliente pide hablar con una persona. No es una falla del asistente
+  // (contesta igual), pero sí un agujero: escala a un humano que nunca
+  // se entera. Va como aviso, no como alarma.
+  const sinAviso = revisados
+    .filter((n) => n.conectado && !n.avisaA)
+    .map((n) => n.id);
 
   // Solo los negocios YA conectados cuentan para decidir si hay alarma.
   const conectados = revisados.filter((n) => n.conectado);
@@ -361,6 +377,8 @@ async function reporte() {
     resumen,
     revisado: new Date().toISOString(),
     cerebro,
+    almacen,
+    sinAviso,
     negocios: revisados,
   };
 }
@@ -377,9 +395,17 @@ function aTexto(r) {
     r.resumen,
     "",
     `Cerebro (${r.cerebro.proveedor}): ${r.cerebro.estado}${r.cerebro.detalle ? " — " + r.cerebro.detalle : ""}`,
-    "",
-    "Negocios conectados:",
+    `Memoria (${r.almacen.tipo}): ${r.almacen.persistente ? "PERSISTENTE" : "SE OLVIDA AL REINICIAR"}` +
+      (r.almacen.detalle ? " — " + r.almacen.detalle : ""),
   ];
+  if (r.sinAviso?.length) {
+    lineas.push(
+      `Aviso a un humano: SIN CONFIGURAR en ${r.sinAviso.join(", ")} — ` +
+        "si un cliente pide hablar con una persona, nadie se entera. " +
+        "Llena WHATSAPP_ADMIN (o avisarA en el perfil)."
+    );
+  }
+  lineas.push("", "Negocios conectados:");
   const conectados = r.negocios.filter((n) => n.conectado);
   const pendientes = r.negocios.filter((n) => !n.conectado);
 
