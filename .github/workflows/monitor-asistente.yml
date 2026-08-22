@@ -1,0 +1,121 @@
+# ═══════════════════════════════════════════════════════════════
+#  MONITOR DEL ASISTENTE DE WHATSAPP
+#
+#  Por qué existe: el 14-ago-2026 el token de Meta venció y el
+#  asistente dejó de contestar MÁS DE UN DÍA sin que nadie se diera
+#  cuenta. El error estaba en los logs, pero nadie mira los logs.
+#  Esto revisa /salud cada 15 minutos y grita cuando algo se rompe.
+#
+#  Qué hay que configurar (una sola vez), en GitHub:
+#    Settings › Secrets and variables › Actions › New repository secret
+#
+#    SALUD_URL          (obligatorio) https://tu-asistente.vercel.app/salud
+#
+#    Y si además quieres el aviso por WhatsApp (opcional; si no los
+#    pones, GitHub igual te manda correo cuando esto falla):
+#    ALERTA_PHONE_ID    el phone_number_id del número del negocio
+#    ALERTA_TOKEN       el token de acceso de Meta
+#    ALERTA_PARA        tu celular, solo dígitos (ej: 5213111216033)
+#
+#  OJO con dos cosas de GitHub Actions:
+#   • Los horarios solo corren en la rama principal (main). Mientras
+#     esto viva en otra rama, no se ejecuta solo.
+#   • Si el repo pasa 60 días sin actividad, GitHub apaga el horario
+#     y te manda un correo para reactivarlo.
+# ═══════════════════════════════════════════════════════════════
+name: Monitor del asistente
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: # botón para correrlo a mano cuando quieras
+
+# Si una revisión se empalma con la anterior, nos quedamos con la nueva.
+concurrency:
+  group: monitor-asistente
+  cancel-in-progress: true
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revisar /salud
+        id: revision
+        env:
+          SALUD_URL: ${{ secrets.SALUD_URL }}
+        run: |
+          set -uo pipefail
+
+          if [ -z "${SALUD_URL}" ]; then
+            echo "::warning::Falta el secreto SALUD_URL; no hay nada que revisar todavía."
+            echo "revisado=no" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Dos intentos: el primero puede pegarle a un servidor recién
+          # despertado (arranque en frío) y devolver un error que no es
+          # real. Alertar por eso sería el clásico monitor que grita en
+          # falso hasta que dejas de hacerle caso.
+          for intento in 1 2; do
+            CUERPO=$(curl -sS --max-time 30 -w '\n%{http_code}' "${SALUD_URL}" 2>&1) || CUERPO=$'error de red\n000'
+            CODIGO=$(printf '%s' "${CUERPO}" | tail -n1)
+            TEXTO=$(printf '%s' "${CUERPO}" | sed '$d')
+
+            if [ "${CODIGO}" = "200" ]; then
+              echo "Asistente sano ✅"
+              printf '%s\n' "${TEXTO}"
+              echo "revisado=si" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Intento ${intento}: /salud respondió ${CODIGO}"
+            [ "${intento}" = "1" ] && sleep 30
+          done
+
+          echo "::error::El asistente NO está sano (HTTP ${CODIGO})"
+          printf '%s\n' "${TEXTO}"
+
+          # Guardamos el resumen para el aviso por WhatsApp. Solo la
+          # primera parte: un WhatsApp con 400 líneas no lo lee nadie.
+          {
+            echo "resumen<<FIN"
+            printf '%s\n' "${TEXTO}" | head -c 700
+            echo ""
+            echo "FIN"
+          } >> "$GITHUB_OUTPUT"
+          echo "codigo=${CODIGO}" >> "$GITHUB_OUTPUT"
+          exit 1
+
+      - name: Avisarme por WhatsApp
+        if: failure() && steps.revision.outputs.codigo != ''
+        env:
+          PHONE_ID: ${{ secrets.ALERTA_PHONE_ID }}
+          TOKEN: ${{ secrets.ALERTA_TOKEN }}
+          PARA: ${{ secrets.ALERTA_PARA }}
+          RESUMEN: ${{ steps.revision.outputs.resumen }}
+          CODIGO: ${{ steps.revision.outputs.codigo }}
+        run: |
+          set -uo pipefail
+          if [ -z "${PHONE_ID}" ] || [ -z "${TOKEN}" ] || [ -z "${PARA}" ]; then
+            echo "Sin secretos de WhatsApp: te llega el aviso por correo de GitHub."
+            exit 0
+          fi
+
+          MENSAJE=$(printf '⚠️ El asistente de WhatsApp no está contestando (HTTP %s).\n\n%s' \
+            "${CODIGO}" "${RESUMEN}")
+
+          RESP=$(jq -n --arg to "${PARA}" --arg body "${MENSAJE}" \
+            '{messaging_product:"whatsapp", to:$to, type:"text", text:{body:$body}}' \
+            | curl -sS -X POST "https://graph.facebook.com/v21.0/${PHONE_ID}/messages" \
+                -H "Authorization: Bearer ${TOKEN}" \
+                -H "Content-Type: application/json" \
+                --data @-)
+
+          echo "Respuesta de Meta: ${RESP}"
+
+          # Aquí también aplica la regla de las 24 h: si hace mucho que
+          # no le escribes al número del negocio, Meta rechaza el texto
+          # libre. El aviso por correo de GitHub no depende de eso.
+          case "${RESP}" in
+            *131047*) echo "::warning::Meta rechazó el aviso por la ventana de 24 h (ver README).";;
+          esac
