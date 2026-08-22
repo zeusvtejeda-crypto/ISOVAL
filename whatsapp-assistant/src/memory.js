@@ -1,55 +1,44 @@
 // ═══════════════════════════════════════════════════════════════
-//  MEMORIA DE CONVERSACIÓN (simple, en memoria)
+//  MEMORIA DE CONVERSACIÓN
 //  Guarda los últimos mensajes de cada cliente para que el asistente
-//  no pierda el hilo. Se borra sola tras 6 horas de inactividad.
+//  no pierda el hilo. Caduca sola tras 6 horas sin actividad.
 //
-//  NOTA: al ser en memoria, se reinicia si apagas el servidor. Para
-//  producción con varias instancias conviene usar una base de datos
-//  o Redis (ver README). Para empezar, esto funciona perfecto.
+//  Vive en src/almacen.js: si configuraste un Redis, el hilo
+//  sobrevive a reinicios y apagones; si no, se guarda en la memoria
+//  del proceso (funciona, pero se olvida al reiniciar).
 // ═══════════════════════════════════════════════════════════════
+const { leer, guardar } = require("./almacen");
 const { MAX_HISTORIAL } = require("./config");
 
-const TTL_MS = 6 * 60 * 60 * 1000; // 6 horas
-const store = new Map(); // clave -> { mensajes: [], visto: timestamp }
+const TTL_SEG = 6 * 60 * 60; // 6 horas
 
 function clave(businessId, usuario) {
-  return `${businessId}:${usuario}`;
+  return `hist:${businessId}:${usuario}`;
 }
 
-function obtener(businessId, usuario) {
-  const k = clave(businessId, usuario);
-  const entrada = store.get(k);
-  if (!entrada) return [];
-  if (Date.now() - entrada.visto > TTL_MS) {
-    store.delete(k);
-    return [];
-  }
-  return entrada.mensajes;
+async function obtener(businessId, usuario) {
+  const mensajes = await leer(clave(businessId, usuario));
+  return Array.isArray(mensajes) ? mensajes : [];
 }
 
-function agregar(businessId, usuario, rol, texto) {
-  const k = clave(businessId, usuario);
-  const entrada = store.get(k) || { mensajes: [], visto: Date.now() };
-  entrada.mensajes.push({ role: rol, content: texto });
+// Agrega un mensaje al hilo y devuelve el hilo ya actualizado.
+// Devolverlo evita tener que volver a leer el almacén justo después:
+// cada lectura es una llamada de red, y en WhatsApp la demora se nota.
+// Si ya tienes el hilo en la mano, pásalo en "previo" y nos ahorramos
+// otra lectura más.
+async function agregar(businessId, usuario, rol, texto, previo) {
+  const mensajes = previo || (await obtener(businessId, usuario));
+  mensajes.push({ role: rol, content: texto });
+
   // Nos quedamos solo con los últimos MAX_HISTORIAL mensajes
-  if (entrada.mensajes.length > MAX_HISTORIAL) {
-    entrada.mensajes = entrada.mensajes.slice(-MAX_HISTORIAL);
-  }
-  entrada.visto = Date.now();
-  store.set(k, entrada);
+  const recortado = mensajes.slice(-MAX_HISTORIAL);
+  await guardar(clave(businessId, usuario), recortado, TTL_SEG);
+  return recortado;
 }
 
 // ¿Es la primera vez que escribe este cliente? (para el saludo)
-function esNuevo(businessId, usuario) {
-  return obtener(businessId, usuario).length === 0;
+async function esNuevo(businessId, usuario) {
+  return (await obtener(businessId, usuario)).length === 0;
 }
-
-// Limpieza periódica de conversaciones viejas
-setInterval(() => {
-  const ahora = Date.now();
-  for (const [k, v] of store) {
-    if (ahora - v.visto > TTL_MS) store.delete(k);
-  }
-}, 60 * 60 * 1000).unref?.();
 
 module.exports = { obtener, agregar, esNuevo };

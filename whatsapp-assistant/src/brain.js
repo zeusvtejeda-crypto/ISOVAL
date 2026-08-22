@@ -162,19 +162,23 @@ async function llamarGemini(system, historial) {
 
 // Genera la respuesta para un mensaje entrante.
 async function generarRespuesta(negocio, usuario, textoUsuario) {
-  // Guardamos el mensaje del cliente en la memoria
-  const eraNuevo = memoria.esNuevo(negocio.id, usuario);
-  memoria.agregar(negocio.id, usuario, "user", textoUsuario);
+  // Leemos el hilo UNA sola vez y lo reusamos. Ahora la memoria vive
+  // en un almacén remoto, así que cada lectura es una llamada de red y
+  // en WhatsApp la demora se nota.
+  const previo = await memoria.obtener(negocio.id, usuario);
+  const eraNuevo = previo.length === 0;
+  const historial = await memoria.agregar(
+    negocio.id, usuario, "user", textoUsuario, previo
+  );
 
   // Sin cerebro configurado -> modo prueba (para probar la plomería sin gastar)
   if (!hayCerebroConfigurado()) {
     const r = respuestaDeRespaldo(negocio, textoUsuario);
-    memoria.agregar(negocio.id, usuario, "assistant", r);
+    await memoria.agregar(negocio.id, usuario, "assistant", r, historial);
     return r;
   }
 
   const instrucciones = construirInstrucciones(negocio);
-  const historial = memoria.obtener(negocio.id, usuario);
 
   // Si es su primer mensaje, le damos una pista para que salude bien.
   const system = eraNuevo
@@ -189,7 +193,7 @@ async function generarRespuesta(negocio, usuario, textoUsuario) {
       : await llamarGemini(system, historial);
 
     const respuesta = texto || negocio.saludo;
-    memoria.agregar(negocio.id, usuario, "assistant", respuesta);
+    await memoria.agregar(negocio.id, usuario, "assistant", respuesta, historial);
     return respuesta;
   } catch (err) {
     console.error(`[brain] Error llamando a ${AI_PROVIDER}:`, err.message);
