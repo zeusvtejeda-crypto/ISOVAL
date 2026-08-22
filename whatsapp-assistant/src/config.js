@@ -35,4 +35,21 @@ module.exports = {
   // Negocio por defecto cuando no se reconoce el número que recibió
   // el mensaje (útil al empezar con un solo número). Ej: "camas".
   DEFAULT_BUSINESS: process.env.DEFAULT_BUSINESS || "",
+
+  // ── Aviso a una persona real ─────────────────────────────────
+  // Tu celular, en formato internacional y solo dígitos
+  // (ej: 5213111216033). Ahí llegan los avisos cuando un cliente
+  // pide hablar con alguien. Cada negocio puede tener el suyo en su
+  // perfil; este es el de respaldo para todos.
+  WHATSAPP_ADMIN: (process.env.WHATSAPP_ADMIN || "").replace(/\D/g, ""),
+
+  // Cuántas horas se queda callado el asistente en una conversación
+  // después de pasarla a una persona (o de que tú contestes a mano).
+  PAUSA_HORAS: Number(process.env.PAUSA_HORAS || 3),
+
+  // Plantilla aprobada en Meta para avisarte cuando ya pasaron más de
+  // 24 h desde tu último mensaje al número del negocio (ver README).
+  // Si la dejas vacía, el aviso se intenta solo como texto libre.
+  PLANTILLA_AVISO: process.env.PLANTILLA_AVISO || "",
+  PLANTILLA_IDIOMA: process.env.PLANTILLA_IDIOMA || "es_MX",
 };

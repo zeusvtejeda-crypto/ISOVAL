@@ -24,6 +24,11 @@ module.exports = {
   //    solo, tomándolo de la variable de entorno PHONE_ID_CAMAS.
   phoneNumberId: process.env.PHONE_ID_CAMAS || "",
 
+  // ── ¿A qué celular le avisamos cuando un cliente pide un humano?
+  //    Formato internacional, solo dígitos (ej: 5213111216033).
+  //    Si lo dejas vacío se usa WHATSAPP_ADMIN, el general para todos.
+  avisarA: process.env.AVISAR_A_CAMAS || process.env.WHATSAPP_ADMIN || "",
+
   // Token de acceso de LA APP DE META de Bases Box Tepic (es una app
   // de Meta distinta a la de Isoval, así que tiene su propio token).
   whatsappToken: process.env.WHATSAPP_TOKEN_CAMAS || process.env.WHATSAPP_TOKEN || "",

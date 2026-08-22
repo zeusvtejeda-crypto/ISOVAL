@@ -14,6 +14,11 @@ module.exports = {
 
   phoneNumberId: process.env.PHONE_ID_INMOBILIARIA || "",
 
+  // ── ¿A qué celular le avisamos cuando un cliente pide un humano?
+  //    Formato internacional, solo dígitos (ej: 5213111216033).
+  //    Si lo dejas vacío se usa WHATSAPP_ADMIN, el general para todos.
+  avisarA: process.env.AVISAR_A_INMOBILIARIA || process.env.WHATSAPP_ADMIN || "",
+
   saludo:
     "¡Hola! 🏠 Gracias por escribirnos. Te ayudo con información de " +
     "propiedades. ¿Buscas comprar, rentar o vender?",

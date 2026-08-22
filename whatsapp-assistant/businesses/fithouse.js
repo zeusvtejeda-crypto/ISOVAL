@@ -11,6 +11,11 @@ module.exports = {
   // phone_number_id del número de WhatsApp de The Fithouse (ver README)
   phoneNumberId: process.env.PHONE_ID_FITHOUSE || "",
 
+  // ── ¿A qué celular le avisamos cuando un cliente pide un humano?
+  //    Formato internacional, solo dígitos (ej: 5213111216033).
+  //    Si lo dejas vacío se usa WHATSAPP_ADMIN, el general para todos.
+  avisarA: process.env.AVISAR_A_FITHOUSE || process.env.WHATSAPP_ADMIN || "",
+
   saludo:
     "¡Hola! 💪 Bienvenido/a a The Fithouse. Con gusto te doy informes. " +
     "¿Te interesa membresía, horarios o clases?",

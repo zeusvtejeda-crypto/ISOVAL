@@ -50,11 +50,74 @@ async function enviarTexto(phoneNumberId, para, texto, token) {
       console.error(`[whatsapp] Error ${resp.status}:`, detalle);
       return { ok: false, motivo: `Meta respondió ${resp.status}: ${detalle}` };
     }
-    return { ok: true };
+
+    // Devolvemos también el id del mensaje que acabamos de mandar.
+    // Sirve para reconocer nuestro propio eco después (ver app.js) y
+    // no confundirlo con una persona real entrando a la conversación.
+    const datos = await resp.json().catch(() => ({}));
+    return { ok: true, id: datos?.messages?.[0]?.id };
   } catch (err) {
     console.error("[whatsapp] Error de red enviando mensaje:", err.message);
     return { ok: false, motivo: `error de red: ${err.message}` };
   }
 }
 
-module.exports = { enviarTexto };
+// ── Envío de PLANTILLA (para avisarte fuera de la ventana de 24 h) ──
+// Regla de Meta: solo puedes mandar texto libre a alguien que te
+// escribió en las últimas 24 horas. Pasado ese rato, Meta rechaza el
+// envío con el código 131047 y SOLO acepta plantillas aprobadas.
+//
+// Esto importa justo donde más duele: el aviso de "un cliente necesita
+// que lo atienda una persona" va a TU celular, y tú casi nunca le
+// escribes al número del negocio. O sea que el aviso más importante
+// del sistema es el que más fácil se cae. Por eso, si el texto libre
+// se rechaza, reintentamos con una plantilla.
+async function enviarPlantilla(phoneNumberId, para, plantilla, idioma, parametros, token) {
+  const tokenUsar = token || WHATSAPP_TOKEN;
+  if (!tokenUsar || !phoneNumberId || !plantilla) {
+    return { ok: false, motivo: "faltan datos para enviar la plantilla" };
+  }
+
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${phoneNumberId}/messages`;
+  const componentes = parametros?.length
+    ? [{ type: "body", parameters: parametros.map((t) => ({ type: "text", text: String(t) })) }]
+    : [];
+
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenUsar}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: para,
+        type: "template",
+        template: {
+          name: plantilla,
+          language: { code: idioma || "es_MX" },
+          components: componentes,
+        },
+      }),
+    });
+
+    if (!resp.ok) {
+      const detalle = await resp.text();
+      console.error(`[whatsapp] Error ${resp.status} enviando plantilla:`, detalle);
+      return { ok: false, motivo: `Meta respondió ${resp.status}: ${detalle}` };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, motivo: `error de red: ${err.message}` };
+  }
+}
+
+// ¿El envío falló porque pasaron más de 24 h desde el último mensaje
+// del destinatario? Ese caso tiene arreglo (mandar plantilla); los
+// demás no, y conviene no confundirlos.
+function esVentanaCerrada(motivo = "") {
+  return /131047|Re-engagement|24 hours/i.test(motivo);
+}
+
+module.exports = { enviarTexto, enviarPlantilla, esVentanaCerrada };

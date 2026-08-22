@@ -14,6 +14,11 @@ module.exports = {
   // que se debe registrar en Meta para obtener este ID.
   phoneNumberId: process.env.PHONE_ID_ISOVAL || "",
 
+  // ── ¿A qué celular le avisamos cuando un cliente pide un humano?
+  //    Formato internacional, solo dígitos (ej: 5213111216033).
+  //    Si lo dejas vacío se usa WHATSAPP_ADMIN, el general para todos.
+  avisarA: process.env.AVISAR_A_ISOVAL || process.env.WHATSAPP_ADMIN || "",
+
   // Token de acceso de LA APP DE META de Isoval (cada app tiene el
   // suyo). Si no lo defines aparte, usa el WHATSAPP_TOKEN general.
   whatsappToken: process.env.WHATSAPP_TOKEN_ISOVAL || process.env.WHATSAPP_TOKEN || "",

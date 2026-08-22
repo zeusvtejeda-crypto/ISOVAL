@@ -1,13 +1,14 @@
 {
   "name": "whatsapp-assistant",
   "version": "1.0.0",
-  "description": "Asistente de WhatsApp multi-negocio (Meta Cloud API + Claude)",
+  "description": "Asistente de WhatsApp multi-negocio (Meta Cloud API + Gemini/Claude)",
   "type": "commonjs",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "chat": "node src/simulator.js"
+    "chat": "node src/simulator.js",
+    "test": "node pruebas/comportamiento.js && node pruebas/almacen.js"
   },
   "engines": {
     "node": ">=18"
