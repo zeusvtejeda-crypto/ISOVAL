@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Currículum de Edgar Heraclio Arteaga Vidal — Técnico en Construcción, Tepic, Nayarit.">
+<title>CV Edgar Arteaga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+
+<style>
+  :root{
+    /* the sheet: fixed, it is paper in every theme */
+    --paper:#FCFBF9;
+    --panel:#F0EDE7;
+    --ink:#1A2531;
+    --ink-soft:#55606D;
+    --ink-faint:#7C8794;
+    --rule:#D8D3CA;
+    --accent:#245C74;
+    /* the surround: adapts to the viewer's theme */
+    --surround:#E8E5DF;
+    --shadow:0 1px 2px rgba(26,37,49,.08), 0 12px 34px rgba(26,37,49,.10);
+
+    --fs-name:30pt;
+    --fs-h2:8.8pt;
+    --fs-body:10.2pt;
+    --fs-small:9pt;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --surround:#15191E;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 18px 44px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --surround:#15191E;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 18px 44px rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--surround);
+    color:var(--ink);
+    font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+    margin:0;
+    padding:28px 16px;
+    display:flex;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .sheet{
+    width:210mm;
+    min-height:297mm;
+    background:var(--paper);
+    color:var(--ink);
+    box-shadow:var(--shadow);
+    padding:13mm 15mm 10mm;
+    display:flex;
+    flex-direction:column;
+    gap:7mm;
+    print-color-adjust:exact;
+    -webkit-print-color-adjust:exact;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{display:flex;gap:7mm;align-items:flex-start;}
+  .photo{
+    width:30mm;height:35mm;flex:none;
+    object-fit:cover;object-position:50% 22%;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    background:var(--panel);
+  }
+  .id{flex:1;min-width:0;padding-top:1mm;}
+  h1{
+    font-family:"Zilla Slab",Georgia,serif;
+    font-weight:700;
+    font-size:var(--fs-name);
+    line-height:1.04;
+    letter-spacing:-.015em;
+    margin:0;
+    text-wrap:balance;
+    color:var(--ink);
+  }
+  .role{
+    font-size:10.4pt;
+    font-weight:600;
+    color:var(--accent);
+    margin:2.4mm 0 0;
+    letter-spacing:.005em;
+  }
+  .contact{
+    list-style:none;margin:3.6mm 0 0;padding:0;
+    display:flex;flex-wrap:wrap;gap:1.6mm 4mm;
+    font-size:8.6pt;
+    color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+  .contact li{display:flex;align-items:baseline;gap:1.8mm;}
+  .contact .tag{
+    font-size:6.6pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .contact a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--rule);}
+  .contact a:hover,.contact a:focus-visible{color:var(--accent);border-bottom-color:var(--accent);}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  /* ---------- grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 64mm;
+    gap:9mm;
+    align-items:stretch;
+    flex:1;
+  }
+  .col{display:flex;flex-direction:column;gap:8mm;}
+  .rail{
+    background:var(--panel);
+    border-radius:2px;
+    padding:7mm 6mm;
+    gap:7mm;
+  }
+  .rail h2{display:block;border-bottom:1px solid var(--rule);padding-bottom:2.2mm;}
+  .rail h2::after{content:none;}
+  .rail .info{margin-top:auto;}
+
+  h2{
+    font-family:"Zilla Slab",Georgia,serif;
+    font-size:var(--fs-h2);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.16em;
+    color:var(--accent);
+    margin:0 0 3.2mm;
+    display:flex;align-items:center;gap:3mm;
+  }
+  h2::after{content:"";flex:1;height:1px;background:var(--rule);}
+
+  p{margin:0;font-size:var(--fs-body);line-height:1.5;color:var(--ink-soft);}
+  .perfil p{max-width:62ch;}
+
+  /* ---------- experience ---------- */
+  .entry + .entry{margin-top:6mm;}
+  .entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:4mm;}
+  .entry-title{
+    font-family:"Zilla Slab",Georgia,serif;
+    font-size:11.8pt;font-weight:600;color:var(--ink);margin:0;line-height:1.2;
+  }
+  .dates{
+    font-size:8.2pt;font-weight:600;color:var(--ink-faint);
+    letter-spacing:.05em;white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .org{font-size:var(--fs-small);color:var(--accent);font-weight:600;margin:.8mm 0 0;}
+  .bullets{list-style:none;margin:2.4mm 0 0;padding:0;display:flex;flex-direction:column;gap:1.8mm;}
+  .bullets li{
+    position:relative;padding-left:4.2mm;
+    font-size:var(--fs-body);line-height:1.42;color:var(--ink-soft);
+  }
+  .bullets li::before{
+    content:"";position:absolute;left:0;top:1.55mm;
+    width:1.5mm;height:1.5mm;background:var(--accent);
+  }
+
+  /* ---------- rail blocks ---------- */
+  .skills{display:flex;flex-direction:column;gap:5mm;}
+  .skill-label{
+    font-size:7.4pt;font-weight:700;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--ink);margin:0 0 1.6mm;
+  }
+  .skill-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1.4mm;}
+  .skill-list li{
+    font-size:9.4pt;line-height:1.35;color:var(--ink-soft);
+    position:relative;padding-left:3.4mm;
+  }
+  .skill-list li::before{
+    content:"";position:absolute;left:0;top:1.5mm;
+    width:1.4mm;height:1px;background:var(--accent);
+  }
+
+  dl{margin:0;display:flex;flex-direction:column;gap:3.2mm;}
+  dt{
+    font-size:7.2pt;font-weight:700;text-transform:uppercase;letter-spacing:.11em;
+    color:var(--ink-faint);
+  }
+  dd{margin:.7mm 0 0;font-size:9.6pt;line-height:1.3;color:var(--ink);font-weight:600;}
+
+  /* ---------- footer ---------- */
+  .foot{
+    margin-top:auto;padding-top:4mm;border-top:1px solid var(--rule);
+    display:flex;justify-content:space-between;gap:6mm;
+    font-size:7.4pt;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);font-variant-numeric:tabular-nums;
+  }
+
+  /* ---------- print ---------- */
+  @page{size:A4;margin:0;}
+  @media print{
+    body{background:#fff;padding:0;display:block;}
+    .sheet{box-shadow:none;width:210mm;min-height:295mm;margin:0;}
+  }
+
+  /* ---------- small screens ---------- */
+  @media screen and (max-width:840px){
+    body{padding:0;}
+    .sheet{width:100%;min-height:0;padding:22px 18px 26px;gap:22px;}
+    .grid{grid-template-columns:1fr;gap:20px;}
+    :root{--fs-name:24pt;}
+    .photo{width:24mm;height:28mm;}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <img class="photo" src="edgar.jpg" alt="Retrato de Edgar Heraclio Arteaga Vidal">
+    <div class="id">
+      <h1>Edgar Heraclio<br>Arteaga Vidal</h1>
+      <p class="role">Técnico en Construcción</p>
+      <ul class="contact">
+        <li><span class="tag">Tel</span><a href="tel:+523114064388">+52 311 406 4388</a></li>
+        <li><span class="tag">Correo</span><a href="mailto:edgarvlah0796@gmail.com">edgarvlah0796@gmail.com</a></li>
+        <li><span class="tag">Ciudad</span>Tepic, Nayarit</li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <div class="col">
+
+      <section class="perfil">
+        <h2>Perfil</h2>
+        <p>Técnico en Construcción egresado del CECyTEN plantel Jazmines. Vengo del servicio en piso, donde aprendí a atender clientes, manejar caja y sostener el ritmo en las horas de mayor carga sin perder el orden del área de trabajo. Busco integrarme al sector de la construcción para aplicar mi formación técnica en obra, con disponibilidad para turnos fijos y disposición para viajar.</p>
+      </section>
+
+      <section>
+        <h2>Formación</h2>
+
+        <article class="entry">
+          <div class="entry-head">
+            <h3 class="entry-title">Técnico en Construcción</h3>
+            <span class="dates">ago 2022 — jul 2025</span>
+          </div>
+          <p class="org">CECyTEN, plantel Jazmines · Tepic, Nayarit</p>
+          <ul class="bullets">
+            <li>Bachillerato técnico con certificación profesional técnica, concluido.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section>
+        <h2>Experiencia laboral</h2>
+
+        <article class="entry">
+          <div class="entry-head">
+            <h3 class="entry-title">Mesero y garrotero</h3>
+            <span class="dates">may 2024 — ene 2025</span>
+          </div>
+          <p class="org">Botanero Mi Lindo Samao · Tepic, Nayarit</p>
+          <ul class="bullets">
+            <li>Atención a clientes durante todo el servicio, en sala y en barra.</li>
+            <li>Venta y recomendación del menú del establecimiento.</li>
+            <li>Limpieza y orden del área de trabajo antes, durante y al cierre del turno.</li>
+            <li>Trabajo en equipo con el resto del personal en las horas de mayor demanda.</li>
+            <li>Resolución de imprevistos y quejas en el momento, sin frenar el servicio.</li>
+          </ul>
+        </article>
+      </section>
+
+    </div>
+
+    <aside class="col rail">
+
+      <section>
+        <h2>Habilidades</h2>
+        <div class="skills">
+
+          <div>
+            <p class="skill-label">Administrativas</p>
+            <ul class="skill-list">
+              <li>Microsoft Office (Word, Excel)</li>
+              <li>Manejo de caja</li>
+              <li>Manejo de efectivo</li>
+              <li>Control de almacén e inventario</li>
+              <li>Organización de documentos</li>
+            </ul>
+          </div>
+
+          <div>
+            <p class="skill-label">Soft skills</p>
+            <ul class="skill-list">
+              <li>Comunicación</li>
+              <li>Liderazgo</li>
+              <li>Trabajo en equipo</li>
+              <li>Resolución de problemas</li>
+              <li>Organización y método</li>
+              <li>Puntualidad y responsabilidad</li>
+            </ul>
+          </div>
+
+          <div>
+            <p class="skill-label">Servicio y operación</p>
+            <ul class="skill-list">
+              <li>Atención a clientes</li>
+              <li>Preparación de alimentos</li>
+              <li>Limpieza del área de trabajo</li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="info">
+        <h2>Información adicional</h2>
+        <dl>
+          <div>
+            <dt>Disponibilidad</dt>
+            <dd>Turnos fijos</dd>
+          </div>
+          <div>
+            <dt>Dispuesto a viajar</dt>
+            <dd>Sí</dd>
+          </div>
+          <div>
+            <dt>Industria de interés</dt>
+            <dd>Construcción</dd>
+          </div>
+          <div>
+            <dt>Nivel de estudios</dt>
+            <dd>Técnico superior terminado</dd>
+          </div>
+        </dl>
+      </section>
+
+    </aside>
+
+  </div>
+
+  <footer class="foot">
+    <span>Edgar Heraclio Arteaga Vidal</span>
+    <span>Tepic, Nayarit · +52 311 406 4388</span>
+  </footer>
+
+</div>
+</body>
+</html>
