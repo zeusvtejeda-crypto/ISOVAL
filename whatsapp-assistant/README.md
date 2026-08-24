@@ -12,7 +12,6 @@ Negocios incluidos de fábrica (los editas tú):
 - 🛏️ **Bases y camas** — `businesses/camas.js` (nombre oficial aún sin decidir; el asistente no menciona ninguna marca hasta que la definas)
 - 💪 **The Fithouse** — `businesses/fithouse.js`
 - 🏠 **Inmobiliaria** — `businesses/inmobiliaria.js` (viene apagada; enciéndela cuando abras el negocio)
-- 🍫 **Xocomelt** — `businesses/xocomelt.js` (postres y fresas con chocolate, Tepic — @xoco.melt)
 
 ---
 

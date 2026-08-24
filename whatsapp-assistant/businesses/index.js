@@ -9,9 +9,8 @@ const camas = require("./camas");
 const fithouse = require("./fithouse");
 const inmobiliaria = require("./inmobiliaria");
 const isoval = require("./isoval");
-const xocomelt = require("./xocomelt");
 
-const negocios = [camas, fithouse, inmobiliaria, isoval, xocomelt];
+const negocios = [camas, fithouse, inmobiliaria, isoval];
 
 // Índices rápidos para buscar por id o por phoneNumberId de WhatsApp
 const porId = {};
