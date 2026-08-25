@@ -1,0 +1,18 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Las Marquesitas Tepic">
+  <circle cx="60" cy="60" r="58" fill="#1B1310"/>
+  <circle cx="60" cy="60" r="58" fill="none" stroke="#E8A93C" stroke-width="2.5"/>
+  <g transform="rotate(-35 60 60)">
+    <rect x="48" y="14" width="24" height="94" rx="12" fill="#F3E3C6"/>
+    <g stroke="#C9A26B" stroke-width="2" opacity=".8">
+      <line x1="48" y1="34" x2="72" y2="34"/>
+      <line x1="48" y1="50" x2="72" y2="50"/>
+      <line x1="48" y1="66" x2="72" y2="66"/>
+      <line x1="48" y1="82" x2="72" y2="82"/>
+    </g>
+    <path d="M46,26 C53,20 57,30 60,26 C63,20 67,30 74,26" fill="none" stroke="#6B4226" stroke-width="4" stroke-linecap="round"/>
+    <g transform="translate(60 12)">
+      <path d="M-7 5c0-6 5-9 7-9s7 3 7 9a7 7 0 01-14 0z" fill="#E14B5A"/>
+      <path d="M-3 -5l2 4M0 -6v4M3 -5l-2 4" stroke="#4C9A5B" stroke-width="1.6" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
