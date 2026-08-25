@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Carpintería de Nayarit — Cocinas, Closets y Muebles a la Medida · Tepic</title>
+<meta name="description" content="Fabricantes de cocinas, closets, puertas y muebles a la medida en Tepic, Nayarit. Taller propio, presupuesto sin compromiso y todas las tarjetas. Cotiza por WhatsApp."/>
+<meta property="og:title" content="Carpintería de Nayarit — Muebles a la medida, fábrica propia"/>
+<meta property="og:description" content="Cocinas, closets, puertas y muebles a la medida en Tepic, Nayarit. Presupuesto sin compromiso. Cotiza por WhatsApp."/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="assets/logo-icon.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,900;1,500;1,600&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#241B12;
+  --ink-mid:#6B5A46;
+  --ink-dim:#9C8A72;
+  --cream:#F6F0E4;
+  --cream-2:#EDE3CE;
+  --card:#FFFDF9;
+  --stone:#DCD1B8;
+  --gold:#B4894F;
+  --gold-2:#8F6B39;
+  --dark:#211609;
+  --dark-2:#2B1C0E;
+  --border:rgba(36,27,18,.13);
+  --border-dark:rgba(246,240,228,.14);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--ink);font-family:'Jost',system-ui,sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,.display{font-family:'Playfair Display',Georgia,serif;font-weight:700;line-height:1.08}
+em{font-style:italic;color:var(--gold-2)}
+a{color:inherit;text-decoration:none}
+img,svg{max-width:100%;display:block}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.eyebrow{font-family:'Jost',sans-serif;font-weight:600;letter-spacing:3.5px;text-transform:uppercase;font-size:13.5px;color:var(--gold-2)}
+.tag-num{font-family:'Jost',sans-serif;font-weight:600;letter-spacing:3px;color:var(--ink-dim);font-size:13px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Jost',sans-serif;font-weight:600;font-size:16px;padding:15px 28px;border:1.5px solid transparent;border-radius:3px;transition:.18s;cursor:pointer;letter-spacing:.2px}
+.btn-primary{background:var(--gold);border-color:var(--gold);color:#211609}
+.btn-primary:hover{background:#c79a5e;border-color:#c79a5e}
+.btn-dark{background:var(--dark);color:var(--cream);border-color:var(--dark)}
+.btn-dark:hover{background:#000}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--stone)}
+.btn-ghost:hover{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+.btn svg{width:19px;height:19px}
+
+/* header */
+header{position:sticky;top:0;z-index:50;background:rgba(246,240,228,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:82px}
+.brand{display:flex;align-items:center;gap:13px}
+.brand .mark{width:46px;height:46px;flex:none}
+.brand .name{font-family:'Playfair Display',serif;font-size:23px;font-weight:700;line-height:1.05}
+.brand .sub{font-family:'Jost',sans-serif;font-weight:600;letter-spacing:4px;font-size:10.5px;color:var(--gold-2);margin-top:3px}
+.nav-links{display:flex;align-items:center;gap:36px}
+.nav-links a{font-family:'Jost',sans-serif;font-weight:500;font-size:15.5px;color:var(--ink-mid);transition:.15s}
+.nav-links a:hover{color:var(--gold-2)}
+.nav-cta{display:flex;align-items:center;gap:16px}
+.nav-cta .btn{padding:12px 22px;font-size:15px}
+.menu-btn{display:none;background:none;border:0;cursor:pointer}
+
+/* hero */
+.hero{position:relative;background:linear-gradient(180deg,var(--cream),var(--cream-2));overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 85% 10%,rgba(180,137,79,.10),transparent 45%)}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;padding:76px 0 88px;position:relative}
+.hero h1{font-size:clamp(38px,5.3vw,64px);letter-spacing:.2px}
+.hero p.lead{font-size:19px;color:var(--ink-mid);max-width:490px;margin:24px 0 34px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero-trust{display:flex;gap:30px;margin-top:46px;flex-wrap:wrap}
+.hero-trust .t{display:flex;align-items:center;gap:9px;font-size:14.5px;color:var(--ink-mid);font-weight:500}
+.hero-trust svg{width:18px;height:18px;color:var(--gold-2);flex:none}
+
+.hero-photo{position:relative}
+.hero-photo .frame{position:relative;border-radius:6px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(33,22,9,.35);border:1px solid rgba(255,255,255,.5)}
+.hero-photo img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:center 30%}
+.hero-photo .cap{position:absolute;left:0;right:0;bottom:0;padding:22px 24px;background:linear-gradient(0deg,rgba(20,13,6,.72),transparent);color:#F6F0E4}
+.hero-photo .cap .k{font-family:'Jost';font-weight:600;letter-spacing:2px;text-transform:uppercase;font-size:11.5px;color:#D9B57C}
+.hero-photo .cap .v{font-family:'Playfair Display',serif;font-size:19px;margin-top:3px}
+.hero-badge{position:absolute;left:-22px;bottom:38px;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:14px 18px;box-shadow:0 16px 36px -14px rgba(33,22,9,.28);display:flex;align-items:center;gap:11px;max-width:230px}
+.hero-badge svg{width:26px;height:26px;color:var(--gold-2);flex:none}
+.hero-badge .n{font-family:'Playfair Display',serif;font-weight:700;font-size:17px;line-height:1.1}
+.hero-badge .l{font-size:12.5px;color:var(--ink-mid);margin-top:1px}
+
+/* section base */
+section{padding:100px 0}
+.sec-head{margin-bottom:52px;max-width:640px}
+.sec-head h2{font-size:clamp(30px,4vw,46px);margin-top:10px}
+.sec-head p{color:var(--ink-mid);margin-top:14px;font-size:17.5px}
+.divider-label{display:flex;align-items:center;gap:14px}
+.divider-label::after{content:"";flex:1;height:1px;background:var(--border);max-width:120px}
+
+/* servicios */
+.serv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.serv{background:var(--card);padding:38px 32px;transition:.2s}
+.serv:hover{background:#fff}
+.serv .ic{width:44px;height:44px;color:var(--gold-2);margin-bottom:20px}
+.serv h3{font-family:'Playfair Display',serif;font-weight:700;font-size:21px;margin-bottom:9px}
+.serv p{color:var(--ink-mid);font-size:15.5px}
+
+/* proyectos */
+#proyectos{background:var(--cream-2)}
+.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.gal-item{position:relative;border-radius:5px;overflow:hidden;box-shadow:0 18px 40px -22px rgba(33,22,9,.32)}
+.gal-item img{width:100%;height:340px;object-fit:cover;transition:transform .5s}
+.gal-item:hover img{transform:scale(1.045)}
+.gal-item .ov{position:absolute;inset:0;background:linear-gradient(0deg,rgba(20,13,6,.78) 0%,rgba(20,13,6,.05) 55%,transparent 100%);display:flex;align-items:flex-end;padding:22px 24px}
+.gal-item .k{font-family:'Jost';font-weight:600;letter-spacing:2px;text-transform:uppercase;font-size:11.5px;color:#D9B57C}
+.gal-item .v{font-family:'Playfair Display',serif;font-size:21px;color:#F6F0E4;margin-top:2px}
+
+.ig-banner{margin-top:26px;background:var(--dark);color:var(--cream);border-radius:6px;padding:30px 34px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.ig-banner .l{display:flex;align-items:center;gap:16px}
+.ig-banner svg{width:34px;height:34px;color:#D9B57C;flex:none}
+.ig-banner b{font-family:'Playfair Display',serif;font-size:19px;font-weight:600}
+.ig-banner span{display:block;color:#C9BBA4;font-size:14.5px;margin-top:3px}
+
+/* nosotros / features */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.feat{background:var(--card);padding:36px 30px}
+.feat .ic{width:42px;height:42px;color:var(--gold-2);margin-bottom:18px}
+.feat h3{font-family:'Playfair Display',serif;font-weight:700;font-size:19.5px;margin-bottom:8px}
+.feat p{color:var(--ink-mid);font-size:15.5px}
+
+/* proceso */
+#proceso{background:var(--dark);color:var(--cream)}
+#proceso .sec-head h2{color:var(--cream)}
+#proceso .sec-head p{color:#C9BBA4}
+.proc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
+.proc{position:relative;padding-top:8px}
+.proc .num{font-family:'Playfair Display',serif;font-size:44px;font-weight:700;color:transparent;-webkit-text-stroke:1.5px #D9B57C}
+.proc h3{font-family:'Playfair Display',serif;font-size:19px;margin:14px 0 8px;color:var(--cream)}
+.proc p{color:#C9BBA4;font-size:15px}
+
+/* contacto */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+.contact-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:36px}
+.contact-card .row{display:flex;gap:15px;align-items:flex-start;margin-bottom:24px}
+.contact-card .row:last-of-type{margin-bottom:28px}
+.contact-card .ic{width:24px;height:24px;color:var(--gold-2);flex:none;margin-top:2px}
+.contact-card .k{font-family:'Jost';letter-spacing:2px;text-transform:uppercase;font-size:12px;color:var(--ink-dim)}
+.contact-card .v{font-size:18px;font-weight:500;margin-top:2px}
+.contact-cta{display:flex;flex-direction:column;gap:14px;justify-content:center;background:var(--dark);border-radius:6px;padding:40px 36px;color:var(--cream)}
+.contact-cta h3{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:6px}
+.contact-cta p{color:#C9BBA4;font-size:15px;margin-bottom:14px}
+.contact-cta .btn{justify-content:center;font-size:17px;padding:17px}
+
+/* footer */
+footer{background:var(--dark-2);color:#C9BBA4;padding:56px 0 30px}
+.foot-grid{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap;align-items:flex-start}
+.foot-brand{display:flex;align-items:center;gap:13px}
+.foot-brand .name{font-family:'Playfair Display',serif;font-size:22px;color:var(--cream);font-weight:700}
+.foot-brand .sub{font-size:13px;margin-top:3px}
+.foot-links{display:flex;gap:26px;flex-wrap:wrap;font-family:'Jost',sans-serif;font-weight:500;font-size:15px}
+.foot-links a:hover{color:#D9B57C}
+.copy{margin-top:36px;padding-top:22px;border-top:1px solid var(--border-dark);font-size:13.5px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* floating whatsapp */
+.wa-float{position:fixed;right:22px;bottom:22px;z-index:60;background:#25D366;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,0,0,.3);transition:transform .15s}
+.wa-float:hover{transform:scale(1.08)}
+.wa-float svg{width:32px;height:32px;fill:#fff}
+
+@media(max-width:900px){
+  .hero-grid,.contact-grid{grid-template-columns:1fr}
+  .hero-photo{order:-1;max-width:420px;margin:0 auto}
+  .hero-badge{left:14px}
+  .serv-grid,.feat-grid{grid-template-columns:1fr 1fr}
+  .proc-grid{grid-template-columns:1fr 1fr}
+  .gal-grid{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+  .menu-btn{display:block}
+  .nav-links.open{display:flex;position:absolute;top:82px;left:0;right:0;flex-direction:column;background:var(--cream);padding:22px 24px;gap:18px;border-bottom:1px solid var(--border)}
+}
+@media(max-width:640px){
+  .serv-grid,.feat-grid,.proc-grid,.gal-grid{grid-template-columns:1fr}
+  .gal-item img{height:280px}
+  section{padding:72px 0}
+  .hero-grid{padding:56px 0 64px}
+  .ig-banner{flex-direction:column;align-items:flex-start}
+  .contact-card,.contact-cta{padding:28px 24px}
+  .wrap{padding:0 16px}
+  .nav{height:70px}
+  .brand{gap:9px}
+  .brand .mark{width:36px;height:36px}
+  .brand .name{font-size:17px}
+  .brand .sub{font-size:9px;letter-spacing:3px}
+  .nav-cta{gap:8px}
+  .nav-cta .btn{padding:9px 14px;font-size:13.5px}
+  .nav-cta .btn svg{width:16px;height:16px}
+  .nav-links.open{top:70px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Carpintería de Nayarit">
+      <img class="mark" src="assets/logo-icon.svg" alt=""/>
+      <div>
+        <div class="name">Carpintería</div>
+        <div class="sub">DE NAYARIT</div>
+      </div>
+    </a>
+    <nav class="nav-links" id="navlinks">
+      <a href="#servicios">Servicios</a>
+      <a href="#proyectos">Proyectos</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-primary" href="https://wa.me/523111173443?text=Hola%2C%20quiero%20cotizar%20un%20mueble%20a%20la%20medida" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+        Cotizar
+      </a>
+      <button class="menu-btn" aria-label="Menú" onclick="document.getElementById('navlinks').classList.toggle('open')">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#241B12" stroke-width="2.2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<a id="top"></a>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Fábrica propia · Tepic, Nayarit</span>
+      <h1 style="margin-top:16px">Detalles que<br/><em>se sienten.</em></h1>
+      <p class="lead">Fabricamos cocinas, closets, puertas y muebles a la medida en nuestro propio taller. Diseño, materiales e instalación — todo bajo un mismo techo.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://wa.me/523111173443?text=Hola%2C%20quiero%20cotizar%20un%20mueble%20a%20la%20medida" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+          Cotiza por WhatsApp
+        </a>
+        <a class="btn btn-ghost" href="#proyectos">Ver proyectos</a>
+      </div>
+      <div class="hero-trust">
+        <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-7h6v7"/></svg>Fabricación propia</div>
+        <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Presupuesto sin compromiso</div>
+        <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/></svg>Todas las tarjetas</div>
+      </div>
+    </div>
+    <div class="hero-photo">
+      <div class="frame">
+        <img src="imgs/hero-salas.jpg" alt="Centro de entretenimiento de madera y mármol fabricado a la medida por Carpintería de Nayarit"/>
+        <div class="cap">
+          <div class="k">Salas</div>
+          <div class="v">Centro de TV a la medida</div>
+        </div>
+      </div>
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <div>
+          <div class="n">+1,200 seguidores</div>
+          <div class="l">@carpinteria_de_nayarit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SERVICIOS ============ -->
+<section id="servicios">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">01 / SERVICIOS</span></div>
+      <h2>Fabricamos cada rincón de tu casa</h2>
+      <p>Cocinas, closets, puertas y muebles — diseñados y construidos a tu medida exacta.</p>
+    </div>
+    <div class="serv-grid">
+      <div class="serv">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18"/><circle cx="9.3" cy="12" r=".6" fill="currentColor" stroke="none"/><circle cx="14.7" cy="12" r=".6" fill="currentColor" stroke="none"/></svg>
+        <h3>Closets y vestidores</h3>
+        <p>Espacios de guardado a la medida exacta de tu recámara, optimizando cada centímetro.</p>
+      </div>
+      <div class="serv">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="4" width="19" height="12" rx="1"/><path d="M9 20h6M12 16v4"/></svg>
+        <h3>Salas y centros de TV</h3>
+        <p>Paneles y muebles de sala con acabados en madera, mármol y herrajes en tono latón.</p>
+      </div>
+      <div class="serv">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 15h18l-1.5 5h-15z"/><path d="M6 15V7a6 6 0 0112 0v8"/><circle cx="9" cy="11" r=".6" fill="currentColor" stroke="none"/><circle cx="12" cy="11" r=".6" fill="currentColor" stroke="none"/></svg>
+        <h3>Cocinas integrales</h3>
+        <p>Cocinas, islas y cubiertas que combinan función, resistencia diaria y diseño.</p>
+      </div>
+      <div class="serv">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19h16"/><path d="M6 19V9a2 2 0 012-2h8a2 2 0 012 2v10"/><path d="M9 19v-4h6v4"/></svg>
+        <h3>Muebles de baño</h3>
+        <p>Lavabos y cubiertas resistentes a la humedad, con el mismo nivel de detalle.</p>
+      </div>
+      <div class="serv">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="2.5" width="14" height="19" rx="1"/><circle cx="15" cy="12" r=".7" fill="currentColor" stroke="none"/></svg>
+        <h3>Puertas a la medida</h3>
+        <p>Puertas de madera fabricadas a tu medida exacta, con el acabado que elijas.</p>
+      </div>
+      <div class="serv">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.5 3.5l6 6-8 8-6-6z"/><path d="M9 15l-5.5 5.5"/><path d="M3 21l1.5-4"/></svg>
+        <h3>Fabricación propia</h3>
+        <p>Todo se hace en nuestro taller — control total de calidad, del corte a la instalación.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROYECTOS ============ -->
+<section id="proyectos">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">02 / PROYECTOS</span></div>
+      <h2>Trabajos reales, en casas reales</h2>
+      <p>Una muestra de lo que fabricamos e instalamos en Tepic. Hay muchos más en nuestro Instagram.</p>
+    </div>
+    <div class="gal-grid">
+      <div class="gal-item">
+        <img src="imgs/proyecto-cocina.jpg" alt="Isla de cocina en mármol y madera fabricada por Carpintería de Nayarit"/>
+        <div class="ov"><div><div class="k">Cocina</div><div class="v">Isla en mármol y madera</div></div></div>
+      </div>
+      <div class="gal-item">
+        <img src="imgs/proyecto-bano.jpg" alt="Mueble de baño con lavabos dobles fabricado a la medida"/>
+        <div class="ov"><div><div class="k">Baño</div><div class="v">Lavabos dobles a la medida</div></div></div>
+      </div>
+      <div class="gal-item">
+        <img src="imgs/proyecto-taller.jpg" alt="Instalación de closet de madera por el equipo de Carpintería de Nayarit"/>
+        <div class="ov"><div><div class="k">Taller</div><div class="v">Fabricación e instalación propia</div></div></div>
+      </div>
+      <div class="gal-item">
+        <img src="imgs/proyecto-escaleras.jpg" alt="Escalera de madera a la medida, detalle de carpintería fina"/>
+        <div class="ov"><div><div class="k">A la medida</div><div class="v">Detalles que se sienten</div></div></div>
+      </div>
+    </div>
+    <div class="ig-banner">
+      <div class="l">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+        <div><b>@carpinteria_de_nayarit</b><span>+1,200 seguidores ya ven nuestro trabajo todos los días</span></div>
+      </div>
+      <a class="btn btn-primary" href="https://www.instagram.com/carpinteria_de_nayarit/" target="_blank" rel="noopener">Seguir en Instagram</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NOSOTROS ============ -->
+<section id="nosotros">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">03 / POR QUÉ NOSOTROS</span></div>
+      <h2>Fabricantes directos, sin intermediarios</h2>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="feat-grid">
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-7h6v7"/></svg>
+        <h3>Taller propio</h3>
+        <p>Diseñamos, cortamos y ensamblamos todo nosotros mismos en Tepic.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        <h3>Presupuesto sin compromiso</h3>
+        <p>Cotizamos tu proyecto sin costo y sin que tengas que comprometerte a nada.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h18M12 3v18" stroke-dasharray="3 2"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+        <h3>Todo a tu medida</h3>
+        <p>Cada mueble se fabrica exacto a tu espacio — no manejamos medidas genéricas.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19"/></svg>
+        <h3>Todas las tarjetas</h3>
+        <p>Aceptamos crédito y débito de cualquier banco, para que pagues como prefieras.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+        <h3>Agenda tu cita</h3>
+        <p>Coordinamos una visita para tomar medidas y mostrarte materiales y acabados.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17h4v-6H3v6zM10 17h4V7h-4v10zM17 17h4v-4h-4v4z"/></svg>
+        <h3>Instalación incluida</h3>
+        <p>Nosotros mismos instalamos cada proyecto — del taller a tu casa, sin intermediarios.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROCESO ============ -->
+<section id="proceso">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num" style="color:#8C7B62">CÓMO TRABAJAMOS</span></div>
+      <h2>De tu idea a tu casa, en 4 pasos</h2>
+      <p>Un proceso simple, pensado para que no pierdas tiempo ni dinero.</p>
+    </div>
+    <div class="proc-grid">
+      <div class="proc"><div class="num">01</div><h3>Agenda tu cita</h3><p>Nos escribes por WhatsApp y coordinamos una visita a tu casa.</p></div>
+      <div class="proc"><div class="num">02</div><h3>Diseño y cotización</h3><p>Tomamos medidas y te damos precio, sin compromiso.</p></div>
+      <div class="proc"><div class="num">03</div><h3>Fabricación</h3><p>Construimos tu proyecto en nuestro taller propio en Tepic.</p></div>
+      <div class="proc"><div class="num">04</div><h3>Instalación</h3><p>Lo instalamos nosotros mismos, listo para usarse.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACTO ============ -->
+<section id="contacto">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">04 / CONTACTO</span></div>
+      <h2>Empecemos tu proyecto</h2>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <div><div class="k">Dirección</div><div class="v">Av. Insurgentes 1155<br/>Tepic, Nayarit</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 16.9v3a2 2 0 01-2.2 2A19.8 19.8 0 013 4.2 2 2 0 015 2h3a2 2 0 012 1.7l.5 3a2 2 0 01-.6 1.9L8.1 10a16 16 0 006 6l1.4-1.4a2 2 0 011.9-.5l3 .5a2 2 0 011.7 2z"/></svg>
+          <div><div class="k">Teléfono / WhatsApp</div><div class="v">311 117 3443</div></div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+          <div><div class="k">Instagram</div><div class="v">@carpinteria_de_nayarit</div></div>
+        </div>
+        <a class="btn btn-ghost" style="width:100%;justify-content:center" href="https://maps.google.com/?q=Av%20Insurgentes%201155%20Tepic%20Nayarit" target="_blank" rel="noopener">Ver en el mapa</a>
+      </div>
+      <div class="contact-cta">
+        <h3>Cotiza tu proyecto hoy</h3>
+        <p>Sin compromiso — te respondemos directo por WhatsApp.</p>
+        <a class="btn btn-primary" href="https://wa.me/523111173443?text=Hola%2C%20quiero%20cotizar%20un%20mueble%20a%20la%20medida" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+          Cotizar por WhatsApp
+        </a>
+        <a class="btn btn-ghost" style="border-color:#4a3a26;color:var(--cream)" href="tel:+523111173443">Llamar ahora</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <img src="assets/logo-mark-gold.svg" alt="" style="width:44px"/>
+        <div>
+          <div class="name">Carpintería de Nayarit</div>
+          <div class="sub">Cocinas, closets y muebles a la medida · Tepic, Nayarit</div>
+        </div>
+      </div>
+      <nav class="foot-links">
+        <a href="#servicios">Servicios</a>
+        <a href="#proyectos">Proyectos</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#contacto">Contacto</a>
+        <a href="https://www.instagram.com/carpinteria_de_nayarit/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://wa.me/523111173443" target="_blank" rel="noopener">WhatsApp</a>
+      </nav>
+    </div>
+    <div class="copy">
+      <span>© <span id="yr"></span> Carpintería de Nayarit. Todos los derechos reservados.</span>
+      <span>Av. Insurgentes 1155, Tepic, Nayarit · 311 117 3443</span>
+    </div>
+  </div>
+</footer>
+
+<!-- floating whatsapp -->
+<a class="wa-float" href="https://wa.me/523111173443?text=Hola%2C%20quiero%20cotizar%20un%20mueble%20a%20la%20medida" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+</a>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a){
+  a.addEventListener('click',function(){document.getElementById('navlinks').classList.remove('open')});
+});
+</script>
+</body>
+</html>

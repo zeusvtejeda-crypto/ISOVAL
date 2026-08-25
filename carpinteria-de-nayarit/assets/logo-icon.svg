@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="58" fill="#F6F0E4" stroke="#3E2A1B" stroke-width="1.5"/>
+  <rect x="32" y="32" width="56" height="56" fill="none" stroke="#B4894F" stroke-width="1.75" transform="rotate(45 60 60)"/>
+  <text x="60" y="73" text-anchor="middle" font-family="'Playfair Display',Georgia,'Times New Roman',serif" font-size="34" font-weight="700" fill="#3E2A1B">CN</text>
+</svg>
