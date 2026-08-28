@@ -55,8 +55,13 @@ MEDIDAS ESTÁNDAR:
 - También fabrican a la medida si el cliente necesita otra.
 
 PRECIOS:
-- (Pon aquí tus precios reales por medida cuando los tengas. Mientras
-  tanto, el asistente NO debe inventar montos — ofrece cotizar.)
+- Individual: $1,600
+- Matrimonial: $1,800
+- Queen: $2,000
+- King: aún no definido — si preguntan, ofrece cotizar por WhatsApp.
+- Son las puras bases, tapizadas en tela: NO llevan relleno de espuma
+  ni acolchado de ningún tipo. Si preguntan si trae relleno o si es
+  acolchada, acláralo así.
 
 ENTREGAS / COBERTURA:
 - (Zonas a las que entregan, costo de envío, tiempos.)
