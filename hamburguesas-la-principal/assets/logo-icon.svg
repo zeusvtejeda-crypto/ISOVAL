@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 226">
+  <!-- bottom bun -->
+  <path d="M28 186 Q28 210 55 210 L185 210 Q212 210 212 186 L212 172 Q212 163 202 163 L38 163 Q28 163 28 172 Z" fill="#C9862F"/>
+  <path d="M32 176 Q32 163 42 163 L198 163 Q208 163 208 176 L208 181 L32 181 Z" fill="#E3A857"/>
+  <!-- lettuce -->
+  <path d="M22 166 L40 152 L56 165 L72 150 L88 164 L104 150 L120 164 L136 150 L152 164 L168 150 L184 164 L200 151 L218 165 L218 175 L22 175 Z" fill="#6BAE3F"/>
+  <!-- tomato peeking -->
+  <circle cx="38" cy="152" r="13" fill="#D8452B"/>
+  <circle cx="202" cy="152" r="13" fill="#D8452B"/>
+  <!-- cheese drip -->
+  <path d="M34 132 L206 132 L206 142 Q196 161 187 142 Q178 161 169 142 Q160 161 151 142 Q142 161 133 142 Q124 161 115 142 Q106 161 97 142 Q88 161 79 142 Q70 161 61 142 Q52 161 43 142 Q34 161 34 142 Z" fill="#F5B82E"/>
+  <!-- patty (al carbón) -->
+  <rect x="30" y="112" width="180" height="30" rx="10" fill="#3B2A1E"/>
+  <g stroke="#2A1D13" stroke-width="4" stroke-linecap="round" opacity=".7">
+    <line x1="55" y1="140" x2="70" y2="114"/>
+    <line x1="90" y1="140" x2="105" y2="114"/>
+    <line x1="125" y1="140" x2="140" y2="114"/>
+    <line x1="160" y1="140" x2="175" y2="114"/>
+  </g>
+  <!-- top bun dome -->
+  <path d="M28 112 Q28 42 120 34 Q212 42 212 112 Z" fill="#E8A33D"/>
+  <ellipse cx="90" cy="66" rx="34" ry="16" fill="#fff" opacity=".14"/>
+  <g fill="#FCEFD8">
+    <ellipse cx="90" cy="52" rx="5" ry="7" transform="rotate(-10 90 52)"/>
+    <ellipse cx="120" cy="44" rx="5" ry="7"/>
+    <ellipse cx="150" cy="52" rx="5" ry="7" transform="rotate(10 150 52)"/>
+    <ellipse cx="70" cy="70" rx="5" ry="7" transform="rotate(-16 70 70)"/>
+    <ellipse cx="105" cy="67" rx="5" ry="7" transform="rotate(-4 105 67)"/>
+    <ellipse cx="135" cy="67" rx="5" ry="7" transform="rotate(6 135 67)"/>
+    <ellipse cx="165" cy="72" rx="5" ry="7" transform="rotate(14 165 72)"/>
+  </g>
+</svg>
