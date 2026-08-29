@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Panadería Bampan — Pan tradicional en Tepic, Nayarit · +50 años de experiencia</title>
+<meta name="description" content="Panadería tradicional en Tepic, Nayarit con más de 50 años de experiencia. Pan dulce, pasteles por encargo y café recién hecho. Pide por WhatsApp."/>
+<meta property="og:title" content="Panadería Bampan — Panadería tradicional en Tepic, Nayarit"/>
+<meta property="og:description" content="Más de 50 años horneando pan dulce, pasteles por encargo y café. Calzada del Panteón 39, Tepic. Pide por WhatsApp."/>
+<meta property="og:type" content="website"/>
+<meta name="theme-color" content="#1E140A"/>
+<link rel="icon" href="assets/logo.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --cocoa:#1E140A;
+  --cocoa-2:#170F08;
+  --near-black:#120B06;
+  --sand:#F3E4CB;
+  --paper:#FBF3E6;
+  --ink:#2B1A0D;
+  --brown-2:#5B4630;
+  --pink:#E81C5F;
+  --pink-2:#C4144E;
+  --orange:#E8790A;
+  --orange-2:#C96706;
+  --teal:#158A98;
+  --muted:#9C8768;
+  --border:rgba(43,26,13,.14);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'Nunito',system-ui,sans-serif;font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,.display{font-family:'Baloo 2',sans-serif;font-weight:800;line-height:1.05;letter-spacing:.2px}
+a{color:inherit;text-decoration:none}
+img,svg{max-width:100%;display:block}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:4px;text-transform:uppercase;font-size:15px;color:var(--pink)}
+.tag-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;color:var(--muted);font-size:14px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;font-size:17px;padding:15px 26px;border:2px solid var(--ink);border-radius:12px;transition:.15s;cursor:pointer}
+.btn-primary{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn-primary:hover{background:var(--orange-2);border-color:var(--orange-2)}
+.btn-dark{background:var(--cocoa);border-color:var(--cocoa);color:var(--paper)}
+.btn-dark:hover{background:#000}
+.btn-ghost{background:transparent;color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:var(--paper)}
+.btn-outline{background:transparent;border-color:#3a2c1a;color:var(--paper)}
+.btn-outline:hover{background:#3a2c1a}
+.btn svg{width:20px;height:20px}
+
+/* header */
+header{position:sticky;top:0;z-index:50;background:rgba(251,243,230,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:78px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .mark{width:46px;height:46px;border-radius:50%;box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--border)}
+.brand .name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:24px;letter-spacing:.2px;line-height:1}
+.brand .name .p{color:var(--pink)}
+.brand .name .o{color:var(--orange)}
+.brand .sub{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;font-size:11px;color:var(--brown-2);margin-top:3px}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links a{font-family:'Barlow Condensed',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;font-size:16px}
+.nav-links a:hover{color:var(--orange)}
+.nav-cta{display:flex;align-items:center;gap:14px}
+.menu-btn{display:none;background:none;border:0;cursor:pointer}
+
+/* hero */
+.hero{position:relative;background:var(--cocoa);color:var(--paper);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(243,228,204,.16) 1.5px,transparent 1.5px);background-size:28px 28px;opacity:.6}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center;padding:76px 0 90px;position:relative}
+.hero h1{font-size:clamp(40px,6vw,66px)}
+.hero h1 .o{color:var(--orange)}
+.hero h1 .p{color:var(--pink)}
+.hero p.lead{font-size:20px;color:#e7dcc7;max-width:520px;margin:22px 0 32px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:34px;margin-top:44px;flex-wrap:wrap}
+.hero-stats .s{border-left:3px solid var(--orange);padding-left:14px}
+.hero-stats .n{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:30px;line-height:1}
+.hero-stats .l{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:#c9bda3}
+.hero-art{position:relative;display:flex;justify-content:center;align-items:center}
+.hero-art .frame{position:relative;max-width:380px;width:100%}
+.hero-art .frame img{width:100%;border-radius:22px;box-shadow:0 30px 60px rgba(0,0,0,.5);transform:rotate(-2deg)}
+.hero-art .sticker{position:absolute;top:-16px;right:-6px;background:var(--pink);color:#fff;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;line-height:1.15;text-align:center;width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(9deg);box-shadow:0 10px 20px rgba(0,0,0,.35);border:3px solid var(--paper)}
+.hero-art .badgepin{position:absolute;bottom:-14px;left:-14px;width:76px;height:76px;border-radius:50%;overflow:hidden;border:3px solid var(--paper);box-shadow:0 10px 20px rgba(0,0,0,.35);background:var(--cocoa)}
+.hero-art .badgepin img{width:100%;height:100%;object-fit:cover}
+
+/* section base */
+section{padding:96px 0}
+.sec-head{margin-bottom:48px}
+.sec-head h2{font-size:clamp(30px,4.2vw,48px)}
+.sec-head p{color:var(--brown-2);max-width:560px;margin-top:12px}
+.divider-label{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.divider-label::after{content:"";flex:1;height:2px;background:var(--border)}
+
+/* nuestro pan */
+#pan{background:var(--sand)}
+.pan-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.pan-card{background:#fff;border:1px solid var(--border);border-radius:18px;overflow:hidden;transition:.2s;box-shadow:0 4px 14px rgba(43,26,13,.06)}
+.pan-card:hover{transform:translateY(-5px);box-shadow:0 18px 32px rgba(43,26,13,.15)}
+.pan-card img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.pan-info{padding:22px 24px}
+.pan-info h3{font-size:22px;margin-bottom:6px}
+.pan-info p{color:var(--brown-2);font-size:16px}
+.pan-link{display:inline-block;margin-top:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;font-size:14px;color:var(--orange)}
+.pan-link:hover{color:var(--orange-2)}
+
+/* features */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border)}
+.feat{background:var(--paper);padding:34px 28px}
+.feat .ic{width:44px;height:44px;color:var(--orange);margin-bottom:16px}
+.feat h3{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:20px;letter-spacing:.2px;margin-bottom:8px}
+.feat p{color:var(--brown-2);font-size:16px}
+
+/* ubicacion */
+#ubicacion{background:var(--cocoa-2);color:var(--paper)}
+#ubicacion .sec-head h2{color:var(--paper)}
+#ubicacion .sec-head p{color:#c9bda3}
+.map-frame{border-radius:20px;overflow:hidden;border:1px solid #3a2c1a}
+.map-frame iframe{width:100%;height:360px;border:0;display:block;filter:saturate(.85)}
+.hours-bar{display:flex;align-items:center;gap:30px;flex-wrap:wrap;margin-top:34px;padding:26px 30px;border:1px solid #3a2c1a;border-radius:16px}
+.hours-bar .hb-item{display:flex;flex-direction:column;gap:3px}
+.hours-bar .hb-item .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:#a99a7d}
+.hours-bar .hb-item .v{font-size:18px;font-weight:700}
+.hours-bar .btn{margin-left:auto}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:13px;padding:9px 16px;border-radius:999px;border:1px solid #3a2c1a}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:#8a7358}
+.badge.is-open{color:#8CE6B0;border-color:rgba(140,230,176,.35);background:rgba(140,230,176,.08)}
+.badge.is-open::before{background:#4ADE80;box-shadow:0 0 0 4px rgba(74,222,128,.2)}
+.badge.is-closed{color:#e0ab7c;border-color:rgba(224,171,124,.3);background:rgba(224,171,124,.06)}
+.badge.is-closed::before{background:#e0ab7c}
+
+/* contacto */
+#contacto{background:linear-gradient(180deg,var(--paper),var(--sand))}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.contact-card{border:1px solid var(--border);border-radius:16px;padding:30px;background:#fff}
+.contact-card .row{display:flex;gap:14px;align-items:flex-start;margin-bottom:22px}
+.contact-card a.row{cursor:pointer}
+.contact-card a.row:hover .v{color:var(--orange)}
+.contact-card .ic{width:24px;height:24px;color:var(--orange);flex:none;margin-top:2px}
+.contact-card .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.contact-card .v{font-size:18px;font-weight:700;transition:.15s}
+.contact-cta{display:flex;flex-direction:column;gap:14px;justify-content:center}
+.contact-cta .btn{justify-content:center;font-size:19px;padding:18px}
+.contact-cta .btn-row{display:flex;gap:14px}
+.contact-cta .btn-row .btn{flex:1;font-size:15px;padding:14px}
+
+/* footer */
+footer{background:var(--near-black);color:#c9bda3;padding:50px 0 30px}
+.foot-grid{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;align-items:center}
+.foot-brand{display:flex;align-items:center;gap:12px}
+.foot-brand img{width:44px;height:44px;border-radius:50%}
+.foot-brand .name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:22px;color:var(--paper)}
+.foot-brand .name .p{color:var(--pink)}
+.foot-brand .name .o{color:var(--orange)}
+.foot-links{display:flex;gap:24px;flex-wrap:wrap;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px}
+.foot-links a:hover{color:var(--orange)}
+.copy{margin-top:30px;padding-top:20px;border-top:1px solid #2a2015;font-size:14px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* floating whatsapp */
+.wa-float{position:fixed;right:20px;bottom:20px;z-index:60;background:#25D366;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.28);transition:transform .15s}
+.wa-float:hover{transform:scale(1.08)}
+.wa-float svg{width:32px;height:32px;fill:#fff}
+
+@media(max-width:900px){
+  .hero-grid,.pan-grid,.contact-grid{grid-template-columns:1fr}
+  .hero-art{order:-1}
+  .feat-grid{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+  .menu-btn{display:block}
+  .nav-links.open{display:flex;position:absolute;top:78px;left:0;right:0;flex-direction:column;background:var(--paper);padding:20px 24px;gap:16px;border-bottom:1px solid var(--border)}
+  .hours-bar .btn{margin-left:0;width:100%;justify-content:center}
+}
+@media(max-width:560px){
+  .feat-grid{grid-template-columns:1fr}
+  .hero-stats{gap:20px}
+  section{padding:70px 0}
+  .contact-cta .btn-row{flex-direction:column}
+}
+@media(max-width:480px){
+  .nav-cta .btn-primary{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Panadería Bampan">
+      <img class="mark" src="assets/logo.png" alt="Logo de Panadería Bampan"/>
+      <div>
+        <div class="name"><span class="p">BAM</span><span class="o">PAN</span></div>
+        <div class="sub">TEPIC, NAY. · +50 AÑOS</div>
+      </div>
+    </a>
+    <nav class="nav-links" id="navlinks">
+      <a href="#pan">Nuestro pan</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#ubicacion">Ubicación</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-primary" href="https://wa.me/523111467498?text=Hola%2C%20quiero%20hacer%20un%20pedido" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+        Ordenar
+      </a>
+      <button class="menu-btn" aria-label="Menú" onclick="document.getElementById('navlinks').classList.toggle('open')">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2B1A0D" stroke-width="2.4"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<a id="top"></a>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Panadería tradicional · Tepic, Nayarit</span>
+      <h1>Más de 50 años<br/>horneando <span class="o">tradición.</span></h1>
+      <p class="lead">Somos una panadería tradicional con más de 50 años de experiencia. Pan dulce, pasteles por encargo y café recién hechos, en el corazón de Tepic.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://wa.me/523111467498?text=Hola%2C%20quiero%20hacer%20un%20pedido" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+          Ordenar por WhatsApp
+        </a>
+        <a class="btn btn-ghost" href="#ubicacion" style="border-color:#5a4a34;color:var(--paper)">Ver ubicación</a>
+      </div>
+      <div class="hero-stats">
+        <div class="s"><div class="n">+50</div><div class="l">Años de tradición</div></div>
+        <div class="s"><div class="n">7:30–4</div><div class="l">Horario</div></div>
+        <div class="s"><div class="n">100%</div><div class="l">Receta de siempre</div></div>
+      </div>
+    </div>
+    <div class="hero-art">
+      <div class="frame">
+        <img src="assets/pan-tricolor.jpg" alt="Conchas tricolor recién horneadas en Panadería Bampan"/>
+        <div class="sticker">+50<br/>AÑOS</div>
+        <div class="badgepin"><img src="assets/logo.png" alt=""/></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NUESTRO PAN ============ -->
+<section id="pan">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">01 / NUESTRO PAN</span></div>
+      <h2>Recién horneado, como siempre</h2>
+      <p>Pan dulce, pan de temporada y pasteles para toda ocasión, hechos con la misma receta de hace 50 años.</p>
+    </div>
+    <div class="pan-grid">
+      <div class="pan-card">
+        <img src="assets/pan-tricolor.jpg" alt="Conchas tricolor de Panadería Bampan" loading="lazy"/>
+        <div class="pan-info">
+          <h3>Pan de temporada</h3>
+          <p>Conchas tricolor y pan dulce variado, horneado fresco cada día en nuestro mostrador.</p>
+        </div>
+      </div>
+      <div class="pan-card">
+        <img src="assets/pastel-especial.jpg" alt="Pastel personalizado con dulces y juguetes de Panadería Bampan" loading="lazy"/>
+        <div class="pan-info">
+          <h3>Pasteles por encargo</h3>
+          <p>Pasteles personalizados con dulces y sorpresas para cumpleaños y fiestas infantiles.</p>
+          <a class="pan-link" href="https://wa.me/523111467498?text=Hola%2C%20quiero%20cotizar%20un%20pastel" target="_blank" rel="noopener">Cotizar un pastel →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ POR QUÉ BAMPAN ============ -->
+<section id="nosotros">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">02 / POR QUÉ BAMPAN</span></div>
+      <h2>Tradición que se nota en cada pieza</h2>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="feat-grid">
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        <h3>+50 años de tradición</h3>
+        <p>Horneando con la misma receta familiar desde hace más de cinco décadas.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M12 6.5L8.5 4.5M12 6.5L15.5 4.5M12 11L8.5 9M12 11L15.5 9M12 15.5L8.5 13.5M12 15.5L15.5 13.5"/></svg>
+        <h3>Horneado artesanal</h3>
+        <p>Pan hecho a mano, sin prisas, todos los días desde temprano.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h13a3 3 0 010 6h-1"/><path d="M4 8v7a4 4 0 004 4h4a4 4 0 004-4V8"/><path d="M8 2c0 1-1 1.2-1 2.2S8 5.5 8 6.5M13 2c0 1-1 1.2-1 2.2s1 1.3 1 2.3"/></svg>
+        <h3>Panadería y cafetería</h3>
+        <p>Acompaña tu pan con un café recién hecho, ahí mismo en el local.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7a2 2 0 012-2h12a2 2 0 012 2v7"/><path d="M4 21h16M4 14a4 4 0 018 0 4 4 0 018 0"/><path d="M12 8V5"/></svg>
+        <h3>Pasteles por encargo</h3>
+        <p>Pasteles personalizados para cumpleaños y fiestas, con dulces y detalles a tu gusto.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8L6 21l1.6-7L2.2 9.2l7.1-.6L12 2z"/></svg>
+        <h3>Pan de temporada</h3>
+        <p>Ediciones especiales para cada fecha del año, como nuestras conchas tricolor.</p>
+      </div>
+      <div class="feat">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0112 6a5.5 5.5 0 019.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg>
+        <h3>Trato de barrio</h3>
+        <p>Más de 1,100 personas nos siguen y recomiendan en Facebook.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ UBICACIÓN ============ -->
+<section id="ubicacion">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num" style="color:#a99a7d">03 / UBICACIÓN</span></div>
+      <h2>Encuéntranos en Tepic</h2>
+      <p>Calzada del Panteón 39, muy cerca de Avenida Benito Juárez.</p>
+    </div>
+    <div class="map-frame">
+      <iframe src="https://www.google.com/maps?q=Calzada%20del%20Pante%C3%B3n%2039%2C%2063000%20Tepic%2C%20Nayarit%2C%20M%C3%A9xico&output=embed" title="Ubicación de Panadería Bampan en el mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="hours-bar">
+      <div class="hb-item">
+        <span class="k">Horario</span>
+        <span class="v">7:30 a. m. – 4:00 p. m.</span>
+      </div>
+      <div class="hb-item">
+        <span class="k">Dirección</span>
+        <span class="v">Calzada del Panteón 39, 63000 Tepic, Nay.</span>
+      </div>
+      <span class="badge" id="openBadge">Consultando horario…</span>
+      <a class="btn btn-outline" href="https://www.google.com/maps/search/?api=1&query=Calzada%20del%20Pante%C3%B3n%2039%2C%2063000%20Tepic%2C%20Nayarit%2C%20M%C3%A9xico" target="_blank" rel="noopener">Cómo llegar</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACTO ============ -->
+<section id="contacto">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">04 / CONTACTO</span></div>
+      <h2>¿Antojo de algo rico?</h2>
+      <p>Escríbenos por WhatsApp, llámanos o síguenos en redes. Con gusto te atendemos.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <a class="row" href="tel:+523111467498">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2A19.8 19.8 0 013 4.2 2 2 0 015 2h3a2 2 0 012 1.7l.5 3a2 2 0 01-.6 1.9L8.1 10a16 16 0 006 6l1.4-1.4a2 2 0 011.9-.5l3 .5a2 2 0 011.7 2z"/></svg>
+          <div><div class="k">Teléfono / WhatsApp</div><div class="v">311 146 7498</div></div>
+        </a>
+        <a class="row" href="https://www.facebook.com/share/19gryKTfgE/?mibextid=wwXIfr" target="_blank" rel="noopener">
+          <svg class="ic" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M22 12a10 10 0 10-11.5 9.9v-7H7.9V12h2.6V9.8c0-2.6 1.5-4 3.9-4 1.1 0 2.3.2 2.3.2v2.5h-1.3c-1.3 0-1.7.8-1.7 1.6V12h2.9l-.5 2.9h-2.4v7A10 10 0 0022 12z"/></svg>
+          <div><div class="k">Facebook</div><div class="v">Panadería Bampan · 1,183 me gusta</div></div>
+        </a>
+        <a class="row" href="https://www.instagram.com/bampan_panaderia/" target="_blank" rel="noopener">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1"/></svg>
+          <div><div class="k">Instagram</div><div class="v">@bampan_panaderia · 24 seguidores</div></div>
+        </a>
+        <a class="row" href="https://www.google.com/maps/search/?api=1&query=Calzada%20del%20Pante%C3%B3n%2039%2C%2063000%20Tepic%2C%20Nayarit%2C%20M%C3%A9xico" target="_blank" rel="noopener" style="margin-bottom:0">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <div><div class="k">Dirección</div><div class="v">Calzada del Panteón 39, Tepic, Nay.</div></div>
+        </a>
+      </div>
+      <div class="contact-cta">
+        <a class="btn btn-primary" href="https://wa.me/523111467498?text=Hola%2C%20quiero%20hacer%20un%20pedido" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+          Ordenar por WhatsApp
+        </a>
+        <a class="btn btn-dark" href="tel:+523111467498">Llamar ahora</a>
+        <div class="btn-row">
+          <a class="btn btn-ghost" style="border-color:#c9bda3" href="https://www.facebook.com/share/19gryKTfgE/?mibextid=wwXIfr" target="_blank" rel="noopener">Facebook</a>
+          <a class="btn btn-ghost" style="border-color:#c9bda3" href="https://www.instagram.com/bampan_panaderia/" target="_blank" rel="noopener">Instagram</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <img src="assets/logo.png" alt=""/>
+        <div>
+          <div class="name"><span class="p">BAM</span><span class="o">PAN</span></div>
+          <div style="font-size:14px">Panadería tradicional · Tepic, Nayarit</div>
+        </div>
+      </div>
+      <nav class="foot-links">
+        <a href="#pan">Nuestro pan</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#ubicacion">Ubicación</a>
+        <a href="#contacto">Contacto</a>
+        <a href="https://wa.me/523111467498" target="_blank" rel="noopener">WhatsApp</a>
+      </nav>
+    </div>
+    <div class="copy">
+      <span>© <span id="yr"></span> Panadería Bampan. Todos los derechos reservados.</span>
+      <span>Calzada del Panteón 39, Tepic, Nay. · 311 146 7498</span>
+    </div>
+  </div>
+</footer>
+
+<!-- floating whatsapp -->
+<a class="wa-float" href="https://wa.me/523111467498?text=Hola%2C%20quiero%20hacer%20un%20pedido" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
+</a>
+
+<script>
+// year
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// open-now badge, based on the visitor's local time (7:30 a.m. - 4:00 p.m.)
+(function(){
+  var badge = document.getElementById('openBadge');
+  if(!badge) return;
+  var now = new Date();
+  var mins = now.getHours()*60 + now.getMinutes();
+  var isOpen = mins >= (7*60+30) && mins < (16*60);
+  badge.textContent = isOpen ? 'Abierto ahora' : 'Cerrado ahora';
+  badge.classList.add(isOpen ? 'is-open' : 'is-closed');
+})();
+
+// close mobile menu on link click
+Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a){
+  a.addEventListener('click',function(){document.getElementById('navlinks').classList.remove('open')});
+});
+</script>
+</body>
+</html>
