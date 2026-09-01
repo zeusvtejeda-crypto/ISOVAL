@@ -111,6 +111,30 @@ por ejemplo **Render** o **Railway** (ambos tienen plan gratis para empezar):
    - Suscríbete al campo **messages**.
 5. Manda un WhatsApp al número de prueba… ¡y el asistente responde! 🎉
 
+### 3.1) ¿Ya usas ese número a diario? → Coexistencia (sigues con el cel)
+
+Por defecto, conectar un número a la Cloud API lo saca de la app del celular.
+Si NO quieres perder eso, Meta tiene un modo llamado **"coexistencia"**:
+mantienes la app **WhatsApp Business** (gratuita) funcionando normal en tu
+teléfono — recibes y contestas ahí igual que siempre — y **además** la Cloud
+API (tu asistente) puede leer y responder los mismos chats. No requiere
+tocar el código de este proyecto, solo cómo conectas el número en Meta:
+
+1. Instala/abre la app **WhatsApp Business** con el número que ya usas
+   (si hoy tienes la app "WhatsApp" normal, Meta te deja migrar el mismo
+   número y tus chats a "WhatsApp Business" sin perder el historial).
+2. En **Meta Business Suite → WhatsApp Business Platform** (o desde el paso
+   1 de arriba, al agregar el producto WhatsApp), elige la opción de
+   **vincular un número de WhatsApp Business que ya existe** — no "usar un
+   número nuevo". Ahí es donde se activa la coexistencia.
+3. Sigue el resto de los pasos igual (1-4 de arriba): el `phone_number_id`
+   y el token que te da Meta se usan exactamente igual en tus variables de
+   entorno (`PHONE_ID_ISOVAL`, `WHATSAPP_TOKEN_ISOVAL`, etc.).
+4. Los nombres y ubicación exacta de estas opciones cambian de vez en
+   cuando en el panel de Meta — busca **"coexistence"** o **"vincular
+   WhatsApp Business existente"** dentro de WhatsApp Business Platform si
+   no coincide 1:1 con lo descrito aquí.
+
 > **Para empezar con un solo número:** deja `PHONE_ID_*` vacíos y pon
 > `DEFAULT_BUSINESS=camas` (o el negocio que quieras). Cuando tengas un número
 > por negocio, llena cada `PHONE_ID_*` y quita `DEFAULT_BUSINESS`.
