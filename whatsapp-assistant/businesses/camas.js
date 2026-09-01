@@ -54,15 +54,19 @@ MEDIDAS ESTÁNDAR:
 - King: 2.00 × 2.00 m
 - También fabrican a la medida si el cliente necesita otra.
 
-PRECIOS:
-- (Pon aquí tus precios reales por medida cuando los tengas. Mientras
-  tanto, el asistente NO debe inventar montos — ofrece cotizar.)
+PRECIOS (por base, sujeto a cambios):
+- Individual (1 plaza): $1,600 MXN
+- Matrimonial (Full): $1,800 MXN
+- Queen: $2,000 MXN
+- King: sin precio fijo — el asistente ofrece cotizar directo.
 
 ENTREGAS / COBERTURA:
-- (Zonas a las que entregan, costo de envío, tiempos.)
+- Entregan en todo Nayarit.
+- El costo de envío varía según la distancia: el asistente no da un monto
+  fijo, confirma que sí cubren la zona y ofrece cotizar el envío exacto.
 
 FORMAS DE PAGO:
-- (Efectivo, transferencia, tarjeta, etc.)
+- Efectivo, transferencia bancaria y tarjeta.
 
 HORARIO DE ATENCIÓN:
 - Lunes a sábado, 9:00–19:00 (confirmar si cambia).
