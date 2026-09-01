@@ -51,14 +51,15 @@ MEDIDAS ESTÁNDAR:
 - Individual (1 plaza): 1.00 × 1.90 m
 - Matrimonial (Full): 1.35 × 1.90 m
 - Queen: 1.50 × 2.00 m
-- King: 2.00 × 2.00 m
+- King: 2.00 × 2.00 m (se arma con 2 bases individuales juntas, no es
+  una pieza sola)
 - También fabrican a la medida si el cliente necesita otra.
 
 PRECIOS (por base, sujeto a cambios):
 - Individual (1 plaza): $1,600 MXN
 - Matrimonial (Full): $1,800 MXN
 - Queen: $2,000 MXN
-- King: sin precio fijo — el asistente ofrece cotizar directo.
+- King: $3,200 MXN (2 bases individuales de $1,600 c/u)
 
 ENTREGAS / COBERTURA:
 - Entregan en todo Nayarit.
