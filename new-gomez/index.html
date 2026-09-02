@@ -464,9 +464,9 @@ var DATA={
 // ── Personal por defecto: superadmin (tú), dueño y empleado ──
 // pin guarda hashPin(PIN), nunca el PIN en texto plano (ver hashPin más abajo).
 var DEFAULT_STAFF=[
-  {id:'zeus',nombre:'Zeus',rol:'superadmin',pin:'7b6ae6ec',activo:true,barbero:false},
-  {id:'angel',nombre:'Angel',rol:'owner',pin:'c345690',activo:true,barbero:true,img:'img/angel.jpg'},
-  {id:'alexis',nombre:'Alexis',rol:'employee',pin:'27aeca16',activo:true,barbero:true,img:'img/alexis.jpg'}
+  {id:'zeus',nombre:'Zeus',rol:'superadmin',pin:'9ed63160',activo:true,barbero:false},
+  {id:'angel',nombre:'Angel',rol:'owner',pin:'d59e0b84',activo:true,barbero:true,img:'img/angel.jpg'},
+  {id:'alexis',nombre:'Alexis',rol:'employee',pin:'fec20396',activo:true,barbero:true,img:'img/alexis.jpg'}
 ];
 
 var S={services:[],barber:'any',date:null,time:null,step:1,last:null};
@@ -963,9 +963,11 @@ function renderBarberos(u){
     STAFF.list.map(function(p){
       // Nadie por debajo de superadmin puede tocar el rol/alta-baja de un superadmin.
       var protegido=p.rol==='superadmin'&&u.rol!=='superadmin';
-      var acts=(puedeAdmin&&p.id!==u.id&&!protegido)?
+      var acts='';
+      if(p.id===u.id||(puedeAdmin&&!protegido))acts+='<button type="button" data-sid="'+p.id+'" data-sact="editar">Editar</button>';
+      if(puedeAdmin&&p.id!==u.id&&!protegido)acts+=
         '<button type="button" data-sid="'+p.id+'" data-sact="rol">'+(p.rol==='employee'?'Hacer admin':'Hacer trabajador')+'</button>'+
-        '<button type="button" data-sid="'+p.id+'" data-sact="toggle" class="danger">'+(p.activo===false?'Reactivar':'Quitar')+'</button>':'';
+        '<button type="button" data-sid="'+p.id+'" data-sact="toggle" class="danger">'+(p.activo===false?'Reactivar':'Quitar')+'</button>';
       return '<div class="staff-row'+(p.activo===false?' inactivo':'')+'">'+(p.img?'<img class="av" src="'+p.img+'" alt="" width="44" height="44" loading="lazy" decoding="async"/>':'<span class="av" aria-hidden="true"></span>')+
         '<b>'+esc(p.nombre)+'</b><span class="role">'+roleLabel(p.rol)+(p.activo===false?' · inactivo':'')+'</span>'+
         '<span class="acts">'+acts+'</span></div>';
@@ -990,9 +992,33 @@ function renderBarberos(u){
     $('#panelBody').addEventListener('click',function(e){
       var b=e.target.closest('button[data-sact]');if(!b)return;
       var p=STAFF.list.filter(function(x){return x.id===b.dataset.sid})[0];if(!p)return;
-      if(p.rol==='superadmin'&&u.rol!=='superadmin')return; // defensa además de ocultar el botón
+      var esUnoMismo=p.id===u.id;
+      if(p.rol==='superadmin'&&u.rol!=='superadmin'&&!esUnoMismo)return; // defensa además de ocultar el botón
       if(b.dataset.sact==='toggle'){p.activo=p.activo===false?true:false;saveStaff(p);renderDash()}
       else if(b.dataset.sact==='rol'){p.rol=p.rol==='employee'?'owner':'employee';saveStaff(p);renderDash()}
+      else if(b.dataset.sact==='editar'){
+        $('#staffForm').innerHTML='<div class="mform"><div class="mform-head"><span>Editar '+esc(p.nombre)+'</span><button type="button" id="eCancel">✕</button></div>'+
+          '<div class="row2"><input type="text" id="eNombre" placeholder="Nombre" value="'+esc(p.nombre)+'"/>'+
+          '<input type="text" id="ePin" placeholder="Nuevo PIN (opcional)" maxlength="4" inputmode="numeric"/></div>'+
+          '<p style="font-size:12px;color:var(--smoke)">Deja el PIN en blanco para conservar el actual.</p>'+
+          '<button type="button" class="btn btn-primary" id="eGuardar" style="min-height:44px">Guardar cambios</button></div>';
+        $('#eCancel').onclick=function(){$('#staffForm').innerHTML=''};
+        $('#eGuardar').onclick=function(){
+          var nombre=$('#eNombre').value.trim(),pinRaw=$('#ePin').value.replace(/\D/g,'');
+          if(!nombre){alert('Escribe un nombre.');return}
+          var hashActual=staffPinOf(p),hashNuevo=hashActual;
+          if(pinRaw){
+            if(pinRaw.length!==4){alert('El PIN debe tener 4 dígitos.');return}
+            hashNuevo=hashPin(pinRaw);
+            if(STAFF.list.some(function(x){return x.id!==p.id&&staffPinOf(x)===hashNuevo})){alert('Ese PIN ya lo usa alguien más.');return}
+          }
+          var actualizado={};for(var k in p)actualizado[k]=p[k];
+          actualizado.nombre=nombre;actualizado.pin=hashNuevo;
+          saveStaff(actualizado);
+          if(esUnoMismo)Session.current=actualizado;
+          $('#staffForm').innerHTML='';renderDash();
+        };
+      }
     });
   }
 }
