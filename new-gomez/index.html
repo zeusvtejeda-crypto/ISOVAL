@@ -127,6 +127,27 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .slot{background:var(--paper);border:1.5px solid var(--line);border-radius:10px;min-height:46px;font-family:var(--mono);font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
 .slot:hover{border-color:var(--brass-deep)}
 .slot[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:var(--ink)}
+.slot.busy{opacity:.45;text-decoration:line-through;cursor:not-allowed;background:var(--bone-2);border-color:transparent}
+.slot.busy:hover{border-color:transparent}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--smoke);margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;border:1.5px solid var(--line);background:var(--paper)}
+.legend i.b{background:var(--bone-2);border-color:transparent}
+.done{background:var(--ink);color:#F2EDE3;border-radius:14px;padding:22px 20px;display:grid;gap:8px;margin-bottom:16px;box-shadow:var(--shadow)}
+.done .ok-ic{width:48px;height:48px;border-radius:50%;background:var(--brass);color:var(--ink);display:grid;place-items:center;margin-bottom:4px}
+.done .ok-ic svg{width:26px;height:26px}
+.done h2{color:#F2EDE3;font-size:34px}
+.done p{font-size:14px;color:#D9D3C6}
+.done .folio{font-family:var(--mono);font-size:13px;color:#C49A3C;letter-spacing:.06em}
+.agenda{display:grid;gap:8px;margin-top:10px}
+.agenda .it{display:grid;grid-template-columns:auto 1fr auto;gap:2px 14px;align-items:center;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.agenda .it .when{grid-row:1/3;font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;line-height:1.35;text-align:center;min-width:64px}
+.agenda .it .when b{display:block;font-family:var(--disp);font-size:24px;font-weight:800;line-height:1}
+.agenda .it .who{font-weight:600}
+.agenda .it .what{grid-column:2;font-size:13px;color:var(--smoke)}
+.agenda .it .st{grid-row:1/3;grid-column:3;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);border:1px solid currentColor;border-radius:999px;padding:3px 8px;white-space:nowrap}
+.agenda-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:26px}
+.agenda-head h3{font-size:22px;font-weight:800}
+.agenda-head span{font-size:12px;color:var(--smoke)}
 .empty{padding:22px 16px;text-align:center;color:var(--smoke);font-size:14px;background:var(--paper);border:1.5px dashed var(--line);border-radius:12px}
 .hint{font-size:13px;color:var(--smoke);margin-top:10px}
 
@@ -244,6 +265,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
       <p class="eyebrow" id="timesLabel">Escoge una hora</p>
       <div class="times" id="times" role="group" aria-labelledby="timesLabel"></div>
       <p class="hint" id="timesHint"></p>
+      <p class="legend"><span><i></i>Disponible</span><span><i class="b"></i>Ocupado</span></p>
     </section>
 
     <!-- Paso 4: Confirmar -->
@@ -287,6 +309,23 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
         <span><b>Cancelación</b> · cancela con al menos 2 horas de antelación.</span>
       </div>
     </section>
+
+    <!-- Paso 5: Cita registrada + agenda -->
+    <section class="step" id="step5" aria-labelledby="h5s" hidden>
+      <div class="done" id="doneCard">
+        <span class="ok-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>
+        <h2 id="h5s" tabindex="-1">Cita registrada</h2>
+        <p id="doneText">Tu horario quedó apartado. Envíanos el mensaje de WhatsApp para confirmarla.</p>
+        <span class="folio" id="folio"></span>
+      </div>
+      <div id="ticketDone"></div>
+      <div class="actions" id="doneActions">
+        <a class="btn btn-primary" id="waBtn2" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Enviar mensaje por WhatsApp</a>
+        <a class="btn btn-ghost" id="calBtn2" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
+      </div>
+      <div class="agenda-head"><h3 id="agendaTitle">Citas registradas</h3><span id="agendaMode">en este dispositivo</span></div>
+      <div class="agenda" id="agenda" aria-live="polite"></div>
+    </section>
   </div>
 
   <aside class="ticket-side" aria-label="Resumen de tu reserva"><div id="ticketSide"></div></aside>
@@ -298,6 +337,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
     <a href="https://wa.me/523111585540" target="_blank" rel="noopener">WhatsApp</a>
     <a href="https://www.instagram.com/angel_newgomez" target="_blank" rel="noopener">Instagram</a>
     <a href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Perfil en Fresha</a>
+    <a href="#agenda" id="agendaLink">Ver agenda</a>
   </div>
   <span>Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit · Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado</span>
 </footer>
@@ -338,7 +378,33 @@ var DATA={
   hours:{0:[],1:[[600,840],[960,1200]],2:[[600,840],[960,1200]],3:[[600,840],[960,1200]],4:[[600,840],[960,1200]],5:[[600,840],[960,1200]],6:[[600,960]]},
   step:20, lead:30, days:14
 };
-var S={services:[],barber:'any',date:null,time:null,step:1};
+var S={services:[],barber:'any',date:null,time:null,step:1,last:null};
+var BOOK={list:[],db:null,shared:false};
+try{BOOK.list=JSON.parse(localStorage.getItem('ng-citas')||'[]')||[]}catch(e){BOOK.list=[]}
+var dayKey=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function overlapping(key,start,end){return BOOK.list.filter(function(b){return b&&b.fecha===key&&b.inicio<end&&(b.inicio+b.dur)>start})}
+function blocked(key,start,d,barberId){
+  var ov=overlapping(key,start,start+d);
+  if(barberId!=='any'&&ov.some(function(b){return b.barbero===barberId}))return true;
+  return ov.length>=2; // dos sillas
+}
+function saveBooking(b){
+  BOOK.list=BOOK.list.filter(function(x){return x.id!==b.id}).concat([b]);
+  try{localStorage.setItem('ng-citas',JSON.stringify(BOOK.list))}catch(e){}
+  if(BOOK.db){BOOK.db.doc('citas/'+b.id).set(b).catch(function(){})}
+}
+function initDb(){
+  if(!(window.claude&&typeof window.claude.use==='function'))return;
+  window.claude.use('db').then(function(db){
+    if(!db)return;BOOK.db=db;
+    db.collection('citas').onSnapshot(function(snap){
+      BOOK.shared=true;BOOK.list=snap.docs.map(function(d){return d.data()}).filter(function(b){return b&&b.fecha});
+      try{localStorage.setItem('ng-citas',JSON.stringify(BOOK.list))}catch(e){}
+      var m=document.getElementById('agendaMode');if(m)m.textContent='agenda compartida · se actualiza en vivo';
+      if(S.step===3)renderTimes();if(S.step===5)renderAgenda();
+    },function(){});
+  }).catch(function(){});
+}
 var $=function(s,r){return (r||document).querySelector(s)};
 var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var fmtDur=function(m){var h=Math.floor(m/60),r=m%60;return h?(r?h+' h '+r+' min':h+' h'):r+' min'};
@@ -404,12 +470,16 @@ function renderTimes(){
   var box=$('#times'),hint=$('#timesHint'),d=dur();
   $('#durHint').textContent='Tu cita dura '+fmtDur(d)+'.';
   if(!S.date){box.innerHTML='<div class="empty" style="grid-column:1/-1">Primero elige una fecha.</div>';hint.textContent='';return}
-  var list=slots(S.date,d);
+  var list=slots(S.date,d),key=dayKey(S.date),free=0;
   if(!list.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">Sin horarios disponibles ese día, elige otro.</div>';hint.textContent='';return}
-  box.innerHTML=list.map(function(t){return '<button type="button" class="slot" data-t="'+t+'" aria-pressed="'+(S.time===t?'true':'false')+'" aria-label="'+fmtTime(t)+' a '+fmtTime(t+d)+'">'+fmtTime(t)+'</button>'}).join('');
+  if(S.time!==null&&blocked(key,S.time,d,S.barber))S.time=null;
+  box.innerHTML=list.map(function(t){
+    var busy=blocked(key,t,d,S.barber);if(!busy)free++;
+    return '<button type="button" class="slot'+(busy?' busy':'')+'" data-t="'+t+'"'+(busy?' disabled aria-label="'+fmtTime(t)+', ocupado"':' aria-pressed="'+(S.time===t?'true':'false')+'" aria-label="'+fmtTime(t)+' a '+fmtTime(t+d)+'"')+'>'+fmtTime(t)+'</button>'}).join('');
+  if(!free){hint.textContent='Ese día ya está lleno para '+(S.barber==='any'?'todos los barberos':barber().nombre)+'. Prueba otra fecha u otro barbero.';return}
   hint.textContent=S.time!==null?'Tu cita: '+fmtTime(S.time)+'–'+fmtTime(S.time+d)+' ('+fmtDur(d)+').':'Horas de inicio disponibles con '+(barber().id==='any'?'cualquier barbero':barber().nombre)+'.';
 }
-$('#times').addEventListener('click',function(e){var b=e.target.closest('.slot');if(!b)return;S.time=+b.dataset.t;renderTimes();update()});
+$('#times').addEventListener('click',function(e){var b=e.target.closest('.slot');if(!b||b.disabled)return;S.time=+b.dataset.t;renderTimes();update()});
 
 /* ── Ticket ── */
 function ticketHTML(){
@@ -442,7 +512,8 @@ function message(){
   return lines.join('\n');
 }
 function links(){
-  $('#waBtn').href='https://wa.me/'+DATA.wa+'?text='+encodeURIComponent(message());
+  var wa='https://wa.me/'+DATA.wa+'?text='+encodeURIComponent(message());
+  $('#waBtn').href=wa;$('#waBtn2').href=wa;
   var cal=$('#calBtn');
   if(S.date&&S.time!==null){
     var names=sel().map(function(x){return x.nombre}).join(', ');
@@ -451,6 +522,7 @@ function links(){
       '&details='+encodeURIComponent(message())+'&location='+encodeURIComponent('NEW GOMEZ Barbershop, Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit');
     cal.hidden=false;
   }else cal.hidden=true;
+  $('#calBtn2').href=cal.href;$('#calBtn2').hidden=cal.hidden;
 }
 
 /* ── Validación y confirmación ── */
@@ -461,15 +533,25 @@ function validate(show){
   if(badName||badPhone)ok=false;
   return ok;
 }
-$('#waBtn').addEventListener('click',function(e){
-  if(!validate(true)){e.preventDefault();var f=$('#fName.invalid input, #fPhone.invalid input');if(f)f.focus();return}
-  store.set('ng-name',person().name);store.set('ng-phone',person().phone);
-});
+function folio(){var t=Date.now().toString(36).slice(-4).toUpperCase(),r=Math.floor(Math.random()*1296).toString(36).toUpperCase().padStart(2,'0');return 'NG-'+t+r}
+function registrar(){
+  var p=person(),b={id:folio(),fecha:dayKey(S.date),inicio:S.time,dur:dur(),barbero:S.barber,barberoNombre:barber().nombre,
+    servicios:sel().map(function(x){return x.nombre}),total:total(),nombre:p.name,telefono:p.phone,primera:p.first,nota:p.note,
+    creado:new Date().toISOString(),estado:'registrada'};
+  store.set('ng-name',p.name);store.set('ng-phone',p.phone);
+  saveBooking(b);S.last=b;return b;
+}
+function confirmar(e){
+  if(!validate(true)){if(e)e.preventDefault();var f=$('#fName.invalid input, #fPhone.invalid input');if(f)f.focus();return false}
+  if(!S.last||S.last.fecha!==dayKey(S.date)||S.last.inicio!==S.time)registrar();
+  setTimeout(function(){go(5)},50);return true;
+}
+$('#waBtn').addEventListener('click',confirmar);
 ['input','change'].forEach(function(ev){$('#form').addEventListener(ev,function(){$('#fName').classList.remove('invalid');$('#fPhone').classList.remove('invalid');links();renderTicket()})});
 $('#name').value=store.get('ng-name');$('#phone').value=store.get('ng-phone');
 
 /* ── Pasos ── */
-var steps=[null,$('#step1'),$('#step2'),$('#step3'),$('#step4')];
+var steps=[null,$('#step1'),$('#step2'),$('#step3'),$('#step4'),$('#step5')];
 function canNext(){
   if(S.step===1)return S.services.length>0;
   if(S.step===2)return !!S.barber;
@@ -480,18 +562,42 @@ function go(n){
   S.step=n;
   steps.forEach(function(el,i){if(el)el.hidden=i!==n});
   Array.prototype.forEach.call(document.querySelectorAll('.segs span'),function(s,i){s.classList.toggle('on',i<n)});
-  $('#stepLabel').textContent='Paso '+n+' de 4';
+  $('#stepLabel').textContent=n===5?'Listo':'Paso '+n+' de 4';
   if(n===3)renderTimes();
+  if(n===5){var b=S.last;$('#doneCard').hidden=!b;$('#doneActions').hidden=!b;$('#ticketDone').innerHTML=b?ticketHTML():'';
+    if(b){$('#folio').textContent='Folio '+b.id;$('#doneText').textContent=(b.nombre?b.nombre+', tu':'Tu')+' horario quedó apartado'+(BOOK.shared?' en la agenda compartida':' en este dispositivo')+'. Envíanos el mensaje de WhatsApp para confirmarla.'}
+    renderAgenda()}
   update();
   window.scrollTo({top:0,behavior:'auto'});
   var h=$('h2',steps[n]);if(h)h.focus({preventScroll:true});
 }
 $('#nextBtn').addEventListener('click',function(){
-  if(S.step===4){ if(validate(true)){store.set('ng-name',person().name);store.set('ng-phone',person().phone);window.open($('#waBtn').href,'_blank','noopener')} else {var f=$('#fName.invalid input, #fPhone.invalid input');if(f)f.focus()} return }
+  if(S.step===5){reset();return}
+  if(S.step===4){ if(confirmar())window.open($('#waBtn').href,'_blank','noopener'); return }
   if(canNext())go(S.step+1);
 });
 Array.prototype.forEach.call(document.querySelectorAll('[data-back]'),function(b){b.addEventListener('click',function(){go(+b.dataset.back)})});
 
+function reset(){
+  S.services=[];S.date=null;S.time=null;S.last=null;
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=svc]'),function(i){i.checked=false});
+  renderDates();go(1);
+}
+var agendaFmt=new Intl.DateTimeFormat('es-MX',{weekday:'short',day:'numeric',month:'short'});
+function renderAgenda(){
+  var tk=dayKey(new Date());
+  var list=BOOK.list.filter(function(b){return b.fecha>=tk}).sort(function(a,b){return a.fecha===b.fecha?a.inicio-b.inicio:(a.fecha<b.fecha?-1:1)});
+  $('#agendaTitle').textContent='Citas registradas ('+list.length+')';
+  if(!list.length){$('#agenda').innerHTML='<div class="empty">Aún no hay citas registradas.</div>';return}
+  $('#agenda').innerHTML=list.map(function(b){
+    var d=new Date(b.fecha+'T12:00:00');
+    return '<div class="it'+(S.last&&S.last.id===b.id?' mine':'')+'"><span class="when">'+esc(agendaFmt.format(d).replace('.','').replace(',',''))+'<b>'+fmtTime(b.inicio)+'</b>'+fmtTime(b.inicio+b.dur)+'</span>'+
+      '<span class="who">'+esc(b.nombre||'Cliente')+' · '+esc(b.barberoNombre||'Cualquier barbero')+'</span>'+
+      '<span class="what">'+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(b.telefono?' · '+esc(b.telefono):'')+(b.id?' · '+esc(b.id):'')+'</span>'+
+      '<span class="st">Registrada</span></div>'}).join('');
+}
+$('#agendaLink').addEventListener('click',function(e){e.preventDefault();S.last=null;go(5)});
+initDb();
 function renderTicket(){var h=ticketHTML();$('#ticketSide').innerHTML=h;$('#ticketMobile').innerHTML=S.step===4?h:''}
 function update(){
   var t=total(),d=dur(),n=S.services.length;
@@ -500,7 +606,8 @@ function update(){
   if(S.step>=3&&S.date&&S.time!==null)det=shortW[S.date.getDay()]+' '+S.date.getDate()+' '+shortM[S.date.getMonth()]+' · '+fmtTime(S.time)+' · '+fmtDur(d);
   $('#barDet').textContent=det;
   var nb=$('#nextBtn');nb.disabled=!canNext();
-  nb.textContent=S.step===4?'Confirmar':S.step===3&&S.time===null?'Elige una hora':'Continuar';
+  nb.textContent=S.step===5?'Nueva reserva':S.step===4?'Confirmar':S.step===3&&S.time===null?'Elige una hora':'Continuar';
+  if(S.step===5){nb.disabled=false;$('#barDet').textContent=S.last?'Folio '+S.last.id:'Agenda'}
   if(S.step===3)renderTimes();
   links();renderTicket();
 }
