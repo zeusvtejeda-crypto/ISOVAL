@@ -957,10 +957,13 @@ function renderMes(){
 }
 function renderBarberos(u){
   var puedeAdmin=u.rol==='superadmin'||u.rol==='owner';
+  // El superadmin no aparece en esta lista para nadie más que para sí mismo: el resto del
+  // equipo ni se entera de que existe esa cuenta, pero él sigue viendo y pudiendo editar todo.
+  var visibles=STAFF.list.filter(function(p){return p.rol!=='superadmin'||p.id===u.id});
   $('#panelBody').innerHTML=
     (puedeAdmin?'<button type="button" class="btn btn-ghost" id="addStaffBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Agregar barbero</button>':'')+
     '<div id="staffForm"></div>'+
-    STAFF.list.map(function(p){
+    visibles.map(function(p){
       // Nadie por debajo de superadmin puede tocar el rol/alta-baja de un superadmin.
       var protegido=p.rol==='superadmin'&&u.rol!=='superadmin';
       var acts='';
