@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NEW GOMEZ · Reservar</title>
+<meta name="description" content="Reserva tu corte en NEW GOMEZ Barbershop, Tepic. Elige servicio, barbero, fecha y hora, y confirma por WhatsApp en menos de un minuto."/>
+<meta name="theme-color" content="#15130F"/>
+<link rel="icon" href="img/logo.jpg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#15130F;--ink-2:#23201A;
+  --bone:#F2EDE3;--paper:#FBF8F1;--bone-2:#E6DFCF;
+  --brass:#C49A3C;--brass-deep:#9E7826;--brass-soft:rgba(196,154,60,.14);
+  --text:#15130F;--smoke:#7A7366;--ok:#2F7D4F;--err:#B3261E;
+  --line:rgba(21,19,15,.12);--shadow:0 10px 30px rgba(21,19,15,.10);
+  --bar:#15130F;--bar-text:#F2EDE3;
+  --disp:'Big Shoulders Display','Oswald','Arial Narrow',Impact,sans-serif;
+  --sans:'IBM Plex Sans','Helvetica Neue',Arial,sans-serif;
+  --mono:'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bone:#15130F;--paper:#1E1B16;--bone-2:#2A2620;--text:#F2EDE3;--smoke:#A39B8B;
+    --brass:#D9B25A;--brass-deep:#C49A3C;--brass-soft:rgba(217,178,90,.16);--ok:#6FBF8A;--err:#F28B82;
+    --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;
+  }
+}
+:root[data-theme="dark"]{
+  --bone:#15130F;--paper:#1E1B16;--bone-2:#2A2620;--text:#F2EDE3;--smoke:#A39B8B;
+  --brass:#D9B25A;--brass-deep:#C49A3C;--brass-soft:rgba(217,178,90,.16);--ok:#6FBF8A;--err:#F28B82;
+  --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bone);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.45;padding-bottom:104px}
+img{max-width:100%;display:block}
+button,input,textarea{font:inherit;color:inherit}
+fieldset{border:0;padding:0;min-width:0}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--smoke)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ── Cabecera ── */
+.head{background:var(--ink);color:#F2EDE3}
+.head-in{max-width:1100px;margin:0 auto;padding:18px 20px 22px;display:flex;gap:16px;align-items:center}
+.head-in>div{min-width:0;flex:1}
+@media (min-width:600px){.head h1{font-size:44px}}
+.badge{width:96px;flex:none;border-radius:10px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(242,237,227,.14)}
+.head h1{font-size:34px;font-weight:800;letter-spacing:.01em;color:#F2EDE3}
+.head h1 small{display:block;font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#C49A3C;margin-top:2px}
+.rating{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;color:#D9D3C6}
+.rating b{color:#F2EDE3;font-weight:600}
+.stars{color:#D9B25A;letter-spacing:1px;font-size:13px}
+.meta{margin-top:6px;font-size:13px;color:#B9B2A3;display:flex;flex-wrap:wrap;gap:4px 12px}
+.meta a{color:#F2EDE3;text-decoration:underline;text-decoration-color:rgba(242,237,227,.35);text-underline-offset:3px}
+.meta a:hover{text-decoration-color:#C49A3C}
+
+/* ── Progreso ── */
+.progress{max-width:1100px;margin:0 auto;padding:16px 20px 0;display:flex;align-items:center;gap:10px}
+.segs{display:flex;gap:6px;flex:1}
+.segs span{flex:1;height:4px;border-radius:2px;background:var(--bone-2)}
+.segs span.on{background:var(--brass)}
+.progress .eyebrow{white-space:nowrap}
+
+/* ── Layout ── */
+.wrap{max-width:1100px;margin:0 auto;padding:12px 20px 0;display:grid;gap:28px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:960px){
+  .wrap{grid-template-columns:minmax(0,1fr) 340px;padding-top:20px}
+  .ticket-side{display:block!important;position:sticky;top:20px;align-self:start}
+  #ticketMobile{display:none}
+  body{padding-bottom:104px}
+}
+.ticket-side{display:none}
+.step-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:10px 0 14px}
+.step-head h2{font-size:32px;font-weight:800;letter-spacing:.01em}
+.step-head p{font-size:14px;color:var(--smoke)}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--smoke);font-size:14px;font-weight:500;min-height:44px;padding:0 4px;margin-left:-4px}
+.back:hover{color:var(--text)}
+.back svg{width:16px;height:16px}
+
+/* ── Opciones ── */
+.list{display:grid;gap:10px}
+.opt{position:relative;display:grid;grid-template-columns:1fr auto;gap:2px 14px;align-items:center;padding:14px 16px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;min-height:64px;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--brass-deep)}
+.opt input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.opt input:focus-visible ~ .name{outline:3px solid var(--brass);outline-offset:14px;border-radius:2px}
+.opt:has(input:checked){border-color:var(--brass);background:var(--brass-soft);box-shadow:inset 0 0 0 1px var(--brass)}
+.opt .name{font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.opt .sub{grid-column:1;font-size:13px;color:var(--smoke)}
+.opt .price{grid-row:1/3;grid-column:2;font-family:var(--disp);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.opt .price small{font-family:var(--mono);font-size:12px;color:var(--smoke);display:block;margin-top:-2px;letter-spacing:0}
+.tag{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--brass-deep);border:1px solid var(--brass);border-radius:999px;padding:2px 7px}
+.check{grid-row:1/3;grid-column:2;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent;transition:.15s}
+.opt:has(input:checked) .check{background:var(--brass);border-color:var(--brass);color:var(--ink)}
+.check svg{width:14px;height:14px}
+.opt.bar{grid-template-columns:auto 1fr auto}
+.opt.bar .name,.opt.bar .sub{grid-column:2}
+.opt.bar .check{grid-column:3}
+.avatar{grid-row:1/3;grid-column:1;width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--bone-2)}
+.avatar.any{display:grid;place-items:center;color:var(--brass-deep);background:var(--brass-soft)}
+.avatar.any svg{width:24px;height:24px}
+.opt .star{font-size:12px;color:var(--smoke);font-weight:500}
+.opt .star b{color:var(--brass-deep)}
+
+/* ── Fechas y horas ── */
+.dates{display:flex;gap:8px;overflow-x:auto;padding:4px 20px 12px;margin:0 -20px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.dates::-webkit-scrollbar{display:none}
+.day{flex:none;width:68px;scroll-snap-align:start;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center;line-height:1.1;min-height:78px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.day .w{font-size:12px;color:var(--smoke);text-transform:lowercase}
+.day .n{font-family:var(--disp);font-size:28px;font-weight:800}
+.day .m{font-size:12px;color:var(--smoke)}
+.day:hover:not(:disabled){border-color:var(--brass-deep)}
+.day[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#F2EDE3}
+.day[aria-pressed="true"] .w,.day[aria-pressed="true"] .m{color:#C49A3C}
+.day:disabled{opacity:.45;cursor:not-allowed}
+.day:disabled .n{font-size:13px;font-family:var(--sans);font-weight:600;padding:6px 0}
+.times{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+@media (min-width:480px){.times{grid-template-columns:repeat(4,1fr)}}
+.slot{background:var(--paper);border:1.5px solid var(--line);border-radius:10px;min-height:46px;font-family:var(--mono);font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
+.slot:hover{border-color:var(--brass-deep)}
+.slot[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:var(--ink)}
+.empty{padding:22px 16px;text-align:center;color:var(--smoke);font-size:14px;background:var(--paper);border:1.5px dashed var(--line);border-radius:12px}
+.hint{font-size:13px;color:var(--smoke);margin-top:10px}
+
+/* ── Formulario ── */
+.form{display:grid;gap:14px;margin-bottom:20px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.field label span{color:var(--smoke);font-weight:400}
+.field input,.field textarea{width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:48px}
+.field textarea{min-height:72px;resize:vertical}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--brass);box-shadow:0 0 0 3px var(--brass-soft)}
+.field .msg{display:none;font-size:13px;color:var(--err);margin-top:6px;font-weight:500}
+.field.invalid input{border-color:var(--err)}
+.field.invalid .msg{display:block}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg .opt{min-height:52px;padding:10px 14px;grid-template-columns:1fr auto}
+
+/* ── Ticket / resumen ── */
+.ticket{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.ticket-top{padding:16px 18px 14px;display:flex;gap:12px;align-items:center;border-bottom:1px dashed var(--line)}
+.ticket-top img{width:56px;border-radius:8px;background:#000}
+.ticket-top h3{font-size:22px;font-weight:800;letter-spacing:.01em}
+.ticket-top p{font-size:12px;color:var(--smoke);margin-top:2px}
+.ticket-body{padding:14px 18px;display:grid;gap:10px}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.row .k{color:var(--smoke)}
+.row .v{text-align:right;font-weight:500}
+.row .v.mono{font-size:13px}
+.row.svc .v{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.row.svc .k{color:var(--text)}
+.row.svc .k small{display:block;color:var(--smoke);font-size:12px}
+.ticket .tot{border-top:1px dashed var(--line);padding-top:12px;align-items:baseline}
+.ticket .tot .k{font-weight:600;color:var(--text)}
+.ticket .tot .v{font-family:var(--disp);font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.ticket .tot .v small{font-family:var(--mono);font-size:12px;color:var(--smoke);margin-left:4px}
+.ticket-foot{padding:12px 18px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--smoke);display:grid;gap:4px}
+.ticket .pending{color:var(--smoke);font-style:italic;font-weight:400}
+
+/* ── Acciones finales ── */
+.actions{display:grid;gap:10px;margin-top:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 20px;border-radius:12px;font-weight:600;font-size:16px;text-decoration:none;border:1.5px solid transparent;transition:transform .12s,background .15s}
+.btn svg{width:20px;height:20px;flex:none}
+.btn-primary{background:var(--brass);color:var(--ink);border-color:var(--brass)}
+.btn-primary:hover{background:var(--brass-deep);border-color:var(--brass-deep)}
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:var(--brass-deep)}
+.btn:active{transform:scale(.985)}
+.policy{font-size:13px;color:var(--smoke);margin-top:14px;display:grid;gap:4px}
+
+/* ── Barra inferior ── */
+.bar-fixed{position:fixed;left:0;right:0;bottom:0;background:var(--bar);color:var(--bar-text);padding:12px 20px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.18);z-index:10}
+.bar-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.bar-in .sum{min-width:0}
+.bar-in .sum .amt{font-family:var(--disp);font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.bar-in .sum .amt small{font-family:var(--mono);font-size:12px;color:#B9B2A3;margin-left:4px}
+.bar-in .sum .det{font-size:12px;color:#B9B2A3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-in .btn{min-width:150px;white-space:nowrap}
+.bar-in .btn:disabled{background:#3A3630;border-color:#3A3630;color:#8B857A;cursor:not-allowed}
+
+/* ── Pie ── */
+.foot{max-width:1100px;margin:36px auto 0;padding:20px 20px 30px;border-top:1px solid var(--line);font-size:13px;color:var(--smoke);display:grid;gap:8px}
+.foot a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.foot a:hover{text-decoration-color:var(--brass)}
+.foot .links{display:flex;flex-wrap:wrap;gap:6px 18px}
+
+.step{animation:fade .25s ease}
+@keyframes fade{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="head">
+  <div class="head-in">
+    <img class="badge" src="img/logo.jpg" width="96" height="53" alt="Logotipo de NEW GOMEZ Barbershop"/>
+    <div>
+      <h1>NEW GOMEZ <small>Barbershop · Tepic</small></h1>
+      <div class="rating"><b>5,0</b> <span class="stars" aria-hidden="true">★★★★★</span> <span>(140 reseñas)</span></div>
+      <div class="meta">
+        <a href="https://www.google.com/maps/search/?api=1&query=21.497270,-104.901603" target="_blank" rel="noopener">Tuxpan 45, Col. Morelos, Tepic</a>
+        <span>Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="progress" aria-label="Progreso de la reserva">
+  <div class="segs" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span></div>
+  <span class="eyebrow" id="stepLabel">Paso 1 de 4</span>
+</nav>
+
+<main class="wrap">
+  <div id="flow">
+
+    <!-- Paso 1: Servicio -->
+    <section class="step" id="step1" aria-labelledby="h1s">
+      <div class="step-head">
+        <div><h2 id="h1s" tabindex="-1">Elige tu servicio</h2><p>Puedes elegir más de uno.</p></div>
+      </div>
+      <div class="list" id="services" role="group" aria-label="Servicios"></div>
+    </section>
+
+    <!-- Paso 2: Barbero -->
+    <section class="step" id="step2" aria-labelledby="h2s" hidden>
+      <button class="back" type="button" data-back="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Servicios</button>
+      <div class="step-head"><div><h2 id="h2s" tabindex="-1">Elige tu barbero</h2><p>Los dos con 5,0 estrellas.</p></div></div>
+      <div class="list" id="barbers" role="radiogroup" aria-label="Barbero"></div>
+    </section>
+
+    <!-- Paso 3: Fecha y hora -->
+    <section class="step" id="step3" aria-labelledby="h3s" hidden>
+      <button class="back" type="button" data-back="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Barbero</button>
+      <div class="step-head"><div><h2 id="h3s" tabindex="-1">Fecha y hora</h2><p id="durHint">Tu cita dura 40 min.</p></div></div>
+      <p class="eyebrow">Selecciona una fecha</p>
+      <div class="dates" id="dates" role="group" aria-label="Fechas disponibles"></div>
+      <p class="eyebrow" id="timesLabel">Escoge una hora</p>
+      <div class="times" id="times" role="group" aria-labelledby="timesLabel"></div>
+      <p class="hint" id="timesHint"></p>
+    </section>
+
+    <!-- Paso 4: Confirmar -->
+    <section class="step" id="step4" aria-labelledby="h4s" hidden>
+      <button class="back" type="button" data-back="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Fecha y hora</button>
+      <div class="step-head"><div><h2 id="h4s" tabindex="-1">Revisar y confirmar</h2><p>Te confirmamos por WhatsApp.</p></div></div>
+
+      <form class="form" id="form" novalidate>
+        <div class="field" id="fName">
+          <label for="name">Tu nombre</label>
+          <input id="name" name="name" type="text" autocomplete="name" placeholder="Como te llamamos en la barbería" required/>
+          <p class="msg" id="nameMsg" role="alert">Escribe tu nombre para poder confirmar.</p>
+        </div>
+        <div class="field" id="fPhone">
+          <label for="phone">Teléfono <span>(opcional, 10 dígitos)</span></label>
+          <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="311 000 0000" maxlength="14"/>
+          <p class="msg" id="phoneMsg" role="alert">Revisa el número: deben ser 10 dígitos.</p>
+        </div>
+        <fieldset class="field">
+          <legend class="eyebrow" style="margin-bottom:8px">¿Es tu primera visita a NEW GOMEZ?</legend>
+          <div class="seg" id="first">
+            <label class="opt"><input type="radio" name="first" value="Sí"/><span class="name">Sí</span><span class="sub">Es mi primera visita</span><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span></label>
+            <label class="opt"><input type="radio" name="first" value="No"/><span class="name">No</span><span class="sub">Ya he venido</span><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span></label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="note">Nota para el barbero <span>(opcional)</span></label>
+          <textarea id="note" name="note" placeholder="Ej. Quiero un fade bajo, traigo referencia."></textarea>
+        </div>
+      </form>
+
+      <div id="ticketMobile"></div>
+
+      <div class="actions">
+        <a class="btn btn-primary" id="waBtn" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Confirmar por WhatsApp</a>
+        <a class="btn btn-ghost" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g/booking" target="_blank" rel="noopener">Reservar en Fresha · confirmación instantánea</a>
+        <a class="btn btn-ghost" id="calBtn" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
+      </div>
+      <div class="policy">
+        <span><b>Pago en tienda</b> · efectivo, tarjeta de crédito o débito.</span>
+        <span><b>Cancelación</b> · cancela con al menos 2 horas de antelación.</span>
+      </div>
+    </section>
+  </div>
+
+  <aside class="ticket-side" aria-label="Resumen de tu reserva"><div id="ticketSide"></div></aside>
+</main>
+
+<footer class="foot">
+  <div class="links">
+    <a href="tel:+523111585540">311 158 5540</a>
+    <a href="https://wa.me/523111585540" target="_blank" rel="noopener">WhatsApp</a>
+    <a href="https://www.instagram.com/angel_newgomez" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Perfil en Fresha</a>
+  </div>
+  <span>Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit · Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado</span>
+</footer>
+
+<div class="bar-fixed">
+  <div class="bar-in">
+    <div class="sum" aria-live="polite">
+      <div class="amt"><span id="barTotal">$0</span><small>MXN</small></div>
+      <div class="det" id="barDet">Elige al menos un servicio</div>
+    </div>
+    <button class="btn btn-primary" id="nextBtn" type="button" disabled>Continuar</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var DATA={
+  wa:'523111585540',
+  services:[
+    {id:'corte',nombre:'Corte de pelo',min:40,precio:180,popular:true},
+    {id:'corte-barba',nombre:'Corte de pelo y barba',min:60,precio:360,popular:true},
+    {id:'barba',nombre:'Corte de barba',min:40,precio:180},
+    {id:'barba-tinte',nombre:'Barba y tinte',min:60,precio:360},
+    {id:'corte-barba-tinte',nombre:'Corte, barba y tinte',min:80,precio:540},
+    {id:'corte-exfo',nombre:'Corte, exfoliación y mascarilla',min:60,precio:360},
+    {id:'exfo',nombre:'Exfoliación y mascarilla',min:20,precio:180},
+    {id:'contornos',nombre:'Limpieza de contornos',min:20,precio:80,desc:'Delineado con máquina, navaja y gel'},
+    {id:'cejas',nombre:'Limpieza de cejas',min:10,precio:80},
+    {id:'nasal',nombre:'Limpieza nasal',min:20,precio:80}
+  ],
+  barbers:[
+    {id:'any',nombre:'Cualquier barbero',rol:'Máxima disponibilidad'},
+    {id:'angel',nombre:'Angel',rol:'Barbero',img:'img/angel.jpg'},
+    {id:'alexis',nombre:'Alexis',rol:'Barbero',img:'img/alexis.jpg'}
+  ],
+  // minutos desde medianoche; índice = getDay() (0 = domingo)
+  hours:{0:[],1:[[600,840],[960,1200]],2:[[600,840],[960,1200]],3:[[600,840],[960,1200]],4:[[600,840],[960,1200]],5:[[600,840],[960,1200]],6:[[600,960]]},
+  step:20, lead:30, days:14
+};
+var S={services:[],barber:'any',date:null,time:null,step:1};
+var $=function(s,r){return (r||document).querySelector(s)};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var fmtDur=function(m){var h=Math.floor(m/60),r=m%60;return h?(r?h+' h '+r+' min':h+' h'):r+' min'};
+var fmtMoney=function(n){return '$'+n.toLocaleString('es-MX')};
+var fmtTime=function(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+var longDate=function(d){return new Intl.DateTimeFormat('es-MX',{weekday:'long',day:'numeric',month:'long'}).format(d)};
+var shortW=['dom','lun','mar','mié','jue','vie','sáb'],shortM=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+var sameDay=function(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()};
+var store={get:function(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+function sel(){return DATA.services.filter(function(s){return S.services.indexOf(s.id)>-1})}
+function total(){return sel().reduce(function(a,s){return a+s.precio},0)}
+function dur(){return sel().reduce(function(a,s){return a+s.min},0)}
+function barber(){return DATA.barbers.filter(function(b){return b.id===S.barber})[0]}
+function slots(date,d){
+  var out=[],blocks=DATA.hours[date.getDay()]||[],now=new Date(),today=sameDay(date,now);
+  var minStart=today?now.getHours()*60+now.getMinutes()+DATA.lead:-1;
+  blocks.forEach(function(b){for(var t=b[0];t+d<=b[1];t+=DATA.step){if(t>=minStart)out.push(t)}});
+  return out;
+}
+
+/* ── Render: servicios ── */
+var CHECK='<span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>';
+$('#services').innerHTML=DATA.services.map(function(s){
+  return '<label class="opt"><input type="checkbox" name="svc" value="'+s.id+'"/>'+
+    '<span class="name">'+esc(s.nombre)+(s.popular?' <span class="tag">Popular</span>':'')+'</span>'+
+    '<span class="sub">'+fmtDur(s.min)+(s.desc?' · '+esc(s.desc):'')+'</span>'+
+    '<span class="price">'+fmtMoney(s.precio)+'<small>MXN</small></span></label>';
+}).join('');
+$('#services').addEventListener('change',function(){
+  S.services=Array.prototype.map.call(document.querySelectorAll('input[name=svc]:checked'),function(i){return i.value});
+  // si ya había hora elegida y ya no cabe, se descarta
+  if(S.date&&S.time!==null&&slots(S.date,dur()).indexOf(S.time)<0)S.time=null;
+  update();
+});
+
+/* ── Render: barberos ── */
+$('#barbers').innerHTML=DATA.barbers.map(function(b){
+  var av=b.img?'<img class="avatar" src="'+b.img+'" alt="" width="52" height="52"/>':'<span class="avatar any" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h4l8 10h4M4 17h4l2-2.5M16 7h4M18 5l2 2-2 2M18 15l2 2-2 2"/></svg></span>';
+  return '<label class="opt bar"><input type="radio" name="barber" value="'+b.id+'"'+(b.id===S.barber?' checked':'')+'/>'+av+
+    '<span class="name">'+esc(b.nombre)+'</span><span class="sub">'+esc(b.rol)+(b.img?' · <span class="star"><b>★ 5,0</b></span>':'')+'</span>'+CHECK+'</label>';
+}).join('');
+$('#barbers').addEventListener('change',function(e){S.barber=e.target.value;update()});
+
+/* ── Render: fechas ── */
+var today=new Date();today.setHours(0,0,0,0);
+var DAYS=[];for(var i=0;i<DATA.days;i++){var d=new Date(today);d.setDate(today.getDate()+i);DAYS.push(d)}
+function renderDates(){
+  $('#dates').innerHTML=DAYS.map(function(d,i){
+    var closed=!(DATA.hours[d.getDay()]||[]).length,on=S.date&&sameDay(d,S.date);
+    var label=(i===0?'Hoy, ':'')+longDate(d);
+    return '<button type="button" class="day" data-i="'+i+'" aria-pressed="'+(on?'true':'false')+'" aria-label="'+esc(label)+(closed?', cerrado':'')+'"'+(closed?' disabled':'')+'>'+
+      '<span class="w">'+(i===0?'hoy':shortW[d.getDay()])+'</span><span class="n">'+(closed?'Cerrado':d.getDate())+'</span><span class="m">'+shortM[d.getMonth()]+'</span></button>';
+  }).join('');
+}
+renderDates();
+$('#dates').addEventListener('click',function(e){
+  var b=e.target.closest('.day');if(!b||b.disabled)return;
+  S.date=DAYS[+b.dataset.i];S.time=null;renderDates();update();
+  b=$('#dates .day[aria-pressed="true"]');if(b)b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+});
+function renderTimes(){
+  var box=$('#times'),hint=$('#timesHint'),d=dur();
+  $('#durHint').textContent='Tu cita dura '+fmtDur(d)+'.';
+  if(!S.date){box.innerHTML='<div class="empty" style="grid-column:1/-1">Primero elige una fecha.</div>';hint.textContent='';return}
+  var list=slots(S.date,d);
+  if(!list.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">Sin horarios disponibles ese día, elige otro.</div>';hint.textContent='';return}
+  box.innerHTML=list.map(function(t){return '<button type="button" class="slot" data-t="'+t+'" aria-pressed="'+(S.time===t?'true':'false')+'" aria-label="'+fmtTime(t)+' a '+fmtTime(t+d)+'">'+fmtTime(t)+'</button>'}).join('');
+  hint.textContent=S.time!==null?'Tu cita: '+fmtTime(S.time)+'–'+fmtTime(S.time+d)+' ('+fmtDur(d)+').':'Horas de inicio disponibles con '+(barber().id==='any'?'cualquier barbero':barber().nombre)+'.';
+}
+$('#times').addEventListener('click',function(e){var b=e.target.closest('.slot');if(!b)return;S.time=+b.dataset.t;renderTimes();update()});
+
+/* ── Ticket ── */
+function ticketHTML(){
+  var s=sel(),d=dur(),pend='<span class="pending">Por elegir</span>';
+  var rows=s.length?s.map(function(x){return '<div class="row svc"><span class="k">'+esc(x.nombre)+'<small>'+fmtDur(x.min)+(barber().id!=='any'?' con '+esc(barber().nombre):'')+'</small></span><span class="v">'+fmtMoney(x.precio)+'</span></div>'}).join(''):'<div class="row"><span class="k">Servicio</span><span class="v">'+pend+'</span></div>';
+  var when=S.date?'<div class="row"><span class="k">Fecha</span><span class="v">'+esc(longDate(S.date))+'</span></div>'+
+    '<div class="row"><span class="k">Hora</span><span class="v mono">'+(S.time!==null?fmtTime(S.time)+'–'+fmtTime(S.time+d)+' <span style="color:var(--smoke)">('+fmtDur(d)+')</span>':pend)+'</span></div>':
+    '<div class="row"><span class="k">Fecha y hora</span><span class="v">'+pend+'</span></div>';
+  return '<div class="ticket"><div class="ticket-top"><img src="img/logo.jpg" alt="" width="56" height="31"/><div><h3>NEW GOMEZ</h3><p>Tuxpan 45, Col. Morelos, Tepic · ★ 5,0 (140)</p></div></div>'+
+    '<div class="ticket-body">'+when+'<div class="row"><span class="k">Barbero</span><span class="v">'+esc(barber().nombre)+'</span></div>'+rows+
+    '<div class="row tot"><span class="k">Total</span><span class="v">'+fmtMoney(total())+'<small>MXN</small></span></div></div>'+
+    '<div class="ticket-foot"><span>Pago en tienda · efectivo o tarjeta</span><span>Cancela con al menos 2 horas de antelación</span></div></div>';
+}
+
+/* ── Mensaje de WhatsApp y calendario ── */
+function pad(n){return String(n).padStart(2,'0')}
+function calStamp(date,min){return date.getFullYear()+pad(date.getMonth()+1)+pad(date.getDate())+'T'+pad(Math.floor(min/60))+pad(min%60)+'00'}
+function person(){return {name:$('#name').value.trim(),phone:$('#phone').value.replace(/\D/g,''),first:($('input[name=first]:checked')||{}).value||'',note:$('#note').value.trim()}}
+function message(){
+  var p=person(),d=dur(),lines=['Hola NEW GOMEZ, quiero reservar una cita:'];
+  sel().forEach(function(x){lines.push('• '+x.nombre+' ('+fmtDur(x.min)+') — '+fmtMoney(x.precio))});
+  lines.push('Barbero: '+barber().nombre);
+  if(S.date)lines.push('Fecha: '+longDate(S.date));
+  if(S.time!==null)lines.push('Hora: '+fmtTime(S.time)+'–'+fmtTime(S.time+d)+' ('+fmtDur(d)+')');
+  lines.push('Total: '+fmtMoney(total())+' MXN (pago en tienda)');
+  if(p.name)lines.push('Nombre: '+p.name);
+  if(p.phone)lines.push('Teléfono: '+p.phone.replace(/(\d{3})(\d{3})(\d{4})/,'$1 $2 $3'));
+  if(p.first)lines.push('Primera visita: '+p.first);
+  if(p.note)lines.push('Nota: '+p.note);
+  return lines.join('\n');
+}
+function links(){
+  $('#waBtn').href='https://wa.me/'+DATA.wa+'?text='+encodeURIComponent(message());
+  var cal=$('#calBtn');
+  if(S.date&&S.time!==null){
+    var names=sel().map(function(x){return x.nombre}).join(', ');
+    cal.href='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('Cita en NEW GOMEZ · '+names)+
+      '&dates='+calStamp(S.date,S.time)+'/'+calStamp(S.date,S.time+dur())+'&ctz=America/Mazatlan'+
+      '&details='+encodeURIComponent(message())+'&location='+encodeURIComponent('NEW GOMEZ Barbershop, Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit');
+    cal.hidden=false;
+  }else cal.hidden=true;
+}
+
+/* ── Validación y confirmación ── */
+function validate(show){
+  var p=person(),ok=true;
+  var badName=!p.name,badPhone=p.phone&&p.phone.length!==10;
+  if(show){$('#fName').classList.toggle('invalid',badName);$('#fPhone').classList.toggle('invalid',!!badPhone)}
+  if(badName||badPhone)ok=false;
+  return ok;
+}
+$('#waBtn').addEventListener('click',function(e){
+  if(!validate(true)){e.preventDefault();var f=$('#fName.invalid input, #fPhone.invalid input');if(f)f.focus();return}
+  store.set('ng-name',person().name);store.set('ng-phone',person().phone);
+});
+['input','change'].forEach(function(ev){$('#form').addEventListener(ev,function(){$('#fName').classList.remove('invalid');$('#fPhone').classList.remove('invalid');links();renderTicket()})});
+$('#name').value=store.get('ng-name');$('#phone').value=store.get('ng-phone');
+
+/* ── Pasos ── */
+var steps=[null,$('#step1'),$('#step2'),$('#step3'),$('#step4')];
+function canNext(){
+  if(S.step===1)return S.services.length>0;
+  if(S.step===2)return !!S.barber;
+  if(S.step===3)return !!S.date&&S.time!==null;
+  return true;
+}
+function go(n){
+  S.step=n;
+  steps.forEach(function(el,i){if(el)el.hidden=i!==n});
+  Array.prototype.forEach.call(document.querySelectorAll('.segs span'),function(s,i){s.classList.toggle('on',i<n)});
+  $('#stepLabel').textContent='Paso '+n+' de 4';
+  if(n===3)renderTimes();
+  update();
+  window.scrollTo({top:0,behavior:'auto'});
+  var h=$('h2',steps[n]);if(h)h.focus({preventScroll:true});
+}
+$('#nextBtn').addEventListener('click',function(){
+  if(S.step===4){ if(validate(true)){store.set('ng-name',person().name);store.set('ng-phone',person().phone);window.open($('#waBtn').href,'_blank','noopener')} else {var f=$('#fName.invalid input, #fPhone.invalid input');if(f)f.focus()} return }
+  if(canNext())go(S.step+1);
+});
+Array.prototype.forEach.call(document.querySelectorAll('[data-back]'),function(b){b.addEventListener('click',function(){go(+b.dataset.back)})});
+
+function renderTicket(){var h=ticketHTML();$('#ticketSide').innerHTML=h;$('#ticketMobile').innerHTML=S.step===4?h:''}
+function update(){
+  var t=total(),d=dur(),n=S.services.length;
+  $('#barTotal').textContent=fmtMoney(t);
+  var det=n?n+' servicio'+(n>1?'s':'')+' · '+fmtDur(d):'Elige al menos un servicio';
+  if(S.step>=3&&S.date&&S.time!==null)det=shortW[S.date.getDay()]+' '+S.date.getDate()+' '+shortM[S.date.getMonth()]+' · '+fmtTime(S.time)+' · '+fmtDur(d);
+  $('#barDet').textContent=det;
+  var nb=$('#nextBtn');nb.disabled=!canNext();
+  nb.textContent=S.step===4?'Confirmar':S.step===3&&S.time===null?'Elige una hora':'Continuar';
+  if(S.step===3)renderTimes();
+  links();renderTicket();
+}
+update();
+})();
+</script>
+</body>
+</html>
