@@ -26,13 +26,13 @@
   :root:not([data-theme="light"]){
     --bone:#15130F;--paper:#1E1B16;--bone-2:#2A2620;--text:#F2EDE3;--smoke:#A39B8B;
     --brass:#D9B25A;--brass-deep:#C49A3C;--brass-soft:rgba(217,178,90,.16);--ok:#6FBF8A;--err:#F28B82;
-    --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;
+    --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;--ink:#332B1E;
   }
 }
 :root[data-theme="dark"]{
   --bone:#15130F;--paper:#1E1B16;--bone-2:#2A2620;--text:#F2EDE3;--smoke:#A39B8B;
   --brass:#D9B25A;--brass-deep:#C49A3C;--brass-soft:rgba(217,178,90,.16);--ok:#6FBF8A;--err:#F28B82;
-  --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;
+  --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;--ink:#332B1E;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
@@ -217,7 +217,8 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 /* ── Panel de staff ── */
-#panelView{width:100%}
+#panelView{width:100%;grid-template-columns:minmax(0,1fr)}
+#panelView>div{min-width:0}
 .pin-wrap{max-width:400px;margin:0 auto;width:100%}
 .pin-card{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:28px 24px;box-shadow:var(--shadow);text-align:center;margin-top:18px}
 .pin-card h2{font-size:28px;margin-bottom:4px}
@@ -236,7 +237,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .dash-who .role{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--brass-deep)}
 .live-dot{color:var(--ok);font-weight:600}
 .tabs{display:flex;gap:6px;overflow-x:auto;margin:16px 0;padding-bottom:2px;-webkit-overflow-scrolling:touch}
-.tabs button{flex:none;padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;border:1.5px solid var(--line);background:var(--paper);white-space:nowrap;min-height:38px}
+.tabs button{flex:none;padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;border:1.5px solid var(--line);background:var(--paper);white-space:nowrap;min-height:44px}
 .tabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#F2EDE3}
 .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
 .stat{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:14px}
@@ -247,10 +248,12 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .mrow .when b{display:block;font-family:var(--disp);font-size:20px;font-weight:800;color:var(--text)}
 .mrow .who{grid-row:1;grid-column:2;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .mrow .what{grid-row:2;grid-column:2;font-size:12px;color:var(--smoke)}
-.mrow .acts{grid-row:1/3;grid-column:3;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:130px}
-.mrow .acts button{font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;border:1.5px solid var(--line);white-space:nowrap;min-height:30px;background:var(--bone)}
+.mrow .acts{grid-row:1/3;grid-column:3;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:130px}
+.mrow .acts button{font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;border:1.5px solid var(--line);white-space:nowrap;min-height:44px;background:var(--bone)}
 .mrow .acts button.ok{border-color:var(--ok);color:var(--ok)}
-.mrow .acts button.danger{border-color:var(--err);color:var(--err)}
+/* Separación extra sobre "Cancelar" (además del gap:8px de .acts) para que quede más lejos
+   de Confirmar/Atendida/Mover y sea más difícil tocarlo sin querer en un teléfono. */
+.mrow .acts button.danger{border-color:var(--err);color:var(--err);margin-top:8px}
 .pill{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:2px 7px;border:1px solid currentColor}
 .pill.registrada{color:var(--smoke)}
 .pill.confirmada{color:var(--ok)}
@@ -258,7 +261,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .pill.atendida{color:var(--brass-deep)}
 .day-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 .day-nav b{font-family:var(--disp);font-size:19px;text-align:center}
-.day-nav button{width:36px;height:36px;flex:none;border:1.5px solid var(--line);border-radius:50%;font-size:16px}
+.day-nav button{width:44px;height:44px;flex:none;border:1.5px solid var(--line);border-radius:50%;font-size:16px}
 .day-nav button:hover{border-color:var(--brass-deep)}
 .week-list,.month-list{display:grid;gap:14px}
 .week-day,.month-day{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper)}
@@ -267,15 +270,16 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .staff-row .av{grid-row:1/3;grid-column:1;width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--bone-2)}
 .staff-row b{grid-row:1;grid-column:2;font-size:14px}
 .staff-row .role{grid-row:2;grid-column:2;font-size:12px;color:var(--smoke)}
-.staff-row .acts{grid-row:1/3;grid-column:3;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.staff-row .acts button{font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;border:1.5px solid var(--line);min-height:30px;background:var(--bone)}
-.staff-row .acts button.danger{border-color:var(--err);color:var(--err)}
+.staff-row .acts{grid-row:1/3;grid-column:3;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.staff-row .acts button{font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;border:1.5px solid var(--line);min-height:44px;background:var(--bone)}
+.staff-row .acts button.danger{border-color:var(--err);color:var(--err);margin-top:8px}
 .staff-row.inactivo{opacity:.5}
 .mform{display:grid;gap:10px;background:var(--paper);border:1.5px dashed var(--brass);border-radius:12px;padding:14px;margin-bottom:16px}
 .mform .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mform input,.mform select{width:100%;background:var(--bone);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
 .mform-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700}
 .mform-head button{font-size:16px;font-weight:700;color:var(--smoke)}
+@media (max-width:380px){.mform .row2{grid-template-columns:1fr}}
 .fallback{max-width:420px;margin:64px auto;text-align:center;padding:0 20px;font-family:var(--sans);color:#15130F;background:#F2EDE3;min-height:100vh}
 .fallback h2{font-family:var(--disp);font-size:30px;margin-bottom:10px;padding-top:60px}
 .fallback p{color:#7A7366;margin-bottom:18px}
@@ -394,6 +398,16 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
   <aside class="ticket-side" aria-label="Resumen de tu reserva"><div id="ticketSide"></div></aside>
 </main>
 
+<div class="bar-fixed">
+  <div class="bar-in">
+    <div class="sum" aria-live="polite">
+      <div class="amt"><span id="barTotal">$0</span><small>MXN</small></div>
+      <div class="det" id="barDet">Elige al menos un servicio</div>
+    </div>
+    <button class="btn btn-primary" id="nextBtn" type="button" disabled>Continuar</button>
+  </div>
+</div>
+
 <main id="panelView" class="wrap" hidden></main>
 
 <footer class="foot">
@@ -406,16 +420,6 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
   </div>
   <span>Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit · Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado</span>
 </footer>
-
-<div class="bar-fixed">
-  <div class="bar-in">
-    <div class="sum" aria-live="polite">
-      <div class="amt"><span id="barTotal">$0</span><small>MXN</small></div>
-      <div class="det" id="barDet">Elige al menos un servicio</div>
-    </div>
-    <button class="btn btn-primary" id="nextBtn" type="button" disabled>Continuar</button>
-  </div>
-</div>
 
 <script>
 (function(){
@@ -458,19 +462,47 @@ var DATA={
 };
 
 // ── Personal por defecto: superadmin (tú), dueño y empleado ──
+// pin guarda hashPin(PIN), nunca el PIN en texto plano (ver hashPin más abajo).
 var DEFAULT_STAFF=[
-  {id:'zeus',nombre:'Zeus',rol:'superadmin',pin:'2610',activo:true,barbero:false},
-  {id:'angel',nombre:'Angel',rol:'owner',pin:'1111',activo:true,barbero:true,img:'img/angel.jpg'},
-  {id:'alexis',nombre:'Alexis',rol:'employee',pin:'2222',activo:true,barbero:true,img:'img/alexis.jpg'}
+  {id:'zeus',nombre:'Zeus',rol:'superadmin',pin:'7b6ae6ec',activo:true,barbero:false},
+  {id:'angel',nombre:'Angel',rol:'owner',pin:'c345690',activo:true,barbero:true,img:'img/angel.jpg'},
+  {id:'alexis',nombre:'Alexis',rol:'employee',pin:'27aeca16',activo:true,barbero:true,img:'img/alexis.jpg'}
 ];
 
 var S={services:[],barber:'any',date:null,time:null,step:1,last:null};
 var BOOK={list:[],db:null,shared:false};
-try{BOOK.list=JSON.parse(localStorage.getItem('ng-citas')||'[]')||[]}catch(e){BOOK.list=[]}
+try{BOOK.list=JSON.parse(localStorage.getItem('nb:new-gomez:citas')||'[]')||[]}catch(e){BOOK.list=[]}
 var STAFF={list:[],db:null,seeded:false};
-try{STAFF.list=JSON.parse(localStorage.getItem('ng-staff')||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
+try{STAFF.list=JSON.parse(localStorage.getItem('nb:new-gomez:staff')||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
 var Session={current:null};
 var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date()};
+
+/* ── Seguridad con base de datos en vivo ──────────────────────────────────
+   El capability db no distingue "cliente" de "staff": cualquiera con el
+   enlace del Artifact puede suscribirse a cualquier colección. Por eso NO
+   se guarda nada sensible en una sola colección "citas"/"staff" — se separa
+   en dos por sensibilidad, y las sensibles solo se piden cuando hace falta:
+   - disponibilidad: solo fecha/hora/duración/barbero/estado. Se suscribe
+     SIEMPRE (hace falta para bloquear horarios en la reserva pública) y
+     nunca lleva nombre/teléfono/nota de nadie.
+   - citas: el registro completo (con nombre/teléfono/nota del cliente).
+     Solo se suscribe dentro de #/panel y con una sesión de staff ya
+     iniciada (Session.current) — un visitante que solo reserva, o que
+     abre #/panel pero no conoce ningún PIN, nunca la recibe.
+   - staff_publico: nombre/foto/rol/activo de cada barbero, SIN el pin.
+     Se suscribe siempre (hace falta para el selector de barbero público).
+   - staff_pins: solo {id, pin-hasheado}. Se suscribe nada más dentro de
+     #/panel (imprescindible para poder validar el PIN que se escriba ahí),
+     nunca en la reserva pública.
+   Aviso honesto: esto reduce muchísimo la exposición (un cliente que solo
+   reserva un corte jamás toca datos de otros clientes ni PINs de nadie),
+   pero no es seguridad de servidor: quien entra deliberadamente a #/panel
+   sigue recibiendo los hashes de PIN de 4 dígitos, y un PIN de 4 dígitos
+   se puede probar sin conexión en microsegundos sin importar el hash. Cerrar
+   eso del todo requiere validar el PIN en un servidor propio, no en el
+   navegador — pendiente de que haya backend real. */
+var _staffPins={};
+var _unsubCitas=null,_unsubPins=null;
 
 var dayKey=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 function overlapping(key,start,end){return BOOK.list.filter(function(b){return b&&b.fecha===key&&b.estado!=='cancelada'&&b.inicio<end&&(b.inicio+b.dur)>start})}
@@ -479,40 +511,86 @@ function blocked(key,start,d,barberId){
   if(barberId!=='any'&&ov.some(function(b){return b.barbero===barberId}))return true;
   return ov.length>=2; // dos sillas
 }
+function toDisponibilidad(b){return {id:b.id,fecha:b.fecha,inicio:b.inicio,dur:b.dur,barbero:b.barbero,estado:b.estado}}
 function saveBooking(b){
   BOOK.list=BOOK.list.filter(function(x){return x.id!==b.id}).concat([b]);
-  try{localStorage.setItem('ng-citas',JSON.stringify(BOOK.list))}catch(e){}
-  if(BOOK.db){BOOK.db.doc('citas/'+b.id).set(b).catch(function(){})}
+  if(!BOOK.db){try{localStorage.setItem('nb:new-gomez:citas',JSON.stringify(BOOK.list))}catch(e){}}
+  if(BOOK.db){
+    BOOK.db.doc('citas/'+b.id).set(b).catch(function(){});
+    BOOK.db.doc('disponibilidad/'+b.id).set(toDisponibilidad(b)).catch(function(){});
+  }
 }
-function persistStaff(){try{localStorage.setItem('ng-staff',JSON.stringify(STAFF.list))}catch(e){}}
+function persistStaff(){
+  if(STAFF.db)return; // el staff con sesión en vivo no se vuelca a disco del visitante.
+  try{localStorage.setItem('nb:new-gomez:staff',JSON.stringify(STAFF.list))}catch(e){}
+}
+function toStaffPublico(p){var c={};for(var k in p){if(k!=='pin')c[k]=p[k]}return c}
 function saveStaff(person){
-  STAFF.list=STAFF.list.filter(function(x){return x.id!==person.id}).concat([person]);
-  persistStaff();
-  if(STAFF.db){STAFF.db.doc('staff/'+person.id).set(person).catch(function(){})}
+  if(STAFF.db){
+    var pub=toStaffPublico(person);
+    STAFF.list=STAFF.list.filter(function(x){return x.id!==person.id}).concat([pub]);
+    _staffPins[person.id]=person.pin;
+    STAFF.db.doc('staff_publico/'+person.id).set(pub).catch(function(){});
+    STAFF.db.doc('staff_pins/'+person.id).set({id:person.id,pin:person.pin}).catch(function(){});
+  }else{
+    STAFF.list=STAFF.list.filter(function(x){return x.id!==person.id}).concat([person]);
+    persistStaff();
+  }
   rebuildBarbers();
+}
+// Sin base de datos en vivo (un solo dispositivo, sin red de por medio) el pin vive directo
+// en STAFF.list — no hay a quién filtrarle nada. Con db en vivo, solo _staffPins (poblado
+// nada más dentro de #/panel) tiene los hashes; STAFF.list nunca vuelve a traer el pin.
+function staffPinOf(p){return STAFF.db?_staffPins[p.id]:p.pin}
+function tryPin(pin){
+  var h=hashPin(pin);
+  return STAFF.list.filter(function(x){return staffPinOf(x)===h&&x.activo!==false})[0]||null;
 }
 function initDb(){
   if(!(window.claude&&typeof window.claude.use==='function'))return;
   window.claude.use('db').then(function(db){
     if(!db)return;
     BOOK.db=db;STAFF.db=db;
-    db.collection('citas').onSnapshot(function(snap){
+    db.collection('disponibilidad').onSnapshot(function(snap){
       BOOK.shared=true;
-      BOOK.list=snap.docs.map(function(d){return d.data()}).filter(function(b){return b&&b.fecha});
-      try{localStorage.setItem('ng-citas',JSON.stringify(BOOK.list))}catch(e){}
+      if(location.hash.indexOf('panel')<0)BOOK.list=snap.docs.map(function(d){return d.data()}).filter(function(b){return b&&b.fecha});
       refreshAfterSync();
     },function(){});
-    db.collection('staff').onSnapshot(function(snap){
+    db.collection('staff_publico').onSnapshot(function(snap){
       var docs=snap.docs.map(function(d){return d.data()}).filter(Boolean);
       if(!docs.length){
         if(STAFF.seeded)return;
         STAFF.seeded=true;
-        DEFAULT_STAFF.forEach(function(p){db.doc('staff/'+p.id).set(p).catch(function(){})});
+        DEFAULT_STAFF.forEach(function(p){
+          db.doc('staff_publico/'+p.id).set(toStaffPublico(p)).catch(function(){});
+          db.doc('staff_pins/'+p.id).set({id:p.id,pin:p.pin}).catch(function(){});
+        });
         return;
       }
       STAFF.list=docs;persistStaff();refreshAfterSync();
     },function(){});
+    watchPanelRoute();
   }).catch(function(){});
+}
+function watchPanelRoute(){
+  if(!BOOK.db)return;
+  var enPanel=location.hash.indexOf('panel')>-1;
+  if(enPanel&&!_unsubPins){
+    _unsubPins=STAFF.db.collection('staff_pins').onSnapshot(function(snap){
+      _staffPins={};snap.docs.forEach(function(d){var p=d.data();if(p)_staffPins[p.id]=p.pin});
+    },function(){});
+  }else if(!enPanel&&_unsubPins){_unsubPins();_unsubPins=null;_staffPins={}}
+  syncCitasSubscription();
+}
+function syncCitasSubscription(){
+  if(!BOOK.db)return;
+  var quiere=location.hash.indexOf('panel')>-1&&!!Session.current;
+  if(quiere&&!_unsubCitas){
+    _unsubCitas=BOOK.db.collection('citas').onSnapshot(function(snap){
+      BOOK.list=snap.docs.map(function(d){return d.data()}).filter(function(b){return b&&b.fecha});
+      refreshAfterSync();
+    },function(){});
+  }else if(!quiere&&_unsubCitas){_unsubCitas();_unsubCitas=null;if(location.hash.indexOf('panel')<0)BOOK.list=[]}
 }
 function refreshAfterSync(){
   rebuildBarbers();
@@ -531,6 +609,9 @@ var sameDay=function(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()
 var store={get:function(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 function slug(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'staff'}
 function roleLabel(r){return r==='superadmin'?'Superadmin':r==='owner'?'Dueño':'Barbero'}
+// Hash simple (no reversible a simple vista) del PIN, para no guardar ni comparar el valor en texto plano.
+function hashPin(p){var h=0x811c9dc5;for(var i=0;i<p.length;i++){h^=p.charCodeAt(i);h=(h*0x01000193)>>>0}return h.toString(16)}
+function plural(n,s){return n+' '+s+(n===1?'':'s')}
 function folio(){var t=Date.now().toString(36).slice(-4).toUpperCase(),r=Math.floor(Math.random()*1296).toString(36).toUpperCase().padStart(2,'0');return 'NG-'+t+r}
 function estadoInfo(e){return {registrada:{t:'Registrada'},confirmada:{t:'Confirmada'},cancelada:{t:'Cancelada'},atendida:{t:'Atendida'}}[e||'registrada']||{t:'Registrada'}}
 
@@ -549,7 +630,7 @@ function slots(date,d){
 var CHECK='<span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>';
 function renderBarbers(){
   $('#barbers').innerHTML=DATA.barbers.map(function(b){
-    var av=b.img?'<img class="avatar" src="'+b.img+'" alt="" width="52" height="52"/>':'<span class="avatar any" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h4l8 10h4M4 17h4l2-2.5M16 7h4M18 5l2 2-2 2M18 15l2 2-2 2"/></svg></span>';
+    var av=b.img?'<img class="avatar" src="'+b.img+'" alt="" width="52" height="52" loading="lazy" decoding="async"/>':'<span class="avatar any" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h4l8 10h4M4 17h4l2-2.5M16 7h4M18 5l2 2-2 2M18 15l2 2-2 2"/></svg></span>';
     return '<label class="opt bar"><input type="radio" name="barber" value="'+b.id+'"'+(b.id===S.barber?' checked':'')+'/>'+av+
       '<span class="name">'+esc(b.nombre)+'</span><span class="sub">'+esc(b.rol)+(b.img?' · <span class="star"><b>★ 5,0</b></span>':'')+'</span>'+CHECK+'</label>';
   }).join('');
@@ -666,7 +747,7 @@ function registrar(){
   var p=person(),b={id:folio(),fecha:dayKey(S.date),inicio:S.time,dur:dur(),barbero:S.barber,barberoNombre:barber().nombre,
     servicios:sel().map(function(x){return x.nombre}),total:total(),nombre:p.name,telefono:p.phone,primera:p.first,nota:p.note,
     creado:new Date().toISOString(),estado:'registrada'};
-  store.set('ng-name',p.name);store.set('ng-phone',p.phone);
+  store.set('nb:new-gomez:name',p.name);store.set('nb:new-gomez:phone',p.phone);
   saveBooking(b);S.last=b;return b;
 }
 function confirmar(){
@@ -676,7 +757,7 @@ function confirmar(){
 }
 $('#confirmBtn').addEventListener('click',confirmar);
 ['input','change'].forEach(function(ev){$('#form').addEventListener(ev,function(){$('#fName').classList.remove('invalid');$('#fPhone').classList.remove('invalid');links();renderTicket()})});
-$('#name').value=store.get('ng-name');$('#phone').value=store.get('ng-phone');
+$('#name').value=store.get('nb:new-gomez:name');$('#phone').value=store.get('nb:new-gomez:phone');
 
 /* ── Pasos de la reserva ── */
 var steps=[null,$('#step1'),$('#step2'),$('#step3'),$('#step4'),$('#step5')];
@@ -731,8 +812,8 @@ function update(){
    PANEL DEL EQUIPO — PIN, roles y agenda por dueño/empleado
 ═══════════════════════════════════════════════ */
 function citasDe(fecha){return BOOK.list.filter(function(b){return b.fecha===fecha}).sort(function(a,b){return a.inicio-b.inicio})}
-function tryPin(pin){return STAFF.list.filter(function(x){return x.pin===pin&&x.activo!==false})[0]||null}
-function logout(){Session.current=null;renderPanel()}
+function tryPin(pin){var h=hashPin(pin);return STAFF.list.filter(function(x){return staffPinOf(x)===h&&x.activo!==false})[0]||null}
+function logout(){Session.current=null;syncCitasSubscription();renderPanel()}
 function reminderWa(b){
   var m='Hola '+(b.nombre||'')+', te escribimos de NEW GOMEZ para confirmar tu cita de hoy a las '+fmtTime(b.inicio)+'. ¿Nos vemos?';
   return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
@@ -763,39 +844,50 @@ function bindRowActions(container){
 }
 function openManualForm(editing){
   var d=editing?new Date(editing.fecha+'T12:00:00'):Panel.day;
-  var svcOpts=DATA.services.map(function(s){return '<option value="'+s.id+'">'+esc(s.nombre)+' · '+fmtMoney(s.precio)+'</option>'}).join('');
-  var barbOpts=DATA.barbers.filter(function(b){return b.id!=='any'}).map(function(b){return '<option value="'+b.id+'">'+esc(b.nombre)+'</option>'}).join('');
+  var svcHtml=DATA.services.map(function(s){
+    var on=editing&&editing.servicios&&editing.servicios.indexOf(s.nombre)>-1;
+    return '<label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:2px 0"><input type="checkbox" name="mSvc" value="'+s.id+'"'+(on?' checked':'')+'/> '+esc(s.nombre)+' · '+fmtMoney(s.precio)+' · '+fmtDur(s.min)+'</label>';
+  }).join('');
+  // 'Cualquier profesional' debe poder elegirse y conservarse igual que en la reserva pública
+  // (si no, mover una cita 'any' la reasigna en silencio al primer barbero de la lista).
+  var barbOpts='<option value="any">Cualquier profesional</option>'+DATA.barbers.filter(function(b){return b.id!=='any'}).map(function(b){return '<option value="'+b.id+'">'+esc(b.nombre)+'</option>'}).join('');
   var box=$('#mformBox');if(!box)return;
   box.innerHTML=
     '<div class="mform"><div class="mform-head"><span>'+(editing?'Mover / editar cita':'Nueva cita manual')+'</span><button type="button" id="mCancel">✕</button></div>'+
     '<div class="row2"><input type="text" id="mNombre" placeholder="Nombre del cliente" value="'+(editing?esc(editing.nombre||''):'')+'"/>'+
     '<input type="tel" id="mTel" placeholder="Teléfono a 10 dígitos" value="'+(editing?esc(editing.telefono||''):'')+'"/></div>'+
-    '<select id="mServicio">'+svcOpts+'</select>'+
-    '<select id="mBarbero">'+barbOpts+'</select>'+
-    '<div class="row2"><input type="date" id="mFecha" value="'+dayKey(d)+'"/><input type="time" id="mHora" value="'+(editing?fmtTime(editing.inicio):'10:00')+'"/></div>'+
+    '<div id="mServicios" role="group" aria-label="Servicios" style="display:grid;gap:2px;max-height:180px;overflow:auto;border:1.5px solid var(--line);border-radius:8px;padding:8px;background:var(--bone)">'+svcHtml+'</div>'+
+    '<select id="mBarbero" aria-label="Barbero">'+barbOpts+'</select>'+
+    '<div class="row2"><input type="date" id="mFecha" aria-label="Fecha de la cita" value="'+dayKey(d)+'"/><input type="time" id="mHora" aria-label="Hora de la cita" value="'+(editing?fmtTime(editing.inicio):'10:00')+'"/></div>'+
     '<button type="button" class="btn btn-primary" id="mGuardar" style="min-height:44px">'+(editing?'Guardar cambios':'Registrar cita')+'</button></div>';
-  if(editing){
-    var svc=DATA.services.filter(function(s){return editing.servicios&&editing.servicios[0]===s.nombre})[0];
-    if(svc)$('#mServicio').value=svc.id;
-    if($('#mBarbero').querySelector('option[value="'+editing.barbero+'"]'))$('#mBarbero').value=editing.barbero;
-  }
+  if(editing&&$('#mBarbero').querySelector('option[value="'+editing.barbero+'"]'))$('#mBarbero').value=editing.barbero;
   $('#mCancel').onclick=function(){box.innerHTML=''};
   $('#mGuardar').onclick=function(){
-    var s=DATA.services.filter(function(x){return x.id===$('#mServicio').value})[0];
+    var svcs=Array.prototype.map.call($('#mServicios').querySelectorAll('input[name=mSvc]:checked'),function(i){return i.value});
+    svcs=DATA.services.filter(function(x){return svcs.indexOf(x.id)>-1});
     var barb=DATA.barbers.filter(function(x){return x.id===$('#mBarbero').value})[0];
     var fecha=$('#mFecha').value,horaParts=$('#mHora').value.split(':');
-    if(!fecha||horaParts.length<2||!barb){alert('Falta la fecha, hora o barbero.');return}
+    if(!fecha||horaParts.length<2||!barb||!svcs.length){alert('Falta la fecha, hora, barbero o al menos un servicio.');return}
     var inicio=(+horaParts[0])*60+(+horaParts[1]);
+    var durNueva=svcs.reduce(function(a,x){return a+x.min},0);
+    // Misma regla de dos sillas / barbero ocupado que usa la reserva pública (blocked()),
+    // excluyendo la propia cita cuando se está moviendo para no chocar consigo misma.
+    var ov=overlapping(fecha,inicio,inicio+durNueva).filter(function(x){return !editing||x.id!==editing.id});
+    var choque=(barb.id!=='any'&&ov.some(function(x){return x.barbero===barb.id}))||ov.length>=2;
+    if(choque&&!confirm('Ese horario ya está ocupado (barbero con otra cita, o ya hay 2 citas ahí). ¿Guardar de todas formas?'))return;
     var b=editing||{id:folio(),creado:new Date().toISOString()};
     b.nombre=$('#mNombre').value.trim()||'Cliente';b.telefono=$('#mTel').value.replace(/\D/g,'');
-    b.servicios=[s.nombre];b.total=s.precio;b.dur=s.min;b.barbero=barb.id;b.barberoNombre=barb.nombre;
+    b.servicios=svcs.map(function(x){return x.nombre});b.total=svcs.reduce(function(a,x){return a+x.precio},0);b.dur=durNueva;
+    b.barbero=barb.id;b.barberoNombre=barb.nombre;
     b.fecha=fecha;b.inicio=inicio;b.estado='confirmada';
     saveBooking(b);box.innerHTML='';renderDash();
   };
 }
 function renderDia(u,isOwner){
   var d=Panel.day,key=dayKey(d);
-  var list=citasDe(key).filter(function(b){return isOwner||b.barbero===u.id});
+  // Las citas 'any' (cualquier profesional) ya ocupan una de las 2 sillas de ese horario, así
+  // que también se muestran a cada empleado (marcadas como tal), no solo las suyas.
+  var list=citasDe(key).filter(function(b){return isOwner||b.barbero===u.id||b.barbero==='any'});
   var totalDia=list.filter(function(b){return b.estado!=='cancelada'}).reduce(function(a,b){return a+(b.total||0)},0);
   var reminderHtml='';
   if(isOwner&&sameDay(d,new Date())){
@@ -815,7 +907,7 @@ function renderDia(u,isOwner){
     reminderHtml+
     (isOwner?'<button type="button" class="btn btn-ghost" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Cita manual (teléfono / mostrador)</button>':'')+
     '<div id="mformBox"></div>'+
-    (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:isOwner})}).join(''):'<div class="empty">Sin citas.</div>');
+    (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true})}).join(''):'<div class="empty">Sin citas.</div>');
   bindRowActions($('#panelBody'));
   if(isOwner){
     $('#dPrev').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()-1);renderDash()};
@@ -830,7 +922,7 @@ function renderSemana(){
     var d=new Date(start);d.setDate(start.getDate()+i);var key=dayKey(d);
     var list=citasDe(key);citasSemana+=list.length;
     var t=list.filter(function(b){return b.estado!=='cancelada'}).reduce(function(a,b){return a+(b.total||0)},0);totalSemana+=t;
-    html+='<div class="week-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</span><span>'+list.length+' citas · '+fmtMoney(t)+'</span></h4>'+
+    html+='<div class="week-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</span><span>'+plural(list.length,'cita')+' · '+fmtMoney(t)+'</span></h4>'+
       (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join(''):'<span class="empty" style="display:block">Sin citas</span>')+'</div>';
   }
   $('#panelBody').innerHTML='<div class="day-nav"><button type="button" id="wPrev">‹</button><b>Semana del '+start.getDate()+' '+shortM[start.getMonth()]+'</b><button type="button" id="wNext">›</button></div>'+
@@ -842,16 +934,18 @@ function renderSemana(){
 }
 function renderMes(){
   var ref=Panel.mRef,y=ref.getFullYear(),m=ref.getMonth();
-  var first=new Date(y,m,1),last=new Date(y,m+1,0),byDay={},total=0,count=0;
+  // Comparar por clave de fecha (string), igual que citasDe()/renderStats(): comparar objetos
+  // Date deja fuera el último día del mes, porque bd (mediodía) siempre es mayor que
+  // 'last' (medianoche de ese mismo día).
+  var firstKey=dayKey(new Date(y,m,1)),lastKey=dayKey(new Date(y,m+1,0)),byDay={},total=0,count=0;
   BOOK.list.forEach(function(b){
-    var bd=new Date(b.fecha+'T12:00:00');
-    if(bd>=first&&bd<=last){(byDay[b.fecha]=byDay[b.fecha]||[]).push(b);if(b.estado!=='cancelada'){total+=b.total||0;count++}}
+    if(b.fecha>=firstKey&&b.fecha<=lastKey){(byDay[b.fecha]=byDay[b.fecha]||[]).push(b);if(b.estado!=='cancelada'){total+=b.total||0;count++}}
   });
   var keys=Object.keys(byDay).sort();
   var html=keys.length?keys.map(function(k){
     var list=byDay[k].sort(function(a,b){return a.inicio-b.inicio});
     var d=new Date(k+'T12:00:00');
-    return '<div class="month-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+'</span><span>'+list.length+' citas</span></h4>'+
+    return '<div class="month-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+'</span><span>'+plural(list.length,'cita')+'</span></h4>'+
       list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join('')+'</div>';
   }).join(''):'<div class="empty">Sin citas este mes.</div>';
   $('#panelBody').innerHTML='<div class="day-nav"><button type="button" id="mPrevM">‹</button><b>'+esc(new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric'}).format(ref))+'</b><button type="button" id="mNextM">›</button></div>'+
@@ -867,10 +961,12 @@ function renderBarberos(u){
     (puedeAdmin?'<button type="button" class="btn btn-ghost" id="addStaffBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Agregar barbero</button>':'')+
     '<div id="staffForm"></div>'+
     STAFF.list.map(function(p){
-      var acts=(puedeAdmin&&p.id!==u.id)?
+      // Nadie por debajo de superadmin puede tocar el rol/alta-baja de un superadmin.
+      var protegido=p.rol==='superadmin'&&u.rol!=='superadmin';
+      var acts=(puedeAdmin&&p.id!==u.id&&!protegido)?
         '<button type="button" data-sid="'+p.id+'" data-sact="rol">'+(p.rol==='employee'?'Hacer admin':'Hacer trabajador')+'</button>'+
         '<button type="button" data-sid="'+p.id+'" data-sact="toggle" class="danger">'+(p.activo===false?'Reactivar':'Quitar')+'</button>':'';
-      return '<div class="staff-row'+(p.activo===false?' inactivo':'')+'">'+(p.img?'<img class="av" src="'+p.img+'" alt=""/>':'<span class="av" aria-hidden="true"></span>')+
+      return '<div class="staff-row'+(p.activo===false?' inactivo':'')+'">'+(p.img?'<img class="av" src="'+p.img+'" alt="" width="44" height="44" loading="lazy" decoding="async"/>':'<span class="av" aria-hidden="true"></span>')+
         '<b>'+esc(p.nombre)+'</b><span class="role">'+roleLabel(p.rol)+(p.activo===false?' · inactivo':'')+'</span>'+
         '<span class="acts">'+acts+'</span></div>';
     }).join('');
@@ -880,17 +976,21 @@ function renderBarberos(u){
         '<select id="sRol"><option value="employee">Trabajador (solo ve sus citas)</option><option value="owner">Administrador (ve todo, gestiona equipo)</option></select>'+
         '<button type="button" class="btn btn-primary" id="sGuardar" style="min-height:44px">Guardar barbero</button></div>';
       $('#sGuardar').onclick=function(){
-        var nombre=$('#sNombre').value.trim(),pin=$('#sPin').value.replace(/\D/g,'');
-        if(!nombre||pin.length!==4){alert('Escribe el nombre y un PIN de 4 dígitos.');return}
-        if(STAFF.list.some(function(p){return p.pin===pin&&p.activo!==false})){alert('Ese PIN ya lo usa alguien más.');return}
+        var nombre=$('#sNombre').value.trim(),pinRaw=$('#sPin').value.replace(/\D/g,'');
+        if(!nombre||pinRaw.length!==4){alert('Escribe el nombre y un PIN de 4 dígitos.');return}
+        var pinHash=hashPin(pinRaw);
+        // Se compara contra TODO el staff (activo e inactivo): si no, el PIN de alguien dado
+        // de baja queda libre y, al reactivarlo, dos personas activas terminan compartiendo PIN.
+        if(STAFF.list.some(function(p){return staffPinOf(p)===pinHash})){alert('Ese PIN ya lo usa alguien más.');return}
         var id=slug(nombre)+'-'+Math.random().toString(36).slice(2,5);
-        saveStaff({id:id,nombre:nombre,pin:pin,rol:$('#sRol').value,activo:true,barbero:true});
+        saveStaff({id:id,nombre:nombre,pin:pinHash,rol:$('#sRol').value,activo:true,barbero:true});
         renderDash();
       };
     };
     $('#panelBody').addEventListener('click',function(e){
       var b=e.target.closest('button[data-sact]');if(!b)return;
       var p=STAFF.list.filter(function(x){return x.id===b.dataset.sid})[0];if(!p)return;
+      if(p.rol==='superadmin'&&u.rol!=='superadmin')return; // defensa además de ocultar el botón
       if(b.dataset.sact==='toggle'){p.activo=p.activo===false?true:false;saveStaff(p);renderDash()}
       else if(b.dataset.sact==='rol'){p.rol=p.rol==='employee'?'owner':'employee';saveStaff(p);renderDash()}
     });
@@ -906,7 +1006,7 @@ function renderStats(){
     (b.servicios||[]).forEach(function(s){porServicio[s]=(porServicio[s]||0)+1});
     t+=b.total||0;
   });
-  var rowsB=Object.keys(porBarbero).sort(function(a,b){return porBarbero[b]-porBarbero[a]}).map(function(k){return '<div class="row"><span class="k">'+esc(k)+'</span><span class="v">'+porBarbero[k]+' cortes</span></div>'}).join('')||'<div class="empty">Sin datos.</div>';
+  var rowsB=Object.keys(porBarbero).sort(function(a,b){return porBarbero[b]-porBarbero[a]}).map(function(k){return '<div class="row"><span class="k">'+esc(k)+'</span><span class="v">'+plural(porBarbero[k],'corte')+'</span></div>'}).join('')||'<div class="empty">Sin datos.</div>';
   var topServicio=Object.keys(porServicio).sort(function(a,b){return porServicio[b]-porServicio[a]})[0];
   $('#panelBody').innerHTML='<div class="day-nav" style="justify-content:center"><b>'+esc(new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric'}).format(ref))+'</b></div>'+
     '<div class="stat-row"><div class="stat"><div class="n">'+list.length+'</div><div class="l">Cortes del mes</div></div>'+
@@ -940,7 +1040,7 @@ function renderLogin(){
     pin+=k;paintDots();
     if(pin.length===4){
       var p=tryPin(pin);
-      if(p){Session.current=p;Panel.tab='dia';Panel.day=new Date();renderDash()}
+      if(p){Session.current=p;Panel.tab='dia';Panel.day=new Date();syncCitasSubscription();renderDash()}
       else{$('#pinMsg').textContent='PIN incorrecto. Intenta de nuevo.';pin='';setTimeout(paintDots,120)}
     }
   };
@@ -955,7 +1055,7 @@ function renderDash(){
     }).join('')+'</div>':'';
   $('#panelView').innerHTML='<div style="width:100%">'+
     '<a href="#/" class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Ir a reservar</a>'+
-    '<div class="dash-top"><div class="dash-who">'+(u.img?'<img class="av" src="'+u.img+'" alt=""/>':'')+
+    '<div class="dash-top"><div class="dash-who">'+(u.img?'<img class="av" src="'+u.img+'" alt="" width="40" height="40" decoding="async"/>':'')+
     '<div><b>Hola, '+esc(u.nombre)+'</b><div class="role">'+roleLabel(u.rol)+(BOOK.shared?' · <span class="live-dot">● en vivo</span>':'')+'</div></div></div>'+
     '<button type="button" class="btn btn-ghost" id="logoutBtn" style="min-height:40px;padding:0 16px">Salir</button></div>'+
     tabsHtml+'<div id="panelBody"></div></div>';
@@ -971,6 +1071,7 @@ function route(){
   $('#bookingMain').hidden=panel;
   $('.bar-fixed').hidden=panel;
   $('#panelView').hidden=!panel;
+  watchPanelRoute();
   if(panel)renderPanel();
 }
 
