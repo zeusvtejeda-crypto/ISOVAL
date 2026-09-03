@@ -8,6 +8,11 @@
 <meta property="og:title" content="Bases Box Tepic — Fábrica de bases para cama"/>
 <meta property="og:description" content="Bases tipo box a la medida, +8 tonos, fabricación propia en Tepic. Cotiza por WhatsApp."/>
 <meta property="og:type" content="website"/>
+<link rel="canonical" href="https://basesboxtepic.mx/"/>
+<meta property="og:locale" content="es_MX"/>
+<meta name="geo.region" content="MX-NAY"/>
+<meta name="geo.placename" content="Tepic, Nayarit"/>
+<meta name="keywords" content="bases para cama Tepic, base tipo box, box spring Tepic, muebles Tepic Nayarit, bases a la medida"/>
 <link rel="icon" href="assets/logo-icon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -138,6 +143,24 @@ section{padding:96px 0}
 .contact-cta{display:flex;flex-direction:column;gap:14px;justify-content:center}
 .contact-cta .btn{justify-content:center;font-size:19px;padding:18px}
 
+/* ubicación */
+#ubicacion{background:var(--concrete)}
+.loc-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:stretch}
+.map-frame{border:2px solid var(--graphite);background:#dcdad5;min-height:400px;overflow:hidden}
+.map-frame iframe{width:100%;height:100%;min-height:400px;border:0;display:block;filter:grayscale(.2) contrast(1.04)}
+.loc-card{background:var(--paper);border:1px solid var(--border);padding:30px;display:flex;flex-direction:column;gap:20px}
+.loc-card .row{display:flex;gap:14px;align-items:flex-start}
+.loc-card .ic{width:26px;height:26px;color:var(--orange);flex:none;margin-top:2px}
+.loc-card .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:var(--muted)}
+.loc-card .v{font-size:18px;font-weight:600;line-height:1.4}
+.hours{list-style:none;margin-top:8px}
+.hours li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed var(--border);font-size:17px}
+.hours li:last-child{border-bottom:0}
+.hours .d{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.hours .closed{color:var(--muted)}
+.loc-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:auto}
+.loc-actions .btn{flex:1;justify-content:center;min-width:180px}
+
 /* footer */
 footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 .foot-grid{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;align-items:center}
@@ -154,7 +177,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 .wa-float svg{width:32px;height:32px;fill:#fff}
 
 @media(max-width:900px){
-  .hero-grid,.tonos-grid,.kids,.contact-grid{grid-template-columns:1fr}
+  .hero-grid,.tonos-grid,.kids,.contact-grid,.loc-grid{grid-template-columns:1fr}
   .hero-art{order:-1}
   .feat-grid{grid-template-columns:1fr 1fr}
   .med-grid{grid-template-columns:1fr 1fr}
@@ -185,6 +208,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <a href="#tonos">Tonos</a>
       <a href="#porque">Por qué</a>
       <a href="#medidas">Medidas</a>
+      <a href="#ubicacion">Ubicación</a>
       <a href="#contacto">Contacto</a>
     </nav>
     <div class="nav-cta">
@@ -372,18 +396,65 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   </div>
 </section>
 
+<!-- ============ UBICACIÓN ============ -->
+<section id="ubicacion">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">05 / UBICACIÓN</span></div>
+      <h2>Visítanos en la fábrica</h2>
+      <p>Estamos sobre el Libramiento Carretero, en la colonia Lomas de San Juan, Tepic. Aquí fabricamos y aquí puedes ver los tonos y la estructura en físico antes de pedir tu base.</p>
+    </div>
+    <div class="loc-grid">
+      <div class="map-frame">
+        <iframe title="Ubicación de Bases Box Tepic en Google Maps" src="https://maps.google.com/maps?q=Bases%20Tipo%20Box%2C%20Libramiento%20Carretero%20Manzana%20N%20Lote%2004%2C%20Lomas%20de%20San%20Juan%2C%2063128%20Tepic%2C%20Nay.&amp;z=16&amp;hl=es&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      </div>
+      <div class="loc-card">
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <div>
+            <div class="k">Dirección</div>
+            <div class="v">Libramiento Carretero Mz. N, L. 04<br/>Col. Lomas de San Juan · C.P. 63128<br/>Tepic, Nayarit</div>
+          </div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          <div style="width:100%">
+            <div class="k">Horario de atención</div>
+            <ul class="hours">
+              <li><span class="d">Lunes a Viernes</span><span>9:00 – 19:00</span></li>
+              <li><span class="d">Sábado</span><span>9:00 – 19:00</span></li>
+              <li><span class="d closed">Domingo</span><span class="closed">Cerrado</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="row">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2A19.8 19.8 0 013 4.2 2 2 0 015 2h3a2 2 0 012 1.7l.5 3a2 2 0 01-.6 1.9L8.1 10a16 16 0 006 6l1.4-1.4a2 2 0 011.9-.5l3 .5a2 2 0 011.7 2z"/></svg>
+          <div>
+            <div class="k">Teléfono / WhatsApp</div>
+            <div class="v"><a href="tel:+523111216033">311 121 6033</a></div>
+          </div>
+        </div>
+        <div class="loc-actions">
+          <a class="btn btn-primary" href="https://www.google.com/maps/dir/?api=1&amp;destination=Bases%20Tipo%20Box%2C%20Libramiento%20Carretero%20Manzana%20N%20Lote%2004%2C%20Lomas%20de%20San%20Juan%2C%2063128%20Tepic%2C%20Nay." target="_blank" rel="noopener">Cómo llegar</a>
+          <a class="btn btn-ghost" href="https://maps.app.goo.gl/uHncNaJoxv8y5KQ5A" target="_blank" rel="noopener">Ver en Google Maps</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ CONTACTO ============ -->
 <section id="contacto">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">05 / CONTACTO</span></div>
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">06 / CONTACTO</span></div>
       <h2>Cotiza hoy tu base</h2>
     </div>
     <div class="contact-grid">
       <div class="contact-card">
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.7-7-11a7 7 0 0114 0c0 5.3-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-          <div><div class="k">Dirección</div><div class="v">Querétaro #285, Col. Centro<br/>Tepic, Nayarit</div></div>
+          <div><div class="k">Dirección</div><div class="v">Libramiento Carretero Mz. N, L. 04<br/>Col. Lomas de San Juan, C.P. 63128<br/>Tepic, Nayarit</div></div>
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.9v3a2 2 0 01-2.2 2A19.8 19.8 0 013 4.2 2 2 0 015 2h3a2 2 0 012 1.7l.5 3a2 2 0 01-.6 1.9L8.1 10a16 16 0 006 6l1.4-1.4a2 2 0 011.9-.5l3 .5a2 2 0 011.7 2z"/></svg>
@@ -391,9 +462,9 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         </div>
         <div class="row">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-          <div><div class="k">Horario</div><div class="v">Lun a Sáb · 9:00 – 19:00</div></div>
+          <div><div class="k">Horario</div><div class="v">Lun a Sáb · 9:00 – 19:00<br/><span style="font-size:15px;font-weight:400;color:var(--muted)">Domingo cerrado</span></div></div>
         </div>
-        <a class="btn btn-ghost" style="border-color:#444;color:var(--paper);width:100%;justify-content:center" href="https://maps.google.com/?q=Quer%C3%A9taro%20285%20Col%20Centro%20Tepic%20Nayarit" target="_blank" rel="noopener">Ver en el mapa</a>
+        <a class="btn btn-ghost" style="border-color:#444;color:var(--paper);width:100%;justify-content:center" href="https://maps.app.goo.gl/uHncNaJoxv8y5KQ5A" target="_blank" rel="noopener">Ver en el mapa</a>
       </div>
       <div class="contact-cta">
         <a class="btn btn-primary" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener">
@@ -421,13 +492,14 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <a href="#tonos">Tonos</a>
         <a href="#porque">Por qué</a>
         <a href="#medidas">Medidas</a>
+        <a href="#ubicacion">Ubicación</a>
         <a href="#contacto">Contacto</a>
         <a href="https://wa.me/523111216033" target="_blank" rel="noopener">WhatsApp</a>
       </nav>
     </div>
     <div class="copy">
       <span>© <span id="yr"></span> Bases Box Tepic. Todos los derechos reservados.</span>
-      <span>Querétaro #285, Col. Centro, Tepic · 311 121 6033</span>
+      <span>Libramiento Carretero Mz. N, L. 04, Col. Lomas de San Juan, Tepic, Nay. · 311 121 6033</span>
     </div>
   </div>
 </footer>
@@ -477,6 +549,41 @@ tones.forEach(function(t,i){
 Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a){
   a.addEventListener('click',function(){document.getElementById('navlinks').classList.remove('open')});
 });
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FurnitureStore",
+  "name": "Bases Box Tepic",
+  "alternateName": "Bases Tipo Box",
+  "description": "Fábrica de bases para cama tipo box a la medida en Tepic, Nayarit. Más de 8 tonos, estructura durable y patas cromadas.",
+  "image": "assets/logo-horizontal.svg",
+  "logo": "assets/logo-icon.svg",
+  "telephone": "+52-311-121-6033",
+  "priceRange": "$$",
+  "currenciesAccepted": "MXN",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Libramiento Carretero Mz. N, L. 04, Col. Lomas de San Juan",
+    "addressLocality": "Tepic",
+    "addressRegion": "Nayarit",
+    "postalCode": "63128",
+    "addressCountry": "MX"
+  },
+  "areaServed": { "@type": "City", "name": "Tepic, Nayarit" },
+  "hasMap": "https://maps.app.goo.gl/uHncNaJoxv8y5KQ5A",
+  "sameAs": ["https://maps.app.goo.gl/uHncNaJoxv8y5KQ5A"],
+  "openingHoursSpecification": [{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    "opens": "09:00",
+    "closes": "19:00"
+  }],
+  "makesOffer": {
+    "@type": "Offer",
+    "itemOffered": { "@type": "Product", "name": "Base para cama tipo box a la medida", "category": "Muebles / Recámara" }
+  }
+}
 </script>
 </body>
 </html>
