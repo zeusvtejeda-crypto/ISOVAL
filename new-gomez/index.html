@@ -492,7 +492,7 @@ try{BOOK.list=JSON.parse(localStorage.getItem('nb:new-gomez:citas')||'[]')||[]}c
 var STAFF={list:[],db:null,seeded:false};
 try{STAFF.list=JSON.parse(localStorage.getItem('nb:new-gomez:staff')||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
 var Session={current:null};
-var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date()};
+var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:''};
 
 /* ── Seguridad con base de datos en vivo ──────────────────────────────────
    El capability db no distingue "cliente" de "staff": cualquiera con el
@@ -846,9 +846,10 @@ function mrowHTML(b,opts){
   }
   return '<div class="mrow"><span class="when">'+fmtTime(b.inicio)+'<b>'+fmtTime(b.inicio+b.dur)+'</b></span>'+
     '<span class="who">'+esc(b.nombre||'Cliente')+' <span class="pill '+(b.estado||'registrada')+'">'+est.t+'</span></span>'+
-    '<span class="what">'+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(opts.mostrarBarbero?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
+    '<span class="what">'+(opts.mostrarFecha?fechaCorta(b.fecha)+' · ':'')+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(opts.mostrarBarbero?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
     '<span class="acts">'+acts+'</span></div>';
 }
+function fechaCorta(k){var d=new Date(k+'T12:00:00');return shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]}
 function bindRowActions(container){
   container.onclick=function(e){
     var b=e.target.closest('button[data-act]');if(!b)return;
@@ -901,6 +902,28 @@ function openManualForm(editing){
   };
 }
 function renderDia(u,isOwner){
+  $('#panelBody').innerHTML=
+    (isOwner?'<input type="search" id="buscarInput" placeholder="Buscar cliente por nombre o teléfono…" value="'+esc(Panel.busqueda||'')+'" aria-label="Buscar cliente" style="width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:44px;margin-bottom:14px"/>':'')+
+    '<div id="mformBox"></div><div id="diaContenido"></div>';
+  if(isOwner){
+    var input=$('#buscarInput');
+    input.oninput=function(){Panel.busqueda=input.value;renderDiaContenido(u,isOwner)};
+    input.focus();var vlen=input.value.length;input.setSelectionRange(vlen,vlen);
+  }
+  renderDiaContenido(u,isOwner);
+}
+function renderDiaContenido(u,isOwner){
+  var q=isOwner?(Panel.busqueda||'').trim().toLowerCase():'';
+  if(q.length>=2){
+    var norm=function(s){return String(s||'').toLowerCase()};
+    var resultados=BOOK.list.filter(function(b){return norm(b.nombre).indexOf(q)>-1||norm(b.telefono).indexOf(q)>-1})
+      .sort(function(a,b){return a.fecha===b.fecha?a.inicio-b.inicio:(a.fecha<b.fecha?-1:1)});
+    $('#diaContenido').innerHTML=
+      '<p class="eyebrow" style="margin-bottom:10px">'+plural(resultados.length,'resultado')+'</p>'+
+      (resultados.length?resultados.map(function(b){return mrowHTML(b,{acciones:true,editar:true,mostrarBarbero:true,mostrarFecha:true})}).join(''):'<div class="empty">Nadie coincide con "'+esc(Panel.busqueda)+'".</div>');
+    bindRowActions($('#diaContenido'));
+    return;
+  }
   var d=Panel.day,key=dayKey(d);
   // Las citas 'any' (cualquier profesional) ya ocupan una de las 2 sillas de ese horario, así
   // que también se muestran a cada empleado (marcadas como tal), no solo las suyas.
@@ -917,18 +940,17 @@ function renderDia(u,isOwner){
         '</div>';
     }
   }
-  $('#panelBody').innerHTML=
+  $('#diaContenido').innerHTML=
     (isOwner?'<div class="day-nav"><button type="button" id="dPrev">‹</button><b>'+esc(longDate(d))+(sameDay(d,new Date())?' · hoy':'')+'</b><button type="button" id="dNext">›</button></div>':
       '<div class="day-nav"><b>'+esc(longDate(d))+' · tus citas de hoy</b></div>')+
     (isOwner?'<div class="stat-row"><div class="stat"><div class="n">'+list.length+'</div><div class="l">Citas</div></div><div class="stat"><div class="n">'+fmtMoney(totalDia)+'</div><div class="l">Ingreso del día</div></div></div>':'')+
     reminderHtml+
     (isOwner?'<button type="button" class="btn btn-ghost" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Cita manual (teléfono / mostrador)</button>':'')+
-    '<div id="mformBox"></div>'+
     (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true})}).join(''):'<div class="empty">Sin citas.</div>');
-  bindRowActions($('#panelBody'));
+  bindRowActions($('#diaContenido'));
   if(isOwner){
-    $('#dPrev').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()-1);renderDash()};
-    $('#dNext').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()+1);renderDash()};
+    $('#dPrev').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()-1);renderDiaContenido(u,isOwner)};
+    $('#dNext').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()+1);renderDiaContenido(u,isOwner)};
     $('#addBtn').onclick=function(){openManualForm(null)};
   }
 }
