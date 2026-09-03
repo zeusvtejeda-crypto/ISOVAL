@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Finanzas — LAB A+A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --cream:        #F3EDE0;
+  --cream-alt:    #EBE2CF;
+  --cream-card:   #F9F5EE;
+  --warm-dark:    #231C10;
+  --warm-dark-2:  #2E2416;
+  --ink:          #221A0E;
+  --ink-mid:      #5C4A36;
+  --ink-dim:      #9C866E;
+  --ink-faint:    #C2AE96;
+  --red:          #E8192C;
+  --red-deep:     #B8131F;
+  --green:        #3E7A4C;
+  --border:       rgba(34,26,14,0.10);
+  --border-mid:   rgba(34,26,14,0.18);
+  --border-strong:rgba(34,26,14,0.30);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--cream);
+  color:var(--ink);
+  font-family:'Fraunces',serif;
+  font-weight:300;
+  min-height:100vh;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+header.top{
+  padding:28px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:12px;
+}
+.brand{font-size:20px;letter-spacing:.5px;}
+.brand em{font-style:normal;color:var(--red);}
+.brand small{
+  display:block;font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--ink-dim);margin-top:2px;
+}
+a.back{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;
+  color:var(--ink-mid);text-decoration:none;border:1px solid var(--border-mid);
+  padding:8px 14px;border-radius:20px;transition:.2s;
+}
+a.back:hover{border-color:var(--red);color:var(--red);}
+
+main{
+  max-width:1240px;margin:0 auto;padding:32px;
+  display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:28px;
+  align-items:start;
+}
+@media(max-width:900px){main{grid-template-columns:1fr;}}
+
+/* ---- Chat panel ---- */
+.panel{
+  background:var(--cream-card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+}
+.panel-head{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--ink-mid);
+  display:flex;align-items:center;gap:8px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;}
+
+#chat-log{
+  height:440px;overflow-y:auto;padding:18px 18px 6px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:14.5px;line-height:1.45;}
+.msg.user{
+  align-self:flex-end;background:var(--warm-dark);color:var(--cream);
+  border-bottom-right-radius:4px;
+}
+.msg.bot{
+  align-self:flex-start;background:var(--cream-alt);color:var(--ink);
+  border-bottom-left-radius:4px;white-space:pre-line;
+}
+.msg.bot.error{background:rgba(232,25,44,0.10);color:var(--red-deep);}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 18px;border-top:1px solid var(--border);}
+.chip{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-mid);
+  border:1px solid var(--border-mid);border-radius:14px;padding:5px 10px;cursor:pointer;
+  background:transparent;transition:.15s;
+}
+.chip:hover{border-color:var(--red);color:var(--red);}
+
+#chat-form{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--border);}
+#chat-input{
+  flex:1;border:1px solid var(--border-mid);border-radius:24px;padding:12px 16px;
+  font-family:'Fraunces',serif;font-size:14.5px;background:var(--cream);color:var(--ink);
+  outline:none;
+}
+#chat-input:focus{border-color:var(--red);}
+#chat-form button{
+  border:none;background:var(--red);color:var(--cream);border-radius:50%;
+  width:44px;height:44px;font-size:16px;cursor:pointer;flex-shrink:0;transition:.15s;
+}
+#chat-form button:hover{background:var(--red-deep);}
+
+/* ---- Dashboard ---- */
+.dash-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.month-switch{display:flex;align-items:center;gap:10px;}
+.month-switch button{
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--border-mid);
+  background:transparent;cursor:pointer;color:var(--ink-mid);font-size:14px;
+}
+.month-switch button:hover{border-color:var(--red);color:var(--red);}
+.month-label{font-size:19px;min-width:170px;text-align:center;}
+.month-label em{font-style:normal;color:var(--red);}
+
+.util-buttons{display:flex;gap:8px;flex-wrap:wrap;}
+.util-buttons button{
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.5px;
+  border:1px solid var(--border-mid);background:transparent;color:var(--ink-mid);
+  padding:7px 12px;border-radius:16px;cursor:pointer;transition:.15s;
+}
+.util-buttons button:hover{border-color:var(--red);color:var(--red);}
+.util-buttons input[type=file]{display:none;}
+
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
+@media(max-width:600px){.cards{grid-template-columns:1fr;}}
+.card{
+  background:var(--cream-card);border:1px solid var(--border);border-radius:14px;
+  padding:18px 20px;
+}
+.card .k{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--ink-dim);margin-bottom:8px;}
+.card .v{font-size:26px;}
+.card.income .v{color:var(--green);}
+.card.expense .v{color:var(--red);}
+.card.balance .v.neg{color:var(--red);}
+.card.balance .v.pos{color:var(--green);}
+
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+@media(max-width:750px){.charts{grid-template-columns:1fr;}}
+.chart-box{
+  background:var(--cream-card);border:1px solid var(--border);border-radius:14px;
+  padding:18px;height:290px;position:relative;
+}
+.chart-box h3{font-size:14px;font-weight:400;margin-bottom:10px;color:var(--ink-mid);
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;}
+.chart-empty{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:var(--ink-faint);font-size:13px;padding-top:20px;
+}
+
+.tx-panel{background:var(--cream-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.tx-panel h3{padding:16px 20px;border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-mid);}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th,td{text-align:left;padding:10px 20px;border-bottom:1px solid var(--border);}
+th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);font-weight:400;}
+td.amt{font-family:'JetBrains Mono',monospace;}
+td.amt.expense{color:var(--red-deep);}
+td.amt.income{color:var(--green);}
+tr:last-child td{border-bottom:none;}
+.del-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:15px;}
+.del-btn:hover{color:var(--red);}
+.tx-empty{padding:28px 20px;text-align:center;color:var(--ink-faint);font-size:13.5px;}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">LAB <em>A+A</em><small>Panel de Finanzas · datos guardados solo en este navegador</small></div>
+  <a class="back" href="index.html">← Volver al sitio</a>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="panel-head"><span class="dot"></span> Chat de gastos e ingresos</div>
+    <div id="chat-log"></div>
+    <div class="chips" id="chips"></div>
+    <form id="chat-form">
+      <input id="chat-input" class="mono" autocomplete="off" placeholder="Ej: gasté 200 en transporte hoy" />
+      <button type="submit">→</button>
+    </form>
+  </section>
+
+  <section>
+    <div class="dash-top">
+      <div class="month-switch">
+        <button id="prevMonth">‹</button>
+        <div class="month-label mono" id="monthLabel"></div>
+        <button id="nextMonth">›</button>
+      </div>
+      <div class="util-buttons">
+        <button id="exportBtn">Exportar JSON</button>
+        <button id="importBtnLabel">Importar JSON</button>
+        <input type="file" id="importFile" accept="application/json"/>
+        <button id="clearBtn">Borrar todo</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card income"><div class="k">Ingresos del mes</div><div class="v" id="cardIncome">$0</div></div>
+      <div class="card expense"><div class="k">Gastos del mes</div><div class="v" id="cardExpense">$0</div></div>
+      <div class="card balance"><div class="k">Balance del mes</div><div class="v" id="cardBalance">$0</div></div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-box">
+        <h3>Gastos por categoría</h3>
+        <canvas id="catChart"></canvas>
+        <div class="chart-empty" id="catChartEmpty" style="display:none;">Sin gastos este mes</div>
+      </div>
+      <div class="chart-box">
+        <h3>Ingresos vs. gastos (6 meses)</h3>
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    <div class="tx-panel">
+      <h3>Movimientos del mes</h3>
+      <table id="txTable">
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Nota</th><th>Monto</th><th></th></tr></thead>
+        <tbody id="txBody"></tbody>
+      </table>
+      <div class="tx-empty" id="txEmpty" style="display:none;">Aún no hay movimientos este mes. Cuéntame en el chat qué gastaste o ganaste.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const STORAGE_KEY = "labaa_finanzas_v1";
+const MXN = new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN",maximumFractionDigits:0});
+
+const CATEGORIES = [
+  {key:"transporte",   label:"Transporte",         words:["transporte","uber","didi","taxi","gasolina","camion","camión","autobus","autobús","pasaje","estacionamiento","peaje","caseta","casetas"]},
+  {key:"comida",        label:"Comida",             words:["comida","restaurante","super","supermercado","mercado","cafe","café","almuerzo","cena","desayuno","antojito","tacos","comí","comi"]},
+  {key:"vivienda",      label:"Vivienda",           words:["renta","alquiler","hipoteca","luz","agua","predial","mantenimiento"]},
+  {key:"servicios",     label:"Servicios",          words:["internet","telefono","teléfono","celular","netflix","spotify","suscripcion","suscripción","software","licencia"]},
+  {key:"salud",         label:"Salud",              words:["doctor","medico","médico","farmacia","medicina","consulta","seguro","dentista"]},
+  {key:"entretenimiento",label:"Entretenimiento",   words:["cine","salida","fiesta","boleto","concierto","viaje","vacaciones"]},
+  {key:"oficina",       label:"Oficina/Material",   words:["papeleria","papelería","material","herramienta","equipo","oficina","impresion","impresión"]},
+  {key:"educacion",     label:"Educación",          words:["curso","libro","colegiatura","escuela","capacitacion","capacitación"]},
+  {key:"trabajo",       label:"Trabajo/Honorarios", words:["honorarios","avaluo","avalúo","proyecto","cliente","sueldo","salario","nomina","nómina","venta","cobro","cobré","cobre"]},
+];
+const OTHER_CATEGORY = {key:"otros", label:"Otros"};
+
+const GASTO_WORDS = ["gaste","gasté","gasto","gastos","pague","pagué","pago","compre","compré","compra","invert","costo","costó","se me fue","se fue en"];
+const INGRESO_WORDS = ["ingreso","ingresé","gane","gané","cobre","cobré","recibi","recibí","recibo","me pagaron","entrada","vendi","vendí","deposito","depósito","me depositaron"];
+
+const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+let state = { txs: load() };
+let viewDate = new Date(); viewDate.setDate(1);
+
+function load(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch(e){ return []; }
+}
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.txs)); }
+
+function normalize(s){
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+}
+
+function detectCategory(rawText){
+  const t = normalize(rawText);
+  for(const cat of CATEGORIES){
+    for(const w of cat.words){
+      if(t.includes(normalize(w))) return cat;
+    }
+  }
+  return null;
+}
+
+function detectType(rawText, category){
+  const t = normalize(rawText);
+  const hasIngreso = INGRESO_WORDS.some(w=>t.includes(normalize(w)));
+  const hasGasto = GASTO_WORDS.some(w=>t.includes(normalize(w)));
+  if(hasIngreso && !hasGasto) return "ingreso";
+  if(hasGasto && !hasIngreso) return "gasto";
+  if(category && category.key === "trabajo") return "ingreso";
+  if(hasIngreso) return "ingreso";
+  return "gasto"; // default: la mayoría de los mensajes son gastos
+}
+
+function extractAmount(rawText){
+  let t = rawText.replace(/,/g,"");
+  let m = t.match(/\$\s?(\d+(?:\.\d{1,2})?)/);
+  if(m) return parseFloat(m[1]);
+  m = t.match(/(\d+(?:\.\d{1,2})?)\s?(pesos|peso|mxn)\b/i);
+  if(m) return parseFloat(m[1]);
+  const nums = [...t.matchAll(/(\d+(?:\.\d{1,2})?)/g)];
+  for(const n of nums){
+    const idx = n.index;
+    const after = t.slice(idx + n[0].length, idx + n[0].length + 24).toLowerCase().trim();
+    // parte de una fecha, ej. "13 de julio" -> no es el monto
+    if(/^de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/.test(after)) continue;
+    return parseFloat(n[1]);
+  }
+  return null;
+}
+
+function extractDate(rawText){
+  const t = normalize(rawText);
+  const today = new Date();
+  if(t.includes("anteayer")){ const d=new Date(today); d.setDate(d.getDate()-2); return d; }
+  if(t.includes("ayer")){ const d=new Date(today); d.setDate(d.getDate()-1); return d; }
+  const m = t.match(/(\d{1,2}) de (enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/);
+  if(m){
+    const day = parseInt(m[1],10);
+    const monthIdx = MONTHS.indexOf(m[2]);
+    const d = new Date(today.getFullYear(), monthIdx, day);
+    if(d > today) d.setFullYear(d.getFullYear()-1);
+    return d;
+  }
+  return today;
+}
+
+function isoDate(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function fmtDateShort(iso){
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y.slice(2)}`;
+}
+
+function monthKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+
+// ---------- Chat ----------
+const chatLog = document.getElementById("chat-log");
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
+const chipsEl = document.getElementById("chips");
+
+function addMsg(text, who, isError){
+  const div = document.createElement("div");
+  div.className = "msg " + who + (isError ? " error" : "");
+  div.textContent = text;
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+const EXAMPLES = [
+  "Gasté 200 en transporte hoy",
+  "Ingreso de 3500 por honorarios",
+  "Pagué 450 de internet",
+  "resumen",
+  "elimina el último"
+];
+EXAMPLES.forEach(ex=>{
+  const b = document.createElement("button");
+  b.className = "chip mono";
+  b.textContent = ex;
+  b.onclick = ()=>{ chatInput.value = ex; chatInput.focus(); };
+  chipsEl.appendChild(b);
+});
+
+function currentMonthSummary(){
+  const key = monthKey(new Date());
+  const txs = state.txs.filter(tx=>tx.date.startsWith(key));
+  const income = txs.filter(t=>t.type==="ingreso").reduce((s,t)=>s+t.amount,0);
+  const expense = txs.filter(t=>t.type==="gasto").reduce((s,t)=>s+t.amount,0);
+  return {income, expense, balance: income-expense};
+}
+
+function handleMessage(text){
+  const clean = text.trim();
+  if(!clean) return;
+  addMsg(clean, "user");
+  const t = normalize(clean);
+
+  if(/^resumen|cuanto llevo|balance$/.test(t) || t.includes("resumen") || t.includes("cuanto llevo")){
+    const s = currentMonthSummary();
+    addMsg(`Este mes: ingresos ${MXN.format(s.income)}, gastos ${MXN.format(s.expense)}, balance ${MXN.format(s.balance)}.`, "bot");
+    return;
+  }
+  if(t.includes("elimina el ultimo") || t.includes("borra el ultimo") || t.includes("deshacer") || t === "undo"){
+    if(state.txs.length === 0){ addMsg("No hay movimientos que eliminar.", "bot"); return; }
+    const removed = state.txs.pop();
+    save(); renderAll();
+    addMsg(`Eliminado: ${removed.type==="gasto"?"gasto":"ingreso"} de ${MXN.format(removed.amount)} en ${removed.categoryLabel}.`, "bot");
+    return;
+  }
+  if(t.includes("ayuda") || t === "help"){
+    addMsg("Cuéntame tus gastos o ingresos en una frase, por ejemplo:\n\"gasté 200 en transporte hoy\"\n\"ingreso de 3000 por un avalúo\"\n\nTambién puedes escribir \"resumen\" o \"elimina el último\".", "bot");
+    return;
+  }
+
+  const amount = extractAmount(clean);
+  if(amount === null || isNaN(amount) || amount <= 0){
+    addMsg("No pude identificar el monto. Intenta incluir la cantidad, por ejemplo: \"gasté 200 en transporte\".", "bot", true);
+    return;
+  }
+  const category = detectCategory(clean) || OTHER_CATEGORY;
+  const type = detectType(clean, category);
+  const date = extractDate(clean);
+
+  const tx = {
+    id: Date.now() + "-" + Math.random().toString(36).slice(2,7),
+    type, amount,
+    category: category.key, categoryLabel: category.label,
+    note: clean,
+    date: isoDate(date),
+  };
+  state.txs.push(tx);
+  save();
+  renderAll();
+
+  const verb = type === "gasto" ? "Gasto" : "Ingreso";
+  addMsg(`✅ ${verb} agregado: ${MXN.format(amount)} · ${category.label} · ${fmtDateShort(tx.date)}`, "bot");
+}
+
+chatForm.addEventListener("submit", e=>{
+  e.preventDefault();
+  const v = chatInput.value;
+  chatInput.value = "";
+  handleMessage(v);
+});
+
+// ---------- Dashboard ----------
+const monthLabelEl = document.getElementById("monthLabel");
+const cardIncome = document.getElementById("cardIncome");
+const cardExpense = document.getElementById("cardExpense");
+const cardBalance = document.getElementById("cardBalance");
+const txBody = document.getElementById("txBody");
+const txEmpty = document.getElementById("txEmpty");
+
+let catChart, trendChart;
+
+function txsForMonth(d){
+  const key = monthKey(d);
+  return state.txs.filter(tx=>tx.date.startsWith(key)).sort((a,b)=>b.date.localeCompare(a.date));
+}
+
+function renderMonthLabel(){
+  const name = MONTHS[viewDate.getMonth()];
+  monthLabelEl.innerHTML = `${name.charAt(0).toUpperCase()+name.slice(1)} <em>${viewDate.getFullYear()}</em>`;
+}
+
+function renderCards(){
+  const txs = txsForMonth(viewDate);
+  const income = txs.filter(t=>t.type==="ingreso").reduce((s,t)=>s+t.amount,0);
+  const expense = txs.filter(t=>t.type==="gasto").reduce((s,t)=>s+t.amount,0);
+  const balance = income - expense;
+  cardIncome.textContent = MXN.format(income);
+  cardExpense.textContent = MXN.format(expense);
+  cardBalance.textContent = MXN.format(balance);
+  cardBalance.className = "v " + (balance < 0 ? "neg" : "pos");
+}
+
+function renderTable(){
+  const txs = txsForMonth(viewDate);
+  txBody.innerHTML = "";
+  txEmpty.style.display = txs.length ? "none" : "block";
+  for(const tx of txs){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="mono">${fmtDateShort(tx.date)}</td>
+      <td>${tx.type === "gasto" ? "Gasto" : "Ingreso"}</td>
+      <td>${tx.categoryLabel}</td>
+      <td>${tx.note}</td>
+      <td class="amt mono ${tx.type}">${tx.type==="gasto"?"-":"+"}${MXN.format(tx.amount)}</td>
+      <td><button class="del-btn" title="Eliminar" data-id="${tx.id}">×</button></td>
+    `;
+    txBody.appendChild(tr);
+  }
+  txBody.querySelectorAll(".del-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.txs = state.txs.filter(t=>t.id !== btn.dataset.id);
+      save(); renderAll();
+    });
+  });
+}
+
+const CHART_COLORS = ["#E8192C","#5C4A36","#9C866E","#3E7A4C","#B8131F","#231C10","#C2AE96","#7A5C3E","#4A6C5C"];
+
+function renderCatChart(){
+  const txs = txsForMonth(viewDate).filter(t=>t.type==="gasto");
+  const byCat = {};
+  txs.forEach(t=>{ byCat[t.categoryLabel] = (byCat[t.categoryLabel]||0) + t.amount; });
+  const labels = Object.keys(byCat);
+  const data = Object.values(byCat);
+  const emptyEl = document.getElementById("catChartEmpty");
+  emptyEl.style.display = labels.length ? "none" : "flex";
+
+  if(catChart) catChart.destroy();
+  if(!labels.length || typeof Chart === "undefined") return;
+  catChart = new Chart(document.getElementById("catChart"), {
+    type: "doughnut",
+    data: { labels, datasets: [{ data, backgroundColor: CHART_COLORS, borderColor: "#F9F5EE", borderWidth: 2 }] },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { font: { family: "JetBrains Mono", size: 10 }, color: "#5C4A36", boxWidth: 10, padding: 10 } } }
+    }
+  });
+}
+
+function renderTrendChart(){
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(viewDate.getFullYear(), viewDate.getMonth()-i, 1);
+    months.push(d);
+  }
+  const labels = months.map(d=>MONTHS[d.getMonth()].slice(0,3)+" "+String(d.getFullYear()).slice(2));
+  const incomeData = months.map(d=>{
+    const key = monthKey(d);
+    return state.txs.filter(t=>t.date.startsWith(key)&&t.type==="ingreso").reduce((s,t)=>s+t.amount,0);
+  });
+  const expenseData = months.map(d=>{
+    const key = monthKey(d);
+    return state.txs.filter(t=>t.date.startsWith(key)&&t.type==="gasto").reduce((s,t)=>s+t.amount,0);
+  });
+
+  if(trendChart) trendChart.destroy();
+  if(typeof Chart === "undefined") return;
+  trendChart = new Chart(document.getElementById("trendChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Ingresos", data: incomeData, backgroundColor: "#3E7A4C" },
+        { label: "Gastos", data: expenseData, backgroundColor: "#E8192C" },
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { font: { family: "JetBrains Mono", size: 9 }, color: "#5C4A36" }, grid: { display:false } },
+        y: { ticks: { font: { family: "JetBrains Mono", size: 9 }, color: "#5C4A36" }, grid: { color: "rgba(34,26,14,0.08)" } }
+      },
+      plugins: { legend: { position: "bottom", labels: { font: { family: "JetBrains Mono", size: 10 }, color: "#5C4A36", boxWidth: 10 } } }
+    }
+  });
+}
+
+function renderAll(){
+  renderMonthLabel();
+  renderCards();
+  renderTable();
+  renderCatChart();
+  renderTrendChart();
+}
+
+document.getElementById("prevMonth").addEventListener("click", ()=>{
+  viewDate.setMonth(viewDate.getMonth()-1); renderAll();
+});
+document.getElementById("nextMonth").addEventListener("click", ()=>{
+  viewDate.setMonth(viewDate.getMonth()+1); renderAll();
+});
+
+// ---------- Import / export / clear ----------
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(state.txs, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "finanzas-labaa.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+const importFile = document.getElementById("importFile");
+document.getElementById("importBtnLabel").addEventListener("click", ()=> importFile.click());
+importFile.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!Array.isArray(data)) throw new Error("formato inválido");
+      state.txs = data;
+      save(); renderAll();
+      addMsg("Datos importados correctamente.", "bot");
+    }catch(err){
+      addMsg("No se pudo importar el archivo: " + err.message, "bot", true);
+    }
+  };
+  reader.readAsText(file);
+  importFile.value = "";
+});
+
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  if(confirm("¿Borrar todos los movimientos guardados en este navegador? Esta acción no se puede deshacer.")){
+    state.txs = [];
+    save(); renderAll();
+    addMsg("Se borraron todos los movimientos.", "bot");
+  }
+});
+
+// ---------- Init ----------
+addMsg("Hola, soy tu registro de gastos e ingresos. Escríbeme algo como \"gasté 200 en transporte hoy\" y lo agrego automáticamente. Escribe \"ayuda\" para ver más ejemplos.", "bot");
+renderAll();
+
+})();
+</script>
+</body>
+</html>
