@@ -290,13 +290,13 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
 <header class="head">
   <div class="head-in">
-    <img class="badge" src="img/logo.jpg" width="96" height="53" alt="Logotipo de NEW GOMEZ Barbershop"/>
+    <img class="badge" id="hBadge" src="img/logo.jpg" width="96" height="53" alt="Logotipo de NEW GOMEZ Barbershop"/>
     <div>
-      <h1>NEW GOMEZ <small>Barbershop · Tepic</small></h1>
-      <div class="rating"><b>5,0</b> <span class="stars" aria-hidden="true">★★★★★</span> <span>(140 reseñas)</span></div>
+      <h1 id="hNombre">NEW GOMEZ <small>Barbershop · Tepic</small></h1>
+      <div class="rating" id="hRating"><b>5,0</b> <span class="stars" aria-hidden="true">★★★★★</span> <span>(140 reseñas)</span></div>
       <div class="meta">
-        <a href="https://www.google.com/maps/search/?api=1&query=21.497270,-104.901603" target="_blank" rel="noopener">Tuxpan 45, Col. Morelos, Tepic</a>
-        <span>Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado</span>
+        <a id="hMapa" href="https://www.google.com/maps/search/?api=1&query=21.497270,-104.901603" target="_blank" rel="noopener">Tuxpan 45, Col. Morelos, Tepic</a>
+        <span id="hHorario">Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado</span>
       </div>
     </div>
   </div>
@@ -354,7 +354,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
           <p class="msg" id="phoneMsg" role="alert">Revisa el número: deben ser 10 dígitos.</p>
         </div>
         <fieldset class="field">
-          <legend class="eyebrow" style="margin-bottom:8px">¿Es tu primera visita a NEW GOMEZ?</legend>
+          <legend class="eyebrow" id="fLegendPrimera" style="margin-bottom:8px">¿Es tu primera visita a NEW GOMEZ?</legend>
           <div class="seg" id="first">
             <label class="opt"><input type="radio" name="first" value="Sí"/><span class="name">Sí</span><span class="sub">Es mi primera visita</span><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span></label>
             <label class="opt"><input type="radio" name="first" value="No"/><span class="name">No</span><span class="sub">Ya he venido</span><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span></label>
@@ -370,7 +370,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
       <div class="actions">
         <button class="btn btn-primary" id="confirmBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Confirmar cita</button>
-        <a class="btn btn-ghost" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g/booking" target="_blank" rel="noopener">Reservar en Fresha · confirmación instantánea</a>
+        <a class="btn btn-ghost" id="freshaBookingLink" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g/booking" target="_blank" rel="noopener">Reservar en Fresha · confirmación instantánea</a>
         <a class="btn btn-ghost" id="calBtn" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
       </div>
       <div class="policy">
@@ -412,13 +412,13 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
 <footer class="foot">
   <div class="links">
-    <a href="tel:+523111585540">311 158 5540</a>
-    <a href="https://wa.me/523111585540" target="_blank" rel="noopener">WhatsApp</a>
-    <a href="https://www.instagram.com/angel_newgomez" target="_blank" rel="noopener">Instagram</a>
-    <a href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Perfil en Fresha</a>
+    <a id="fTel" href="tel:+523111585540">311 158 5540</a>
+    <a id="fWa" href="https://wa.me/523111585540" target="_blank" rel="noopener">WhatsApp</a>
+    <a id="fIg" href="https://www.instagram.com/angel_newgomez" target="_blank" rel="noopener">Instagram</a>
+    <a id="fFresha" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Perfil en Fresha</a>
     <a href="#/panel">Panel del equipo</a>
   </div>
-  <span>Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit · Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado</span>
+  <span id="fDireccion">Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit · Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado</span>
 </footer>
 
 <script>
@@ -432,17 +432,34 @@ try{ boot(); }catch(e){ fatal(e); }
 
 function fatal(e){
   console.error('[new-gomez] fallo de arranque:',e);
-  var msg=encodeURIComponent('Hola NEW GOMEZ, quiero reservar una cita');
+  var tel=(typeof NEGOCIO!=='undefined'&&NEGOCIO.telefono)||'523111585540';
+  var telDisplay=(typeof NEGOCIO!=='undefined'&&NEGOCIO.telefonoDisplay)||'311 158 5540';
+  var msg=encodeURIComponent('Hola, quiero reservar una cita');
   document.body.innerHTML='<div class="fallback"><h2>Estamos actualizando el sistema</h2>'+
     '<p>Para reservar o confirmar tu cita ahora mismo, escríbenos directo por WhatsApp o por teléfono.</p>'+
-    '<a class="btn" href="https://wa.me/523111585540?text='+msg+'" target="_blank" rel="noopener">Escribir por WhatsApp</a>'+
-    '<p style="margin-top:16px"><a href="tel:+523111585540">311 158 5540</a></p></div>';
+    '<a class="btn" href="https://wa.me/'+tel+'?text='+msg+'" target="_blank" rel="noopener">Escribir por WhatsApp</a>'+
+    '<p style="margin-top:16px"><a href="tel:+'+tel+'">'+telDisplay+'</a></p></div>';
 }
 
 function boot(){
 
+// ── Todo lo específico de ESTE negocio vive aquí. Para clonar el motor a otra
+// barbería: cambiar este objeto + las imágenes de /img, nada más. ──
+var NEGOCIO={
+  nombre:'NEW GOMEZ', subtitulo:'Barbershop', ciudad:'Tepic',
+  direccion:'Tuxpan 45, Col. Morelos, Tepic',
+  direccionLarga:'Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit',
+  mapaUrl:'https://www.google.com/maps/search/?api=1&query=21.497270,-104.901603',
+  telefono:'523111585540', telefonoDisplay:'311 158 5540',
+  instagram:'https://www.instagram.com/angel_newgomez',
+  fresha:'https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g',
+  freshaBooking:'https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g/booking',
+  horarioCorto:'Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado',
+  horarioLargo:'Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado',
+  rating:5.0, resenas:140, ctz:'America/Mazatlan', logo:'img/logo.jpg',
+  slug:'new-gomez'
+};
 var DATA={
-  wa:'523111585540',
   services:[
     {id:'corte',nombre:'Corte de pelo',min:40,precio:180,popular:true},
     {id:'corte-barba',nombre:'Corte de pelo y barba',min:60,precio:360,popular:true},
@@ -698,7 +715,7 @@ function ticketHTML(){
   var when=S.date?'<div class="row"><span class="k">Fecha</span><span class="v">'+esc(longDate(S.date))+'</span></div>'+
     '<div class="row"><span class="k">Hora</span><span class="v mono">'+(S.time!==null?fmtTime(S.time)+'–'+fmtTime(S.time+d)+' <span style="color:var(--smoke)">('+fmtDur(d)+')</span>':pend)+'</span></div>':
     '<div class="row"><span class="k">Fecha y hora</span><span class="v">'+pend+'</span></div>';
-  return '<div class="ticket"><div class="ticket-top"><img src="img/logo.jpg" alt="" width="56" height="31"/><div><h3>NEW GOMEZ</h3><p>Tuxpan 45, Col. Morelos, Tepic · ★ 5,0 (140)</p></div></div>'+
+  return '<div class="ticket"><div class="ticket-top"><img src="'+NEGOCIO.logo+'" alt="" width="56" height="31"/><div><h3>'+esc(NEGOCIO.nombre)+'</h3><p>'+esc(NEGOCIO.direccion)+' · ★ '+NEGOCIO.rating.toFixed(1).replace('.',',')+' ('+NEGOCIO.resenas+')</p></div></div>'+
     '<div class="ticket-body">'+when+'<div class="row"><span class="k">Barbero</span><span class="v">'+esc(barber().nombre)+'</span></div>'+rows+
     '<div class="row tot"><span class="k">Total</span><span class="v">'+fmtMoney(total())+'<small>MXN</small></span></div></div>'+
     '<div class="ticket-foot"><span>Pago en tienda · efectivo o tarjeta</span><span>Cancela con al menos 2 horas de antelación</span></div></div>';
@@ -709,7 +726,7 @@ function pad(n){return String(n).padStart(2,'0')}
 function calStamp(date,min){return date.getFullYear()+pad(date.getMonth()+1)+pad(date.getDate())+'T'+pad(Math.floor(min/60))+pad(min%60)+'00'}
 function person(){return {name:$('#name').value.trim(),phone:$('#phone').value.replace(/\D/g,''),first:($('input[name=first]:checked')||{}).value||'',note:$('#note').value.trim()}}
 function message(){
-  var p=person(),d=dur(),lines=['Hola NEW GOMEZ, quiero reservar una cita:'];
+  var p=person(),d=dur(),lines=['Hola '+NEGOCIO.nombre+', quiero reservar una cita:'];
   sel().forEach(function(x){lines.push('• '+x.nombre+' ('+fmtDur(x.min)+') — '+fmtMoney(x.precio))});
   lines.push('Barbero: '+barber().nombre);
   if(S.date)lines.push('Fecha: '+longDate(S.date));
@@ -722,14 +739,14 @@ function message(){
   return lines.join('\n');
 }
 function links(){
-  var wa='https://wa.me/'+DATA.wa+'?text='+encodeURIComponent(message());
+  var wa='https://wa.me/'+NEGOCIO.telefono+'?text='+encodeURIComponent(message());
   $('#waBtn2').href=wa;
   var cal=$('#calBtn');
   if(S.date&&S.time!==null){
     var names=sel().map(function(x){return x.nombre}).join(', ');
-    cal.href='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('Cita en NEW GOMEZ · '+names)+
-      '&dates='+calStamp(S.date,S.time)+'/'+calStamp(S.date,S.time+dur())+'&ctz=America/Mazatlan'+
-      '&details='+encodeURIComponent(message())+'&location='+encodeURIComponent('NEW GOMEZ Barbershop, Tuxpan 45, Col. Morelos, 63160 Tepic, Nayarit');
+    cal.href='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('Cita en '+NEGOCIO.nombre+' · '+names)+
+      '&dates='+calStamp(S.date,S.time)+'/'+calStamp(S.date,S.time+dur())+'&ctz='+NEGOCIO.ctz+
+      '&details='+encodeURIComponent(message())+'&location='+encodeURIComponent(NEGOCIO.nombre+' '+NEGOCIO.subtitulo+', '+NEGOCIO.direccionLarga);
     cal.hidden=false;
   }else cal.hidden=true;
   $('#calBtn2').href=cal.href;$('#calBtn2').hidden=cal.hidden;
@@ -815,7 +832,7 @@ function citasDe(fecha){return BOOK.list.filter(function(b){return b.fecha===fec
 function tryPin(pin){var h=hashPin(pin);return STAFF.list.filter(function(x){return staffPinOf(x)===h&&x.activo!==false})[0]||null}
 function logout(){Session.current=null;syncCitasSubscription();renderPanel()}
 function reminderWa(b){
-  var m='Hola '+(b.nombre||'')+', te escribimos de NEW GOMEZ para confirmar tu cita de hoy a las '+fmtTime(b.inicio)+'. ¿Nos vemos?';
+  var m='Hola '+(b.nombre||'')+', te escribimos de '+NEGOCIO.nombre+' para confirmar tu cita de hoy a las '+fmtTime(b.inicio)+'. ¿Nos vemos?';
   return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
 }
 function mrowHTML(b,opts){
@@ -1041,7 +1058,31 @@ function renderStats(){
     '<div class="stat-row"><div class="stat"><div class="n">'+list.length+'</div><div class="l">Cortes del mes</div></div>'+
     '<div class="stat"><div class="n">'+fmtMoney(t)+'</div><div class="l">Ingreso</div></div>'+
     '<div class="stat"><div class="n" style="font-size:16px">'+(topServicio?esc(topServicio):'—')+'</div><div class="l">Servicio top</div></div></div>'+
-    '<div class="ticket"><div class="ticket-body">'+rowsB+'</div></div>';
+    '<div class="ticket"><div class="ticket-body">'+rowsB+'</div></div>'+
+    '<button type="button" class="btn btn-ghost" id="exportBtn" style="margin-top:14px;min-height:44px;width:100%">⬇ Respaldo de todas las citas (CSV)</button>'+
+    '<p id="exportMsg" style="font-size:12px;color:var(--smoke);margin-top:8px;text-align:center"></p>';
+  $('#exportBtn').onclick=exportarCitasCSV;
+}
+function csvCelda(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+async function exportarCitasCSV(){
+  var msg=$('#exportMsg');if(msg)msg.textContent='Generando…';
+  var encabezados=['Folio','Fecha','Hora','Duración (min)','Barbero','Cliente','Teléfono','Servicios','Total','Primera visita','Nota','Estado','Registrada el'];
+  var filas=BOOK.list.slice().sort(function(a,b){return a.fecha===b.fecha?a.inicio-b.inicio:(a.fecha<b.fecha?-1:1)}).map(function(b){
+    return [b.id,b.fecha,fmtTime(b.inicio),b.dur,b.barberoNombre||'',b.nombre||'',b.telefono||'',(b.servicios||[]).join(' + '),b.total||0,b.primera||'',b.nota||'',estadoInfo(b.estado).t,b.creado||''];
+  });
+  var csv=[encabezados].concat(filas).map(function(r){return r.map(csvCelda).join(',')}).join('\r\n');
+  var filename=NEGOCIO.slug+'-citas-'+dayKey(new Date())+'.csv';
+  try{
+    if(window.claude&&typeof window.claude.use==='function'){
+      var downloads=await window.claude.use('downloads');
+      if(downloads){await downloads.save({filename:filename,data:'﻿'+csv});if(msg)msg.textContent='Descargado: '+filas.length+' citas.';return}
+    }
+    var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);a.remove()},1000);
+    if(msg)msg.textContent='Descargado: '+filas.length+' citas.';
+  }catch(e){if(msg)msg.textContent='No se pudo generar el archivo. Intenta de nuevo.'}
 }
 function renderTab(tab,u,isOwner){
   if(!isOwner){renderDia(u,false);return}
@@ -1104,6 +1145,24 @@ function route(){
   if(panel)renderPanel();
 }
 
+function syncNegocioUI(){
+  document.title=NEGOCIO.nombre+' · Reservar';
+  var desc=$('meta[name="description"]');
+  if(desc)desc.setAttribute('content','Reserva tu corte en '+NEGOCIO.nombre+' '+NEGOCIO.subtitulo+', '+NEGOCIO.ciudad+'. Elige servicio, barbero, fecha y hora y confirma tu cita al instante.');
+  $('#hBadge').alt='Logotipo de '+NEGOCIO.nombre+' '+NEGOCIO.subtitulo;
+  $('#hNombre').innerHTML=esc(NEGOCIO.nombre)+' <small>'+esc(NEGOCIO.subtitulo)+' · '+esc(NEGOCIO.ciudad)+'</small>';
+  $('#hRating').innerHTML='<b>'+NEGOCIO.rating.toFixed(1).replace('.',',')+'</b> <span class="stars" aria-hidden="true">★★★★★</span> <span>('+NEGOCIO.resenas+' reseñas)</span>';
+  $('#hMapa').href=NEGOCIO.mapaUrl;$('#hMapa').textContent=NEGOCIO.direccion;
+  $('#hHorario').textContent=NEGOCIO.horarioCorto;
+  $('#fLegendPrimera').textContent='¿Es tu primera visita a '+NEGOCIO.nombre+'?';
+  $('#fTel').href='tel:+'+NEGOCIO.telefono;$('#fTel').textContent=NEGOCIO.telefonoDisplay;
+  $('#fWa').href='https://wa.me/'+NEGOCIO.telefono;
+  $('#fIg').href=NEGOCIO.instagram;
+  $('#fFresha').href=NEGOCIO.fresha;
+  $('#fDireccion').textContent=NEGOCIO.direccionLarga+' · '+NEGOCIO.horarioLargo;
+  Array.prototype.forEach.call(document.querySelectorAll('#freshaBookingLink'),function(a){a.href=NEGOCIO.freshaBooking});
+}
+syncNegocioUI();
 initDb();
 update();
 document.body.dataset.booted='1';
