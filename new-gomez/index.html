@@ -276,7 +276,11 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .staff-row.inactivo{opacity:.5}
 .mform{display:grid;gap:10px;background:var(--paper);border:1.5px dashed var(--brass);border-radius:12px;padding:14px;margin-bottom:16px}
 .mform .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.mform input,.mform select{width:100%;background:var(--bone);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
+.mform input:not([type="checkbox"]),.mform select{width:100%;background:var(--bone);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
+.mform input[type="checkbox"]{width:18px;height:18px;flex:none;accent-color:var(--brass);cursor:pointer}
+.mform label:has(input[type="checkbox"]){border-radius:8px;padding:9px 8px!important;min-height:44px;transition:background .1s}
+.mform label:has(input[type="checkbox"]:checked){background:var(--brass-soft)}
+.mform label:has(input[type="checkbox"]):hover{background:var(--bone)}
 .mform-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700}
 .mform-head button{font-size:16px;font-weight:700;color:var(--smoke)}
 @media (max-width:380px){.mform .row2{grid-template-columns:1fr}}
@@ -1079,7 +1083,7 @@ function renderStats(){
   $('#panelBody').innerHTML='<div class="day-nav" style="justify-content:center"><b>'+esc(new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric'}).format(ref))+'</b></div>'+
     '<div class="stat-row"><div class="stat"><div class="n">'+list.length+'</div><div class="l">Cortes del mes</div></div>'+
     '<div class="stat"><div class="n">'+fmtMoney(t)+'</div><div class="l">Ingreso</div></div>'+
-    '<div class="stat"><div class="n" style="font-size:16px">'+(topServicio?esc(topServicio):'—')+'</div><div class="l">Servicio top</div></div></div>'+
+    '<div class="stat"><div class="n" style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+(topServicio?esc(topServicio):'')+'">'+(topServicio?esc(topServicio):'—')+'</div><div class="l">Servicio top</div></div></div>'+
     '<div class="ticket"><div class="ticket-body">'+rowsB+'</div></div>'+
     '<button type="button" class="btn btn-ghost" id="exportBtn" style="margin-top:14px;min-height:44px;width:100%">⬇ Respaldo de todas las citas (CSV)</button>'+
     '<p id="exportMsg" style="font-size:12px;color:var(--smoke);margin-top:8px;text-align:center"></p>';
