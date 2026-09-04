@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Bases Box Tepic — Bases tipo box a la medida · Fábrica propia en Tepic, Nayarit</title>
-<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit. Más de 8 tonos, estructura durable y patas cromadas. Cotiza directo por WhatsApp."/>
+<meta name="description" content="Fabricamos bases para cama tipo box a la medida en Tepic, Nayarit. Estructura modular apilable, más de 8 tonos y patas cromadas. Cotiza directo por WhatsApp."/>
 <meta property="og:title" content="Bases Box Tepic — Fábrica de bases para cama"/>
 <meta property="og:description" content="Bases tipo box a la medida, +8 tonos, fabricación propia en Tepic. Cotiza por WhatsApp."/>
 <meta property="og:type" content="website"/>
@@ -154,6 +154,16 @@ section{padding:96px 0}
 .contact-cta{display:flex;flex-direction:column;gap:14px;justify-content:center}
 .contact-cta .btn{justify-content:center;font-size:19px;padding:18px}
 
+/* diseño 3D */
+#diseno{background:var(--paper)}
+.render-grid{display:grid;gap:28px}
+.render{border:2px solid var(--graphite);background:var(--graphite)}
+.render img{width:100%;height:auto;display:block;border-bottom:2px solid var(--graphite)}
+.render figcaption{padding:16px 20px;color:#cfcdc7;font-size:16.5px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.render .code{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:14px;color:var(--orange);border:1px solid var(--orange);padding:2px 9px;flex:none}
+.render figcaption b{color:var(--paper);font-weight:600}
+.render-note{margin-top:22px;color:var(--steel);font-size:16px}
+
 /* ubicación */
 #ubicacion{background:var(--concrete)}
 .loc-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:stretch}
@@ -219,6 +229,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <a href="#tonos">Tonos</a>
       <a href="#porque">Por qué</a>
       <a href="#medidas">Medidas</a>
+      <a href="#diseno">Diseño</a>
       <a href="#ubicacion">Ubicación</a>
       <a href="#contacto">Contacto</a>
     </nav>
@@ -407,11 +418,33 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   </div>
 </section>
 
+<!-- ============ DISEÑO 3D ============ -->
+<section id="diseno">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="divider-label"><span class="tag-num">05 / DISEÑO 3D</span></div>
+      <h2>Estructura modular apilable</h2>
+      <p>Cada base es una unidad independiente: se usa sola o se apila con otras para ganar altura, sin perder estabilidad. Estas son las vistas 3D del diseño, tal cual sale de fábrica.</p>
+    </div>
+    <div class="render-grid">
+      <figure class="render">
+        <img src="img/render-base-individual.jpg" alt="Vistas 3D de la base individual: perfil, planta, patas cromadas y refuerzo inferior" width="1024" height="426" loading="lazy"/>
+        <figcaption><span class="code">1-BASE-04</span><span><b>Base individual.</b> Vistas del diseño 3D: perfil, planta, detalle de tapizado texturizado, patas cromadas y estructura reforzada en la base.</span></figcaption>
+      </figure>
+      <figure class="render">
+        <img src="img/render-gama-tonos.jpg" alt="Vistas 3D de la gama de tonos apilados: grafito, vino, morado y azul marino" width="1024" height="426" loading="lazy"/>
+        <figcaption><span class="code">1-BASE-MULTI</span><span><b>Gama de tonos apilados.</b> Cuatro unidades combinadas — grafito, vino, morado y azul marino — para ver cómo se ven los tonos juntos y a distinta altura.</span></figcaption>
+      </figure>
+    </div>
+    <p class="render-note">*Imágenes de diseño 3D. El tapizado y los tonos se cotizan según disponibilidad — pídelos por WhatsApp.</p>
+  </div>
+</section>
+
 <!-- ============ UBICACIÓN ============ -->
 <section id="ubicacion">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num">05 / UBICACIÓN</span></div>
+      <div class="divider-label"><span class="tag-num">06 / UBICACIÓN</span></div>
       <h2>Visítanos en la fábrica</h2>
       <p>Estamos sobre el Libramiento Carretero, en la colonia Lomas de San Juan, Tepic. Aquí fabricamos y aquí puedes ver los tonos y la estructura en físico antes de pedir tu base.</p>
     </div>
@@ -458,7 +491,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 <section id="contacto">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">06 / CONTACTO</span></div>
+      <div class="divider-label"><span class="tag-num" style="color:#8C8C88">07 / CONTACTO</span></div>
       <h2>Cotiza hoy tu base</h2>
     </div>
     <div class="contact-grid">
@@ -503,6 +536,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <a href="#tonos">Tonos</a>
         <a href="#porque">Por qué</a>
         <a href="#medidas">Medidas</a>
+        <a href="#diseno">Diseño</a>
         <a href="#ubicacion">Ubicación</a>
         <a href="#contacto">Contacto</a>
         <a href="https://wa.me/523111216033" target="_blank" rel="noopener">WhatsApp</a>
@@ -527,6 +561,7 @@ document.getElementById('yr').textContent = new Date().getFullYear();
 // tone selector
 var tones = [
   {name:'Cocoa',  c:'#6F4E37', d:'#573c2b'},
+  {name:'Vino',   c:'#7B2B3B', d:'#5f2029'},
   {name:'Morado', c:'#6B3FA0', d:'#532f80'},
   {name:'Rosa',   c:'#E84E8A', d:'#c93b73'},
   {name:'Gris',   c:'#8A8D8F', d:'#6f7274'},
@@ -569,7 +604,7 @@ Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a
   "alternateName": "Bases Tipo Box",
   "description": "Fábrica de bases para cama tipo box a la medida en Tepic, Nayarit. Más de 8 tonos, estructura durable y patas cromadas.",
   "url": "https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/",
-  "image": "https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/assets/og-cover.png",
+  "image": ["https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/assets/og-cover.png","https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/img/render-base-individual.jpg","https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/img/render-gama-tonos.jpg"],
   "logo": "https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/assets/logo-icon.svg",
   "telephone": "+52-311-121-6033",
   "priceRange": "$$",
@@ -593,7 +628,15 @@ Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a
   }],
   "makesOffer": {
     "@type": "Offer",
-    "itemOffered": { "@type": "Product", "name": "Base para cama tipo box a la medida", "category": "Muebles / Recámara" }
+    "itemOffered": {
+      "@type": "Product",
+      "name": "Base para cama tipo box a la medida",
+      "alternateName": "Estructura de cama modular apilable",
+      "category": "Muebles / Recámara",
+      "material": "Estructura reforzada con tapizado texturizado y patas cromadas",
+      "image": "https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/img/render-base-individual.jpg",
+      "sku": "1-BASE-04"
+    }
   }
 }
 </script>
