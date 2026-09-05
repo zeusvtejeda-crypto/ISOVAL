@@ -23,7 +23,10 @@ html,body{width:%(w)spx;height:%(h)spx;overflow:hidden;background:var(--char);co
 .mid{display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-height:0;gap:calc(22px*var(--s))}
 .eyebrow{display:inline-flex;align-items:center;gap:14px;font-family:Jost,sans-serif;font-weight:600;font-size:calc(24px*var(--s));letter-spacing:.3em;text-transform:uppercase;color:var(--gold-lt)}
 .eyebrow::before{content:"";width:calc(34px*var(--s));height:2px;background:var(--gold)}
-.pill{align-self:flex-start;background:var(--gold);color:var(--ink);font-family:Jost,sans-serif;font-weight:600;font-size:calc(26px*var(--s));letter-spacing:.14em;text-transform:uppercase;padding:calc(12px*var(--s)) calc(22px*var(--s))}
+.tags{display:flex;flex-wrap:wrap;gap:calc(12px*var(--s));align-items:center}
+.disc{background:var(--paper);color:var(--ink);font-family:Jost,sans-serif;font-weight:600;font-size:calc(26px*var(--s));letter-spacing:.06em;text-transform:uppercase;padding:calc(12px*var(--s)) calc(22px*var(--s))}
+.disc b{font-weight:600;color:#9a7a2e}
+.pill{background:var(--gold);color:var(--ink);font-family:Jost,sans-serif;font-weight:600;font-size:calc(26px*var(--s));letter-spacing:.14em;text-transform:uppercase;padding:calc(12px*var(--s)) calc(22px*var(--s))}
 h1{font-family:Fraunces,Georgia,serif;font-weight:300;font-size:calc(112px*var(--s));line-height:.98;letter-spacing:-.015em;max-width:%(h1w)s}
 h1 em{font-style:italic;color:var(--gold-lt)}
 .sub{font-size:calc(34px*var(--s));line-height:1.3;max-width:24ch;color:rgba(250,247,241,.92)}
@@ -47,18 +50,20 @@ h1 em{font-style:italic;color:var(--gold-lt)}
 ADS = {
  "A-listas": dict(
    bg='<div class="bg"><img src="img/tonos-torre.jpg"></div>', pos="50% 40%", renderY="0",
-   mid='<div class="pill">Listas para entregar · esta semana</div>'
+   mid='<div class="tags"><div class="pill">Listas para entregar · esta semana</div><div class="disc"><b>−$100 por base</b> · con este anuncio</div></div>'
        '<h1>Quedan pocas.<br><em>Elige tu tono.</em></h1>'
        '<p class="sub">Macizas por dentro, 8 tonos y todas las medidas. Directo de fábrica en Tepic.</p>'),
  "B-fabrica": dict(
    bg='<div class="render"><img src="img/base-render-3d.png"></div>', pos="50% 50%", renderY="-14%",
    mid='<div class="eyebrow">Directo de fábrica · sin intermediarios</div>'
+       '<div class="tags"><div class="disc"><b>−$100 por base</b> · con este anuncio</div></div>'
        '<h1>Tu base, hecha <em>en Tepic.</em></h1>'
        '<div class="chips"><div class="chip"><b>Individual</b> 1.00 m</div><div class="chip"><b>Matrimonial</b> 1.35 m</div>'
        '<div class="chip"><b>Queen</b> 1.50 m</div><div class="chip"><b>King</b> 2.00 m</div><div class="chip">Medidas especiales</div></div>'),
  "C-taller": dict(
    bg='<div class="bg"><img src="img/taller-wide.jpg"></div>', pos="50% 62%", renderY="0",
    mid='<div class="eyebrow">Nuestro taller · fotos reales</div>'
+       '<div class="tags"><div class="disc"><b>−$100 por base</b> · con este anuncio</div></div>'
        '<h1>Así se hacen <em>tus bases.</em></h1>'
        '<p class="sub">Se arman, tapizan y empacan aquí mismo. Te la llevamos a domicilio en Tepic.</p>'),
 }
