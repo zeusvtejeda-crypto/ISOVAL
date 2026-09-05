@@ -154,6 +154,14 @@ section{padding:96px 0}
 .contact-cta{display:flex;flex-direction:column;gap:14px;justify-content:center}
 .contact-cta .btn{justify-content:center;font-size:19px;padding:18px}
 
+/* galería de producto */
+.shots{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:44px}
+.shot{background:var(--graphite);border:1px solid var(--border)}
+.shot .crop{aspect-ratio:4/3;background-repeat:no-repeat;background-color:#cfcdc7}
+.shot figcaption{padding:12px 14px;color:#cfcdc7;font-size:14.5px;line-height:1.3}
+.shot figcaption b{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:15px;color:var(--paper)}
+.fichas-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:14px;color:var(--muted);margin-bottom:16px}
+
 /* diseño 3D */
 #diseno{background:var(--paper)}
 .render-grid{display:grid;gap:28px}
@@ -201,6 +209,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   .hero-grid,.tonos-grid,.kids,.contact-grid,.loc-grid{grid-template-columns:1fr}
   .hero-art{order:-1}
   .feat-grid{grid-template-columns:1fr 1fr}
+  .shots{grid-template-columns:1fr 1fr}
   .med-grid{grid-template-columns:1fr 1fr}
   .nav-links{display:none}
   .menu-btn{display:block}
@@ -229,7 +238,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <a href="#tonos">Tonos</a>
       <a href="#porque">Por qué</a>
       <a href="#medidas">Medidas</a>
-      <a href="#diseno">Diseño</a>
+      <a href="#diseno">Galería</a>
       <a href="#ubicacion">Ubicación</a>
       <a href="#contacto">Contacto</a>
     </nav>
@@ -422,10 +431,45 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 <section id="diseno">
   <div class="wrap">
     <div class="sec-head">
-      <div class="divider-label"><span class="tag-num">05 / DISEÑO 3D</span></div>
-      <h2>Estructura modular apilable</h2>
-      <p>Cada base es una unidad independiente: se usa sola o se apila con otras para ganar altura, sin perder estabilidad. Estas son las vistas 3D del diseño, tal cual sale de fábrica.</p>
+      <div class="divider-label"><span class="tag-num">05 / GALERÍA</span></div>
+      <h2>Así se ve la base</h2>
+      <p>Cada base es una unidad independiente: se usa sola o se apila con otras para ganar altura, sin perder estabilidad. Perfil, tapizado, patas cromadas y estructura interna — de cerca.</p>
     </div>
+    <div class="shots">
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Base individual — Vista 3/4 con patas cromadas" style="background-image:url(img/render-base-individual.jpg);background-size:345.9% auto;background-position:51.10% 71.08%"></div>
+        <figcaption><b>Base individual</b><span>Vista 3/4 con patas cromadas</span></figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Perfil — Altura de una sola unidad" style="background-image:url(img/render-base-individual.jpg);background-size:731.4% auto;background-position:78.05% 29.60%"></div>
+        <figcaption><b>Perfil</b><span>Altura de una sola unidad</span></figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Vista frontal — Tapizado texturizado en tono grafito" style="background-image:url(img/render-base-individual.jpg);background-size:556.5% auto;background-position:99.52% 10.42%"></div>
+        <figcaption><b>Vista frontal</b><span>Tapizado texturizado en tono grafito</span></figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Cuatro unidades apiladas — Grafito, vino, morado y azul marino" style="background-image:url(img/render-gama-tonos.jpg);background-size:445.2% auto;background-position:5.04% 39.53%"></div>
+        <figcaption><b>Cuatro unidades apiladas</b><span>Grafito, vino, morado y azul marino</span></figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Estructura inferior — Refuerzo con esquineros metálicos" style="background-image:url(img/render-base-individual.jpg);background-size:602.4% auto;background-position:98.95% 83.89%"></div>
+        <figcaption><b>Estructura inferior</b><span>Refuerzo con esquineros metálicos</span></figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Detalle de pata — Pata cromada con base reforzada" style="background-image:url(img/render-base-individual.jpg);background-size:1024.0% auto;background-position:75.76% 79.20%"></div>
+        <figcaption><b>Detalle de pata</b><span>Pata cromada con base reforzada</span></figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Detalle de esquina — Costura y tapizado en vino y marino" style="background-image:url(img/render-gama-tonos.jpg);background-size:1024.0% auto;background-position:27.92% 77.49%"></div>
+        <figcaption><b>Detalle de esquina</b><span>Costura y tapizado en vino y marino</span></figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="crop" role="img" aria-label="Tono grafito — Vista frontal de una unidad" style="background-image:url(img/render-gama-tonos.jpg);background-size:556.5% auto;background-position:99.52% 10.42%"></div>
+        <figcaption><b>Tono grafito</b><span>Vista frontal de una unidad</span></figcaption>
+      </figure>
+    </div>
+    <div class="fichas-label">Fichas técnicas completas</div>
     <div class="render-grid">
       <figure class="render">
         <img src="img/render-base-individual.jpg" alt="Vistas 3D de la base individual: perfil, planta, patas cromadas y refuerzo inferior" width="1024" height="426" loading="lazy"/>
@@ -536,7 +580,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
         <a href="#tonos">Tonos</a>
         <a href="#porque">Por qué</a>
         <a href="#medidas">Medidas</a>
-        <a href="#diseno">Diseño</a>
+        <a href="#diseno">Galería</a>
         <a href="#ubicacion">Ubicación</a>
         <a href="#contacto">Contacto</a>
         <a href="https://wa.me/523111216033" target="_blank" rel="noopener">WhatsApp</a>
