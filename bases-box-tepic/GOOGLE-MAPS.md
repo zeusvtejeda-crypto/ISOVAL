@@ -11,7 +11,7 @@ Ficha actual: https://maps.app.goo.gl/uHncNaJoxv8y5KQ5A
 
 | Campo | Valor |
 |---|---|
-| Nombre | `Bases Box Tepic` *(ver nota abajo)* |
+| Nombre | `Bases Box Tepic` |
 | Categoría principal | `Tienda de camas` |
 | Categorías adicionales | `Fabricante de muebles` · `Tienda de muebles` · `Tienda de colchones` |
 | Dirección | `Libramiento Carretero Mz. N, L. 04, Col. Lomas de San Juan, 63128 Tepic, Nay.` |
@@ -20,10 +20,10 @@ Ficha actual: https://maps.app.goo.gl/uHncNaJoxv8y5KQ5A
 | Sitio web | `https://zeusvtejeda-crypto.github.io/ISOVAL/bases-box-tepic/` |
 | Área de servicio | Tepic, Xalisco y zona conurbada |
 
-> **Nota sobre el nombre:** la ficha aparece hoy como *Bases Tipo Box*. Google
-> solo permite el nombre real del negocio (el del letrero/factura). Si el letrero
-> dice "Bases Box Tepic", cámbialo; si dice "Bases Tipo Box", déjalo así y no
-> agregues palabras clave — Google suspende fichas por eso.
+> **Corrige el nombre:** la ficha aparece hoy como *Bases Tipo Box*. El nombre
+> real del negocio es **Bases Box Tepic**, así que cámbialo en el perfil
+> (Editar perfil → Nombre de la empresa). No le agregues palabras clave extra
+> como "bases para cama Tepic": Google suspende fichas por eso.
 
 ## 2. Horario
 
@@ -103,14 +103,14 @@ Están en `entregables/fotos-maps/` de este repo. Orden sugerido:
 | 6 | `06-detalle-pata.png` | Productos (detalle) |
 | 7 | `07-detalle-esquina.png` | Productos (detalle) |
 
-**Importante:** estas imágenes salen de los renders 3D, no son fotografías. Google
-prioriza fotos reales y los clientes confían más en ellas. En cuanto puedas, sube
-con el celular:
+Google prioriza los perfiles con muchas fotos y las actualiza seguido, así que
+súbelas todas y ve agregando más con el tiempo. Lo que más falta y más ayuda:
 
-1. Fachada de la fábrica (para que la gente la reconozca al llegar)
+1. **Fachada de la fábrica** — es la que más falta; sirve para que la gente
+   reconozca el lugar al llegar por el Libramiento
 2. Interior / área de trabajo
-3. Bases terminadas, de frente y de 3/4
-4. Una base junto a un colchón puesto (da escala)
+3. Bases terminadas en más tonos (vino, marino, cocoa, verde)
+4. Una base con el colchón puesto — da escala y ayuda a imaginarla en la recámara
 5. El equipo trabajando
 
 ## 8. Preguntas frecuentes (publícalas tú mismo en la ficha)
