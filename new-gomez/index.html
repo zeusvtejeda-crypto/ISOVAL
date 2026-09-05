@@ -496,12 +496,12 @@ var DEFAULT_STAFF=[
 ];
 
 var S={services:[],barber:'any',date:null,time:null,step:1,last:null};
-var BOOK={list:[],db:null,shared:false};
+var BOOK={list:[],dispo:[],db:null,shared:false};
 try{BOOK.list=JSON.parse(localStorage.getItem('nb:new-gomez:citas')||'[]')||[]}catch(e){BOOK.list=[]}
 var STAFF={list:[],db:null,seeded:false};
 try{STAFF.list=JSON.parse(localStorage.getItem('nb:new-gomez:staff')||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
 var Session={current:null};
-var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:''};
+var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:'',pendiente:false};
 
 /* ── Seguridad con base de datos en vivo ──────────────────────────────────
    El capability db no distingue "cliente" de "staff": cualquiera con el
@@ -579,7 +579,10 @@ function initDb(){
     BOOK.db=db;STAFF.db=db;
     db.collection('disponibilidad').onSnapshot(function(snap){
       BOOK.shared=true;
-      if(location.hash.indexOf('panel')<0)BOOK.list=snap.docs.map(function(d){return d.data()}).filter(function(b){return b&&b.fecha});
+      BOOK.dispo=snap.docs.map(function(d){return d.data()}).filter(function(b){return b&&b.fecha});
+      // Mientras no haya suscripción a 'citas' (reserva pública o pantalla de PIN), la
+      // disponibilidad es la única fuente para bloquear horarios.
+      if(!_unsubCitas)BOOK.list=BOOK.dispo;
       refreshAfterSync();
     },function(){});
     db.collection('staff_publico').onSnapshot(function(snap){
@@ -616,12 +619,23 @@ function syncCitasSubscription(){
       BOOK.list=snap.docs.map(function(d){return d.data()}).filter(function(b){return b&&b.fecha});
       refreshAfterSync();
     },function(){});
-  }else if(!quiere&&_unsubCitas){_unsubCitas();_unsubCitas=null;if(location.hash.indexOf('panel')<0)BOOK.list=[]}
+  }else if(!quiere&&_unsubCitas){
+    _unsubCitas();_unsubCitas=null;
+    // Al cerrar sesión o salir del panel se sueltan los datos sensibles, pero la
+    // disponibilidad se conserva: si quedara vacía, la reserva pública dejaría de
+    // bloquear horarios ocupados hasta el siguiente cambio en la base.
+    BOOK.list=BOOK.dispo;
+  }
 }
 function refreshAfterSync(){
   rebuildBarbers();
   if(S.step===3)renderTimes();
-  if(location.hash.indexOf('panel')>-1&&Session.current)renderDash();
+  if(location.hash.indexOf('panel')>-1&&Session.current){
+    // Si hay un formulario abierto (cita manual, editar barbero), un repintado en vivo
+    // lo borraría a media captura; se repinta al cerrarlo.
+    var abierto=$('#mformBox .mform, #staffForm .mform');
+    if(abierto)Panel.pendiente=true;else renderDash();
+  }
 }
 
 var $=function(s,r){return (r||document).querySelector(s)};
@@ -770,15 +784,17 @@ function validate(show){
   return ok;
 }
 function registrar(){
-  var p=person(),b={id:folio(),fecha:dayKey(S.date),inicio:S.time,dur:dur(),barbero:S.barber,barberoNombre:barber().nombre,
+  // Si ya se registró una cita en esta sesión y el cliente volvió atrás a cambiar algo,
+  // se reutiliza el mismo folio: así no queda la versión anterior ocupando otro horario.
+  var prev=S.last,p=person(),b={id:prev?prev.id:folio(),fecha:dayKey(S.date),inicio:S.time,dur:dur(),barbero:S.barber,barberoNombre:barber().nombre,
     servicios:sel().map(function(x){return x.nombre}),total:total(),nombre:p.name,telefono:p.phone,primera:p.first,nota:p.note,
-    creado:new Date().toISOString(),estado:'registrada'};
+    creado:prev?prev.creado:new Date().toISOString(),estado:prev?prev.estado:'registrada'};
   store.set('nb:new-gomez:name',p.name);store.set('nb:new-gomez:phone',p.phone);
   saveBooking(b);S.last=b;return b;
 }
 function confirmar(){
   if(!validate(true)){var f=$('#fName.invalid input, #fPhone.invalid input');if(f)f.focus();return false}
-  if(!S.last||S.last.fecha!==dayKey(S.date)||S.last.inicio!==S.time)registrar();
+  registrar();
   go(5);return true;
 }
 $('#confirmBtn').addEventListener('click',confirmar);
@@ -838,7 +854,6 @@ function update(){
    PANEL DEL EQUIPO — PIN, roles y agenda por dueño/empleado
 ═══════════════════════════════════════════════ */
 function citasDe(fecha){return BOOK.list.filter(function(b){return b.fecha===fecha}).sort(function(a,b){return a.inicio-b.inicio})}
-function tryPin(pin){var h=hashPin(pin);return STAFF.list.filter(function(x){return staffPinOf(x)===h&&x.activo!==false})[0]||null}
 function logout(){Session.current=null;syncCitasSubscription();renderPanel()}
 function reminderWa(b){
   var m='Hola '+(b.nombre||'')+', te escribimos de '+NEGOCIO.nombre+' para confirmar tu cita de hoy a las '+fmtTime(b.inicio)+'. ¿Nos vemos?';
@@ -888,7 +903,7 @@ function openManualForm(editing){
     '<div class="row2"><input type="date" id="mFecha" aria-label="Fecha de la cita" value="'+dayKey(d)+'"/><input type="time" id="mHora" aria-label="Hora de la cita" value="'+(editing?fmtTime(editing.inicio):'10:00')+'"/></div>'+
     '<button type="button" class="btn btn-primary" id="mGuardar" style="min-height:44px">'+(editing?'Guardar cambios':'Registrar cita')+'</button></div>';
   if(editing&&$('#mBarbero').querySelector('option[value="'+editing.barbero+'"]'))$('#mBarbero').value=editing.barbero;
-  $('#mCancel').onclick=function(){box.innerHTML=''};
+  $('#mCancel').onclick=function(){box.innerHTML='';if(Panel.pendiente)renderDash()};
   $('#mGuardar').onclick=function(){
     var svcs=Array.prototype.map.call($('#mServicios').querySelectorAll('input[name=mSvc]:checked'),function(i){return i.value});
     svcs=DATA.services.filter(function(x){return svcs.indexOf(x.id)>-1});
@@ -917,7 +932,7 @@ function renderDia(u,isOwner){
   if(isOwner){
     var input=$('#buscarInput');
     input.oninput=function(){Panel.busqueda=input.value;renderDiaContenido(u,isOwner)};
-    input.focus();var vlen=input.value.length;input.setSelectionRange(vlen,vlen);
+    if(Panel.busqueda){input.focus();var vlen=input.value.length;input.setSelectionRange(vlen,vlen)}
   }
   renderDiaContenido(u,isOwner);
 }
@@ -933,7 +948,7 @@ function renderDiaContenido(u,isOwner){
     bindRowActions($('#diaContenido'));
     return;
   }
-  var d=Panel.day,key=dayKey(d);
+  var d=isOwner?Panel.day:new Date(),key=dayKey(d);
   // Las citas 'any' (cualquier profesional) ya ocupan una de las 2 sillas de ese horario, así
   // que también se muestran a cada empleado (marcadas como tal), no solo las suyas.
   var list=citasDe(key).filter(function(b){return isOwner||b.barbero===u.id||b.barbero==='any'});
@@ -1053,7 +1068,7 @@ function renderBarberos(u){
           '<input type="text" id="ePin" placeholder="Nuevo PIN (opcional)" maxlength="4" inputmode="numeric"/></div>'+
           '<p style="font-size:12px;color:var(--smoke)">Deja el PIN en blanco para conservar el actual.</p>'+
           '<button type="button" class="btn btn-primary" id="eGuardar" style="min-height:44px">Guardar cambios</button></div>';
-        $('#eCancel').onclick=function(){$('#staffForm').innerHTML=''};
+        $('#eCancel').onclick=function(){$('#staffForm').innerHTML='';if(Panel.pendiente)renderDash()};
         $('#eGuardar').onclick=function(){
           var nombre=$('#eNombre').value.trim(),pinRaw=$('#ePin').value.replace(/\D/g,'');
           if(!nombre){alert('Escribe un nombre.');return}
@@ -1148,6 +1163,7 @@ function renderLogin(){
   paintDots();
 }
 function renderDash(){
+  Panel.pendiente=false;
   var u=Session.current;if(!u){renderLogin();return}
   var isOwner=u.rol==='owner'||u.rol==='superadmin';
   var tabsHtml=isOwner?'<div class="tabs" role="tablist">'+
