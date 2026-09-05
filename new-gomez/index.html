@@ -17,6 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
 <style>
 :root{
+  color-scheme:light;
   --ink:#15130F;--ink-2:#23201A;
   --bone:#F2EDE3;--paper:#FBF8F1;--bone-2:#E6DFCF;
   --brass:#C49A3C;--brass-deep:#9E7826;--brass-soft:rgba(196,154,60,.14);
@@ -31,19 +32,19 @@
   :root:not([data-theme="light"]){
     --bone:#15130F;--paper:#1E1B16;--bone-2:#2A2620;--text:#F2EDE3;--smoke:#A39B8B;
     --brass:#D9B25A;--brass-deep:#C49A3C;--brass-soft:rgba(217,178,90,.16);--ok:#6FBF8A;--err:#F28B82;
-    --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;--ink:#332B1E;
+    --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;--ink:#332B1E;color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bone:#15130F;--paper:#1E1B16;--bone-2:#2A2620;--text:#F2EDE3;--smoke:#A39B8B;
   --brass:#D9B25A;--brass-deep:#C49A3C;--brass-soft:rgba(217,178,90,.16);--ok:#6FBF8A;--err:#F28B82;
-  --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;--ink:#332B1E;
+  --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;--ink:#332B1E;color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bone);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.45;padding-bottom:104px}
 img{max-width:100%;display:block}
-button,input,textarea{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
 fieldset{border:0;padding:0;min-width:0}
 button{cursor:pointer;background:none;border:0}
 :focus-visible{outline:3px solid var(--brass);outline-offset:2px;border-radius:6px}
@@ -253,12 +254,20 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .mrow .when b{display:block;font-family:var(--disp);font-size:20px;font-weight:800;color:var(--text)}
 .mrow .who{grid-row:1;grid-column:2;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .mrow .what{grid-row:2;grid-column:2;font-size:12px;color:var(--smoke)}
-.mrow .acts{grid-row:1/3;grid-column:3;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:130px}
+.mrow .acts{grid-row:1/3;grid-column:3;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .mrow .acts button{font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;border:1.5px solid var(--line);white-space:nowrap;min-height:44px;background:var(--bone)}
 .mrow .acts button.ok{border-color:var(--ok);color:var(--ok)}
 /* Separación extra sobre "Cancelar" (además del gap:8px de .acts) para que quede más lejos
    de Confirmar/Atendida/Mover y sea más difícil tocarlo sin querer en un teléfono. */
 .mrow .acts button.danger{border-color:var(--err);color:var(--err);margin-top:8px}
+/* En pantallas angostas las acciones bajan a una fila propia debajo de la cita: el nombre y el
+   detalle recuperan el ancho completo y los botones no se apilan en una columna de 130px. */
+@media (max-width:767px){
+  .mrow{grid-template-columns:auto 1fr}
+  .mrow .acts{grid-row:3;grid-column:1/-1;justify-content:flex-start;margin-top:8px}
+  .mrow .acts:empty{display:none}
+  .mrow .acts button.danger{margin-top:0;margin-left:auto}
+}
 .pill{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:2px 7px;border:1px solid currentColor}
 .pill.registrada{color:var(--smoke)}
 .pill.confirmada{color:var(--ok)}
@@ -281,6 +290,8 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .staff-row.inactivo{opacity:.5}
 .mform{display:grid;gap:10px;background:var(--paper);border:1.5px dashed var(--brass);border-radius:12px;padding:14px;margin-bottom:16px}
 .mform .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mform .svcs{display:grid;gap:2px;border:1.5px solid var(--line);border-radius:8px;padding:8px;background:var(--bone)}
+@media (min-width:720px){.mform .svcs{grid-template-columns:1fr 1fr}}
 .mform input:not([type="checkbox"]),.mform select{width:100%;background:var(--bone);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px}
 .mform input[type="checkbox"]{width:18px;height:18px;flex:none;accent-color:var(--brass);cursor:pointer}
 .mform label:has(input[type="checkbox"]){border-radius:8px;padding:9px 8px!important;min-height:44px;transition:background .1s}
@@ -379,7 +390,6 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
       <div class="actions">
         <button class="btn btn-primary" id="confirmBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Confirmar cita</button>
-        <a class="btn btn-ghost" id="freshaBookingLink" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g/booking" target="_blank" rel="noopener">Reservar en Fresha · confirmación instantánea</a>
         <a class="btn btn-ghost" id="calBtn" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
       </div>
       <div class="policy">
@@ -462,7 +472,6 @@ var NEGOCIO={
   telefono:'523111585540', telefonoDisplay:'311 158 5540',
   instagram:'https://www.instagram.com/angel_newgomez',
   fresha:'https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g',
-  freshaBooking:'https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g/booking',
   horarioCorto:'Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado',
   horarioLargo:'Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado',
   rating:5.0, resenas:140, ctz:'America/Mazatlan', logo:'img/logo.jpg',
@@ -501,7 +510,7 @@ try{BOOK.list=JSON.parse(localStorage.getItem('nb:new-gomez:citas')||'[]')||[]}c
 var STAFF={list:[],db:null,seeded:false};
 try{STAFF.list=JSON.parse(localStorage.getItem('nb:new-gomez:staff')||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
 var Session={current:null};
-var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:''};
+var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:'',focoBuscar:false};
 
 /* ── Seguridad con base de datos en vivo ──────────────────────────────────
    El capability db no distingue "cliente" de "staff": cualquiera con el
@@ -646,8 +655,9 @@ function total(){return sel().reduce(function(a,s){return a+s.precio},0)}
 function dur(){return sel().reduce(function(a,s){return a+s.min},0)}
 function barber(){return DATA.barbers.filter(function(b){return b.id===S.barber})[0]||DATA.barbers[0]}
 function slots(date,d){
-  var out=[],blocks=DATA.hours[date.getDay()]||[],now=new Date(),today=sameDay(date,now);
-  var minStart=today?now.getHours()*60+now.getMinutes()+DATA.lead:-1;
+  var out=[],blocks=DATA.hours[date.getDay()]||[],now=new Date(),hoy=new Date(now);hoy.setHours(0,0,0,0);
+  if(date<hoy)return out; // un día ya pasado no ofrece horas (p. ej. página abierta al cruzar medianoche)
+  var minStart=sameDay(date,now)?now.getHours()*60+now.getMinutes()+DATA.lead:-1;
   blocks.forEach(function(b){for(var t=b[0];t+d<=b[1];t+=DATA.step){if(t>=minStart)out.push(t)}});
   return out;
 }
@@ -686,9 +696,17 @@ $('#barbers').addEventListener('change',function(e){S.barber=e.target.value;upda
 rebuildBarbers();
 
 /* ── Render: fechas ── */
-var today=new Date();today.setHours(0,0,0,0);
-var DAYS=[];for(var i=0;i<DATA.days;i++){var d=new Date(today);d.setDate(today.getDate()+i);DAYS.push(d)}
+// 'today' y DAYS se recalculan en cada renderDates(): si la página (o la PWA) se queda abierta al
+// cruzar medianoche, "hoy" debe avanzar en vez de seguir ofreciendo el día anterior completo.
+var today,DAYS=[];
+function buildDays(){
+  today=new Date();today.setHours(0,0,0,0);DAYS=[];
+  for(var i=0;i<DATA.days;i++){var d=new Date(today);d.setDate(today.getDate()+i);DAYS.push(d)}
+  if(S.date&&S.date<today&&S.step<5){S.date=null;S.time=null} // la fecha elegida ya pasó
+}
+function syncHoy(){if(today&&sameDay(today,new Date()))return false;renderDates();return true}
 function renderDates(){
+  buildDays();
   $('#dates').innerHTML=DAYS.map(function(d,i){
     var closed=!(DATA.hours[d.getDay()]||[]).length,on=S.date&&sameDay(d,S.date);
     var label=(i===0?'Hoy, ':'')+longDate(d);
@@ -702,8 +720,12 @@ $('#dates').addEventListener('click',function(e){
   S.date=DAYS[+b.dataset.i];S.time=null;renderDates();update();
   b=$('#dates .day[aria-pressed="true"]');if(b)b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
 });
+// Al volver a la pestaña o a la app (p. ej. al día siguiente) se actualiza "hoy" y, en Fecha y hora, las horas ofrecidas.
+function refrescarFechas(){if(document.hidden)return;syncHoy();if(S.step===3||S.step===4)update()}
+document.addEventListener('visibilitychange',refrescarFechas);
+window.addEventListener('focus',refrescarFechas);
 function renderTimes(){
-  var box=$('#times'),hint=$('#timesHint'),d=dur();
+  var box=$('#times'),hint=$('#timesHint'),d=dur();hint.style.color='';
   $('#durHint').textContent='Tu cita dura '+fmtDur(d)+'.';
   if(!S.date){box.innerHTML='<div class="empty" style="grid-column:1/-1">Primero elige una fecha.</div>';hint.textContent='';return}
   var list=slots(S.date,d),key=dayKey(S.date),free=0;
@@ -776,8 +798,16 @@ function registrar(){
   store.set('nb:new-gomez:name',p.name);store.set('nb:new-gomez:phone',p.phone);
   saveBooking(b);S.last=b;return b;
 }
+function horaPasada(date,t){var now=new Date(),hoy=new Date(now);hoy.setHours(0,0,0,0);return date<hoy||(sameDay(date,now)&&t<now.getHours()*60+now.getMinutes())}
 function confirmar(){
   if(!validate(true)){var f=$('#fName.invalid input, #fPhone.invalid input');if(f)f.focus();return false}
+  // Red de seguridad: con la página abierta desde antes de medianoche (o si la hora ya pasó) no se registra una cita en el pasado.
+  syncHoy();
+  if(!S.date||S.time===null||horaPasada(S.date,S.time)){
+    S.time=null;go(3);
+    var hint=$('#timesHint');hint.textContent='Esa hora ya pasó. Elige otra, por favor.';hint.style.color='var(--err)';
+    return false;
+  }
   if(!S.last||S.last.fecha!==dayKey(S.date)||S.last.inicio!==S.time)registrar();
   go(5);return true;
 }
@@ -798,7 +828,7 @@ function go(n){
   steps.forEach(function(el,i){if(el)el.hidden=i!==n});
   Array.prototype.forEach.call(document.querySelectorAll('.segs span'),function(s,i){s.classList.toggle('on',i<n)});
   $('#stepLabel').textContent=n===5?'Listo':'Paso '+n+' de 4';
-  if(n===3)renderTimes();
+  if(n===3){syncHoy();renderTimes()}
   if(n===5){
     var b=S.last;$('#doneCard').hidden=!b;$('#doneActions').hidden=!b;$('#ticketDone').innerHTML=b?ticketHTML():'';
     if(b){$('#folio').textContent='Folio '+b.id;
@@ -863,10 +893,15 @@ function bindRowActions(container){
   container.onclick=function(e){
     var b=e.target.closest('button[data-act]');if(!b)return;
     var id=b.dataset.id,act=b.dataset.act,cita=BOOK.list.filter(function(x){return x.id===id})[0];if(!cita)return;
-    if(act==='confirmar'){cita.estado='confirmada';saveBooking(cita);renderDash()}
-    else if(act==='atender'){cita.estado='atendida';saveBooking(cita);renderDash()}
-    else if(act==='cancelar'){if(confirm('¿Cancelar la cita de '+(cita.nombre||'este cliente')+'?')){cita.estado='cancelada';saveBooking(cita);renderDash()}}
+    var hecho=false;
+    if(act==='confirmar'){cita.estado='confirmada';hecho=true}
+    else if(act==='atender'){cita.estado='atendida';hecho=true}
+    else if(act==='cancelar'){if(confirm('¿Cancelar la cita de '+(cita.nombre||'este cliente')+'?')){cita.estado='cancelada';hecho=true}}
     else if(act==='editar'){openManualForm(cita)}
+    if(!hecho)return;
+    saveBooking(cita);renderDash();
+    // Tras redibujar, el foco vuelve a la misma cita (su siguiente botón) en vez de perderse o saltar al buscador.
+    var sig=$('#panelView').querySelector('button[data-id="'+id+'"]');if(sig)sig.focus({preventScroll:true});
   };
 }
 function openManualForm(editing){
@@ -883,7 +918,7 @@ function openManualForm(editing){
     '<div class="mform"><div class="mform-head"><span>'+(editing?'Mover / editar cita':'Nueva cita manual')+'</span><button type="button" id="mCancel">✕</button></div>'+
     '<div class="row2"><input type="text" id="mNombre" placeholder="Nombre del cliente" value="'+(editing?esc(editing.nombre||''):'')+'"/>'+
     '<input type="tel" id="mTel" placeholder="Teléfono a 10 dígitos" value="'+(editing?esc(editing.telefono||''):'')+'"/></div>'+
-    '<div id="mServicios" role="group" aria-label="Servicios" style="display:grid;gap:2px;max-height:180px;overflow:auto;border:1.5px solid var(--line);border-radius:8px;padding:8px;background:var(--bone)">'+svcHtml+'</div>'+
+    '<div id="mServicios" class="svcs" role="group" aria-label="Servicios">'+svcHtml+'</div>'+
     '<select id="mBarbero" aria-label="Barbero">'+barbOpts+'</select>'+
     '<div class="row2"><input type="date" id="mFecha" aria-label="Fecha de la cita" value="'+dayKey(d)+'"/><input type="time" id="mHora" aria-label="Hora de la cita" value="'+(editing?fmtTime(editing.inicio):'10:00')+'"/></div>'+
     '<button type="button" class="btn btn-primary" id="mGuardar" style="min-height:44px">'+(editing?'Guardar cambios':'Registrar cita')+'</button></div>';
@@ -917,7 +952,9 @@ function renderDia(u,isOwner){
   if(isOwner){
     var input=$('#buscarInput');
     input.oninput=function(){Panel.busqueda=input.value;renderDiaContenido(u,isOwner)};
-    input.focus();var vlen=input.value.length;input.setSelectionRange(vlen,vlen);
+    // Solo recupera el foco si el usuario ya estaba escribiendo ahí (renderDash lo anota antes de
+    // reconstruir el panel): un focus() incondicional abre el teclado del teléfono al entrar y tras cada acción.
+    if(Panel.focoBuscar){input.focus();var vlen=input.value.length;input.setSelectionRange(vlen,vlen)}
   }
   renderDiaContenido(u,isOwner);
 }
@@ -937,7 +974,9 @@ function renderDiaContenido(u,isOwner){
   // Las citas 'any' (cualquier profesional) ya ocupan una de las 2 sillas de ese horario, así
   // que también se muestran a cada empleado (marcadas como tal), no solo las suyas.
   var list=citasDe(key).filter(function(b){return isOwner||b.barbero===u.id||b.barbero==='any'});
-  var totalDia=list.filter(function(b){return b.estado!=='cancelada'}).reduce(function(a,b){return a+(b.total||0)},0);
+  // Las canceladas se siguen listando, pero no cuentan ni en citas ni en ingreso (igual que Mes y Estadísticas).
+  var activas=list.filter(function(b){return b.estado!=='cancelada'});
+  var totalDia=activas.reduce(function(a,b){return a+(b.total||0)},0);
   var reminderHtml='';
   if(isOwner&&sameDay(d,new Date())){
     var nowMin=(new Date()).getHours()*60+(new Date()).getMinutes();
@@ -952,7 +991,7 @@ function renderDiaContenido(u,isOwner){
   $('#diaContenido').innerHTML=
     (isOwner?'<div class="day-nav"><button type="button" id="dPrev">‹</button><b>'+esc(longDate(d))+(sameDay(d,new Date())?' · hoy':'')+'</b><button type="button" id="dNext">›</button></div>':
       '<div class="day-nav"><b>'+esc(longDate(d))+' · tus citas de hoy</b></div>')+
-    (isOwner?'<div class="stat-row"><div class="stat"><div class="n">'+list.length+'</div><div class="l">Citas</div></div><div class="stat"><div class="n">'+fmtMoney(totalDia)+'</div><div class="l">Ingreso del día</div></div></div>':'')+
+    (isOwner?'<div class="stat-row"><div class="stat"><div class="n">'+activas.length+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalDia)+'</div><div class="l">Ingreso del día</div></div></div>':'')+
     reminderHtml+
     (isOwner?'<button type="button" class="btn btn-ghost" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Cita manual (teléfono / mostrador)</button>':'')+
     (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true})}).join(''):'<div class="empty">Sin citas.</div>');
@@ -968,13 +1007,13 @@ function renderSemana(){
   var totalSemana=0,citasSemana=0,html='';
   for(var i=0;i<7;i++){
     var d=new Date(start);d.setDate(start.getDate()+i);var key=dayKey(d);
-    var list=citasDe(key);citasSemana+=list.length;
-    var t=list.filter(function(b){return b.estado!=='cancelada'}).reduce(function(a,b){return a+(b.total||0)},0);totalSemana+=t;
-    html+='<div class="week-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</span><span>'+plural(list.length,'cita')+' · '+fmtMoney(t)+'</span></h4>'+
+    var list=citasDe(key),activas=list.filter(function(b){return b.estado!=='cancelada'});citasSemana+=activas.length;
+    var t=activas.reduce(function(a,b){return a+(b.total||0)},0);totalSemana+=t;
+    html+='<div class="week-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</span><span>'+plural(activas.length,'cita')+' · '+fmtMoney(t)+'</span></h4>'+
       (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join(''):'<span class="empty" style="display:block">Sin citas</span>')+'</div>';
   }
   $('#panelBody').innerHTML='<div class="day-nav"><button type="button" id="wPrev">‹</button><b>Semana del '+start.getDate()+' '+shortM[start.getMonth()]+'</b><button type="button" id="wNext">›</button></div>'+
-    '<div class="stat-row"><div class="stat"><div class="n">'+citasSemana+'</div><div class="l">Citas</div></div><div class="stat"><div class="n">'+fmtMoney(totalSemana)+'</div><div class="l">Ingreso</div></div></div>'+
+    '<div class="stat-row"><div class="stat"><div class="n">'+citasSemana+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalSemana)+'</div><div class="l">Ingreso</div></div></div>'+
     '<div class="week-list">'+html+'</div>';
   bindRowActions($('#panelBody'));
   $('#wPrev').onclick=function(){Panel.wRef=new Date(start);Panel.wRef.setDate(start.getDate()-7);renderDash()};
@@ -1149,6 +1188,8 @@ function renderLogin(){
 }
 function renderDash(){
   var u=Session.current;if(!u){renderLogin();return}
+  Panel.focoBuscar=!!document.activeElement&&document.activeElement.id==='buscarInput';
+  var tabsPrev=$('#panelView .tabs'),tabsScroll=tabsPrev?tabsPrev.scrollLeft:0;
   var isOwner=u.rol==='owner'||u.rol==='superadmin';
   var tabsHtml=isOwner?'<div class="tabs" role="tablist">'+
     [['dia','Día'],['semana','Semana'],['mes','Mes'],['barberos','Barberos'],['stats','Estadísticas']].map(function(t){
@@ -1162,6 +1203,15 @@ function renderDash(){
     tabsHtml+'<div id="panelBody"></div></div>';
   $('#logoutBtn').onclick=logout;
   if(isOwner)Array.prototype.forEach.call($('#panelView').querySelectorAll('.tabs button'),function(b){b.onclick=function(){Panel.tab=b.dataset.tab;renderDash()}});
+  var tabsEl=$('#panelView .tabs');
+  if(tabsEl){
+    // La tira se reconstruye con innerHTML (su scrollLeft vuelve a 0): se conserva el desplazamiento y se
+    // deja a la vista la pestaña activa, sin tocar el scroll vertical de la página.
+    tabsEl.scrollLeft=tabsScroll;
+    var ta=tabsEl.querySelector('[aria-selected="true"]');
+    if(ta){var tr=tabsEl.getBoundingClientRect(),ar=ta.getBoundingClientRect();
+      if(ar.right>tr.right)tabsEl.scrollLeft+=ar.right-tr.right;else if(ar.left<tr.left)tabsEl.scrollLeft-=tr.left-ar.left}
+  }
   renderTab(Panel.tab,u,isOwner);
 }
 
@@ -1191,7 +1241,6 @@ function syncNegocioUI(){
   $('#fIg').href=NEGOCIO.instagram;
   $('#fFresha').href=NEGOCIO.fresha;
   $('#fDireccion').textContent=NEGOCIO.direccionLarga+' · '+NEGOCIO.horarioLargo;
-  Array.prototype.forEach.call(document.querySelectorAll('#freshaBookingLink'),function(a){a.href=NEGOCIO.freshaBooking});
 }
 syncNegocioUI();
 initDb();
