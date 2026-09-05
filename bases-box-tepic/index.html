@@ -162,6 +162,16 @@ section{padding:96px 0}
 .shot figcaption b{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:15px;color:var(--paper)}
 .fichas-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:14px;color:var(--muted);margin-bottom:16px}
 
+/* visor ampliado */
+.shot .crop{cursor:zoom-in}
+.shot .crop:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.lb{position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;cursor:zoom-out}
+.lb[hidden]{display:none}
+.lb .big{height:min(76vh,760px);aspect-ratio:4/3;max-width:94vw;background-repeat:no-repeat;background-color:#cfcdc7;border:2px solid var(--orange)}
+.lb .cap{color:var(--paper);font-size:17px;text-align:center;max-width:640px}
+.lb .cap b{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;display:block;color:var(--orange);font-size:15px;margin-bottom:4px}
+.lb .hint{position:absolute;top:20px;right:24px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:14px}
+
 /* diseño 3D */
 #diseno{background:var(--paper)}
 .render-grid{display:grid;gap:28px}
@@ -433,7 +443,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
     <div class="sec-head">
       <div class="divider-label"><span class="tag-num">05 / GALERÍA</span></div>
       <h2>Así se ve la base</h2>
-      <p>Cada base es una unidad independiente: se usa sola o se apila con otras para ganar altura, sin perder estabilidad. Perfil, tapizado, patas cromadas y estructura interna — de cerca.</p>
+      <p>Cada base es una unidad independiente: se usa sola o se apila con otras para ganar altura, sin perder estabilidad. Perfil, tapizado, patas cromadas y estructura interna — de cerca. Toca cualquier imagen para verla en grande.</p>
     </div>
     <div class="shots">
       <figure class="shot">
@@ -593,6 +603,13 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   </div>
 </footer>
 
+<!-- visor ampliado -->
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Vista ampliada">
+  <span class="hint">Toca para cerrar · Esc</span>
+  <div class="big" id="lbBig"></div>
+  <div class="cap" id="lbCap"></div>
+</div>
+
 <!-- floating whatsapp -->
 <a class="wa-float" href="https://wa.me/523111216033?text=Hola%2C%20quiero%20cotizar%20una%20base" target="_blank" rel="noopener" aria-label="WhatsApp">
   <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.9 5-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.6-6c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.6 0a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2a.4.4 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.7 11.7 0 004.5 4c.6.3 1.1.4 1.5.5a3.5 3.5 0 001.6.1c.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>
@@ -634,6 +651,29 @@ tones.forEach(function(t,i){
   };
   sw.appendChild(b);
 });
+
+// visor ampliado de la galería
+(function(){
+  var lb=document.getElementById('lb'), big=document.getElementById('lbBig'), cap=document.getElementById('lbCap');
+  function abrir(c){
+    big.style.backgroundImage=c.style.backgroundImage;
+    big.style.backgroundSize=c.style.backgroundSize;
+    big.style.backgroundPosition=c.style.backgroundPosition;
+    var f=c.parentNode.querySelector('figcaption');
+    cap.innerHTML=f?f.innerHTML:'';
+    lb.hidden=false; document.body.style.overflow='hidden';
+  }
+  function cerrar(){lb.hidden=true; document.body.style.overflow='';}
+  Array.prototype.forEach.call(document.querySelectorAll('.shot .crop'),function(c){
+    c.tabIndex=0; c.setAttribute('role','button');
+    c.addEventListener('click',function(){abrir(c)});
+    c.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();abrir(c)}
+    });
+  });
+  lb.addEventListener('click',cerrar);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!lb.hidden)cerrar()});
+})();
 
 // close mobile menu on link click
 Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a){
