@@ -1,0 +1,15 @@
+{
+  "name": "NEW GOMEZ · Panel del equipo",
+  "short_name": "NG Panel",
+  "description": "Agenda, citas y equipo de NEW GOMEZ Barbershop.",
+  "start_url": "../#/panel",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#15130F",
+  "theme_color": "#15130F",
+  "lang": "es",
+  "icons": [
+    { "src": "../img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
