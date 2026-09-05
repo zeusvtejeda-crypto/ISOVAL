@@ -838,6 +838,16 @@ function go(n){
   update();
   window.scrollTo({top:0,behavior:'auto'});
   var h=$('h2',steps[n]);if(h)h.focus({preventScroll:true});
+  // En ventanas de escritorio bajas, el contenido de los pasos 4 y 5 puede terminar justo
+  // debajo de la barra fija (position:fixed no reserva espacio en el flujo). Si el botón
+  // secundario queda tapado nada más cargar el paso, se baja el scroll lo justo para liberarlo.
+  requestAnimationFrame(function(){
+    var acciones=$('.actions',steps[n]);var barra=$('.bar-fixed');
+    if(!acciones||!barra||barra.hidden)return;
+    var ar=acciones.getBoundingClientRect(),br=barra.getBoundingClientRect();
+    var tapado=ar.bottom-br.top;
+    if(tapado>0)window.scrollBy({top:tapado+16,behavior:'auto'});
+  });
 }
 $('#nextBtn').addEventListener('click',function(){
   if(S.step===5){reset();return}
@@ -1154,6 +1164,31 @@ async function exportarCitasCSV(){
     if(msg)msg.textContent='Descargado: '+filas.length+' citas.';
   }catch(e){if(msg)msg.textContent='No se pudo generar el archivo. Intenta de nuevo.'}
 }
+function abrirEditarPerfilPropio(u){
+  var box=$('#perfilFormBox');if(!box)return;
+  box.innerHTML='<div class="mform"><div class="mform-head"><span>Editar mi perfil</span><button type="button" id="pCancel" aria-label="Cerrar">✕</button></div>'+
+    '<div class="row2"><input type="text" id="pNombre" placeholder="Nombre" value="'+esc(u.nombre)+'"/>'+
+    '<input type="text" id="pPin" placeholder="Nuevo PIN (opcional)" maxlength="4" inputmode="numeric"/></div>'+
+    '<p style="font-size:12px;color:var(--smoke)">Deja el PIN en blanco para conservar el actual.</p>'+
+    '<button type="button" class="btn btn-primary" id="pGuardar" style="min-height:44px">Guardar cambios</button></div>';
+  $('#pCancel').onclick=function(){box.innerHTML=''};
+  $('#pGuardar').onclick=function(){
+    var nombre=$('#pNombre').value.trim(),pinRaw=$('#pPin').value.replace(/\D/g,'');
+    if(!nombre){alert('Escribe un nombre.');return}
+    var actual=STAFF.list.filter(function(x){return x.id===u.id})[0];if(!actual)return;
+    var hashNuevo=staffPinOf(actual);
+    if(pinRaw){
+      if(pinRaw.length!==4){alert('El PIN debe tener 4 dígitos.');return}
+      hashNuevo=hashPin(pinRaw);
+      if(STAFF.list.some(function(x){return x.id!==actual.id&&staffPinOf(x)===hashNuevo})){alert('Ese PIN ya lo usa alguien más.');return}
+    }
+    var actualizado={};for(var k in actual)actualizado[k]=actual[k];
+    actualizado.nombre=nombre;actualizado.pin=hashNuevo;
+    saveStaff(actualizado);
+    Session.current=actualizado;
+    box.innerHTML='';renderDash();
+  };
+}
 function renderTab(tab,u,isOwner){
   if(!isOwner){renderDia(u,false);return}
   if(tab==='dia')renderDia(u,true);
@@ -1199,9 +1234,15 @@ function renderDash(){
     '<a href="#/" class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Ir a reservar</a>'+
     '<div class="dash-top"><div class="dash-who">'+(u.img?'<img class="av" src="'+u.img+'" alt="" width="40" height="40" decoding="async"/>':'')+
     '<div><b>Hola, '+esc(u.nombre)+'</b><div class="role">'+roleLabel(u.rol)+(BOOK.shared?' · <span class="live-dot">● en vivo</span>':'')+'</div></div></div>'+
-    '<button type="button" class="btn btn-ghost" id="logoutBtn" style="min-height:40px;padding:0 16px">Salir</button></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    (isOwner?'':'<button type="button" class="btn btn-ghost" id="editPerfilBtn" style="min-height:40px;padding:0 16px">Editar mi perfil</button>')+
+    '<button type="button" class="btn btn-ghost" id="logoutBtn" style="min-height:40px;padding:0 16px">Salir</button></div></div>'+
+    (isOwner?'':'<div id="perfilFormBox"></div>')+
     tabsHtml+'<div id="panelBody"></div></div>';
   $('#logoutBtn').onclick=logout;
+  // Barberos (la pestaña con "Editar") solo existe para el dueño/superadmin: un empleado
+  // sin pestañas necesita este botón aparte para poder cambiar su propio nombre/PIN.
+  if(!isOwner)$('#editPerfilBtn').onclick=function(){abrirEditarPerfilPropio(u)};
   if(isOwner)Array.prototype.forEach.call($('#panelView').querySelectorAll('.tabs button'),function(b){b.onclick=function(){Panel.tab=b.dataset.tab;renderDash()}});
   var tabsEl=$('#panelView .tabs');
   if(tabsEl){
