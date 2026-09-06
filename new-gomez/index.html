@@ -796,7 +796,18 @@ function registrar(){
     servicios:sel().map(function(x){return x.nombre}),total:total(),nombre:p.name,telefono:p.phone,primera:p.first,nota:p.note,
     creado:new Date().toISOString(),estado:'registrada'};
   store.set('nb:new-gomez:name',p.name);store.set('nb:new-gomez:phone',p.phone);
-  saveBooking(b);S.last=b;return b;
+  saveBooking(b);S.last=b;notificarCita(b);return b;
+}
+// Aviso por correo al dueño: solo funciona donde exista el backend de Cloudflare Pages
+// (Functions en /api). En GitHub Pages (sin backend) el fetch simplemente falla y se
+// ignora: la cita ya quedó guardada localmente pase lo que pase con este aviso.
+function notificarCita(b){
+  try{
+    fetch('/api/notificar-cita',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      folio:b.id,nombre:b.nombre,telefono:b.telefono,fecha:longDate(S.date),hora:fmtTime(b.inicio),
+      barbero:b.barberoNombre,servicios:b.servicios,total:b.total,nota:b.nota
+    })}).catch(function(){});
+  }catch(e){}
 }
 function horaPasada(date,t){var now=new Date(),hoy=new Date(now);hoy.setHours(0,0,0,0);return date<hoy||(sameDay(date,now)&&t<now.getHours()*60+now.getMinutes())}
 function confirmar(){
