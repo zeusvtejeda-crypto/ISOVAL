@@ -18,7 +18,9 @@
   "@context": "https://schema.org",
   "@type": "BarberShop",
   "name": "NEW GOMEZ Barbershop",
+  "alternateName": "Barbería Ángel",
   "url": "https://gomez.tubarberia.mx/",
+  "hasMap": "https://maps.google.com/?cid=16017407076252956381",
   "image": ["https://gomez.tubarberia.mx/img/foto3.jpg", "https://gomez.tubarberia.mx/img/logo.jpg"],
   "telephone": "+523111585540",
   "priceRange": "$80 - $540 MXN",
@@ -36,7 +38,7 @@
     {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "16:00", "closes": "20:00"},
     {"@type": "OpeningHoursSpecification", "dayOfWeek": "Saturday", "opens": "10:00", "closes": "16:00"}
   ],
-  "sameAs": ["https://www.instagram.com/angel_newgomez", "https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g"],
+  "sameAs": ["https://www.instagram.com/angel_newgomez", "https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g", "https://maps.google.com/?cid=16017407076252956381"],
   "potentialAction": {"@type": "ReserveAction", "target": "https://gomez.tubarberia.mx/", "name": "Reservar cita"}
 }
 </script>
@@ -577,7 +579,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
     </article>
   </div>
   <div class="review-actions">
-    <a class="btn btn-primary" id="rsGoogle" href="https://www.google.com/maps/search/?api=1&query=NEW+GOMEZ+Barbershop+Tuxpan+45+Col.+Morelos+Tepic+Nayarit" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3l-5.4 3.2 1.4-6.1L3.3 10.3l6.2-.5L12 4l2.5 5.8 6.2.5-4.7 4.1 1.4 6.1z"/></svg>Deja tu reseña en Google</a>
+    <a class="btn btn-primary" id="rsGoogle" href="https://www.google.com/search?q=Barber%C3%ADa+%C3%81ngel+Tuxpan+45+Tepic&ludocid=16017407076252956381#lrd=0x84273726b5bd348d:0xde4942df3ae2b6dd,3" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3l-5.4 3.2 1.4-6.1L3.3 10.3l6.2-.5L12 4l2.5 5.8 6.2.5-4.7 4.1 1.4 6.1z"/></svg>Deja tu reseña en Google</a>
     <a class="btn btn-ghost" id="rsMore" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Ver las 145 reseñas en Fresha</a>
   </div>
 </section>
@@ -596,7 +598,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
     <a id="fTel" href="tel:+523111585540">311 158 5540</a>
     <a id="fWa" href="https://wa.me/523111585540" target="_blank" rel="noopener">WhatsApp</a>
     <a id="fIg" href="https://www.instagram.com/angel_newgomez" target="_blank" rel="noopener">Instagram</a>
-    <a id="fResena" href="https://www.google.com/maps/search/?api=1&query=NEW+GOMEZ+Barbershop+Tuxpan+45+Col.+Morelos+Tepic+Nayarit" target="_blank" rel="noopener">Reseña en Google</a>
+    <a id="fResena" href="https://www.google.com/search?q=Barber%C3%ADa+%C3%81ngel+Tuxpan+45+Tepic&ludocid=16017407076252956381#lrd=0x84273726b5bd348d:0xde4942df3ae2b6dd,3" target="_blank" rel="noopener">Reseña en Google</a>
     <a id="fFresha" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Perfil en Fresha</a>
     <a href="#/panel">Panel del equipo</a>
   </div>
@@ -642,10 +644,11 @@ var NEGOCIO={
   // Textos con palabras clave (SEO) que ven tanto el cliente como los buscadores.
   lema:'Barbería en Tepic · Cortes, barba y tinte',
   intro:'Barbería en Tepic, Nayarit: cortes de cabello, barba, tinte y limpieza facial con Angel y Alexis. Reserva tu cita en línea en menos de un minuto: elige servicio, barbero, fecha y hora, y queda registrada al instante.',
-  // Abre la ficha del negocio en Google Maps (ahí el cliente toca "Escribir una reseña"). Cuando se
-  // tenga el Place ID de la ficha, cambiar por el enlace directo al formulario:
-  // https://search.google.com/local/writereview?placeid=ChIJ...
-  resenaGoogleUrl:'https://www.google.com/maps/search/?api=1&query=NEW+GOMEZ+Barbershop+Tuxpan+45+Col.+Morelos+Tepic+Nayarit',
+  // Abre directo el formulario "Escribir una reseña" de la ficha de Google (ludocid = CID de la
+  // ficha "Barbería Ángel"; el fragmento #lrd=<ftid>,3 abre el cuadro de reseña). La ficha en
+  // Maps: https://maps.google.com/?cid=16017407076252956381
+  resenaGoogleUrl:'https://www.google.com/search?q=Barber%C3%ADa+%C3%81ngel+Tuxpan+45+Tepic&ludocid=16017407076252956381#lrd=0x84273726b5bd348d:0xde4942df3ae2b6dd,3',
+  mapsFichaUrl:'https://maps.google.com/?cid=16017407076252956381',
   slug:'new-gomez'
 };
 var DATA={
