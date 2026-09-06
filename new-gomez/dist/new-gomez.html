@@ -277,6 +277,23 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .day-nav b{font-family:var(--disp);font-size:19px;text-align:center}
 .day-nav button{width:44px;height:44px;flex:none;border:1.5px solid var(--line);border-radius:50%;font-size:16px}
 .day-nav button:hover{border-color:var(--brass-deep)}
+.aviso-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--brass-soft);border:1.5px solid var(--brass);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:500}
+.aviso-banner button{color:var(--smoke);font-size:18px;line-height:1;min-width:32px;min-height:32px}
+/* ── Calendario visual (escritorio) ── */
+.cal-wrap{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.cal-heads{display:grid;border-bottom:1.5px solid var(--line);background:var(--bone-2)}
+.cal-col-head{padding:8px 6px;font-size:12px;font-weight:700;text-align:center;border-left:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-col-head.hoy{color:var(--brass-deep)}
+.cal-body{display:grid;position:relative;overflow-x:auto;overflow-y:visible}
+.cal-hours{position:relative}
+.cal-hourline{position:absolute;left:0;right:0;border-top:1px solid var(--line);font-size:10px;color:var(--smoke);padding-right:6px;text-align:right}
+.cal-hourline span{position:relative;top:-6px;background:var(--paper);padding-left:2px}
+.cal-col{position:relative;border-left:1px solid var(--line);background:
+  repeating-linear-gradient(to bottom,transparent,transparent 55px,var(--line) 55px,var(--line) 56px)}
+.cal-block{position:absolute;overflow:hidden;text-align:left;background:var(--bone);border:1px solid var(--line);border-left:3px solid var(--smoke);border-radius:6px;padding:2px 6px;font-size:11px;line-height:1.25;cursor:pointer}
+.cal-block:hover{border-color:var(--brass-deep)}
+.cal-block b{font-family:var(--mono);font-weight:700}
+.cal-svc{display:block;color:var(--smoke);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .week-list,.month-list{display:grid;gap:14px}
 .week-day,.month-day{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper)}
 .week-day h4,.month-day h4{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px}
@@ -408,7 +425,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
       </div>
       <div id="ticketDone"></div>
       <div class="actions" id="doneActions">
-        <a class="btn btn-ghost" id="waBtn2" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Enviar mensaje por WhatsApp</a>
+        <a class="btn btn-ghost" id="waBtn2" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Avisar al negocio por WhatsApp</a>
         <a class="btn btn-ghost" id="calBtn2" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
       </div>
     </section>
@@ -504,13 +521,31 @@ var DEFAULT_STAFF=[
   {id:'alexis',nombre:'Alexis',rol:'employee',pin:'fec20396',activo:true,barbero:true,img:'data:image/jpeg;base64,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'}
 ];
 
+// Llave de localStorage por negocio (NEGOCIO.slug): clonar el motor a otra
+// barbería en otro subdominio no mezcla sus datos con los de esta, ni falta
+// migrar nada — cada slug tiene su propio cajón desde el primer arranque.
+function k(n){return 'nb:'+NEGOCIO.slug+':'+n}
 var S={services:[],barber:'any',date:null,time:null,step:1,last:null};
 var BOOK={list:[],db:null,shared:false};
-try{BOOK.list=JSON.parse(localStorage.getItem('nb:new-gomez:citas')||'[]')||[]}catch(e){BOOK.list=[]}
+try{BOOK.list=JSON.parse(localStorage.getItem(k('citas'))||'[]')||[]}catch(e){BOOK.list=[]}
 var STAFF={list:[],db:null,seeded:false};
-try{STAFF.list=JSON.parse(localStorage.getItem('nb:new-gomez:staff')||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
+try{STAFF.list=JSON.parse(localStorage.getItem(k('staff'))||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
 var Session={current:null};
-var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:'',focoBuscar:false};
+var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:'',focoBuscar:false,aviso:null};
+// Aviso de WhatsApp pendiente tras cancelar/reagendar: un link real que el barbero
+// clickea, no un window.open() automático — los navegadores bloquean los popups
+// abiertos justo después de un confirm(), así que un auto-open ahí se pierde en silencio.
+function avisoHTML(){
+  if(!Panel.aviso)return '';
+  return '<div class="aviso-banner" id="avisoBanner"><span>'+esc(Panel.aviso.texto)+'</span>'+
+    '<span style="display:flex;gap:8px;flex:none;align-items:center">'+
+    '<a class="btn btn-primary" href="'+Panel.aviso.link+'" target="_blank" rel="noopener" style="min-height:36px;padding:0 14px;font-size:13px">'+esc(Panel.aviso.label)+'</a>'+
+    '<button type="button" id="avisoCerrar" aria-label="Cerrar aviso">✕</button></span></div>';
+}
+function bindAviso(){
+  var b=$('#avisoCerrar');if(!b)return;
+  b.onclick=function(){Panel.aviso=null;var el=$('#avisoBanner');if(el)el.remove()};
+}
 
 /* ── Seguridad con base de datos en vivo ──────────────────────────────────
    El capability db no distingue "cliente" de "staff": cualquiera con el
@@ -549,7 +584,7 @@ function blocked(key,start,d,barberId){
 function toDisponibilidad(b){return {id:b.id,fecha:b.fecha,inicio:b.inicio,dur:b.dur,barbero:b.barbero,estado:b.estado}}
 function saveBooking(b){
   BOOK.list=BOOK.list.filter(function(x){return x.id!==b.id}).concat([b]);
-  if(!BOOK.db){try{localStorage.setItem('nb:new-gomez:citas',JSON.stringify(BOOK.list))}catch(e){}}
+  if(!BOOK.db){try{localStorage.setItem(k('citas'),JSON.stringify(BOOK.list))}catch(e){}}
   if(BOOK.db){
     BOOK.db.doc('citas/'+b.id).set(b).catch(function(){});
     BOOK.db.doc('disponibilidad/'+b.id).set(toDisponibilidad(b)).catch(function(){});
@@ -557,7 +592,7 @@ function saveBooking(b){
 }
 function persistStaff(){
   if(STAFF.db)return; // el staff con sesión en vivo no se vuelca a disco del visitante.
-  try{localStorage.setItem('nb:new-gomez:staff',JSON.stringify(STAFF.list))}catch(e){}
+  try{localStorage.setItem(k('staff'),JSON.stringify(STAFF.list))}catch(e){}
 }
 function toStaffPublico(p){var c={};for(var k in p){if(k!=='pin')c[k]=p[k]}return c}
 function saveStaff(person){
@@ -770,7 +805,8 @@ function message(){
   return lines.join('\n');
 }
 function links(){
-  var wa='https://wa.me/'+NEGOCIO.telefono+'?text='+encodeURIComponent(message());
+  var textoWa=S.last?mensajeNuevaCita(S.last):message();
+  var wa='https://wa.me/'+NEGOCIO.telefono+'?text='+encodeURIComponent(textoWa);
   $('#waBtn2').href=wa;
   var cal=$('#calBtn');
   if(S.date&&S.time!==null){
@@ -795,7 +831,7 @@ function registrar(){
   var p=person(),b={id:folio(),fecha:dayKey(S.date),inicio:S.time,dur:dur(),barbero:S.barber,barberoNombre:barber().nombre,
     servicios:sel().map(function(x){return x.nombre}),total:total(),nombre:p.name,telefono:p.phone,primera:p.first,nota:p.note,
     creado:new Date().toISOString(),estado:'registrada'};
-  store.set('nb:new-gomez:name',p.name);store.set('nb:new-gomez:phone',p.phone);
+  store.set(k('name'),p.name);store.set(k('phone'),p.phone);
   saveBooking(b);S.last=b;return b;
 }
 function horaPasada(date,t){var now=new Date(),hoy=new Date(now);hoy.setHours(0,0,0,0);return date<hoy||(sameDay(date,now)&&t<now.getHours()*60+now.getMinutes())}
@@ -813,7 +849,7 @@ function confirmar(){
 }
 $('#confirmBtn').addEventListener('click',confirmar);
 ['input','change'].forEach(function(ev){$('#form').addEventListener(ev,function(){$('#fName').classList.remove('invalid');$('#fPhone').classList.remove('invalid');links();renderTicket()})});
-$('#name').value=store.get('nb:new-gomez:name');$('#phone').value=store.get('nb:new-gomez:phone');
+$('#name').value=store.get(k('name'));$('#phone').value=store.get(k('phone'));
 
 /* ── Pasos de la reserva ── */
 var steps=[null,$('#step1'),$('#step2'),$('#step3'),$('#step4'),$('#step5')];
@@ -880,8 +916,29 @@ function update(){
 function citasDe(fecha){return BOOK.list.filter(function(b){return b.fecha===fecha}).sort(function(a,b){return a.inicio-b.inicio})}
 function tryPin(pin){var h=hashPin(pin);return STAFF.list.filter(function(x){return staffPinOf(x)===h&&x.activo!==false})[0]||null}
 function logout(){Session.current=null;syncCitasSubscription();renderPanel()}
+/* ── Plantillas de WhatsApp: formales, cortas, un tono para todas.
+   agendaLink() usa location.origin en vivo (no un dominio fijo) para que
+   funcionen igual en el link de Claude, en Vercel o en un dominio propio. ── */
+function agendaLink(){return location.origin+location.pathname+'#/panel'}
+function fechaHora(b){return longDate(new Date(b.fecha+'T12:00:00'))+' a las '+fmtTime(b.inicio)}
+function mensajeNuevaCita(b){
+  return ['Nueva cita agendada — '+NEGOCIO.nombre,
+    'Cliente: '+(b.nombre||'Sin nombre')+(b.telefono?' ('+b.telefono+')':''),
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Fecha y hora: '+fechaHora(b),
+    'Barbero: '+(b.barberoNombre||'Cualquiera'),
+    'Ver agenda: '+agendaLink()].join('\n');
+}
 function reminderWa(b){
-  var m='Hola '+(b.nombre||'')+', te escribimos de '+NEGOCIO.nombre+' para confirmar tu cita de hoy a las '+fmtTime(b.inicio)+'. ¿Nos vemos?';
+  var m='Hola '+(b.nombre||'')+', te confirmamos tu cita hoy a las '+fmtTime(b.inicio)+' en '+NEGOCIO.nombre+'. ¿Nos vemos?';
+  return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
+}
+function reagendadaWa(b){
+  var m='Hola '+(b.nombre||'')+', tu cita en '+NEGOCIO.nombre+' se reagendó. Nuevo horario: '+fechaHora(b)+'. Cualquier duda, contáctanos.';
+  return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
+}
+function canceladaWa(b){
+  var m='Hola '+(b.nombre||'')+', tu cita en '+NEGOCIO.nombre+' del '+fechaHora(b)+' fue cancelada. Si deseas reagendar, escríbenos.';
   return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
 }
 function mrowHTML(b,opts){
@@ -906,7 +963,7 @@ function bindRowActions(container){
     var hecho=false;
     if(act==='confirmar'){cita.estado='confirmada';hecho=true}
     else if(act==='atender'){cita.estado='atendida';hecho=true}
-    else if(act==='cancelar'){if(confirm('¿Cancelar la cita de '+(cita.nombre||'este cliente')+'?')){cita.estado='cancelada';hecho=true}}
+    else if(act==='cancelar'){if(confirm('¿Cancelar la cita de '+(cita.nombre||'este cliente')+'?')){cita.estado='cancelada';hecho=true;if(cita.telefono)Panel.aviso={texto:'Cita cancelada.',link:canceladaWa(cita),label:'Avisar por WhatsApp'}}}
     else if(act==='editar'){openManualForm(cita)}
     if(!hecho)return;
     saveBooking(cita);renderDash();
@@ -947,18 +1004,109 @@ function openManualForm(editing){
     var ov=overlapping(fecha,inicio,inicio+durNueva).filter(function(x){return !editing||x.id!==editing.id});
     var choque=(barb.id!=='any'&&ov.some(function(x){return x.barbero===barb.id}))||ov.length>=2;
     if(choque&&!confirm('Ese horario ya está ocupado (barbero con otra cita, o ya hay 2 citas ahí). ¿Guardar de todas formas?'))return;
+    var moved=editing&&(editing.fecha!==fecha||editing.inicio!==inicio);
     var b=editing||{id:folio(),creado:new Date().toISOString()};
     b.nombre=$('#mNombre').value.trim()||'Cliente';b.telefono=$('#mTel').value.replace(/\D/g,'');
     b.servicios=svcs.map(function(x){return x.nombre});b.total=svcs.reduce(function(a,x){return a+x.precio},0);b.dur=durNueva;
     b.barbero=barb.id;b.barberoNombre=barb.nombre;
     b.fecha=fecha;b.inicio=inicio;b.estado='confirmada';
+    // Avisar al cliente solo cuando de verdad cambió fecha/hora (no en una edición de servicios/nombre).
+    // Se prepara ANTES de renderDash() — si no, el banner se pierde porque ya se pintó sin él.
+    if(moved&&b.telefono)Panel.aviso={texto:'Cita reagendada.',link:reagendadaWa(b),label:'Avisar por WhatsApp'};
     saveBooking(b);box.innerHTML='';renderDash();
   };
 }
+/* ── Agenda tipo calendario (solo escritorio, panel del dueño) ───────────
+   Columnas por barbero (vista Día) o por día (vista Semana), filas por
+   hora, bloques posicionados por minuto exacto — sin empalmes visuales
+   porque cada barbero/carril tiene su propio espacio horizontal. ── */
+function esEscritorio(){return window.matchMedia('(min-width:860px)').matches}
+var BARBER_COLORS=['#9E7826','#2F6F6B','#7A4B8C','#4A6B3A','#8C4B3A','#3A5A8C'];
+function colorBarbero(id){
+  if(!id||id==='any')return '#7A7366';
+  var activos=DATA.barbers.filter(function(b){return b.id!=='any'});
+  var i=activos.findIndex(function(b){return b.id===id});
+  return BARBER_COLORS[(i<0?0:i)%BARBER_COLORS.length];
+}
+function rangoHoras(dows){
+  var min=Infinity,max=-Infinity;
+  dows.forEach(function(dow){(DATA.hours[dow]||[]).forEach(function(b){if(b[0]<min)min=b[0];if(b[1]>max)max=b[1]})});
+  if(min===Infinity){min=600;max=1200}
+  return {min:min,max:max};
+}
+var HOUR_PX=56,PXMIN=HOUR_PX/60;
+function calBloqueHTML(b,leftPct,widthPct,minBase){
+  var top=(b.inicio-minBase)*PXMIN,h=Math.max(b.dur*PXMIN,30);
+  var color=colorBarbero(b.barbero);
+  return '<button type="button" class="cal-block" data-id="'+b.id+'" style="top:'+top+'px;height:'+h+'px;left:'+leftPct+'%;width:'+widthPct+'%;border-left-color:'+color+'" title="'+esc((b.nombre||'Cliente')+' · '+(b.servicios||[]).join(' + '))+'">'+
+    '<b>'+fmtTime(b.inicio)+'</b> '+esc(b.nombre||'Cliente')+
+    (h>=44?'<span class="cal-svc">'+esc((b.servicios||[]).join(' + '))+'</span>':'')+'</button>';
+}
+function calEjeHTML(rango){
+  var horas=[];for(var t=rango.min;t<=rango.max;t+=60)horas.push(t);
+  return horas.map(function(t){return '<div class="cal-hourline" style="top:'+((t-rango.min)*PXMIN)+'px"><span>'+fmtTime(t)+'</span></div>'}).join('');
+}
+function gridDiaHTML(d){
+  var citas=citasDe(dayKey(d)).filter(function(b){return b.estado!=='cancelada'});
+  var rango=rangoHoras([d.getDay()]);
+  var cols=DATA.barbers;
+  var colsHTML=cols.map(function(c){
+    return '<div class="cal-col">'+citas.filter(function(b){return b.barbero===c.id}).map(function(b){return calBloqueHTML(b,4,92,rango.min)}).join('')+'</div>';
+  }).join('');
+  return '<div class="cal-wrap"><div class="cal-heads" style="grid-template-columns:52px repeat('+cols.length+',1fr)"><div></div>'+
+    cols.map(function(c){return '<div class="cal-col-head">'+esc(c.nombre)+'</div>'}).join('')+'</div>'+
+    '<div class="cal-body" style="height:'+((rango.max-rango.min)*PXMIN)+'px;grid-template-columns:52px repeat('+cols.length+',1fr)">'+
+    '<div class="cal-hours">'+calEjeHTML(rango)+'</div>'+colsHTML+'</div></div>';
+}
+// Reparte citas que chocan en el tiempo en carriles lado a lado (regla de 2 sillas: casi
+// siempre 1-2 carriles), en vez de encimarlas — así nunca se tapan visualmente entre sí.
+function asignarCarriles(citas){
+  var orden=citas.slice().sort(function(a,b){return a.inicio-b.inicio});
+  var finCarril=[];
+  return orden.map(function(b){
+    var carril=finCarril.findIndex(function(fin){return fin<=b.inicio});
+    if(carril<0){carril=finCarril.length;finCarril.push(0)}
+    finCarril[carril]=b.inicio+b.dur;
+    return {b:b,carril:carril};
+  });
+}
+function gridSemanaHTML(){
+  var start=new Date(Panel.wRef);start.setDate(start.getDate()-((start.getDay()+6)%7));
+  var dias=[];for(var i=0;i<7;i++){var d=new Date(start);d.setDate(start.getDate()+i);dias.push(d)}
+  var rango=rangoHoras(dias.map(function(d){return d.getDay()}));
+  var colsHTML=dias.map(function(d){
+    var citas=citasDe(dayKey(d)).filter(function(b){return b.estado!=='cancelada'});
+    var asignadas=asignarCarriles(citas);
+    var totalCarriles=Math.max.apply(null,[0].concat(asignadas.map(function(x){return x.carril})))+1;
+    return '<div class="cal-col">'+asignadas.map(function(x){
+      var w=92/totalCarriles;
+      return calBloqueHTML(x.b,4+x.carril*w,w-2,rango.min);
+    }).join('')+'</div>';
+  }).join('');
+  return '<div class="cal-wrap"><div class="cal-heads" style="grid-template-columns:52px repeat(7,1fr)"><div></div>'+
+    dias.map(function(d){return '<div class="cal-col-head'+(sameDay(d,new Date())?' hoy':'')+'">'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</div>'}).join('')+'</div>'+
+    '<div class="cal-body" style="height:'+((rango.max-rango.min)*PXMIN)+'px;grid-template-columns:52px repeat(7,1fr)">'+
+    '<div class="cal-hours">'+calEjeHTML(rango)+'</div>'+colsHTML+'</div></div>';
+}
+function bindCalClicks(container){
+  container.onclick=function(e){
+    var b=e.target.closest('.cal-block');if(!b)return;
+    var cita=BOOK.list.filter(function(x){return x.id===b.dataset.id})[0];if(!cita)return;
+    var box=$('#mformBox');if(!box)return;
+    // Acciones rápidas (Confirmar/Atendida/Mover/Cancelar) también desde el calendario,
+    // reusando la misma fila y lógica que la lista — nada que mantener por duplicado.
+    box.innerHTML='<div class="mform"><div class="mform-head"><span>Cita seleccionada</span><button type="button" id="calCerrar" aria-label="Cerrar">✕</button></div>'+
+      mrowHTML(cita,{acciones:true,editar:true,mostrarBarbero:true,mostrarFecha:true})+'</div>';
+    $('#calCerrar').onclick=function(){box.innerHTML=''};
+    bindRowActions(box);
+    box.scrollIntoView({block:'nearest',behavior:'smooth'});
+  };
+}
 function renderDia(u,isOwner){
-  $('#panelBody').innerHTML=
+  $('#panelBody').innerHTML=avisoHTML()+
     (isOwner?'<input type="search" id="buscarInput" placeholder="Buscar cliente por nombre o teléfono…" value="'+esc(Panel.busqueda||'')+'" aria-label="Buscar cliente" style="width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:44px;margin-bottom:14px"/>':'')+
     '<div id="mformBox"></div><div id="diaContenido"></div>';
+  bindAviso();
   if(isOwner){
     var input=$('#buscarInput');
     input.oninput=function(){Panel.busqueda=input.value;renderDiaContenido(u,isOwner)};
@@ -998,14 +1146,15 @@ function renderDiaContenido(u,isOwner){
         '</div>';
     }
   }
+  var vistaCalendario=isOwner&&esEscritorio();
   $('#diaContenido').innerHTML=
     (isOwner?'<div class="day-nav"><button type="button" id="dPrev">‹</button><b>'+esc(longDate(d))+(sameDay(d,new Date())?' · hoy':'')+'</b><button type="button" id="dNext">›</button></div>':
       '<div class="day-nav"><b>'+esc(longDate(d))+' · tus citas de hoy</b></div>')+
     (isOwner?'<div class="stat-row"><div class="stat"><div class="n">'+activas.length+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalDia)+'</div><div class="l">Ingreso del día</div></div></div>':'')+
     reminderHtml+
-    (isOwner?'<button type="button" class="btn btn-ghost" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Cita manual (teléfono / mostrador)</button>':'')+
-    (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true})}).join(''):'<div class="empty">Sin citas.</div>');
-  bindRowActions($('#diaContenido'));
+    (isOwner?'<button type="button" class="btn btn-primary" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Nueva cita</button>':'')+
+    (vistaCalendario?gridDiaHTML(d):(list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true})}).join(''):'<div class="empty">Sin citas.</div>'));
+  if(vistaCalendario)bindCalClicks($('#diaContenido'));else bindRowActions($('#diaContenido'));
   if(isOwner){
     $('#dPrev').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()-1);renderDiaContenido(u,isOwner)};
     $('#dNext').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()+1);renderDiaContenido(u,isOwner)};
@@ -1022,10 +1171,13 @@ function renderSemana(){
     html+='<div class="week-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</span><span>'+plural(activas.length,'cita')+' · '+fmtMoney(t)+'</span></h4>'+
       (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join(''):'<span class="empty" style="display:block">Sin citas</span>')+'</div>';
   }
-  $('#panelBody').innerHTML='<div class="day-nav"><button type="button" id="wPrev">‹</button><b>Semana del '+start.getDate()+' '+shortM[start.getMonth()]+'</b><button type="button" id="wNext">›</button></div>'+
+  var vistaCalendario=esEscritorio();
+  $('#panelBody').innerHTML=avisoHTML()+'<div class="day-nav"><button type="button" id="wPrev">‹</button><b>Semana del '+start.getDate()+' '+shortM[start.getMonth()]+'</b><button type="button" id="wNext">›</button></div>'+
     '<div class="stat-row"><div class="stat"><div class="n">'+citasSemana+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalSemana)+'</div><div class="l">Ingreso</div></div></div>'+
-    '<div class="week-list">'+html+'</div>';
-  bindRowActions($('#panelBody'));
+    '<div id="mformBox"></div>'+
+    (vistaCalendario?gridSemanaHTML():'<div class="week-list">'+html+'</div>');
+  bindAviso();
+  if(vistaCalendario)bindCalClicks($('#panelBody'));else bindRowActions($('#panelBody'));
   $('#wPrev').onclick=function(){Panel.wRef=new Date(start);Panel.wRef.setDate(start.getDate()-7);renderDash()};
   $('#wNext').onclick=function(){Panel.wRef=new Date(start);Panel.wRef.setDate(start.getDate()+7);renderDash()};
 }
@@ -1288,6 +1440,21 @@ initDb();
 update();
 document.body.dataset.booted='1';
 window.addEventListener('hashchange',route);
+// Si la ventana cruza el punto de quiebre móvil/escritorio (p. ej. se gira una tablet o se
+// redimensiona la ventana), la agenda del dueño cambia sola entre lista y calendario visual
+// sin esperar a la próxima navegación. Se compara el resultado, no el ancho, para no redibujar
+// en cada pixel de un resize.
+var eraEscritorio=esEscritorio(),resizeT=null;
+window.addEventListener('resize',function(){
+  clearTimeout(resizeT);
+  resizeT=setTimeout(function(){
+    var ahoraEscritorio=esEscritorio();
+    if(ahoraEscritorio!==eraEscritorio){
+      eraEscritorio=ahoraEscritorio;
+      if(location.hash.indexOf('panel')>-1&&Session.current)renderDash();
+    }
+  },150);
+});
 route();
 
 }
