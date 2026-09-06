@@ -727,7 +727,12 @@ $('#services').addEventListener('change',function(){
   if(S.date&&S.time!==null&&slots(S.date,dur()).indexOf(S.time)<0)S.time=null;
   update();
 });
-$('#barbers').addEventListener('change',function(e){S.barber=e.target.value;update()});
+$('#barbers').addEventListener('change',function(e){
+  S.barber=e.target.value;update();
+  // Avanza solo si de verdad se elige a alguien en el paso 2 (no un redibujo por otra causa),
+  // y solo si seguimos ahí — si ya se le dio "Atrás" antes de que corra, no lo empuja de vuelta.
+  if(S.step===2)setTimeout(function(){if(S.step===2)go(3)},280);
+});
 rebuildBarbers();
 
 /* ── Render: fechas ── */
@@ -772,7 +777,11 @@ function renderTimes(){
   if(!free){hint.textContent='Ese día ya está lleno para '+(S.barber==='any'?'todos los barberos':barber().nombre)+'. Prueba otra fecha u otro barbero.';return}
   hint.textContent=S.time!==null?'Tu cita: '+fmtTime(S.time)+'–'+fmtTime(S.time+d)+' ('+fmtDur(d)+').':'Horas de inicio disponibles con '+(barber().id==='any'?'cualquier barbero':barber().nombre)+'.';
 }
-$('#times').addEventListener('click',function(e){var b=e.target.closest('.slot');if(!b||b.disabled)return;S.time=+b.dataset.t;renderTimes();update()});
+$('#times').addEventListener('click',function(e){
+  var b=e.target.closest('.slot');if(!b||b.disabled)return;
+  S.time=+b.dataset.t;renderTimes();update();
+  if(S.step===3)setTimeout(function(){if(S.step===3)go(4)},280);
+});
 
 /* ── Ticket ── */
 function ticketHTML(){
@@ -952,7 +961,9 @@ function mrowHTML(b,opts){
   }
   return '<div class="mrow"><span class="when">'+fmtTime(b.inicio)+'<b>'+fmtTime(b.inicio+b.dur)+'</b></span>'+
     '<span class="who">'+esc(b.nombre||'Cliente')+' <span class="pill '+(b.estado||'registrada')+'">'+est.t+'</span></span>'+
-    '<span class="what">'+(opts.mostrarFecha?fechaCorta(b.fecha)+' · ':'')+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(opts.mostrarBarbero?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
+    // Al barbero no se le repite su propio nombre en cada tarjeta de su propia lista (opts.miId):
+    // ya sabe de quién es la agenda. Sí se le avisa cuando una cita es "Cualquiera" (le toca a él o a otro).
+    '<span class="what">'+(opts.mostrarFecha?fechaCorta(b.fecha)+' · ':'')+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(opts.mostrarBarbero&&(!opts.miId||b.barbero!==opts.miId)?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
     '<span class="acts">'+acts+'</span></div>';
 }
 function fechaCorta(k){var d=new Date(k+'T12:00:00');return shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]}
@@ -1153,7 +1164,7 @@ function renderDiaContenido(u,isOwner){
     (isOwner?'<div class="stat-row"><div class="stat"><div class="n">'+activas.length+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalDia)+'</div><div class="l">Ingreso del día</div></div></div>':'')+
     reminderHtml+
     (isOwner?'<button type="button" class="btn btn-primary" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Nueva cita</button>':'')+
-    (vistaCalendario?gridDiaHTML(d):(list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true})}).join(''):'<div class="empty">Sin citas.</div>'));
+    (vistaCalendario?gridDiaHTML(d):(list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true,miId:isOwner?null:u.id})}).join(''):'<div class="empty">Sin citas.</div>'));
   if(vistaCalendario)bindCalClicks($('#diaContenido'));else bindRowActions($('#diaContenido'));
   if(isOwner){
     $('#dPrev').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()-1);renderDiaContenido(u,isOwner)};
