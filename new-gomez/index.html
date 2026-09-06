@@ -6,6 +6,9 @@
 <title>NEW GOMEZ · Reservar</title>
 <meta name="description" content="Reserva tu corte en NEW GOMEZ Barbershop, Tepic. Elige servicio, barbero, fecha y hora y confirma tu cita al instante."/>
 <meta name="theme-color" content="#15130F"/>
+<meta property="og:title" content="NEW GOMEZ Barbershop · Tepic"/>
+<meta property="og:description" content="Cortes, barba y diseño. 5.0 ★ en Fresha. Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Tuxpan 45, Col. Morelos."/>
+<meta property="og:image" content="https://gomez.tubarberia.mx/img/foto3.jpg"/>
 <link rel="icon" href="img/icon-192.png" type="image/png"/>
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png"/>
@@ -41,7 +44,7 @@
   --line:rgba(242,237,227,.14);--shadow:0 10px 30px rgba(0,0,0,.45);--bar:#0E0D0A;--ink:#332B1E;color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{background:var(--bone);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.45;padding-bottom:104px}
 img{max-width:100%;display:block}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -68,6 +71,21 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .meta{margin-top:6px;font-size:13px;color:#B9B2A3;display:flex;flex-wrap:wrap;gap:4px 12px}
 .meta a{color:#F2EDE3;text-decoration:underline;text-decoration-color:rgba(242,237,227,.35);text-underline-offset:3px}
 .meta a:hover{text-decoration-color:#C49A3C}
+
+/* ── Galería de trabajos en la cabecera ── */
+.hero-gallery{max-width:1100px;margin:0 auto;padding:0 20px 22px;display:grid;grid-template-columns:1.9fr 1fr;grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;height:clamp(300px,36vw,440px)}
+.hero-gallery figure{margin:0;overflow:hidden;border-radius:12px;border:1px solid rgba(242,237,227,.14);position:relative;background:#000}
+.hero-gallery img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-gallery .main{grid-row:span 2}
+.hero-gallery .main::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.3),transparent 40%);pointer-events:none}
+.hero-gallery .solo-movil{display:none}
+@media (max-width:720px){
+  .hero-gallery{display:flex;height:auto;gap:8px;padding:0 20px 18px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .hero-gallery::-webkit-scrollbar{display:none}
+  .hero-gallery figure{flex:0 0 78%;scroll-snap-align:center;aspect-ratio:4/3;border-radius:10px}
+  .hero-gallery .main{grid-row:auto}
+  .hero-gallery .solo-movil{display:block}
+}
 
 /* ── Progreso ── */
 .progress{max-width:1100px;margin:0 auto;padding:16px 20px 0;display:flex;align-items:center;gap:10px}
@@ -304,6 +322,30 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .fallback h2{font-family:var(--disp);font-size:30px;margin-bottom:10px;padding-top:60px}
 .fallback p{color:#7A7366;margin-bottom:18px}
 .fallback a.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:12px;font-weight:600;background:#C49A3C;color:#15130F;text-decoration:none}
+
+/* ── Secciones de información (Equipo / Reseñas / Horario) ── */
+.info-nav{max-width:1100px;margin:0 auto;padding:14px 20px 0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.info-nav::-webkit-scrollbar{display:none}
+.info-nav a{flex:none;font-size:13px;font-weight:600;color:var(--smoke);padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);text-decoration:none;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center;transition:border-color .15s,color .15s}
+.info-nav a:hover{border-color:var(--brass-deep);color:var(--text)}
+.info-section{max-width:1100px;margin:0 auto;padding:36px 20px 0;scroll-margin-top:20px}
+.info-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.info-head h2{font-size:28px;font-weight:800;letter-spacing:.01em}
+.stars-ink{color:var(--brass-deep);letter-spacing:1px;font-size:13px}
+.team-grid,.review-grid{display:grid;gap:10px}
+@media (min-width:640px){.team-grid,.review-grid{grid-template-columns:1fr 1fr}}
+.ai-summary{background:var(--brass-soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;margin-bottom:14px}
+.review-card{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:6px}
+.review-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.review-date{font-size:12px;color:var(--smoke)}
+.review-card p{font-size:14px}
+.review-who{font-size:12px;color:var(--smoke)}
+.review-actions{display:grid;gap:10px;margin-top:14px}
+@media (min-width:640px){.review-actions{grid-template-columns:1fr 1fr}}
+.acerca-desc{font-size:14px;max-width:640px;margin-bottom:14px}
+.hours-card .row.today{font-weight:700}
+.hours-card .row.today .k{color:var(--brass-deep)}
+.hours-card .row a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
 </style>
 </head>
 <body>
@@ -320,7 +362,20 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
       </div>
     </div>
   </div>
+  <div class="hero-gallery" role="group" aria-label="Trabajos de NEW GOMEZ">
+    <figure class="main"><img src="img/foto3.jpg" width="1200" height="680" alt="Corte con acabado degradado hecho en NEW GOMEZ" fetchpriority="high"/></figure>
+    <figure><img src="img/foto4.jpg" width="1200" height="680" alt="Fade rizado, interior de la barbería" loading="lazy" decoding="async"/></figure>
+    <figure><img src="img/foto6.jpg" width="1200" height="680" alt="Servicio de lavado en NEW GOMEZ" loading="lazy" decoding="async"/></figure>
+    <figure class="solo-movil"><img src="img/foto2.jpg" width="1200" height="680" alt="Corte con diseño lateral" loading="lazy" decoding="async"/></figure>
+    <figure class="solo-movil"><img src="img/foto5.jpg" width="1200" height="680" alt="Corte a rapa cero con acabado limpio" loading="lazy" decoding="async"/></figure>
+  </div>
 </header>
+
+<nav class="info-nav" aria-label="Secciones de la página">
+  <a href="#equipo">Equipo</a>
+  <a href="#resenas">Reseñas</a>
+  <a href="#horario">Horario y ubicación</a>
+</nav>
 
 <nav class="progress" id="progressNav" aria-label="Progreso de la reserva">
   <div class="segs" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span></div>
@@ -427,6 +482,61 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
   </div>
 </div>
 
+<section class="info-section" id="equipo" aria-labelledby="hEquipo">
+  <div class="info-head"><h2 id="hEquipo">Equipo</h2></div>
+  <div class="team-grid" id="equipoList"></div>
+</section>
+
+<section class="info-section" id="resenas" aria-labelledby="hResenas">
+  <div class="info-head">
+    <h2 id="hResenas">Reseñas</h2>
+    <span class="stars-ink" id="rsCount"><b>5,0</b> ★★★★★ (145 en Fresha)</span>
+  </div>
+  <p class="ai-summary">El corte de pelo en NEW GOMEZ es altamente valorado por su calidad y atención al cliente. Los barberos ofrecen un servicio excepcional, proporcionando cortes impecables y un ambiente limpio y agradable. Varios clientes destacan la amena plática durante la visita, lo que contribuye a una experiencia más placentera.</p>
+  <div class="review-grid">
+    <article class="review-card">
+      <div class="review-top"><span class="stars-ink" aria-hidden="true">★★★★★</span><span class="review-date">hace 1 mes</span></div>
+      <p>"Excelente servicio y atención"</p>
+      <div class="review-who">Lic. Elmer D. · Corte de pelo y barba · con Angel</div>
+    </article>
+    <article class="review-card">
+      <div class="review-top"><span class="stars-ink" aria-hidden="true">★★★★★</span><span class="review-date">hace 1 mes</span></div>
+      <p>"Excelente servicio!"</p>
+      <div class="review-who">Carlos A. · Corte de pelo · con Angel</div>
+    </article>
+    <article class="review-card">
+      <div class="review-top"><span class="stars-ink" aria-hidden="true">★★★★★</span><span class="review-date">hace 3 meses</span></div>
+      <p>"excelente atención y servicio, los cortes quedan muy bien"</p>
+      <div class="review-who">Jocksan H. · Corte de pelo · con Alexis</div>
+    </article>
+    <article class="review-card">
+      <div class="review-top"><span class="stars-ink" aria-hidden="true">★★★★★</span><span class="review-date">hace 3 meses</span></div>
+      <p>"Excelente atención"</p>
+      <div class="review-who">Juan C. · Corte de pelo · con Angel</div>
+    </article>
+    <article class="review-card">
+      <div class="review-top"><span class="stars-ink" aria-hidden="true">★★★★★</span><span class="review-date">hace 3 meses</span></div>
+      <p>"Barbero top, buena atención volvería a ir"</p>
+      <div class="review-who">Mario alexis V. · Limpieza de contornos · con Angel</div>
+    </article>
+    <article class="review-card">
+      <div class="review-top"><span class="stars-ink" aria-hidden="true">★★★★★</span><span class="review-date">hace 3 meses</span></div>
+      <p>"Excelente servicio por parte del barbero 10/10"</p>
+      <div class="review-who">Blanca G. · 2 servicios · con Angel</div>
+    </article>
+  </div>
+  <div class="review-actions">
+    <a class="btn btn-primary" id="rsGoogle" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3l-5.4 3.2 1.4-6.1L3.3 10.3l6.2-.5L12 4l2.5 5.8 6.2.5-4.7 4.1 1.4 6.1z"/></svg>Deja tu reseña en Google</a>
+    <a class="btn btn-ghost" id="rsMore" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Ver las 145 reseñas en Fresha</a>
+  </div>
+</section>
+
+<section class="info-section" id="horario" aria-labelledby="hHorarioSec">
+  <div class="info-head"><h2 id="hHorarioSec">Horario y ubicación</h2></div>
+  <p class="acerca-desc">Mejorando siempre nuestros servicios para ofrecerles trabajos de calidad. Nos especializamos en tratamientos para cuidar tanto el cabello como la piel de nuestros clientes, para una mejor apariencia en cada visita.</p>
+  <div class="ticket hours-card"><div class="ticket-body" id="horarioTabla"></div></div>
+</section>
+
 <main id="panelView" class="wrap" hidden></main>
 
 <footer class="foot">
@@ -434,6 +544,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
     <a id="fTel" href="tel:+523111585540">311 158 5540</a>
     <a id="fWa" href="https://wa.me/523111585540" target="_blank" rel="noopener">WhatsApp</a>
     <a id="fIg" href="https://www.instagram.com/angel_newgomez" target="_blank" rel="noopener">Instagram</a>
+    <a id="fResena" href="#" target="_blank" rel="noopener">Reseña en Google</a>
     <a id="fFresha" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Perfil en Fresha</a>
     <a href="#/panel">Panel del equipo</a>
   </div>
@@ -474,7 +585,11 @@ var NEGOCIO={
   fresha:'https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g',
   horarioCorto:'Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado',
   horarioLargo:'Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado',
-  rating:5.0, resenas:140, ctz:'America/Mazatlan', logo:'img/logo.jpg',
+  rating:5.0, resenas:145, ctz:'America/Mazatlan', logo:'img/logo.jpg',
+  // Abre la ficha del negocio en Google Maps (ahí el cliente toca "Escribir una reseña"). Cuando se
+  // tenga el Place ID de la ficha, cambiar por el enlace directo al formulario:
+  // https://search.google.com/local/writereview?placeid=ChIJ...
+  resenaGoogleUrl:'https://www.google.com/maps/search/?api=1&query=NEW+GOMEZ+Barbershop+Tuxpan+45+Col.+Morelos+Tepic+Nayarit',
   slug:'new-gomez'
 };
 var DATA={
@@ -678,6 +793,24 @@ function rebuildBarbers(){
   }));
   if(S.barber!=='any'&&!activos.some(function(p){return p.id===S.barber}))S.barber='any';
   renderBarbers();
+  renderInfoSections(activos);
+}
+
+/* ── Secciones informativas: equipo activo y horario (derivado de DATA.hours) ── */
+function renderInfoSections(activos){
+  var equipoEl=$('#equipoList');
+  if(equipoEl)equipoEl.innerHTML=activos.map(function(p){
+    var av=p.img?'<img class="avatar" src="'+p.img+'" alt="" width="52" height="52" loading="lazy" decoding="async"/>':'<span class="avatar any" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h4l8 10h4M4 17h4l2-2.5M16 7h4M18 5l2 2-2 2M18 15l2 2-2 2"/></svg></span>';
+    return '<div class="opt bar">'+av+'<span class="name">'+esc(p.nombre)+'</span><span class="sub">Barbero · <span class="star"><b>★ 5,0</b></span></span></div>';
+  }).join('')||'<div class="empty">Pronto conocerás al equipo.</div>';
+  var horEl=$('#horarioTabla');
+  if(horEl){
+    var dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],hoy=new Date().getDay();
+    horEl.innerHTML=[1,2,3,4,5,6,0].map(function(i){
+      var bloques=(DATA.hours[i]||[]).map(function(b){return fmtTime(b[0])+'–'+fmtTime(b[1])}).join(', ')||'Cerrado';
+      return '<div class="row'+(i===hoy?' today':'')+'"><span class="k">'+dias[i]+(i===hoy?' · hoy':'')+'</span><span class="v">'+bloques+'</span></div>';
+    }).join('')+'<div class="row"><span class="k">Dirección</span><span class="v"><a href="'+NEGOCIO.mapaUrl+'" target="_blank" rel="noopener">'+esc(NEGOCIO.direccionLarga)+'</a></span></div>';
+  }
 }
 
 /* ── Render: servicios ── */
@@ -802,6 +935,7 @@ function registrar(){
 // (Functions en /api). En GitHub Pages (sin backend) el fetch simplemente falla y se
 // ignora: la cita ya quedó guardada localmente pase lo que pase con este aviso.
 function notificarCita(b){
+  if(location.protocol!=='https:'&&location.protocol!=='http:')return; // abierto como archivo local: no hay backend
   try{
     fetch('/api/notificar-cita',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       folio:b.id,nombre:b.nombre,telefono:b.telefono,fecha:longDate(S.date),hora:fmtTime(b.inicio),
@@ -1273,6 +1407,7 @@ function route(){
   $('#progressNav').hidden=panel;
   $('#bookingMain').hidden=panel;
   $('.bar-fixed').hidden=panel;
+  Array.prototype.forEach.call(document.querySelectorAll('.hero-gallery,.info-nav,.info-section'),function(el){el.hidden=panel});
   $('#panelView').hidden=!panel;
   watchPanelRoute();
   if(panel)renderPanel();
@@ -1293,6 +1428,13 @@ function syncNegocioUI(){
   $('#fIg').href=NEGOCIO.instagram;
   $('#fFresha').href=NEGOCIO.fresha;
   $('#fDireccion').textContent=NEGOCIO.direccionLarga+' · '+NEGOCIO.horarioLargo;
+  var ratingTxt=NEGOCIO.rating.toFixed(1).replace('.',',');
+  $('#rsCount').innerHTML='<b>'+ratingTxt+'</b> <span aria-hidden="true">★★★★★</span> ('+NEGOCIO.resenas+' en Fresha)';
+  $('#rsMore').href=NEGOCIO.fresha;$('#rsMore').textContent='Ver las '+NEGOCIO.resenas+' reseñas en Fresha';
+  $('#rsGoogle').href=NEGOCIO.resenaGoogleUrl;$('#fResena').href=NEGOCIO.resenaGoogleUrl;
+  var og=function(p,v){var m=$('meta[property="og:'+p+'"]');if(m)m.setAttribute('content',v)};
+  og('title',NEGOCIO.nombre+' '+NEGOCIO.subtitulo+' · '+NEGOCIO.ciudad);
+  og('description','Cortes, barba y diseño. '+NEGOCIO.rating.toFixed(1)+' ★ en Fresha. '+NEGOCIO.horarioCorto+' · '+NEGOCIO.direccion+'.');
 }
 syncNegocioUI();
 initDb();
