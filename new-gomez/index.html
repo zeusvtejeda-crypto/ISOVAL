@@ -3,12 +3,43 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>NEW GOMEZ · Reservar</title>
-<meta name="description" content="Reserva tu corte en NEW GOMEZ Barbershop, Tepic. Elige servicio, barbero, fecha y hora y confirma tu cita al instante."/>
+<title>NEW GOMEZ Barbershop · Barbería en Tepic · Reserva tu corte en línea</title>
+<meta name="description" content="Barbería en Tepic, Nayarit: cortes de cabello, barba, tinte y limpieza facial con Angel y Alexis. Reserva tu cita en línea en NEW GOMEZ Barbershop y confirma al instante."/>
 <meta name="theme-color" content="#15130F"/>
-<meta property="og:title" content="NEW GOMEZ Barbershop · Tepic"/>
-<meta property="og:description" content="Cortes, barba y diseño. 5.0 ★ en Fresha. Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Tuxpan 45, Col. Morelos."/>
+<link rel="canonical" href="https://gomez.tubarberia.mx/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="es_MX"/>
+<meta property="og:url" content="https://gomez.tubarberia.mx/"/>
+<meta property="og:title" content="NEW GOMEZ Barbershop · Barbería en Tepic"/>
+<meta property="og:description" content="Cortes, barba y tinte en Tepic. 5.0 ★ en Fresha. Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Tuxpan 45, Col. Morelos. Reserva en línea."/>
 <meta property="og:image" content="https://gomez.tubarberia.mx/img/foto3.jpg"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BarberShop",
+  "name": "NEW GOMEZ Barbershop",
+  "url": "https://gomez.tubarberia.mx/",
+  "image": ["https://gomez.tubarberia.mx/img/foto3.jpg", "https://gomez.tubarberia.mx/img/logo.jpg"],
+  "telephone": "+523111585540",
+  "priceRange": "$80 - $540 MXN",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Tuxpan 45, Col. Morelos",
+    "addressLocality": "Tepic",
+    "addressRegion": "Nayarit",
+    "postalCode": "63160",
+    "addressCountry": "MX"
+  },
+  "geo": {"@type": "GeoCoordinates", "latitude": 21.497270, "longitude": -104.901603},
+  "openingHoursSpecification": [
+    {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "10:00", "closes": "14:00"},
+    {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "16:00", "closes": "20:00"},
+    {"@type": "OpeningHoursSpecification", "dayOfWeek": "Saturday", "opens": "10:00", "closes": "16:00"}
+  ],
+  "sameAs": ["https://www.instagram.com/angel_newgomez", "https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g"],
+  "potentialAction": {"@type": "ReserveAction", "target": "https://gomez.tubarberia.mx/", "name": "Reservar cita"}
+}
+</script>
 <link rel="icon" href="img/icon-192.png" type="image/png"/>
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png"/>
@@ -71,6 +102,8 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .meta{margin-top:6px;font-size:13px;color:#B9B2A3;display:flex;flex-wrap:wrap;gap:4px 12px}
 .meta a{color:#F2EDE3;text-decoration:underline;text-decoration-color:rgba(242,237,227,.35);text-underline-offset:3px}
 .meta a:hover{text-decoration-color:#C49A3C}
+.badge-link{flex:none;display:block;border-radius:10px}
+.intro{margin-top:10px;font-size:14px;line-height:1.45;color:#D9D3C6;max-width:640px}
 
 /* ── Galería de trabajos en la cabecera ── */
 .hero-gallery{max-width:1100px;margin:0 auto;padding:0 20px 22px;display:grid;grid-template-columns:1.9fr 1fr;grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;height:clamp(300px,36vw,440px)}
@@ -369,14 +402,15 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
 <header class="head">
   <div class="head-in">
-    <img class="badge" id="hBadge" src="img/logo.jpg" width="96" height="53" alt="Logotipo de NEW GOMEZ Barbershop"/>
+    <a class="badge-link" href="./" aria-label="NEW GOMEZ · inicio"><img class="badge" id="hBadge" src="img/logo.jpg" width="96" height="53" alt="Logotipo de NEW GOMEZ Barbershop"/></a>
     <div>
-      <h1 id="hNombre">NEW GOMEZ <small>Barbershop · Tepic</small></h1>
+      <h1 id="hNombre">NEW GOMEZ <small>Barbería en Tepic · Cortes, barba y tinte</small></h1>
       <div class="rating" id="hRating"><b>5,0</b> <span class="stars" aria-hidden="true">★★★★★</span> <span>(140 reseñas)</span></div>
       <div class="meta">
         <a id="hMapa" href="https://www.google.com/maps/search/?api=1&query=21.497270,-104.901603" target="_blank" rel="noopener">Tuxpan 45, Col. Morelos, Tepic</a>
         <span id="hHorario">Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado</span>
       </div>
+      <p class="intro" id="hIntro">Barbería en Tepic, Nayarit: cortes de cabello, barba, tinte y limpieza facial con Angel y Alexis. Reserva tu cita en línea en menos de un minuto: elige servicio, barbero, fecha y hora, y queda registrada al instante.</p>
     </div>
   </div>
   <div class="hero-gallery" role="group" aria-label="Trabajos de NEW GOMEZ">
@@ -462,7 +496,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
       <div class="actions">
         <button class="btn btn-primary" id="confirmBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Confirmar cita</button>
-        <a class="btn btn-ghost" id="calBtn" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
+        <a class="btn btn-ghost" id="calBtn" href="https://calendar.google.com/" target="_blank" rel="noopener" hidden>Agregar a Google Calendar</a>
       </div>
       <div class="policy">
         <span><b>Pago en tienda</b> · efectivo, tarjeta de crédito o débito.</span>
@@ -480,8 +514,8 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
       </div>
       <div id="ticketDone"></div>
       <div class="actions" id="doneActions">
-        <a class="btn btn-ghost" id="waBtn2" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Avisar al negocio por WhatsApp</a>
-        <a class="btn btn-ghost" id="calBtn2" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
+        <a class="btn btn-ghost" id="waBtn2" href="https://wa.me/523111585540" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Avisar al negocio por WhatsApp</a>
+        <a class="btn btn-ghost" id="calBtn2" href="https://calendar.google.com/" target="_blank" rel="noopener" hidden>Agregar a Google Calendar</a>
       </div>
     </section>
   </div>
@@ -500,7 +534,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 </div>
 
 <section class="info-section" id="equipo" aria-labelledby="hEquipo">
-  <div class="info-head"><h2 id="hEquipo">Equipo</h2></div>
+  <div class="info-head"><h2 id="hEquipo">Equipo</h2><a href="#bookingMain" class="btn btn-ghost" style="min-height:40px;padding:0 14px;font-size:14px">Reservar con el equipo</a></div>
   <div class="team-grid" id="equipoList"></div>
 </section>
 
@@ -543,7 +577,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
     </article>
   </div>
   <div class="review-actions">
-    <a class="btn btn-primary" id="rsGoogle" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3l-5.4 3.2 1.4-6.1L3.3 10.3l6.2-.5L12 4l2.5 5.8 6.2.5-4.7 4.1 1.4 6.1z"/></svg>Deja tu reseña en Google</a>
+    <a class="btn btn-primary" id="rsGoogle" href="https://www.google.com/maps/search/?api=1&query=NEW+GOMEZ+Barbershop+Tuxpan+45+Col.+Morelos+Tepic+Nayarit" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3l-5.4 3.2 1.4-6.1L3.3 10.3l6.2-.5L12 4l2.5 5.8 6.2.5-4.7 4.1 1.4 6.1z"/></svg>Deja tu reseña en Google</a>
     <a class="btn btn-ghost" id="rsMore" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Ver las 145 reseñas en Fresha</a>
   </div>
 </section>
@@ -552,6 +586,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
   <div class="info-head"><h2 id="hHorarioSec">Horario y ubicación</h2></div>
   <p class="acerca-desc">Mejorando siempre nuestros servicios para ofrecerles trabajos de calidad. Nos especializamos en tratamientos para cuidar tanto el cabello como la piel de nuestros clientes, para una mejor apariencia en cada visita.</p>
   <div class="ticket hours-card"><div class="ticket-body" id="horarioTabla"></div></div>
+  <a href="#bookingMain" class="btn btn-primary" style="margin-top:14px;width:100%">Reservar una cita</a>
 </section>
 
 <main id="panelView" class="wrap" hidden></main>
@@ -561,7 +596,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
     <a id="fTel" href="tel:+523111585540">311 158 5540</a>
     <a id="fWa" href="https://wa.me/523111585540" target="_blank" rel="noopener">WhatsApp</a>
     <a id="fIg" href="https://www.instagram.com/angel_newgomez" target="_blank" rel="noopener">Instagram</a>
-    <a id="fResena" href="#" target="_blank" rel="noopener">Reseña en Google</a>
+    <a id="fResena" href="https://www.google.com/maps/search/?api=1&query=NEW+GOMEZ+Barbershop+Tuxpan+45+Col.+Morelos+Tepic+Nayarit" target="_blank" rel="noopener">Reseña en Google</a>
     <a id="fFresha" href="https://www.fresha.com/es/a/new-gomez-tepic-tuxpan-grp0jy1g" target="_blank" rel="noopener">Perfil en Fresha</a>
     <a href="#/panel">Panel del equipo</a>
   </div>
@@ -603,6 +638,10 @@ var NEGOCIO={
   horarioCorto:'Lun–Vie 10–14 y 16–20 · Sáb 10–16 · Dom cerrado',
   horarioLargo:'Lunes a viernes 10:00–14:00 y 16:00–20:00 · Sábado 10:00–16:00 · Domingo cerrado',
   rating:5.0, resenas:145, ctz:'America/Mazatlan', logo:'img/logo.jpg',
+  url:'https://gomez.tubarberia.mx/',
+  // Textos con palabras clave (SEO) que ven tanto el cliente como los buscadores.
+  lema:'Barbería en Tepic · Cortes, barba y tinte',
+  intro:'Barbería en Tepic, Nayarit: cortes de cabello, barba, tinte y limpieza facial con Angel y Alexis. Reserva tu cita en línea en menos de un minuto: elige servicio, barbero, fecha y hora, y queda registrada al instante.',
   // Abre la ficha del negocio en Google Maps (ahí el cliente toca "Escribir una reseña"). Cuando se
   // tenga el Place ID de la ficha, cambiar por el enlace directo al formulario:
   // https://search.google.com/local/writereview?placeid=ChIJ...
@@ -1609,11 +1648,12 @@ function route(){
 }
 
 function syncNegocioUI(){
-  document.title=NEGOCIO.nombre+' · Reservar';
+  document.title=NEGOCIO.nombre+' '+NEGOCIO.subtitulo+' · Barbería en '+NEGOCIO.ciudad+' · Reserva tu corte en línea';
   var desc=$('meta[name="description"]');
-  if(desc)desc.setAttribute('content','Reserva tu corte en '+NEGOCIO.nombre+' '+NEGOCIO.subtitulo+', '+NEGOCIO.ciudad+'. Elige servicio, barbero, fecha y hora y confirma tu cita al instante.');
+  if(desc)desc.setAttribute('content',NEGOCIO.intro.split('. Reserva')[0]+'. Reserva tu cita en línea en '+NEGOCIO.nombre+' '+NEGOCIO.subtitulo+' y confirma al instante.');
   $('#hBadge').alt='Logotipo de '+NEGOCIO.nombre+' '+NEGOCIO.subtitulo;
-  $('#hNombre').innerHTML=esc(NEGOCIO.nombre)+' <small>'+esc(NEGOCIO.subtitulo)+' · '+esc(NEGOCIO.ciudad)+'</small>';
+  $('#hNombre').innerHTML=esc(NEGOCIO.nombre)+' <small>'+esc(NEGOCIO.lema)+'</small>';
+  $('#hIntro').textContent=NEGOCIO.intro;
   $('#hRating').innerHTML='<b>'+NEGOCIO.rating.toFixed(1).replace('.',',')+'</b> <span class="stars" aria-hidden="true">★★★★★</span> <span>('+NEGOCIO.resenas+' reseñas)</span>';
   $('#hMapa').href=NEGOCIO.mapaUrl;$('#hMapa').textContent=NEGOCIO.direccion;
   $('#hHorario').textContent=NEGOCIO.horarioCorto;
@@ -1628,8 +1668,9 @@ function syncNegocioUI(){
   $('#rsMore').href=NEGOCIO.fresha;$('#rsMore').textContent='Ver las '+NEGOCIO.resenas+' reseñas en Fresha';
   $('#rsGoogle').href=NEGOCIO.resenaGoogleUrl;$('#fResena').href=NEGOCIO.resenaGoogleUrl;
   var og=function(p,v){var m=$('meta[property="og:'+p+'"]');if(m)m.setAttribute('content',v)};
-  og('title',NEGOCIO.nombre+' '+NEGOCIO.subtitulo+' · '+NEGOCIO.ciudad);
-  og('description','Cortes, barba y diseño. '+NEGOCIO.rating.toFixed(1)+' ★ en Fresha. '+NEGOCIO.horarioCorto+' · '+NEGOCIO.direccion+'.');
+  og('title',NEGOCIO.nombre+' '+NEGOCIO.subtitulo+' · Barbería en '+NEGOCIO.ciudad);
+  og('description','Cortes, barba y tinte en '+NEGOCIO.ciudad+'. '+NEGOCIO.rating.toFixed(1)+' ★ en Fresha. '+NEGOCIO.horarioCorto+' · '+NEGOCIO.direccion+'. Reserva en línea.');
+  og('url',NEGOCIO.url);
 }
 syncNegocioUI();
 initDb();

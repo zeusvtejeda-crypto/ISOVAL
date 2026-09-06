@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://gomez.tubarberia.mx/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image><image:loc>https://gomez.tubarberia.mx/img/foto3.jpg</image:loc><image:title>Corte con acabado degradado en NEW GOMEZ Barbershop, Tepic</image:title></image:image>
+    <image:image><image:loc>https://gomez.tubarberia.mx/img/foto4.jpg</image:loc><image:title>Fade rizado en NEW GOMEZ Barbershop</image:title></image:image>
+    <image:image><image:loc>https://gomez.tubarberia.mx/img/foto6.jpg</image:loc><image:title>Servicio de lavado en NEW GOMEZ Barbershop</image:title></image:image>
+  </url>
+</urlset>
