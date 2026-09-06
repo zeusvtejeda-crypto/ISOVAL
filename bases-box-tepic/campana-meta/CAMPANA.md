@@ -21,6 +21,8 @@
 
 ## 2. Anuncios (copy final)
 
+> **Formatos disponibles por anuncio:** 1080×1350 (feed 4:5), 1080×1080 (feed 1:1) y **1080×1920 (Stories/Reels 9:16)**. Sube los 3 a cada anuncio — así Meta cubre feed, Stories y Reels sin el error "no se pudieron cargar imágenes" en esas ubicaciones.
+
 ### A · "Listas para entregar" — foto torre de tonos
 - **Texto principal:**
   > Tenemos bases tipo box **LISTAS para entregar esta semana** en Tepic 🛏️
@@ -95,5 +97,9 @@ Responder en **menos de 5 min** durante 9:00–19:00. Cada hora sin contestar ba
 | B-fabrica-1080x1080 | https://uhuegcgiysvbcxokebjg.supabase.co/storage/v1/object/public/brand_images/org_3EBMZtsB6ztlUroZXUVzhM5UT4A/1788621173775-c26x8c.png |
 | C-taller-1080x1350 | https://uhuegcgiysvbcxokebjg.supabase.co/storage/v1/object/public/brand_images/org_3EBMZtsB6ztlUroZXUVzhM5UT4A/1788621175615-gji70i.png |
 | C-taller-1080x1080 | https://uhuegcgiysvbcxokebjg.supabase.co/storage/v1/object/public/brand_images/org_3EBMZtsB6ztlUroZXUVzhM5UT4A/1788621177614-efr22.png |
+
+| A-listas-1080x1920 | https://uhuegcgiysvbcxokebjg.supabase.co/storage/v1/object/public/brand_images/org_3EBMZtsB6ztlUroZXUVzhM5UT4A/1788658020525-87f88x.png |
+| B-fabrica-1080x1920 | https://uhuegcgiysvbcxokebjg.supabase.co/storage/v1/object/public/brand_images/org_3EBMZtsB6ztlUroZXUVzhM5UT4A/1788658022522-8iipic.png |
+| C-taller-1080x1920 | https://uhuegcgiysvbcxokebjg.supabase.co/storage/v1/object/public/brand_images/org_3EBMZtsB6ztlUroZXUVzhM5UT4A/1788658024429-ib7z4.png |
 
 Regenerar los PNG: `cd src && python3 render.py` (usa Chromium headless y las fuentes Fraunces / Jost / Inter Tight instaladas en el sistema).

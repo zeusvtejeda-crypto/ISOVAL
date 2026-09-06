@@ -67,7 +67,11 @@ ADS = {
        '<h1>Así se hacen <em>tus bases.</em></h1>'
        '<p class="sub">Se arman, tapizan y empacan aquí mismo. Te la llevamos a domicilio en Tepic.</p>'),
 }
-SIZES = {"1080x1350": (1080, 1350, 1.0, "12ch", "-16%", "88%"), "1080x1080": (1080, 1080, 0.8, "14ch", "-30%", "78%")}
+SIZES = {
+ "1080x1350": (1080, 1350, 1.0, "12ch", "-16%", "88%"),
+ "1080x1080": (1080, 1080, 0.8, "14ch", "-30%", "78%"),
+ "1080x1920": (1080, 1920, 1.0, "12ch", "-145%", "84%"),
+}
 
 def main():
     OUT.mkdir(exist_ok=True)
