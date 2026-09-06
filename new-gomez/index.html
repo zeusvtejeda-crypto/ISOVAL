@@ -295,6 +295,23 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .day-nav b{font-family:var(--disp);font-size:19px;text-align:center}
 .day-nav button{width:44px;height:44px;flex:none;border:1.5px solid var(--line);border-radius:50%;font-size:16px}
 .day-nav button:hover{border-color:var(--brass-deep)}
+.aviso-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--brass-soft);border:1.5px solid var(--brass);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:500}
+.aviso-banner button{color:var(--smoke);font-size:18px;line-height:1;min-width:32px;min-height:32px}
+/* ── Calendario visual (escritorio) ── */
+.cal-wrap{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.cal-heads{display:grid;border-bottom:1.5px solid var(--line);background:var(--bone-2)}
+.cal-col-head{padding:8px 6px;font-size:12px;font-weight:700;text-align:center;border-left:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-col-head.hoy{color:var(--brass-deep)}
+.cal-body{display:grid;position:relative;overflow-x:auto;overflow-y:visible}
+.cal-hours{position:relative}
+.cal-hourline{position:absolute;left:0;right:0;border-top:1px solid var(--line);font-size:10px;color:var(--smoke);padding-right:6px;text-align:right}
+.cal-hourline span{position:relative;top:-6px;background:var(--paper);padding-left:2px}
+.cal-col{position:relative;border-left:1px solid var(--line);background:
+  repeating-linear-gradient(to bottom,transparent,transparent 55px,var(--line) 55px,var(--line) 56px)}
+.cal-block{position:absolute;overflow:hidden;text-align:left;background:var(--bone);border:1px solid var(--line);border-left:3px solid var(--smoke);border-radius:6px;padding:2px 6px;font-size:11px;line-height:1.25;cursor:pointer}
+.cal-block:hover{border-color:var(--brass-deep)}
+.cal-block b{font-family:var(--mono);font-weight:700}
+.cal-svc{display:block;color:var(--smoke);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .week-list,.month-list{display:grid;gap:14px}
 .week-day,.month-day{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper)}
 .week-day h4,.month-day h4{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px}
@@ -457,13 +474,13 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
     <section class="step" id="step5" aria-labelledby="h5s" hidden>
       <div class="done" id="doneCard">
         <span class="ok-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>
-        <h2 id="h5s" tabindex="-1">¡Cita confirmada!</h2>
+        <h2 id="h5s" tabindex="-1">¡Gracias por agendar tu cita!</h2>
         <p id="doneText">Gracias por tu preferencia.</p>
         <span class="folio" id="folio"></span>
       </div>
       <div id="ticketDone"></div>
       <div class="actions" id="doneActions">
-        <a class="btn btn-ghost" id="waBtn2" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Enviar mensaje por WhatsApp</a>
+        <a class="btn btn-ghost" id="waBtn2" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>Avisar al negocio por WhatsApp</a>
         <a class="btn btn-ghost" id="calBtn2" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
       </div>
     </section>
@@ -621,11 +638,29 @@ var DEFAULT_STAFF=[
 
 var S={services:[],barber:'any',date:null,time:null,step:1,last:null};
 var BOOK={list:[],db:null,shared:false};
-try{BOOK.list=JSON.parse(localStorage.getItem('nb:new-gomez:citas')||'[]')||[]}catch(e){BOOK.list=[]}
+// Llave de localStorage por negocio (NEGOCIO.slug): clonar el motor a otra
+// barbería en otro subdominio no mezcla sus datos con los de esta, ni falta
+// migrar nada — cada slug tiene su propio cajón desde el primer arranque.
+function k(n){return 'nb:'+NEGOCIO.slug+':'+n}
+try{BOOK.list=JSON.parse(localStorage.getItem(k('citas'))||'[]')||[]}catch(e){BOOK.list=[]}
 var STAFF={list:[],db:null,seeded:false};
-try{STAFF.list=JSON.parse(localStorage.getItem('nb:new-gomez:staff')||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
+try{STAFF.list=JSON.parse(localStorage.getItem(k('staff'))||'null')||DEFAULT_STAFF.slice()}catch(e){STAFF.list=DEFAULT_STAFF.slice()}
 var Session={current:null};
-var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:'',focoBuscar:false};
+var Panel={tab:'dia',day:new Date(),wRef:new Date(),mRef:new Date(),busqueda:'',focoBuscar:false,aviso:null};
+// Aviso de WhatsApp pendiente tras cancelar/reagendar: un link real que el barbero
+// clickea, no un window.open() automático — los navegadores bloquean los popups
+// abiertos justo después de un confirm(), así que un auto-open ahí se pierde en silencio.
+function avisoHTML(){
+  if(!Panel.aviso)return '';
+  return '<div class="aviso-banner" id="avisoBanner"><span>'+esc(Panel.aviso.texto)+'</span>'+
+    '<span style="display:flex;gap:8px;flex:none;align-items:center">'+
+    '<a class="btn btn-primary" href="'+Panel.aviso.link+'" target="_blank" rel="noopener" style="min-height:36px;padding:0 14px;font-size:13px">'+esc(Panel.aviso.label)+'</a>'+
+    '<button type="button" id="avisoCerrar" aria-label="Cerrar aviso">✕</button></span></div>';
+}
+function bindAviso(){
+  var b=$('#avisoCerrar');if(!b)return;
+  b.onclick=function(){Panel.aviso=null;var el=$('#avisoBanner');if(el)el.remove()};
+}
 
 /* ── Seguridad con base de datos en vivo ──────────────────────────────────
    El capability db no distingue "cliente" de "staff": cualquiera con el
@@ -664,7 +699,7 @@ function blocked(key,start,d,barberId){
 function toDisponibilidad(b){return {id:b.id,fecha:b.fecha,inicio:b.inicio,dur:b.dur,barbero:b.barbero,estado:b.estado}}
 function saveBooking(b){
   BOOK.list=BOOK.list.filter(function(x){return x.id!==b.id}).concat([b]);
-  if(!BOOK.db){try{localStorage.setItem('nb:new-gomez:citas',JSON.stringify(BOOK.list))}catch(e){}}
+  if(!BOOK.db){try{localStorage.setItem(k('citas'),JSON.stringify(BOOK.list))}catch(e){}}
   if(BOOK.db){
     BOOK.db.doc('citas/'+b.id).set(b).catch(function(){});
     BOOK.db.doc('disponibilidad/'+b.id).set(toDisponibilidad(b)).catch(function(){});
@@ -672,7 +707,7 @@ function saveBooking(b){
 }
 function persistStaff(){
   if(STAFF.db)return; // el staff con sesión en vivo no se vuelca a disco del visitante.
-  try{localStorage.setItem('nb:new-gomez:staff',JSON.stringify(STAFF.list))}catch(e){}
+  try{localStorage.setItem(k('staff'),JSON.stringify(STAFF.list))}catch(e){}
 }
 function toStaffPublico(p){var c={};for(var k in p){if(k!=='pin')c[k]=p[k]}return c}
 function saveStaff(person){
@@ -825,7 +860,12 @@ $('#services').addEventListener('change',function(){
   if(S.date&&S.time!==null&&slots(S.date,dur()).indexOf(S.time)<0)S.time=null;
   update();
 });
-$('#barbers').addEventListener('change',function(e){S.barber=e.target.value;update()});
+$('#barbers').addEventListener('change',function(e){
+  S.barber=e.target.value;update();
+  // Avanza solo si de verdad se elige a alguien en el paso 2 (no un redibujo por otra causa),
+  // y solo si seguimos ahí — si ya se le dio "Atrás" antes de que corra, no lo empuja de vuelta.
+  if(S.step===2)setTimeout(function(){if(S.step===2)go(3)},280);
+});
 rebuildBarbers();
 
 /* ── Render: fechas ── */
@@ -870,7 +910,11 @@ function renderTimes(){
   if(!free){hint.textContent='Ese día ya está lleno para '+(S.barber==='any'?'todos los barberos':barber().nombre)+'. Prueba otra fecha u otro barbero.';return}
   hint.textContent=S.time!==null?'Tu cita: '+fmtTime(S.time)+'–'+fmtTime(S.time+d)+' ('+fmtDur(d)+').':'Horas de inicio disponibles con '+(barber().id==='any'?'cualquier barbero':barber().nombre)+'.';
 }
-$('#times').addEventListener('click',function(e){var b=e.target.closest('.slot');if(!b||b.disabled)return;S.time=+b.dataset.t;renderTimes();update()});
+$('#times').addEventListener('click',function(e){
+  var b=e.target.closest('.slot');if(!b||b.disabled)return;
+  S.time=+b.dataset.t;renderTimes();update();
+  if(S.step===3)setTimeout(function(){if(S.step===3)go(4)},280);
+});
 
 /* ── Ticket ── */
 function ticketHTML(){
@@ -903,7 +947,8 @@ function message(){
   return lines.join('\n');
 }
 function links(){
-  var wa='https://wa.me/'+NEGOCIO.telefono+'?text='+encodeURIComponent(message());
+  var textoWa=S.last?mensajeNuevaCita(S.last):message();
+  var wa='https://wa.me/'+NEGOCIO.telefono+'?text='+encodeURIComponent(textoWa);
   $('#waBtn2').href=wa;
   var cal=$('#calBtn');
   if(S.date&&S.time!==null){
@@ -928,7 +973,7 @@ function registrar(){
   var p=person(),b={id:folio(),fecha:dayKey(S.date),inicio:S.time,dur:dur(),barbero:S.barber,barberoNombre:barber().nombre,
     servicios:sel().map(function(x){return x.nombre}),total:total(),nombre:p.name,telefono:p.phone,primera:p.first,nota:p.note,
     creado:new Date().toISOString(),estado:'registrada'};
-  store.set('nb:new-gomez:name',p.name);store.set('nb:new-gomez:phone',p.phone);
+  store.set(k('name'),p.name);store.set(k('phone'),p.phone);
   saveBooking(b);S.last=b;notificarCita(b);return b;
 }
 // Aviso por correo al dueño: solo funciona donde exista el backend de Cloudflare Pages
@@ -958,7 +1003,7 @@ function confirmar(){
 }
 $('#confirmBtn').addEventListener('click',confirmar);
 ['input','change'].forEach(function(ev){$('#form').addEventListener(ev,function(){$('#fName').classList.remove('invalid');$('#fPhone').classList.remove('invalid');links();renderTicket()})});
-$('#name').value=store.get('nb:new-gomez:name');$('#phone').value=store.get('nb:new-gomez:phone');
+$('#name').value=store.get(k('name'));$('#phone').value=store.get(k('phone'));
 
 /* ── Pasos de la reserva ── */
 var steps=[null,$('#step1'),$('#step2'),$('#step3'),$('#step4'),$('#step5')];
@@ -1023,24 +1068,74 @@ function update(){
    PANEL DEL EQUIPO — PIN, roles y agenda por dueño/empleado
 ═══════════════════════════════════════════════ */
 function citasDe(fecha){return BOOK.list.filter(function(b){return b.fecha===fecha}).sort(function(a,b){return a.inicio-b.inicio})}
-function tryPin(pin){var h=hashPin(pin);return STAFF.list.filter(function(x){return staffPinOf(x)===h&&x.activo!==false})[0]||null}
 function logout(){Session.current=null;syncCitasSubscription();renderPanel()}
+/* ── Plantillas de WhatsApp: formales, cortas, un tono para todas.
+   agendaLink() usa location.origin en vivo (no un dominio fijo) para que
+   funcionen igual en el link de Claude, en Cloudflare o en GitHub Pages. ── */
+function agendaLink(){return location.origin+location.pathname+'#/panel'}
+function fechaHora(b){return longDate(new Date(b.fecha+'T12:00:00'))+' a las '+fmtTime(b.inicio)}
+function mensajeNuevaCita(b){
+  return ['Nueva cita agendada — '+NEGOCIO.nombre,
+    'Cliente: '+(b.nombre||'Sin nombre')+(b.telefono?' ('+b.telefono+')':''),
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Fecha y hora: '+fechaHora(b),
+    'Barbero: '+(b.barberoNombre||'Cualquiera'),
+    'Ver agenda: '+agendaLink()].join('\n');
+}
+// Aviso al CLIENTE cuando el staff registra su cita a mano (p. ej. llamó por teléfono):
+// distinto de mensajeNuevaCita(), que es el resumen que el CLIENTE le envía AL NEGOCIO al
+// reservar en línea — aquí el destinatario es el cliente, así que va en segunda persona.
+function nuevaManualWa(b){
+  var m=['Cita agendada — '+NEGOCIO.nombre,
+    'Hola '+(b.nombre||'')+', tu cita quedó registrada.',
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Horario: '+fechaHora(b),
+    'Ver agenda: '+agendaLink()].join('\n');
+  return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
+}
 function reminderWa(b){
-  var m='Hola '+(b.nombre||'')+', te escribimos de '+NEGOCIO.nombre+' para confirmar tu cita de hoy a las '+fmtTime(b.inicio)+'. ¿Nos vemos?';
+  var m=['Recordatorio — '+NEGOCIO.nombre,
+    'Hola '+(b.nombre||'')+', tu cita es hoy a las '+fmtTime(b.inicio)+'.',
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Te esperamos.'].join('\n');
+  return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
+}
+function reagendadaWa(b){
+  var m=['Cita reagendada — '+NEGOCIO.nombre,
+    'Cliente: '+(b.nombre||'Sin nombre'),
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Nuevo horario: '+fechaHora(b),
+    'Ver agenda: '+agendaLink()].join('\n');
+  return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
+}
+function canceladaWa(b){
+  var m=['Cita cancelada — '+NEGOCIO.nombre,
+    'Cliente: '+(b.nombre||'Sin nombre'),
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Horario cancelado: '+fechaHora(b),
+    'Para reagendar: '+agendaLink()].join('\n');
   return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
 }
 function mrowHTML(b,opts){
   opts=opts||{};
   var est=estadoInfo(b.estado),acts='';
   if(opts.acciones){
-    if(b.estado!=='confirmada'&&b.estado!=='cancelada'&&b.estado!=='atendida')acts+='<button type="button" class="ok" data-act="confirmar" data-id="'+b.id+'">Confirmar</button>';
+    // "Confirmar" es un paso de recepción sobre una cita que el cliente ya ve en su pantalla;
+    // al barbero (opts.confirmar=false) solo le hacen falta las 3 acciones que de verdad usa
+    // en su día: marcar completada (Atendida), reagendar (Mover) y cancelar — sin botones de
+    // sobra en su lista.
+    if(opts.confirmar&&b.estado!=='confirmada'&&b.estado!=='cancelada'&&b.estado!=='atendida')acts+='<button type="button" class="ok" data-act="confirmar" data-id="'+b.id+'">Confirmar</button>';
     if(b.estado!=='atendida'&&b.estado!=='cancelada')acts+='<button type="button" data-act="atender" data-id="'+b.id+'">Atendida</button>';
     if(opts.editar&&b.estado!=='cancelada')acts+='<button type="button" data-act="editar" data-id="'+b.id+'">Mover</button>';
     if(b.estado!=='cancelada')acts+='<button type="button" class="danger" data-act="cancelar" data-id="'+b.id+'">Cancelar</button>';
   }
+  // El nombre del barbero solo aclara algo cuando de verdad hace falta (cita 'cualquiera', o
+  // recepción viendo a varios barberos a la vez): en la agenda propia de un barbero es texto
+  // de sobra, ya sabe que son las suyas.
+  var verBarbero=opts.mostrarBarbero&&(opts.siempreBarbero||b.barbero==='any');
   return '<div class="mrow"><span class="when">'+fmtTime(b.inicio)+'<b>'+fmtTime(b.inicio+b.dur)+'</b></span>'+
     '<span class="who">'+esc(b.nombre||'Cliente')+' <span class="pill '+(b.estado||'registrada')+'">'+est.t+'</span></span>'+
-    '<span class="what">'+(opts.mostrarFecha?fechaCorta(b.fecha)+' · ':'')+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(opts.mostrarBarbero?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
+    '<span class="what">'+(opts.mostrarFecha?fechaCorta(b.fecha)+' · ':'')+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(verBarbero?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
     '<span class="acts">'+acts+'</span></div>';
 }
 function fechaCorta(k){var d=new Date(k+'T12:00:00');return shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]}
@@ -1051,7 +1146,7 @@ function bindRowActions(container){
     var hecho=false;
     if(act==='confirmar'){cita.estado='confirmada';hecho=true}
     else if(act==='atender'){cita.estado='atendida';hecho=true}
-    else if(act==='cancelar'){if(confirm('¿Cancelar la cita de '+(cita.nombre||'este cliente')+'?')){cita.estado='cancelada';hecho=true}}
+    else if(act==='cancelar'){if(confirm('¿Cancelar la cita de '+(cita.nombre||'este cliente')+'?')){cita.estado='cancelada';hecho=true;if(cita.telefono)Panel.aviso={texto:'Cita cancelada.',link:canceladaWa(cita),label:'Avisar por WhatsApp'}}}
     else if(act==='editar'){openManualForm(cita)}
     if(!hecho)return;
     saveBooking(cita);renderDash();
@@ -1092,18 +1187,114 @@ function openManualForm(editing){
     var ov=overlapping(fecha,inicio,inicio+durNueva).filter(function(x){return !editing||x.id!==editing.id});
     var choque=(barb.id!=='any'&&ov.some(function(x){return x.barbero===barb.id}))||ov.length>=2;
     if(choque&&!confirm('Ese horario ya está ocupado (barbero con otra cita, o ya hay 2 citas ahí). ¿Guardar de todas formas?'))return;
+    var esNueva=!editing,moved=editing&&(editing.fecha!==fecha||editing.inicio!==inicio);
     var b=editing||{id:folio(),creado:new Date().toISOString()};
     b.nombre=$('#mNombre').value.trim()||'Cliente';b.telefono=$('#mTel').value.replace(/\D/g,'');
     b.servicios=svcs.map(function(x){return x.nombre});b.total=svcs.reduce(function(a,x){return a+x.precio},0);b.dur=durNueva;
     b.barbero=barb.id;b.barberoNombre=barb.nombre;
     b.fecha=fecha;b.inicio=inicio;b.estado='confirmada';
+    // Avisar al cliente cuando se registra a mano (nueva) o cuando de verdad cambió fecha/hora
+    // (reagendada) — nunca en una edición de solo nombre/servicios. Se prepara ANTES de
+    // renderDash() — si no, el banner se pierde porque ya se pintó sin él. La cita ya quedó
+    // guardada (saveBooking, línea siguiente) sin depender de que este aviso se envíe o no.
+    if(b.telefono){
+      if(esNueva)Panel.aviso={texto:'Cita registrada.',link:nuevaManualWa(b),label:'Avisar por WhatsApp'};
+      else if(moved)Panel.aviso={texto:'Cita reagendada.',link:reagendadaWa(b),label:'Avisar por WhatsApp'};
+    }
     saveBooking(b);box.innerHTML='';renderDash();
   };
 }
+/* ── Agenda tipo calendario (solo escritorio, panel del dueño) ───────────
+   Columnas por barbero (vista Día) o por día (vista Semana), filas por
+   hora, bloques posicionados por minuto exacto — sin empalmes visuales
+   porque cada barbero/carril tiene su propio espacio horizontal. ── */
+function esEscritorio(){return window.matchMedia('(min-width:860px)').matches}
+var BARBER_COLORS=['#9E7826','#2F6F6B','#7A4B8C','#4A6B3A','#8C4B3A','#3A5A8C'];
+function colorBarbero(id){
+  if(!id||id==='any')return '#7A7366';
+  var activos=DATA.barbers.filter(function(b){return b.id!=='any'});
+  var i=activos.findIndex(function(b){return b.id===id});
+  return BARBER_COLORS[(i<0?0:i)%BARBER_COLORS.length];
+}
+function rangoHoras(dows){
+  var min=Infinity,max=-Infinity;
+  dows.forEach(function(dow){(DATA.hours[dow]||[]).forEach(function(b){if(b[0]<min)min=b[0];if(b[1]>max)max=b[1]})});
+  if(min===Infinity){min=600;max=1200}
+  return {min:min,max:max};
+}
+var HOUR_PX=56,PXMIN=HOUR_PX/60;
+function calBloqueHTML(b,leftPct,widthPct,minBase){
+  var top=(b.inicio-minBase)*PXMIN,h=Math.max(b.dur*PXMIN,30);
+  var color=colorBarbero(b.barbero);
+  return '<button type="button" class="cal-block" data-id="'+b.id+'" style="top:'+top+'px;height:'+h+'px;left:'+leftPct+'%;width:'+widthPct+'%;border-left-color:'+color+'" title="'+esc((b.nombre||'Cliente')+' · '+(b.servicios||[]).join(' + '))+'">'+
+    '<b>'+fmtTime(b.inicio)+'</b> '+esc(b.nombre||'Cliente')+
+    (h>=44?'<span class="cal-svc">'+esc((b.servicios||[]).join(' + '))+'</span>':'')+'</button>';
+}
+function calEjeHTML(rango){
+  var horas=[];for(var t=rango.min;t<=rango.max;t+=60)horas.push(t);
+  return horas.map(function(t){return '<div class="cal-hourline" style="top:'+((t-rango.min)*PXMIN)+'px"><span>'+fmtTime(t)+'</span></div>'}).join('');
+}
+function gridDiaHTML(d){
+  var citas=citasDe(dayKey(d)).filter(function(b){return b.estado!=='cancelada'});
+  var rango=rangoHoras([d.getDay()]);
+  var cols=DATA.barbers;
+  var colsHTML=cols.map(function(c){
+    return '<div class="cal-col">'+citas.filter(function(b){return b.barbero===c.id}).map(function(b){return calBloqueHTML(b,4,92,rango.min)}).join('')+'</div>';
+  }).join('');
+  return '<div class="cal-wrap"><div class="cal-heads" style="grid-template-columns:52px repeat('+cols.length+',1fr)"><div></div>'+
+    cols.map(function(c){return '<div class="cal-col-head">'+esc(c.nombre)+'</div>'}).join('')+'</div>'+
+    '<div class="cal-body" style="height:'+((rango.max-rango.min)*PXMIN)+'px;grid-template-columns:52px repeat('+cols.length+',1fr)">'+
+    '<div class="cal-hours">'+calEjeHTML(rango)+'</div>'+colsHTML+'</div></div>';
+}
+// Reparte citas que chocan en el tiempo en carriles lado a lado (regla de 2 sillas: casi
+// siempre 1-2 carriles), en vez de encimarlas — así nunca se tapan visualmente entre sí.
+function asignarCarriles(citas){
+  var orden=citas.slice().sort(function(a,b){return a.inicio-b.inicio});
+  var finCarril=[];
+  return orden.map(function(b){
+    var carril=finCarril.findIndex(function(fin){return fin<=b.inicio});
+    if(carril<0){carril=finCarril.length;finCarril.push(0)}
+    finCarril[carril]=b.inicio+b.dur;
+    return {b:b,carril:carril};
+  });
+}
+function gridSemanaHTML(){
+  var start=new Date(Panel.wRef);start.setDate(start.getDate()-((start.getDay()+6)%7));
+  var dias=[];for(var i=0;i<7;i++){var d=new Date(start);d.setDate(start.getDate()+i);dias.push(d)}
+  var rango=rangoHoras(dias.map(function(d){return d.getDay()}));
+  var colsHTML=dias.map(function(d){
+    var citas=citasDe(dayKey(d)).filter(function(b){return b.estado!=='cancelada'});
+    var asignadas=asignarCarriles(citas);
+    var totalCarriles=Math.max.apply(null,[0].concat(asignadas.map(function(x){return x.carril})))+1;
+    return '<div class="cal-col">'+asignadas.map(function(x){
+      var w=92/totalCarriles;
+      return calBloqueHTML(x.b,4+x.carril*w,w-2,rango.min);
+    }).join('')+'</div>';
+  }).join('');
+  return '<div class="cal-wrap"><div class="cal-heads" style="grid-template-columns:52px repeat(7,1fr)"><div></div>'+
+    dias.map(function(d){return '<div class="cal-col-head'+(sameDay(d,new Date())?' hoy':'')+'">'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</div>'}).join('')+'</div>'+
+    '<div class="cal-body" style="height:'+((rango.max-rango.min)*PXMIN)+'px;grid-template-columns:52px repeat(7,1fr)">'+
+    '<div class="cal-hours">'+calEjeHTML(rango)+'</div>'+colsHTML+'</div></div>';
+}
+function bindCalClicks(container){
+  container.onclick=function(e){
+    var b=e.target.closest('.cal-block');if(!b)return;
+    var cita=BOOK.list.filter(function(x){return x.id===b.dataset.id})[0];if(!cita)return;
+    var box=$('#mformBox');if(!box)return;
+    // Acciones rápidas (Confirmar/Atendida/Mover/Cancelar) también desde el calendario,
+    // reusando la misma fila y lógica que la lista — nada que mantener por duplicado.
+    box.innerHTML='<div class="mform"><div class="mform-head"><span>Cita seleccionada</span><button type="button" id="calCerrar" aria-label="Cerrar">✕</button></div>'+
+      mrowHTML(cita,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true,mostrarFecha:true})+'</div>';
+    $('#calCerrar').onclick=function(){box.innerHTML=''};
+    bindRowActions(box);
+    box.scrollIntoView({block:'nearest',behavior:'smooth'});
+  };
+}
 function renderDia(u,isOwner){
-  $('#panelBody').innerHTML=
+  $('#panelBody').innerHTML=avisoHTML()+
     (isOwner?'<input type="search" id="buscarInput" placeholder="Buscar cliente por nombre o teléfono…" value="'+esc(Panel.busqueda||'')+'" aria-label="Buscar cliente" style="width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:44px;margin-bottom:14px"/>':'')+
     '<div id="mformBox"></div><div id="diaContenido"></div>';
+  bindAviso();
   if(isOwner){
     var input=$('#buscarInput');
     input.oninput=function(){Panel.busqueda=input.value;renderDiaContenido(u,isOwner)};
@@ -1121,7 +1312,7 @@ function renderDiaContenido(u,isOwner){
       .sort(function(a,b){return a.fecha===b.fecha?a.inicio-b.inicio:(a.fecha<b.fecha?-1:1)});
     $('#diaContenido').innerHTML=
       '<p class="eyebrow" style="margin-bottom:10px">'+plural(resultados.length,'resultado')+'</p>'+
-      (resultados.length?resultados.map(function(b){return mrowHTML(b,{acciones:true,editar:true,mostrarBarbero:true,mostrarFecha:true})}).join(''):'<div class="empty">Nadie coincide con "'+esc(Panel.busqueda)+'".</div>');
+      (resultados.length?resultados.map(function(b){return mrowHTML(b,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true,mostrarFecha:true})}).join(''):'<div class="empty">Nadie coincide con "'+esc(Panel.busqueda)+'".</div>');
     bindRowActions($('#diaContenido'));
     return;
   }
@@ -1135,22 +1326,23 @@ function renderDiaContenido(u,isOwner){
   var reminderHtml='';
   if(isOwner&&sameDay(d,new Date())){
     var nowMin=(new Date()).getHours()*60+(new Date()).getMinutes();
-    var proximas=list.filter(function(b){return b.estado!=='cancelada'&&b.estado!=='atendida'&&(b.inicio-nowMin)<=60&&(b.inicio-nowMin)>=-15});
+    var proximas=list.filter(function(b){return b.estado!=='cancelada'&&b.estado!=='atendida'&&(b.inicio-nowMin)<=120&&(b.inicio-nowMin)>=-15});
     if(proximas.length){
-      reminderHtml='<div class="mform"><div class="mform-head"><span>⏰ Por confirmar (próxima hora)</span></div>'+
+      reminderHtml='<div class="mform"><div class="mform-head"><span>⏰ Por confirmar (próximas 2 horas)</span></div>'+
         proximas.map(function(b){return '<div class="row"><span class="k">'+fmtTime(b.inicio)+' · '+esc(b.nombre||'Cliente')+'</span><span class="v">'+
           (b.telefono?'<a href="'+reminderWa(b)+'" target="_blank" rel="noopener" style="color:var(--brass-deep);font-weight:600">Recordar por WhatsApp</a>':'sin teléfono')+'</span></div>'}).join('')+
         '</div>';
     }
   }
+  var vistaCalendario=isOwner&&esEscritorio();
   $('#diaContenido').innerHTML=
     (isOwner?'<div class="day-nav"><button type="button" id="dPrev">‹</button><b>'+esc(longDate(d))+(sameDay(d,new Date())?' · hoy':'')+'</b><button type="button" id="dNext">›</button></div>':
       '<div class="day-nav"><b>'+esc(longDate(d))+' · tus citas de hoy</b></div>')+
     (isOwner?'<div class="stat-row"><div class="stat"><div class="n">'+activas.length+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalDia)+'</div><div class="l">Ingreso del día</div></div></div>':'')+
     reminderHtml+
-    (isOwner?'<button type="button" class="btn btn-ghost" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Cita manual (teléfono / mostrador)</button>':'')+
-    (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true})}).join(''):'<div class="empty">Sin citas.</div>');
-  bindRowActions($('#diaContenido'));
+    (isOwner?'<button type="button" class="btn btn-primary" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Nueva cita</button>':'')+
+    (vistaCalendario?gridDiaHTML(d):(list.length?list.map(function(b){return mrowHTML(b,{acciones:true,confirmar:isOwner,editar:true,mostrarBarbero:true,siempreBarbero:isOwner})}).join(''):'<div class="empty">Sin citas.</div>'));
+  if(vistaCalendario)bindCalClicks($('#diaContenido'));else bindRowActions($('#diaContenido'));
   if(isOwner){
     $('#dPrev').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()-1);renderDiaContenido(u,isOwner)};
     $('#dNext').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()+1);renderDiaContenido(u,isOwner)};
@@ -1165,12 +1357,15 @@ function renderSemana(){
     var list=citasDe(key),activas=list.filter(function(b){return b.estado!=='cancelada'});citasSemana+=activas.length;
     var t=activas.reduce(function(a,b){return a+(b.total||0)},0);totalSemana+=t;
     html+='<div class="week-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</span><span>'+plural(activas.length,'cita')+' · '+fmtMoney(t)+'</span></h4>'+
-      (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join(''):'<span class="empty" style="display:block">Sin citas</span>')+'</div>';
+      (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true})}).join(''):'<span class="empty" style="display:block">Sin citas</span>')+'</div>';
   }
-  $('#panelBody').innerHTML='<div class="day-nav"><button type="button" id="wPrev">‹</button><b>Semana del '+start.getDate()+' '+shortM[start.getMonth()]+'</b><button type="button" id="wNext">›</button></div>'+
+  var vistaCalendario=esEscritorio();
+  $('#panelBody').innerHTML=avisoHTML()+'<div class="day-nav"><button type="button" id="wPrev">‹</button><b>Semana del '+start.getDate()+' '+shortM[start.getMonth()]+'</b><button type="button" id="wNext">›</button></div>'+
     '<div class="stat-row"><div class="stat"><div class="n">'+citasSemana+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalSemana)+'</div><div class="l">Ingreso</div></div></div>'+
-    '<div class="week-list">'+html+'</div>';
-  bindRowActions($('#panelBody'));
+    '<div id="mformBox"></div>'+
+    (vistaCalendario?gridSemanaHTML():'<div class="week-list">'+html+'</div>');
+  bindAviso();
+  if(vistaCalendario)bindCalClicks($('#panelBody'));else bindRowActions($('#panelBody'));
   $('#wPrev').onclick=function(){Panel.wRef=new Date(start);Panel.wRef.setDate(start.getDate()-7);renderDash()};
   $('#wNext').onclick=function(){Panel.wRef=new Date(start);Panel.wRef.setDate(start.getDate()+7);renderDash()};
 }
@@ -1188,7 +1383,7 @@ function renderMes(){
     var list=byDay[k].sort(function(a,b){return a.inicio-b.inicio});
     var d=new Date(k+'T12:00:00');
     return '<div class="month-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+'</span><span>'+plural(list.length,'cita')+'</span></h4>'+
-      list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join('')+'</div>';
+      list.map(function(b){return mrowHTML(b,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true})}).join('')+'</div>';
   }).join(''):'<div class="empty">Sin citas este mes.</div>';
   $('#panelBody').innerHTML='<div class="day-nav"><button type="button" id="mPrevM">‹</button><b>'+esc(new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric'}).format(ref))+'</b><button type="button" id="mNextM">›</button></div>'+
     '<div class="stat-row"><div class="stat"><div class="n">'+count+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(total)+'</div><div class="l">Ingreso del mes</div></div></div>'+
@@ -1441,6 +1636,21 @@ initDb();
 update();
 document.body.dataset.booted='1';
 window.addEventListener('hashchange',route);
+// Si la ventana cruza el punto de quiebre móvil/escritorio (p. ej. se gira una tablet o se
+// redimensiona la ventana), la agenda del dueño cambia sola entre lista y calendario visual
+// sin esperar a la próxima navegación. Se compara el resultado, no el ancho, para no redibujar
+// en cada pixel de un resize.
+var eraEscritorio=esEscritorio(),resizeT=null;
+window.addEventListener('resize',function(){
+  clearTimeout(resizeT);
+  resizeT=setTimeout(function(){
+    var ahoraEscritorio=esEscritorio();
+    if(ahoraEscritorio!==eraEscritorio){
+      eraEscritorio=ahoraEscritorio;
+      if(location.hash.indexOf('panel')>-1&&Session.current)renderDash();
+    }
+  },150);
+});
 route();
 
 }
