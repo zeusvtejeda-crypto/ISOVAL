@@ -1,0 +1,25 @@
+{
+  "note": "Respaldo manual antes del rediseño de new-gomez. Tomado leyendo la base de datos en vivo del Artifact publicado (capability 'db'), no del código fuente.",
+  "artifact_url": "https://claude.ai/code/artifact/848e07b8-cf57-4a3a-a56c-350e81a043b6",
+  "taken_at": "2026-09-06T02:03:00Z",
+  "git_tag": "backup/new-gomez-pre-revamp-20260906-020359",
+  "collections": {
+    "citas": [],
+    "disponibilidad": [],
+    "staff_publico": [
+      { "id": "alexis", "nombre": "Alexis", "rol": "employee", "activo": true, "barbero": true, "updatedAt": "2026-09-02T15:28:05.876831Z" },
+      { "id": "angel", "nombre": "Angel", "rol": "owner", "activo": true, "barbero": true, "updatedAt": "2026-09-02T15:28:05.122042Z" },
+      { "id": "zeus", "nombre": "Zeus", "rol": "superadmin", "activo": true, "barbero": false, "updatedAt": "2026-09-02T15:28:04.40347Z" }
+    ],
+    "staff_pins": [
+      { "id": "alexis", "pin_hash": "fec20396", "updatedAt": "2026-09-02T15:40:51.174292Z" },
+      { "id": "angel", "pin_hash": "d59e0b84", "updatedAt": "2026-09-02T15:40:51.165166Z" },
+      { "id": "zeus", "pin_hash": "9ed63160", "updatedAt": "2026-09-02T15:40:51.156379Z" }
+    ]
+  },
+  "observaciones": [
+    "citas y disponibilidad estaban vacías al momento del respaldo: no había ninguna cita agendada, cero riesgo de pérdida en este corte.",
+    "Las fotos base64 de angel/alexis se omiten de este respaldo (idénticas a img/angel.jpg e img/alexis.jpg ya versionadas en el repo).",
+    "pin_hash es un hash del PIN de 4 dígitos (función hashPin en el código), no el PIN en texto plano."
+  ]
+}
