@@ -990,9 +990,9 @@ function renderDiaContenido(u,isOwner){
   var reminderHtml='';
   if(isOwner&&sameDay(d,new Date())){
     var nowMin=(new Date()).getHours()*60+(new Date()).getMinutes();
-    var proximas=list.filter(function(b){return b.estado!=='cancelada'&&b.estado!=='atendida'&&(b.inicio-nowMin)<=60&&(b.inicio-nowMin)>=-15});
+    var proximas=list.filter(function(b){return b.estado!=='cancelada'&&b.estado!=='atendida'&&(b.inicio-nowMin)<=120&&(b.inicio-nowMin)>=-15});
     if(proximas.length){
-      reminderHtml='<div class="mform"><div class="mform-head"><span>⏰ Por confirmar (próxima hora)</span></div>'+
+      reminderHtml='<div class="mform"><div class="mform-head"><span>⏰ Por confirmar (próximas 2 horas)</span></div>'+
         proximas.map(function(b){return '<div class="row"><span class="k">'+fmtTime(b.inicio)+' · '+esc(b.nombre||'Cliente')+'</span><span class="v">'+
           (b.telefono?'<a href="'+reminderWa(b)+'" target="_blank" rel="noopener" style="color:var(--brass-deep);font-weight:600">Recordar por WhatsApp</a>':'sin teléfono')+'</span></div>'}).join('')+
         '</div>';
