@@ -322,8 +322,6 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .fallback p{color:#7A7366;margin-bottom:18px}
 .fallback a.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:12px;font-weight:600;background:#C49A3C;color:#15130F;text-decoration:none}
 </style>
-</head>
-<body>
 
 <header class="head">
   <div class="head-in">
@@ -938,32 +936,60 @@ function mensajeNuevaCita(b){
     'Barbero: '+(b.barberoNombre||'Cualquiera'),
     'Ver agenda: '+agendaLink()].join('\n');
 }
+// Aviso al CLIENTE cuando el staff registra su cita a mano (p. ej. llamó por teléfono):
+// distinto de mensajeNuevaCita(), que es el resumen que el CLIENTE le envía AL NEGOCIO al
+// reservar en línea — aquí el destinatario es el cliente, así que va en segunda persona.
+function nuevaManualWa(b){
+  var m=['Cita agendada — '+NEGOCIO.nombre,
+    'Hola '+(b.nombre||'')+', tu cita quedó registrada.',
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Horario: '+fechaHora(b),
+    'Ver agenda: '+agendaLink()].join('\n');
+  return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
+}
 function reminderWa(b){
-  var m='Hola '+(b.nombre||'')+', te confirmamos tu cita hoy a las '+fmtTime(b.inicio)+' en '+NEGOCIO.nombre+'. ¿Nos vemos?';
+  var m=['Recordatorio — '+NEGOCIO.nombre,
+    'Hola '+(b.nombre||'')+', tu cita es hoy a las '+fmtTime(b.inicio)+'.',
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Te esperamos.'].join('\n');
   return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
 }
 function reagendadaWa(b){
-  var m='Hola '+(b.nombre||'')+', tu cita en '+NEGOCIO.nombre+' se reagendó. Nuevo horario: '+fechaHora(b)+'. Cualquier duda, contáctanos.';
+  var m=['Cita reagendada — '+NEGOCIO.nombre,
+    'Cliente: '+(b.nombre||'Sin nombre'),
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Nuevo horario: '+fechaHora(b),
+    'Ver agenda: '+agendaLink()].join('\n');
   return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
 }
 function canceladaWa(b){
-  var m='Hola '+(b.nombre||'')+', tu cita en '+NEGOCIO.nombre+' del '+fechaHora(b)+' fue cancelada. Si deseas reagendar, escríbenos.';
+  var m=['Cita cancelada — '+NEGOCIO.nombre,
+    'Cliente: '+(b.nombre||'Sin nombre'),
+    'Servicio: '+(b.servicios||[]).join(' + '),
+    'Horario cancelado: '+fechaHora(b),
+    'Para reagendar: '+agendaLink()].join('\n');
   return 'https://wa.me/52'+(b.telefono||'')+'?text='+encodeURIComponent(m);
 }
 function mrowHTML(b,opts){
   opts=opts||{};
   var est=estadoInfo(b.estado),acts='';
   if(opts.acciones){
-    if(b.estado!=='confirmada'&&b.estado!=='cancelada'&&b.estado!=='atendida')acts+='<button type="button" class="ok" data-act="confirmar" data-id="'+b.id+'">Confirmar</button>';
+    // "Confirmar" es un paso de recepción sobre una cita que el cliente ya ve en su pantalla;
+    // al barbero (opts.confirmar=false) solo le hacen falta las 3 acciones que de verdad usa
+    // en su día: marcar completada (Atendida), reagendar (Mover) y cancelar — sin botones de
+    // sobra en su lista.
+    if(opts.confirmar&&b.estado!=='confirmada'&&b.estado!=='cancelada'&&b.estado!=='atendida')acts+='<button type="button" class="ok" data-act="confirmar" data-id="'+b.id+'">Confirmar</button>';
     if(b.estado!=='atendida'&&b.estado!=='cancelada')acts+='<button type="button" data-act="atender" data-id="'+b.id+'">Atendida</button>';
     if(opts.editar&&b.estado!=='cancelada')acts+='<button type="button" data-act="editar" data-id="'+b.id+'">Mover</button>';
     if(b.estado!=='cancelada')acts+='<button type="button" class="danger" data-act="cancelar" data-id="'+b.id+'">Cancelar</button>';
   }
+  // El nombre del barbero solo aclara algo cuando de verdad hace falta (cita 'cualquiera', o
+  // recepción viendo a varios barberos a la vez): en la agenda propia de un barbero es texto
+  // de sobra, ya sabe que son las suyas.
+  var verBarbero=opts.mostrarBarbero&&(opts.siempreBarbero||b.barbero==='any');
   return '<div class="mrow"><span class="when">'+fmtTime(b.inicio)+'<b>'+fmtTime(b.inicio+b.dur)+'</b></span>'+
     '<span class="who">'+esc(b.nombre||'Cliente')+' <span class="pill '+(b.estado||'registrada')+'">'+est.t+'</span></span>'+
-    // Al barbero no se le repite su propio nombre en cada tarjeta de su propia lista (opts.miId):
-    // ya sabe de quién es la agenda. Sí se le avisa cuando una cita es "Cualquiera" (le toca a él o a otro).
-    '<span class="what">'+(opts.mostrarFecha?fechaCorta(b.fecha)+' · ':'')+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(opts.mostrarBarbero&&(!opts.miId||b.barbero!==opts.miId)?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
+    '<span class="what">'+(opts.mostrarFecha?fechaCorta(b.fecha)+' · ':'')+esc((b.servicios||[]).join(' + '))+' · '+fmtMoney(b.total||0)+(verBarbero?' · '+esc(b.barberoNombre||'Cualquiera'):'')+(b.telefono?' · '+esc(b.telefono):'')+'</span>'+
     '<span class="acts">'+acts+'</span></div>';
 }
 function fechaCorta(k){var d=new Date(k+'T12:00:00');return shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]}
@@ -1015,15 +1041,20 @@ function openManualForm(editing){
     var ov=overlapping(fecha,inicio,inicio+durNueva).filter(function(x){return !editing||x.id!==editing.id});
     var choque=(barb.id!=='any'&&ov.some(function(x){return x.barbero===barb.id}))||ov.length>=2;
     if(choque&&!confirm('Ese horario ya está ocupado (barbero con otra cita, o ya hay 2 citas ahí). ¿Guardar de todas formas?'))return;
-    var moved=editing&&(editing.fecha!==fecha||editing.inicio!==inicio);
+    var esNueva=!editing,moved=editing&&(editing.fecha!==fecha||editing.inicio!==inicio);
     var b=editing||{id:folio(),creado:new Date().toISOString()};
     b.nombre=$('#mNombre').value.trim()||'Cliente';b.telefono=$('#mTel').value.replace(/\D/g,'');
     b.servicios=svcs.map(function(x){return x.nombre});b.total=svcs.reduce(function(a,x){return a+x.precio},0);b.dur=durNueva;
     b.barbero=barb.id;b.barberoNombre=barb.nombre;
     b.fecha=fecha;b.inicio=inicio;b.estado='confirmada';
-    // Avisar al cliente solo cuando de verdad cambió fecha/hora (no en una edición de servicios/nombre).
-    // Se prepara ANTES de renderDash() — si no, el banner se pierde porque ya se pintó sin él.
-    if(moved&&b.telefono)Panel.aviso={texto:'Cita reagendada.',link:reagendadaWa(b),label:'Avisar por WhatsApp'};
+    // Avisar al cliente cuando se registra a mano (nueva) o cuando de verdad cambió fecha/hora
+    // (reagendada) — nunca en una edición de solo nombre/servicios. Se prepara ANTES de
+    // renderDash() — si no, el banner se pierde porque ya se pintó sin él. La cita ya quedó
+    // guardada (saveBooking, línea siguiente) sin depender de que este aviso se envíe o no.
+    if(b.telefono){
+      if(esNueva)Panel.aviso={texto:'Cita registrada.',link:nuevaManualWa(b),label:'Avisar por WhatsApp'};
+      else if(moved)Panel.aviso={texto:'Cita reagendada.',link:reagendadaWa(b),label:'Avisar por WhatsApp'};
+    }
     saveBooking(b);box.innerHTML='';renderDash();
   };
 }
@@ -1107,7 +1138,7 @@ function bindCalClicks(container){
     // Acciones rápidas (Confirmar/Atendida/Mover/Cancelar) también desde el calendario,
     // reusando la misma fila y lógica que la lista — nada que mantener por duplicado.
     box.innerHTML='<div class="mform"><div class="mform-head"><span>Cita seleccionada</span><button type="button" id="calCerrar" aria-label="Cerrar">✕</button></div>'+
-      mrowHTML(cita,{acciones:true,editar:true,mostrarBarbero:true,mostrarFecha:true})+'</div>';
+      mrowHTML(cita,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true,mostrarFecha:true})+'</div>';
     $('#calCerrar').onclick=function(){box.innerHTML=''};
     bindRowActions(box);
     box.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -1135,7 +1166,7 @@ function renderDiaContenido(u,isOwner){
       .sort(function(a,b){return a.fecha===b.fecha?a.inicio-b.inicio:(a.fecha<b.fecha?-1:1)});
     $('#diaContenido').innerHTML=
       '<p class="eyebrow" style="margin-bottom:10px">'+plural(resultados.length,'resultado')+'</p>'+
-      (resultados.length?resultados.map(function(b){return mrowHTML(b,{acciones:true,editar:true,mostrarBarbero:true,mostrarFecha:true})}).join(''):'<div class="empty">Nadie coincide con "'+esc(Panel.busqueda)+'".</div>');
+      (resultados.length?resultados.map(function(b){return mrowHTML(b,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true,mostrarFecha:true})}).join(''):'<div class="empty">Nadie coincide con "'+esc(Panel.busqueda)+'".</div>');
     bindRowActions($('#diaContenido'));
     return;
   }
@@ -1164,7 +1195,7 @@ function renderDiaContenido(u,isOwner){
     (isOwner?'<div class="stat-row"><div class="stat"><div class="n">'+activas.length+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(totalDia)+'</div><div class="l">Ingreso del día</div></div></div>':'')+
     reminderHtml+
     (isOwner?'<button type="button" class="btn btn-primary" id="addBtn" style="margin-bottom:14px;min-height:44px;width:100%">+ Nueva cita</button>':'')+
-    (vistaCalendario?gridDiaHTML(d):(list.length?list.map(function(b){return mrowHTML(b,{acciones:true,editar:isOwner,mostrarBarbero:true,miId:isOwner?null:u.id})}).join(''):'<div class="empty">Sin citas.</div>'));
+    (vistaCalendario?gridDiaHTML(d):(list.length?list.map(function(b){return mrowHTML(b,{acciones:true,confirmar:isOwner,editar:true,mostrarBarbero:true,siempreBarbero:isOwner})}).join(''):'<div class="empty">Sin citas.</div>'));
   if(vistaCalendario)bindCalClicks($('#diaContenido'));else bindRowActions($('#diaContenido'));
   if(isOwner){
     $('#dPrev').onclick=function(){Panel.day=new Date(d);Panel.day.setDate(d.getDate()-1);renderDiaContenido(u,isOwner)};
@@ -1180,7 +1211,7 @@ function renderSemana(){
     var list=citasDe(key),activas=list.filter(function(b){return b.estado!=='cancelada'});citasSemana+=activas.length;
     var t=activas.reduce(function(a,b){return a+(b.total||0)},0);totalSemana+=t;
     html+='<div class="week-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+' '+shortM[d.getMonth()]+'</span><span>'+plural(activas.length,'cita')+' · '+fmtMoney(t)+'</span></h4>'+
-      (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join(''):'<span class="empty" style="display:block">Sin citas</span>')+'</div>';
+      (list.length?list.map(function(b){return mrowHTML(b,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true})}).join(''):'<span class="empty" style="display:block">Sin citas</span>')+'</div>';
   }
   var vistaCalendario=esEscritorio();
   $('#panelBody').innerHTML=avisoHTML()+'<div class="day-nav"><button type="button" id="wPrev">‹</button><b>Semana del '+start.getDate()+' '+shortM[start.getMonth()]+'</b><button type="button" id="wNext">›</button></div>'+
@@ -1206,7 +1237,7 @@ function renderMes(){
     var list=byDay[k].sort(function(a,b){return a.inicio-b.inicio});
     var d=new Date(k+'T12:00:00');
     return '<div class="month-day"><h4><span>'+shortW[d.getDay()]+' '+d.getDate()+'</span><span>'+plural(list.length,'cita')+'</span></h4>'+
-      list.map(function(b){return mrowHTML(b,{acciones:true,mostrarBarbero:true})}).join('')+'</div>';
+      list.map(function(b){return mrowHTML(b,{acciones:true,confirmar:true,editar:true,mostrarBarbero:true,siempreBarbero:true})}).join('')+'</div>';
   }).join(''):'<div class="empty">Sin citas este mes.</div>';
   $('#panelBody').innerHTML='<div class="day-nav"><button type="button" id="mPrevM">‹</button><b>'+esc(new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric'}).format(ref))+'</b><button type="button" id="mNextM">›</button></div>'+
     '<div class="stat-row"><div class="stat"><div class="n">'+count+'</div><div class="l">Citas activas</div></div><div class="stat"><div class="n">'+fmtMoney(total)+'</div><div class="l">Ingreso del mes</div></div></div>'+
@@ -1472,5 +1503,6 @@ route();
 })();
 
 </script>
+
 </body>
 </html>
