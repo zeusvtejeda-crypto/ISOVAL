@@ -1,0 +1,15 @@
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "@id": "https://basestipobox.com/#catalogo",
+  "name": "Bases tipo box tapizadas — medidas y tonos",
+  "description": "Medidas y acabados disponibles de bases tipo box. Fabricación propia en Tepic, Nayarit; el precio se cotiza por WhatsApp según medida y tono.",
+  "url": "https://basestipobox.com/#medidas",
+  "numberOfItems": 4,
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Individual · 1.00 × 1.90 m", "url": "https://basestipobox.com/#medidas" },
+    { "@type": "ListItem", "position": 2, "name": "Matrimonial · 1.35 × 1.90 m", "url": "https://basestipobox.com/#medidas" },
+    { "@type": "ListItem", "position": 3, "name": "Queen · 1.50 × 1.90 m", "url": "https://basestipobox.com/#medidas" },
+    { "@type": "ListItem", "position": 4, "name": "King · 2.00 × 1.90 m (dos bases de 1.00 × 1.90 m)", "url": "https://basestipobox.com/#medidas" }
+  ]
+}

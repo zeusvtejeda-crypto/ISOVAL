@@ -1,0 +1,819 @@
+{
+  "@context": "https://schema.org",
+  "@type": "ProductGroup",
+  "@id": "https://basestipobox.com/#catalogo",
+  "name": "Bases tipo box tapizadas",
+  "description": "Catálogo de bases tipo box: 4 medidas (individual, matrimonial, queen y king) en 8 acabados. Fabricación propia en Tepic, Nayarit; precio se cotiza por WhatsApp según medida y tono.",
+  "brand": {
+    "@type": "Brand",
+    "name": "Bases Tipo Box"
+  },
+  "url": "https://basestipobox.com/#medidas",
+  "productGroupID": "bases-tipo-box",
+  "variesBy": [
+    "https://schema.org/size",
+    "https://schema.org/color"
+  ],
+  "hasVariant": [
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Cocoa",
+      "size": "1.00 × 1.90 m",
+      "color": "Cocoa",
+      "image": "https://basestipobox.com/img/tono/cocoa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-cocoa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Morado",
+      "size": "1.00 × 1.90 m",
+      "color": "Morado",
+      "image": "https://basestipobox.com/img/tono/morado.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-morado",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Rosa",
+      "size": "1.00 × 1.90 m",
+      "color": "Rosa",
+      "image": "https://basestipobox.com/img/tono/rosa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-rosa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Chocolate Vinipiel",
+      "size": "1.00 × 1.90 m",
+      "color": "Chocolate Vinipiel",
+      "image": "https://basestipobox.com/img/tono/chocolate.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-chocolate-vinipiel",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Gris",
+      "size": "1.00 × 1.90 m",
+      "color": "Gris",
+      "image": "https://basestipobox.com/img/tono/gris.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-gris",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Azul",
+      "size": "1.00 × 1.90 m",
+      "color": "Azul",
+      "image": "https://basestipobox.com/img/tono/azul.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-azul",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Azul Marino",
+      "size": "1.00 × 1.90 m",
+      "color": "Azul Marino",
+      "image": "https://basestipobox.com/img/tono/marino.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-azul-marino",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Individual en Negro",
+      "size": "1.00 × 1.90 m",
+      "color": "Negro",
+      "image": "https://basestipobox.com/img/tono/negro.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-individual-en-negro",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_INDIVIDUAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Cocoa",
+      "size": "1.35 × 1.90 m",
+      "color": "Cocoa",
+      "image": "https://basestipobox.com/img/tono/cocoa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-cocoa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Morado",
+      "size": "1.35 × 1.90 m",
+      "color": "Morado",
+      "image": "https://basestipobox.com/img/tono/morado.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-morado",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Rosa",
+      "size": "1.35 × 1.90 m",
+      "color": "Rosa",
+      "image": "https://basestipobox.com/img/tono/rosa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-rosa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Chocolate Vinipiel",
+      "size": "1.35 × 1.90 m",
+      "color": "Chocolate Vinipiel",
+      "image": "https://basestipobox.com/img/tono/chocolate.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-chocolate-vinipiel",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Gris",
+      "size": "1.35 × 1.90 m",
+      "color": "Gris",
+      "image": "https://basestipobox.com/img/tono/gris.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-gris",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Azul",
+      "size": "1.35 × 1.90 m",
+      "color": "Azul",
+      "image": "https://basestipobox.com/img/tono/azul.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-azul",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Azul Marino",
+      "size": "1.35 × 1.90 m",
+      "color": "Azul Marino",
+      "image": "https://basestipobox.com/img/tono/marino.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-azul-marino",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Matrimonial en Negro",
+      "size": "1.35 × 1.90 m",
+      "color": "Negro",
+      "image": "https://basestipobox.com/img/tono/negro.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-matrimonial-en-negro",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_MATRIMONIAL",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Cocoa",
+      "size": "1.50 × 1.90 m",
+      "color": "Cocoa",
+      "image": "https://basestipobox.com/img/tono/cocoa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-cocoa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Morado",
+      "size": "1.50 × 1.90 m",
+      "color": "Morado",
+      "image": "https://basestipobox.com/img/tono/morado.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-morado",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Rosa",
+      "size": "1.50 × 1.90 m",
+      "color": "Rosa",
+      "image": "https://basestipobox.com/img/tono/rosa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-rosa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Chocolate Vinipiel",
+      "size": "1.50 × 1.90 m",
+      "color": "Chocolate Vinipiel",
+      "image": "https://basestipobox.com/img/tono/chocolate.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-chocolate-vinipiel",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Gris",
+      "size": "1.50 × 1.90 m",
+      "color": "Gris",
+      "image": "https://basestipobox.com/img/tono/gris.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-gris",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Azul",
+      "size": "1.50 × 1.90 m",
+      "color": "Azul",
+      "image": "https://basestipobox.com/img/tono/azul.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-azul",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Azul Marino",
+      "size": "1.50 × 1.90 m",
+      "color": "Azul Marino",
+      "image": "https://basestipobox.com/img/tono/marino.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-azul-marino",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box Queen Size en Negro",
+      "size": "1.50 × 1.90 m",
+      "color": "Negro",
+      "image": "https://basestipobox.com/img/tono/negro.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-queen-size-en-negro",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_QUEEN",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Cocoa",
+      "size": "2.00 × 1.90 m",
+      "color": "Cocoa",
+      "image": "https://basestipobox.com/img/tono/cocoa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-cocoa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Morado",
+      "size": "2.00 × 1.90 m",
+      "color": "Morado",
+      "image": "https://basestipobox.com/img/tono/morado.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-morado",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Rosa",
+      "size": "2.00 × 1.90 m",
+      "color": "Rosa",
+      "image": "https://basestipobox.com/img/tono/rosa.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-rosa",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Chocolate Vinipiel",
+      "size": "2.00 × 1.90 m",
+      "color": "Chocolate Vinipiel",
+      "image": "https://basestipobox.com/img/tono/chocolate.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-chocolate-vinipiel",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Gris",
+      "size": "2.00 × 1.90 m",
+      "color": "Gris",
+      "image": "https://basestipobox.com/img/tono/gris.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-gris",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Azul",
+      "size": "2.00 × 1.90 m",
+      "color": "Azul",
+      "image": "https://basestipobox.com/img/tono/azul.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-azul",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Azul Marino",
+      "size": "2.00 × 1.90 m",
+      "color": "Azul Marino",
+      "image": "https://basestipobox.com/img/tono/marino.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-azul-marino",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    },
+    {
+      "@type": "Product",
+      "name": "Base tipo box King Size en Negro",
+      "size": "2.00 × 1.90 m",
+      "color": "Negro",
+      "image": "https://basestipobox.com/img/tono/negro.webp",
+      "url": "https://basestipobox.com/#tonos",
+      "sku": "base-box-king-size-en-negro",
+      "brand": {
+        "@type": "Brand",
+        "name": "Bases Tipo Box"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": "https://basestipobox.com/#medidas",
+        "priceCurrency": "MXN",
+        "price": "PRECIO_KING",
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition",
+        "priceValidUntil": "2027-12-31",
+        "seller": {
+          "@id": "https://basestipobox.com/#negocio"
+        }
+      }
+    }
+  ]
+}
