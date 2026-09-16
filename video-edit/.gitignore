@@ -1,0 +1,12 @@
+# Material de trabajo y salidas: nunca se versionan
+work/
+out/
+in/
+.venv/
+*.mp4
+*.mov
+*.wav
+*.srt
+*.ass
+*.json
+!lib/styles.json

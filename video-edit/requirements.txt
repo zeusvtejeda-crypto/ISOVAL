@@ -1,0 +1,4 @@
+# Transcripcion local con timestamps por palabra (implementacion CTranslate2 de Whisper).
+faster-whisper>=1.0
+# Deteccion y corte de silencios.
+auto-editor>=24.3

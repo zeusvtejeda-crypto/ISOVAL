@@ -1,0 +1,53 @@
+{
+  "pop": {
+    "_desc": "TikTok/Reels: negritas gruesas, palabra activa en amarillo. MAYUSCULAS.",
+    "font": "Arial Black",
+    "base_color": "&H00FFFFFF",
+    "highlight_color": "&H0000E5FF",
+    "outline_color": "&H00000000",
+    "shadow_color": "&H96000000",
+    "outline": 6,
+    "shadow": 3,
+    "bold": -1,
+    "uppercase": true,
+    "pop_scale": 112,
+    "size_ratio": 0.052,
+    "margin_ratio": 0.17,
+    "max_chars": 13,
+    "max_words": 3
+  },
+  "clean": {
+    "_desc": "Sobrio para YouTube: una linea larga, resalte celeste, sin sombra dura.",
+    "font": "Helvetica",
+    "base_color": "&H00FFFFFF",
+    "highlight_color": "&H00FFD166",
+    "outline_color": "&H00000000",
+    "shadow_color": "&H64000000",
+    "outline": 4,
+    "shadow": 1,
+    "bold": -1,
+    "uppercase": false,
+    "pop_scale": 104,
+    "size_ratio": 0.042,
+    "margin_ratio": 0.1,
+    "max_chars": 34,
+    "max_words": 7
+  },
+  "neon": {
+    "_desc": "Alto contraste, resalte magenta con contorno violeta.",
+    "font": "Arial Black",
+    "base_color": "&H00FFFFFF",
+    "highlight_color": "&H00FF00E5",
+    "outline_color": "&H00320019",
+    "shadow_color": "&H96000000",
+    "outline": 5,
+    "shadow": 4,
+    "bold": -1,
+    "uppercase": true,
+    "pop_scale": 116,
+    "size_ratio": 0.052,
+    "margin_ratio": 0.17,
+    "max_chars": 12,
+    "max_words": 3
+  }
+}
