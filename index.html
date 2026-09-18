@@ -12,7 +12,11 @@
 <meta property="og:image" content="imgs/hero1.jpg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,900&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<link rel="preload" as="image" href="imgs/hero1-sm.webp" media="(max-width:768px)"/>
+<link rel="preload" as="image" href="imgs/hero1-lg.webp" media="(min-width:769px)"/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,900&family=JetBrains+Mono:wght@300;400&display=swap"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,900&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,900&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/></noscript>
 <style>
 /* ═══════════════════════════════════════════════
    LAB A+A — WARM MINIMALIST EDITION
@@ -186,14 +190,18 @@ nav.scrolled{
   opacity:0;will-change:opacity,transform;
 }
 .slide:nth-child(1){background-image:url('imgs/hero1-sm.webp');background-position:center 55%;animation:kb1 24s ease-in-out infinite 0s;}
-.slide:nth-child(2){background-image:url('imgs/hero2-sm.webp');background-position:center 50%;animation:kb2 24s ease-in-out infinite -6s;}
-.slide:nth-child(3){background-image:url('imgs/hero3-sm.webp');background-position:center 40%;animation:kb3 24s ease-in-out infinite -12s;}
-.slide:nth-child(4){background-image:url('imgs/hero4-sm.webp');background-position:center 45%;animation:kb4 24s ease-in-out infinite -18s;}
+.slide:nth-child(2){background-position:center 50%;animation:kb2 24s ease-in-out infinite -6s;}
+.slide:nth-child(3){background-position:center 40%;animation:kb3 24s ease-in-out infinite -12s;}
+.slide:nth-child(4){background-position:center 45%;animation:kb4 24s ease-in-out infinite -18s;}
+/* Los slides 2-4 se descargan despues del primer render (clase .ready) */
+.slides.ready .slide:nth-child(2){background-image:url('imgs/hero2-sm.webp');}
+.slides.ready .slide:nth-child(3){background-image:url('imgs/hero3-sm.webp');}
+.slides.ready .slide:nth-child(4){background-image:url('imgs/hero4-sm.webp');}
 @media(min-width:769px){
 .slide:nth-child(1){background-image:url('imgs/hero1-lg.webp');}
-.slide:nth-child(2){background-image:url('imgs/hero2-lg.webp');}
-.slide:nth-child(3){background-image:url('imgs/hero3-lg.webp');}
-.slide:nth-child(4){background-image:url('imgs/hero4-lg.webp');}
+.slides.ready .slide:nth-child(2){background-image:url('imgs/hero2-lg.webp');}
+.slides.ready .slide:nth-child(3){background-image:url('imgs/hero3-lg.webp');}
+.slides.ready .slide:nth-child(4){background-image:url('imgs/hero4-lg.webp');}
 }
 @keyframes kb1{0%{opacity:0;transform:scale(1.08) translate(1%,0.5%);}8%{opacity:1;}33%{opacity:1;transform:scale(1.14) translate(-0.5%,-0.5%);}41%{opacity:0;}100%{opacity:0;}}
 @keyframes kb2{0%{opacity:0;transform:scale(1.10) translate(-0.5%,0);}8%{opacity:1;}33%{opacity:1;transform:scale(1.16) translate(0.5%,0.5%);}41%{opacity:0;}100%{opacity:0;}}
@@ -227,8 +235,8 @@ nav.scrolled{
 .rl{display:block;opacity:0;transform:translateY(110%) skewY(1.5deg);}
 .rl.go{
   opacity:1;transform:translateY(0) skewY(0);
-  transition:opacity 900ms cubic-bezier(0.16,1,0.3,1),
-             transform 900ms cubic-bezier(0.16,1,0.3,1);
+  transition:opacity 620ms cubic-bezier(0.16,1,0.3,1),
+             transform 620ms cubic-bezier(0.16,1,0.3,1);
 }
 
 .hero-eyebrow{
@@ -479,17 +487,17 @@ nav.scrolled{
   filter:sepia(8%) saturate(88%);
 }
 .port-card:hover .port-bg{transform:scale(1.06);}
-.pb1{background-image:url('imgs/port1-sm.webp');}
-.pb2{background-image:url('imgs/port2-sm.webp');}
-.pb3{background-image:url('imgs/port3-sm.webp');}
-.pb4{background-image:url('imgs/port4-sm.webp');}
-.pb5{background-image:url('imgs/port5-sm.webp');}
+.pb1.bg-on{background-image:url('imgs/port1-sm.webp');}
+.pb2.bg-on{background-image:url('imgs/port2-sm.webp');}
+.pb3.bg-on{background-image:url('imgs/port3-sm.webp');}
+.pb4.bg-on{background-image:url('imgs/port4-sm.webp');}
+.pb5.bg-on{background-image:url('imgs/port5-sm.webp');}
 @media(min-width:769px){
-.pb1{background-image:url('imgs/port1-lg.webp');}
-.pb2{background-image:url('imgs/port2-lg.webp');}
-.pb3{background-image:url('imgs/port3-lg.webp');}
-.pb4{background-image:url('imgs/port4-lg.webp');}
-.pb5{background-image:url('imgs/port5-lg.webp');}
+.pb1.bg-on{background-image:url('imgs/port1-lg.webp');}
+.pb2.bg-on{background-image:url('imgs/port2-lg.webp');}
+.pb3.bg-on{background-image:url('imgs/port3-lg.webp');}
+.pb4.bg-on{background-image:url('imgs/port4-lg.webp');}
+.pb5.bg-on{background-image:url('imgs/port5-lg.webp');}
 }
 .port-grad{
   position:absolute;inset:0;
@@ -570,11 +578,12 @@ nav.scrolled{
 #quote{
   position:relative;z-index:2;overflow:hidden;
   padding:160px var(--pad-h);
-  background-image:url('imgs/quote-sm.webp');
+  background-image:none;
   background-size:cover;background-position:center 30%;
   background-attachment:fixed;
 }
-@media(min-width:769px){#quote{background-image:url('imgs/quote-lg.webp');}}
+#quote.bg-on{background-image:url('imgs/quote-sm.webp');}
+@media(min-width:769px){#quote.bg-on{background-image:url('imgs/quote-lg.webp');}}
 #quote::before{
   content:'';position:absolute;inset:0;
   background:rgba(20,13,6,0.84);/* overlay cálido */
@@ -1369,18 +1378,18 @@ footer{
   <div class="hero-content">
     <div class="hero-eyebrow">Arquitectura · Construcción · Nayarit</div>
     <h1 class="hero-h1">
-      <span class="rw"><span class="rl" data-d="280">De la idea</span></span>
-      <span class="rw"><span class="rl" data-d="400">al proyecto</span></span>
-      <span class="rw"><span class="rl" data-d="520"><em>construido.</em></span></span>
+      <span class="rw"><span class="rl" data-d="80">De la idea</span></span>
+      <span class="rw"><span class="rl" data-d="170">al proyecto</span></span>
+      <span class="rw"><span class="rl" data-d="260"><em>construido.</em></span></span>
     </h1>
     <div class="hero-sub">
-      <span class="rw"><span class="rl" data-d="700">
+      <span class="rw"><span class="rl" data-d="360">
         Diseñamos, planeamos y ejecutamos espacios<br>
         con un mismo equipo — del primer trazo a la entrega.
       </span></span>
     </div>
     <div class="hero-actions">
-      <span class="rw"><span class="rl" data-d="900" style="display:flex;gap:14px;flex-wrap:wrap;">
+      <span class="rw"><span class="rl" data-d="460" style="display:flex;gap:14px;flex-wrap:wrap;">
         <a href="#contacto" class="btn solid"><span>Cuéntanos sobre tu proyecto</span></a>
         <a href="#proyectos" class="btn outline"><span>Ver proyectos reales →</span></a>
       </span></span>
@@ -2095,9 +2104,34 @@ function boot(){
   try{initObservers();}catch(e){}
   try{initTextReveals();}catch(e){}
   try{initSlideDots();}catch(e){}
+  try{initLazyBackgrounds();}catch(e){}
   setTimeout(function(){
     document.querySelectorAll('.reveal:not(.in)').forEach(function(el){el.classList.add('in');});
   },1800);
+}
+
+/* Fondos pesados: el hero completo y los fondos de seccion se piden
+   despues del primer render, no compitiendo con el. */
+function initLazyBackgrounds(){
+  var slides=document.querySelector('.slides');
+  var start=function(){if(slides)slides.classList.add('ready');};
+  if(window.requestIdleCallback){requestIdleCallback(start,{timeout:2500});}
+  else{setTimeout(start,700);}
+
+  var targets=document.querySelectorAll('.pb1,.pb2,.pb3,.pb4,.pb5,#quote');
+  if(!targets.length)return;
+  if(!('IntersectionObserver' in window)){
+    Array.prototype.forEach.call(targets,function(el){el.classList.add('bg-on');});
+    return;
+  }
+  var bgIO=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      e.target.classList.add('bg-on');
+      bgIO.unobserve(e.target);
+    });
+  },{rootMargin:'400px 0px'});
+  Array.prototype.forEach.call(targets,function(el){bgIO.observe(el);});
 }
 
 /* Cursor con event delegation — un solo listener en vez de N */
