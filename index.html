@@ -3,13 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Arquitectura y Construcción en Nayarit — LAB A+A · Tepic</title>
-<meta name="description" content="Diseñamos, planeamos y construimos en Tepic y Riviera Nayarit. Proyecto arquitectónico, proyecto ejecutivo, obra, supervisión y valuación inmobiliaria con un mismo equipo. Primera consulta sin costo."/>
-<meta name="theme-color" content="#F3EDE0"/>
-<meta property="og:type" content="website"/>
-<meta property="og:title" content="Arquitectura y Construcción en Nayarit — LAB A+A"/>
-<meta property="og:description" content="De la idea al proyecto construido. Arquitectura, construcción y valuación en Tepic, Riviera Nayarit y Bahía de Banderas."/>
-<meta property="og:image" content="imgs/hero1.jpg"/>
+<title>LAB A+A — Appraiser & Architect · Tepic, Nayarit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,900&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet"/>
@@ -284,6 +278,25 @@ nav.scrolled{
 .btn.outline-dark{border:1px solid var(--border-mid);color:var(--ink-mid);}
 .btn.outline-dark:hover{border-color:var(--red);color:var(--red);}
 .btn span{position:relative;z-index:1;}
+
+/* Stats en hero — estilo Xencalli */
+.hero-stats-row{
+  margin-top:60px;display:flex;gap:0;
+  border:1px solid rgba(243,237,224,0.14);
+  max-width:520px;
+}
+.hstat{flex:1;padding:20px 24px;border-right:1px solid rgba(243,237,224,0.1);}
+.hstat:last-child{border-right:none;}
+.hstat-n{
+  font-family:'Fraunces',serif;font-weight:300;
+  font-size:clamp(26px,3vw,42px);line-height:1;letter-spacing:-0.04em;
+  color:#F3EDE0;
+}
+.hstat-n em{font-style:normal;color:var(--red);}
+.hstat-l{
+  font-family:'JetBrains Mono',monospace;font-size:9px;
+  color:rgba(243,237,224,0.38);letter-spacing:0.2em;text-transform:uppercase;margin-top:8px;
+}
 
 /* Slide dots */
 .slide-dots{
@@ -850,7 +863,7 @@ footer{
 .f-brand{font-family:'Fraunces',serif;font-weight:300;font-size:16px;letter-spacing:0.05em;color:rgba(243,237,224,0.7);}
 .f-brand em{font-style:normal;color:var(--red);}
 .f-copy{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(243,237,224,0.28);letter-spacing:0.12em;}
-.f-links{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 28px;list-style:none;}
+.f-links{display:flex;gap:28px;list-style:none;}
 .f-links a{
   font-family:'JetBrains Mono',monospace;font-size:10px;
   color:rgba(243,237,224,0.28);text-decoration:none;
@@ -881,12 +894,12 @@ footer{
   .timeline::before{display:none;}
   footer{flex-direction:column;gap:20px;text-align:center;}
   .closing-cta{flex-direction:column;align-items:center;}
+  .hero-stats-row{flex-wrap:wrap;}
   .closing::before{font-size:160px;}
   .faq-q{font-size:16px;}
 }
 @media(max-width:600px){
   .timeline{grid-template-columns:1fr;}
-  .f-copy{text-align:center;line-height:1.7;}
 }
 
 /* ══════════════════════════════════════════
@@ -988,347 +1001,10 @@ footer{
   .mq-track{animation:none;}
   .hero-accent-line{animation:none;transform:scaleY(1);}
 }
-
-/* ══════════════════════════════════════════
-   V3 — EDITORIAL: contenido, proceso real,
-   caso, obra (reels) e Instagram
-══════════════════════════════════════════ */
-
-/* Hero — línea de cobertura */
-.hero-places{
-  margin-top:46px;display:flex;align-items:center;gap:12px;
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.24em;text-transform:uppercase;
-  color:rgba(243,237,224,0.42);
-  opacity:0;animation:fadeIn 900ms ease 1.4s forwards;
-}
-.hero-places::before{content:'';width:22px;height:1px;background:rgba(243,237,224,0.3);}
-
-/* Portafolio — metadatos del proyecto */
-.port-meta{
-  display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.16em;text-transform:uppercase;color:rgba(243,237,224,0.55);
-}
-.port-meta span{display:flex;align-items:center;gap:8px;}
-.port-meta span::before{content:'';width:4px;height:4px;background:var(--red);flex-shrink:0;}
-
-/* ── 04 · APRENDE — versión web de los carruseles ── */
-#aprende{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  background:var(--cream-alt);
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-}
-.learn-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:1px;background:var(--border-mid);
-  border:1px solid var(--border-mid);margin-top:8px;
-}
-.learn-card{
-  background:var(--cream-card);padding:48px 40px 42px;
-  display:flex;flex-direction:column;text-decoration:none;
-  transition:background 320ms;
-}
-.learn-card:hover{background:var(--cream);}
-.learn-num{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.24em;text-transform:uppercase;color:var(--red);
-}
-.learn-q{
-  font-family:'Fraunces',serif;font-weight:700;font-style:italic;
-  font-size:22px;line-height:1.22;letter-spacing:-0.02em;
-  color:var(--ink);margin:22px 0 16px;
-}
-.learn-a{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:15px;line-height:1.8;color:var(--ink-mid);flex:1;
-}
-.learn-link{
-  margin-top:30px;display:flex;align-items:center;gap:10px;
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.2em;text-transform:uppercase;color:var(--red);
-  transition:gap 320ms cubic-bezier(0.16,1,0.3,1);
-}
-.learn-card:hover .learn-link{gap:18px;}
-
-/* ── 05 · PROCESO REAL con fotografía ── */
-.proc-grid{
-  display:grid;grid-template-columns:repeat(5,1fr);
-  gap:2px;margin-top:8px;
-}
-.proc-step{
-  background:var(--cream-card);border:1px solid var(--border);
-  display:flex;flex-direction:column;transition:border-color 300ms;
-}
-.proc-step:hover{border-color:var(--red);}
-.proc-photo{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--cream-alt);}
-.proc-photo img{
-  width:100%;height:100%;object-fit:cover;display:block;
-  filter:sepia(8%) saturate(88%);
-  transition:transform 1200ms cubic-bezier(0.16,1,0.3,1);
-}
-.proc-step:hover .proc-photo img{transform:scale(1.05);}
-.proc-index{
-  position:absolute;top:0;left:0;z-index:2;
-  background:var(--cream);padding:8px 13px;
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.18em;color:var(--ink);
-}
-.proc-body{padding:24px 22px 30px;}
-.proc-name{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.22em;text-transform:uppercase;color:var(--red);
-}
-.proc-title{
-  font-family:'Fraunces',serif;font-weight:700;font-style:italic;
-  font-size:18px;letter-spacing:-0.02em;color:var(--ink);margin:12px 0 10px;
-}
-.proc-desc{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:13px;line-height:1.72;color:var(--ink-mid);
-}
-
-/* ── 06 · CASO DESTACADO ── */
-#caso{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  border-bottom:1px solid var(--border);
-}
-.case-wrap{
-  display:grid;grid-template-columns:1.02fr 0.98fr;
-  border:1px solid var(--border-mid);margin-top:8px;
-}
-.case-photo{position:relative;min-height:560px;overflow:hidden;}
-.case-photo img{
-  width:100%;height:100%;object-fit:cover;display:block;
-  filter:sepia(8%) saturate(88%);
-}
-.case-stamp{
-  position:absolute;left:0;bottom:0;background:var(--cream);
-  padding:13px 20px;font-family:'JetBrains Mono',monospace;
-  font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-mid);
-}
-.case-body{padding:56px 52px;background:var(--cream-card);}
-.case-title{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:clamp(30px,3.4vw,52px);line-height:0.98;
-  letter-spacing:-0.04em;color:var(--ink);
-}
-.case-title em{font-style:italic;font-weight:900;color:var(--red);}
-.case-facts{
-  display:flex;margin:32px 0 36px;
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-}
-.case-fact{flex:1;padding:18px 0;border-right:1px solid var(--border);}
-.case-fact:last-child{border-right:none;}
-.case-fact-n{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:26px;line-height:1;letter-spacing:-0.03em;color:var(--ink);
-}
-.case-fact-l{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-dim);margin-top:8px;
-}
-.case-label{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.24em;text-transform:uppercase;color:var(--red);margin-bottom:14px;
-}
-.case-text{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:15px;line-height:1.85;color:var(--ink-mid);
-}
-.case-scope{
-  list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;
-}
-.case-scope li{
-  display:flex;align-items:baseline;gap:10px;
-  font-family:'Fraunces',serif;font-weight:300;font-size:15px;color:var(--ink);
-}
-.case-scope li::before{content:'✓';color:var(--red);font-size:12px;}
-.case-flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
-.case-chip{
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-mid);
-  padding:8px 14px;border:1px solid var(--border-mid);
-}
-.case-arrow{color:var(--red);font-size:11px;}
-.case-cta{margin-top:40px;}
-
-/* ── 07 · EN OBRA — del plano a la realidad ── */
-#obra{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  background:var(--warm-dark-2);
-}
-#obra .eyebrow{color:rgba(243,237,224,0.45);}
-#obra .eyebrow::before{background:rgba(243,237,224,0.45);}
-#obra .s-title{color:var(--cream);}
-.flow-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:8px;}
-.flow-frame{
-  position:relative;aspect-ratio:1/1;overflow:hidden;
-  border:1px solid rgba(243,237,224,0.08);
-}
-.flow-frame img{
-  width:100%;height:100%;object-fit:cover;display:block;
-  filter:sepia(10%) saturate(85%) brightness(0.92);
-  transition:transform 1200ms cubic-bezier(0.16,1,0.3,1);
-}
-.flow-frame:hover img{transform:scale(1.05);}
-.flow-label{
-  position:absolute;left:0;right:0;bottom:0;padding:16px 18px;
-  background:linear-gradient(to top,rgba(22,14,6,0.92),transparent);
-  font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.22em;text-transform:uppercase;color:rgba(243,237,224,0.85);
-  display:flex;align-items:center;gap:10px;
-}
-.flow-step{color:var(--red);}
-.reels-row{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px;}
-.reel{
-  position:relative;aspect-ratio:9/16;overflow:hidden;
-  background:#1a1109;border:1px solid rgba(243,237,224,0.08);
-}
-.reel img,.reel video{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;display:block;
-}
-.reel video{z-index:2;}
-.reel-play{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;
-  width:56px;height:56px;border-radius:50%;
-  border:1px solid rgba(243,237,224,0.45);
-  display:flex;align-items:center;justify-content:center;
-  color:rgba(243,237,224,0.8);font-size:13px;
-  transition:background 300ms,border-color 300ms;
-}
-.reel:hover .reel-play{background:var(--red);border-color:var(--red);color:#fff;}
-.reel.playing .reel-play{display:none;}
-.reel-cap{
-  position:absolute;left:0;right:0;bottom:0;z-index:3;padding:18px;
-  background:linear-gradient(to top,rgba(22,14,6,0.92),transparent);
-  font-family:'Fraunces',serif;font-weight:300;font-size:15px;color:#F3EDE0;
-}
-.reel-cap span{
-  display:block;font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.22em;text-transform:uppercase;color:var(--red);margin-bottom:6px;
-}
-.obra-note{
-  margin-top:28px;font-family:'JetBrains Mono',monospace;font-size:9px;
-  letter-spacing:0.22em;text-transform:uppercase;color:rgba(243,237,224,0.35);
-}
-
-/* ── 08 · TESTIMONIOS ── */
-#testimonios{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  border-bottom:1px solid var(--border);
-}
-.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px;}
-.testi{
-  background:var(--cream-card);border:1px dashed var(--border-mid);
-  padding:40px 36px;display:flex;flex-direction:column;
-}
-.testi-pending{
-  align-self:flex-start;padding:5px 10px;border:1px solid var(--border-mid);
-  font-family:'JetBrains Mono',monospace;font-size:8px;
-  letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-dim);
-}
-.testi-quote{
-  font-family:'Fraunces',serif;font-weight:300;font-style:italic;
-  font-size:19px;line-height:1.55;letter-spacing:-0.02em;
-  color:var(--ink);margin:26px 0 auto;
-}
-.testi-who{
-  margin-top:28px;font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.16em;text-transform:uppercase;color:var(--ink);
-}
-.testi-who span{color:var(--ink-dim);}
-
-/* ── 09 · INSTAGRAM ── */
-#instagram{
-  position:relative;z-index:2;
-  padding:var(--pad-section) var(--pad-h);
-  background:var(--cream-alt);
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-}
-.ig-head{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;}
-.ig-follow{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  letter-spacing:0.2em;text-transform:uppercase;color:var(--red);
-  text-decoration:none;display:flex;align-items:center;gap:10px;
-  transition:gap 320ms cubic-bezier(0.16,1,0.3,1);flex-shrink:0;
-}
-.ig-follow:hover{gap:18px;}
-.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:56px;}
-.ig-tile{
-  position:relative;aspect-ratio:1/1;overflow:hidden;display:block;
-  text-decoration:none;border:1px solid var(--border);transition:border-color 300ms;
-}
-.ig-tile:hover{border-color:var(--red);}
-.ig-tile img{
-  width:100%;height:100%;object-fit:cover;display:block;
-  filter:sepia(8%) saturate(88%);
-  transition:transform 1200ms cubic-bezier(0.16,1,0.3,1);
-}
-.ig-tile:hover img{transform:scale(1.05);}
-.ig-kind{
-  position:absolute;top:14px;left:14px;z-index:2;
-  background:rgba(243,237,224,0.92);padding:6px 10px;
-  font-family:'JetBrains Mono',monospace;font-size:8px;
-  letter-spacing:0.2em;text-transform:uppercase;color:var(--ink);
-}
-.ig-cap{
-  position:absolute;left:0;right:0;bottom:0;z-index:2;padding:20px;
-  background:linear-gradient(to top,rgba(22,14,6,0.9),transparent);
-  font-family:'Fraunces',serif;font-weight:700;font-style:italic;
-  font-size:17px;letter-spacing:-0.02em;color:#F3EDE0;
-}
-
-/* Contacto — bajada */
-.ct-lead{
-  font-family:'Fraunces',serif;font-weight:300;
-  font-size:17px;line-height:1.8;color:var(--ink-mid);
-  max-width:600px;margin-bottom:60px;
-}
-
-/* Sección con encabezado + grid pegado */
-#aprende .s-title,#proceso .s-title,#caso .s-title,#obra .s-title,#testimonios .s-title{margin-bottom:64px;}
-
-/* content-visibility en las secciones nuevas */
-#aprende,#caso,#obra,#testimonios,#instagram{
-  content-visibility:auto;
-  contain-intrinsic-size:auto 700px;
-}
-
-/* Responsive V3 */
-@media(max-width:1024px){
-  .learn-grid{grid-template-columns:1fr;}
-  .proc-grid{grid-template-columns:1fr 1fr;}
-  .case-wrap{grid-template-columns:1fr;}
-  .case-photo{min-height:320px;}
-  .case-body{padding:40px 28px;}
-  .case-scope{grid-template-columns:1fr;}
-  .flow-strip{grid-template-columns:1fr 1fr;}
-  .reels-row{grid-template-columns:1fr 1fr;}
-  .testi-grid{grid-template-columns:1fr;}
-  .ig-grid{grid-template-columns:1fr 1fr;}
-  .ig-head{flex-direction:column;align-items:flex-start;gap:20px;}
-  .hero-places{margin-top:34px;}
-}
-@media(max-width:600px){
-  .proc-grid{grid-template-columns:1fr;}
-  .reels-row{grid-template-columns:1fr;}
-  .ig-grid{grid-template-columns:1fr;}
-  .case-facts{flex-direction:column;}
-  .case-fact{border-right:none;border-bottom:1px solid var(--border);}
-  .case-fact:last-child{border-bottom:none;}
-}
-@media(prefers-reduced-motion:reduce){
-  .hero-places{animation:none;opacity:1;}
-}
 </style>
 </head>
 <body>
+
 <div class="scroll-progress" id="sp"></div>
 <div id="cur"><div class="dot"></div></div>
 
@@ -1339,18 +1015,17 @@ footer{
     <div class="nav-brand">LAB <em>A+A</em></div>
   </div>
   <ul class="nav-links">
-    <li><a href="#proyectos">Proyectos</a></li>
+    <li><a href="#nosotros">Nosotros</a></li>
     <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#aprende">Aprende</a></li>
+    <li><a href="#proyectos">Proyectos</a></li>
+    <li><a href="#nayarit">Nayarit</a></li>
     <li><a href="#proceso">Proceso</a></li>
-    <li><a href="#obra">En obra</a></li>
     <li><a href="#contacto">Contacto</a></li>
   </ul>
   <a href="#contacto" class="nav-cta"><span>Iniciar proyecto</span></a>
 </nav>
 
-<!-- ═══ 01 · HERO ═══ -->
-<!-- Foto real de obra/proyecto terminado. Evitar renders hiperperfectos: la fotografía real vende más. -->
+<!-- ═══ HERO ═══ -->
 <section class="hero" id="inicio">
   <div class="slides">
     <div class="slide"></div>
@@ -1367,25 +1042,38 @@ footer{
     <div class="sdot"><div class="sdot-fill"></div></div>
   </div>
   <div class="hero-content">
-    <div class="hero-eyebrow">Arquitectura · Construcción · Nayarit</div>
+    <div class="hero-eyebrow">Appraiser & Architect · Tepic, Nayarit</div>
     <h1 class="hero-h1">
-      <span class="rw"><span class="rl" data-d="280">De la idea</span></span>
-      <span class="rw"><span class="rl" data-d="400">al proyecto</span></span>
-      <span class="rw"><span class="rl" data-d="520"><em>construido.</em></span></span>
+      <span class="rw"><span class="rl" data-d="280">No es solo</span></span>
+      <span class="rw"><span class="rl" data-d="400">un espacio.</span></span>
+      <span class="rw"><span class="rl" data-d="520">Es tu <em>legado.</em></span></span>
     </h1>
     <div class="hero-sub">
       <span class="rw"><span class="rl" data-d="700">
-        Diseñamos, planeamos y ejecutamos espacios<br>
-        con un mismo equipo — del primer trazo a la entrega.
+        Diseño con propósito. Construcción sin excusas.<br>
+        Valuación con precisión — todo bajo un mismo techo.
       </span></span>
     </div>
     <div class="hero-actions">
-      <span class="rw"><span class="rl" data-d="900" style="display:flex;gap:14px;flex-wrap:wrap;">
-        <a href="#contacto" class="btn solid"><span>Cuéntanos sobre tu proyecto</span></a>
-        <a href="#proyectos" class="btn outline"><span>Ver proyectos reales →</span></a>
+      <span class="rw"><span class="rl" data-d="900" style="display:flex;gap:14px;">
+        <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
+        <a href="#proyectos" class="btn outline"><span>Ver proyectos</span></a>
       </span></span>
     </div>
-    <div class="hero-places">Tepic · Riviera Nayarit · Bahía de Banderas</div>
+    <div class="hero-stats-row">
+      <div class="hstat">
+        <div class="hstat-n">12<em>+</em></div>
+        <div class="hstat-l">Años de experiencia</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-n">200<em>+</em></div>
+        <div class="hstat-l">Proyectos entregados</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-n">98<em>%</em></div>
+        <div class="hstat-l">Clientes satisfechos</div>
+      </div>
+    </div>
   </div>
   <div class="hero-badge">
     <span class="hb-tag">Tepic · Nayarit · México</span>
@@ -1400,20 +1088,20 @@ footer{
 <!-- MARQUEE -->
 <div class="mq-wrap">
   <div class="mq-track">
-    <div class="mq-item"><span class="mq-dot"></span>Proyecto Arquitectónico</div>
-    <div class="mq-item"><span class="mq-dot"></span>Proyecto Ejecutivo</div>
+    <div class="mq-item"><span class="mq-dot"></span>Diseño Arquitectónico</div>
     <div class="mq-item"><span class="mq-dot"></span>Construcción Integral</div>
-    <div class="mq-item"><span class="mq-dot"></span>Supervisión de Obra</div>
     <div class="mq-item"><span class="mq-dot"></span>Valuación Inmobiliaria</div>
+    <div class="mq-item"><span class="mq-dot"></span>Supervisión de Obra</div>
+    <div class="mq-item"><span class="mq-dot"></span>Diseño de Interiores</div>
     <div class="mq-item"><span class="mq-dot"></span>Tepic · Nayarit · Riviera</div>
-    <div class="mq-item"><span class="mq-dot"></span>Un solo equipo responsable</div>
-    <div class="mq-item"><span class="mq-dot"></span>Proyecto Arquitectónico</div>
-    <div class="mq-item"><span class="mq-dot"></span>Proyecto Ejecutivo</div>
+    <div class="mq-item"><span class="mq-dot"></span>Precisión en cada detalle</div>
+    <div class="mq-item"><span class="mq-dot"></span>Diseño Arquitectónico</div>
     <div class="mq-item"><span class="mq-dot"></span>Construcción Integral</div>
-    <div class="mq-item"><span class="mq-dot"></span>Supervisión de Obra</div>
     <div class="mq-item"><span class="mq-dot"></span>Valuación Inmobiliaria</div>
+    <div class="mq-item"><span class="mq-dot"></span>Supervisión de Obra</div>
+    <div class="mq-item"><span class="mq-dot"></span>Diseño de Interiores</div>
     <div class="mq-item"><span class="mq-dot"></span>Tepic · Nayarit · Riviera</div>
-    <div class="mq-item"><span class="mq-dot"></span>Un solo equipo responsable</div>
+    <div class="mq-item"><span class="mq-dot"></span>Precisión en cada detalle</div>
   </div>
 </div>
 
@@ -1438,138 +1126,10 @@ footer{
     <div class="stat">
       <div class="stat-number" data-target="3" data-suffix="">0</div>
       <div class="stat-label">Especialidades</div>
-      <div class="stat-delta">Arquitectura · Construc. · Valuac.</div>
+      <div class="stat-delta">Diseño · Construc. · Valuac.</div>
     </div>
   </div>
 </div>
-
-<!-- ═══ 02 · PROYECTOS REALES ═══ -->
-<!-- Sustituir cada tarjeta por el proyecto real y su fotografía: Casa Puertas del Sol,
-     Proyecto Riviera, Casa Celosía, Casa Puga, Terraza Bar, Pérgola Lounge, Jardín & Alberca.
-     Los nombres de abajo describen la foto que está cargada hoy: cámbialos junto con la imagen. -->
-<section id="proyectos">
-  <div style="padding:0 var(--pad-h);">
-    <div class="eyebrow neutral">Portafolio · Nayarit</div>
-    <h2 class="s-title reveal">Proyectos <em>reales,</em><br>no renders.</h2>
-  </div>
-  <div class="port-grid" style="margin:0 var(--pad-h);">
-    <div class="port-card span2 reveal">
-      <div class="port-bg pb1" style="background-position:center 50%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Arquitectura · Residencial · Nayarit</div>
-        <div class="port-name">Casa Contemporánea — Fachada Doble Nivel</div>
-        <div class="port-meta">
-          <span>Proyecto + Obra</span>
-          <span>Tepic, Nayarit</span>
-          <span>Entregado</span>
-        </div>
-      </div>
-    </div>
-    <div class="port-card reveal">
-      <div class="port-bg pb2" style="background-position:center 55%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Diseño · Interiorismo · Residencial</div>
-        <div class="port-name">Sala — Comedor con Escalera Flotante</div>
-        <div class="port-meta"><span>Diseño interior</span><span>Nayarit</span></div>
-      </div>
-    </div>
-    <div class="port-card reveal">
-      <div class="port-bg pb3" style="background-position:center 50%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Cocina · Minimalista · Interiorismo</div>
-        <div class="port-name">Cocina Integral — Mármol y Madera</div>
-        <div class="port-meta"><span>Remodelación</span><span>Tepic</span></div>
-      </div>
-    </div>
-    <div class="port-card reveal">
-      <div class="port-bg pb4" style="background-position:center 50%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Suite · Diseño · Residencial</div>
-        <div class="port-name">Suite Principal — Vista al Jardín</div>
-        <div class="port-meta"><span>Proyecto ejecutivo</span><span>Xalisco</span></div>
-      </div>
-    </div>
-    <div class="port-card reveal">
-      <div class="port-bg pb5" style="background-position:center 40%;"></div>
-      <div class="port-grad"></div>
-      <div class="port-glass">
-        <div class="port-tag">Paisajismo · Alberca · Exterior</div>
-        <div class="port-name">Jardín & Alberca — Terraza Lounge</div>
-        <div class="port-meta"><span>Obra exterior</span><span>Riviera Nayarit</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ 03 · SERVICIOS ═══ -->
-<section id="servicios">
-  <div style="padding:0 var(--pad-h);">
-    <div class="eyebrow">Lo que hacemos</div>
-    <h2 class="s-title reveal">Tres disciplinas.<br>Un solo <em>responsable.</em></h2>
-  </div>
-  <div class="svc-grid">
-    <div class="svc-card reveal">
-      <div class="svc-ghost">01</div>
-      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="18" cy="18" r="15"/>
-        <line x1="18" y1="3" x2="18" y2="33"/>
-        <line x1="3" y1="18" x2="33" y2="18"/>
-        <circle cx="18" cy="18" r="4"/>
-      </svg>
-      <div class="svc-num">01 — Arquitectura</div>
-      <div class="svc-name">Arquitectura</div>
-      <div class="svc-desc">Del concepto a los planos con los que realmente se construye — estética, función y normativa en el mismo documento.</div>
-      <ul class="svc-list">
-        <li>Proyecto arquitectónico</li>
-        <li>Proyecto ejecutivo</li>
-        <li>Diseño interior</li>
-        <li>Visualización</li>
-      </ul>
-    </div>
-    <div class="svc-card reveal">
-      <div class="svc-ghost">02</div>
-      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="14" width="28" height="20"/>
-        <polyline points="2,14 18,4 34,14"/>
-        <rect x="11" y="22" width="6" height="12"/>
-        <rect x="20" y="22" width="6" height="8"/>
-      </svg>
-      <div class="svc-num">02 — Construcción</div>
-      <div class="svc-name">Construcción</div>
-      <div class="svc-desc">Ejecutamos lo que diseñamos. Avance documentado, estimaciones claras y una sola persona respondiendo por la obra.</div>
-      <ul class="svc-list">
-        <li>Obra residencial</li>
-        <li>Obra comercial</li>
-        <li>Remodelación</li>
-        <li>Supervisión</li>
-      </ul>
-    </div>
-    <div class="svc-card reveal">
-      <div class="svc-ghost">03</div>
-      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
-        <line x1="18" y1="4" x2="18" y2="32"/>
-        <line x1="18" y1="12" x2="5" y2="20"/>
-        <line x1="18" y1="12" x2="31" y2="20"/>
-        <path d="M5 20 Q5 27 11.5 27 Q18 27 18 20"/>
-        <path d="M18 20 Q18 27 24.5 27 Q31 27 31 20"/>
-        <line x1="12" y1="32" x2="24" y2="32"/>
-      </svg>
-      <div class="svc-num">03 — Valuación</div>
-      <div class="svc-name">Valuación</div>
-      <div class="svc-desc">Dictámenes técnicos para decidir con números, no con suposiciones: comprar, vender, financiar o repartir.</div>
-      <ul class="svc-list">
-        <li>Avalúos</li>
-        <li>Valor comercial</li>
-        <li>Terrenos e inmuebles</li>
-        <li>Asesoría técnica</li>
-      </ul>
-    </div>
-  </div>
-</section>
 
 <!-- NOSOTROS -->
 <section id="nosotros">
@@ -1584,15 +1144,16 @@ footer{
     </div>
     <div class="about-text">
       <div class="eyebrow">Quiénes somos</div>
-      <h2 class="s-title reveal">Un mismo equipo<br>de principio a <em>fin.</em></h2>
+      <h2 class="s-title reveal">Interiores que<br><em>enamoran.</em></h2>
       <p class="about-body reveal">
-        Somos un estudio de arquitectura, construcción y valuación inmobiliaria en Tepic, Nayarit. Diseñamos el proyecto, lo planeamos con precisión y lo ejecutamos en obra — sin traspasar la responsabilidad a terceros a mitad del camino. Eso es lo que evita improvisaciones, sobrecostos y semanas perdidas.
+        LAB A+A es un estudio especializado en arquitectura, construcción y valuación inmobiliaria en Tepic, Nayarit. Combinamos rigor técnico con visión creativa para entregar proyectos que trascienden lo ordinario — desde el primer trazo hasta la llave en mano.
       </p>
       <div class="about-pills reveal">
-        <span class="pill">Arquitectura</span>
+        <span class="pill">Diseño</span>
         <span class="pill">Construcción</span>
         <span class="pill">Supervisión</span>
         <span class="pill">Valuación</span>
+        <span class="pill">Gestión</span>
         <span class="pill">Nayarit</span>
       </div>
       <div class="about-badge reveal">
@@ -1603,181 +1164,125 @@ footer{
   </div>
 </section>
 
-<!-- ═══ 04 · CONTENIDO EDITORIAL (versión web de los carruseles) ═══ -->
-<section id="aprende">
-  <div class="eyebrow">Antes de construir</div>
-  <h2 class="s-title reveal">Antes de construir,<br>necesitas <em>saber esto.</em></h2>
-  <div class="learn-grid">
-    <a class="learn-card reveal" href="blog/por-que-varian-los-presupuestos-de-construccion/">
-      <div class="learn-num">Lectura 01</div>
-      <div class="learn-q">¿Por qué dos presupuestos pueden variar hasta 40%?</div>
-      <div class="learn-a">Materiales, instalaciones, acabados y alcance cambian completamente un presupuesto. Dos números distintos casi nunca describen la misma casa.</div>
-      <div class="learn-link">Leer explicación <span>→</span></div>
-    </a>
-    <a class="learn-card reveal" href="blog/que-incluye-un-proyecto-ejecutivo/">
-      <div class="learn-num">Lectura 02</div>
-      <div class="learn-q">¿Qué incluye un proyecto ejecutivo?</div>
-      <div class="learn-a">Planos, instalaciones, especificaciones y documentación necesaria para construir con claridad — y para que cualquier constructor cotice lo mismo.</div>
-      <div class="learn-link">Conocer el proceso <span>→</span></div>
-    </a>
-    <a class="learn-card reveal" href="blog/que-necesitas-antes-de-construir/">
-      <div class="learn-num">Lectura 03</div>
-      <div class="learn-q">¿Diseño o construcción primero?</div>
-      <div class="learn-a">La planeación correcta evita improvisaciones durante la obra. Aquí va el orden real de los pasos y los documentos que necesitas antes del primer metro cúbico.</div>
-      <div class="learn-link">Ver cómo trabajamos <span>→</span></div>
-    </a>
+<!-- SERVICIOS -->
+<section id="servicios">
+  <div style="padding:0 var(--pad-h);">
+    <div class="eyebrow">Nuestros servicios</div>
+    <h2 class="s-title reveal">Todo lo que necesitas,<br>en un <em>solo lugar.</em></h2>
   </div>
-</section>
-
-<!-- ═══ 05 · PROCESO REAL ═══ -->
-<!-- Sustituir cada imagen por la foto real de esa etapa (visita a terreno, croquis sobre mesa,
-     plano ejecutivo, obra en curso, entrega). Fotografía de celular real > render. -->
-<section id="proceso">
-  <div class="eyebrow neutral">Cómo trabajamos</div>
-  <h2 class="s-title reveal">Así sucede <em>realmente.</em></h2>
-  <div class="proc-grid">
-    <div class="proc-step reveal">
-      <div class="proc-photo">
-        <div class="proc-index">01</div>
-        <img src="imgs/hero3-sm.webp" loading="lazy" decoding="async" alt="Visita al terreno en Nayarit"/>
-      </div>
-      <div class="proc-body">
-        <div class="proc-name">Visita</div>
-        <div class="proc-title">Vamos al terreno</div>
-        <div class="proc-desc">Medimos, revisamos topografía, accesos y servicios. Sin costo y sin compromiso.</div>
-      </div>
+  <div class="svc-grid">
+    <div class="svc-card reveal">
+      <div class="svc-ghost">01</div>
+      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="15"/>
+        <line x1="18" y1="3" x2="18" y2="33"/>
+        <line x1="3" y1="18" x2="33" y2="18"/>
+        <circle cx="18" cy="18" r="4"/>
+      </svg>
+      <div class="svc-num">01 — Diseño</div>
+      <div class="svc-name">Diseño Arquitectónico</div>
+      <div class="svc-desc">Proyectos que equilibran estética, funcionalidad y sustentabilidad — desde la idea hasta los planos constructivos.</div>
+      <ul class="svc-list">
+        <li>Diseño residencial y comercial</li>
+        <li>Diseño de interiores</li>
+        <li>Renders y visualización 3D</li>
+        <li>Planos y memoria descriptiva</li>
+      </ul>
     </div>
-    <div class="proc-step reveal">
-      <div class="proc-photo">
-        <div class="proc-index">02</div>
-        <img src="imgs/port2-sm.webp" loading="lazy" decoding="async" alt="Croquis y propuesta sobre la mesa"/>
-      </div>
-      <div class="proc-body">
-        <div class="proc-name">Propuesta</div>
-        <div class="proc-title">Croquis y alcance</div>
-        <div class="proc-desc">Primeras plantas, superficies y un estimado real de inversión y tiempos.</div>
-      </div>
-    </div>
-    <div class="proc-step reveal">
-      <div class="proc-photo">
-        <div class="proc-index">03</div>
-        <img src="imgs/port4-sm.webp" loading="lazy" decoding="async" alt="Plano ejecutivo del proyecto"/>
-      </div>
-      <div class="proc-body">
-        <div class="proc-name">Proyecto</div>
-        <div class="proc-title">Planos ejecutivos</div>
-        <div class="proc-desc">Arquitectónicos, estructurales, instalaciones y especificaciones para construir sin adivinar.</div>
-      </div>
-    </div>
-    <div class="proc-step reveal">
-      <div class="proc-photo">
-        <div class="proc-index">04</div>
-        <img src="imgs/hero2-sm.webp" loading="lazy" decoding="async" alt="Obra en proceso con supervisión"/>
-      </div>
-      <div class="proc-body">
-        <div class="proc-name">Obra</div>
-        <div class="proc-title">Construcción supervisada</div>
-        <div class="proc-desc">Avance documentado, estimaciones por etapa y comunicación directa con el equipo.</div>
-      </div>
-    </div>
-    <div class="proc-step reveal">
-      <div class="proc-photo">
-        <div class="proc-index">05</div>
-        <img src="imgs/port1-sm.webp" loading="lazy" decoding="async" alt="Proyecto terminado y entregado"/>
-      </div>
-      <div class="proc-body">
-        <div class="proc-name">Entrega</div>
-        <div class="proc-title">Llave en mano</div>
-        <div class="proc-desc">Revisión final, documentación completa y garantías de instalaciones en tu poder.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ 06 · CASO DESTACADO ═══ -->
-<!-- Cambiar foto, superficie y alcance por los datos reales del proyecto publicado en Instagram. -->
-<section id="caso">
-  <div class="eyebrow">Caso destacado</div>
-  <h2 class="s-title reveal">Un proyecto,<br><em>explicado completo.</em></h2>
-  <div class="case-wrap reveal">
-    <div class="case-photo">
-      <img src="imgs/port1-lg.webp" loading="lazy" decoding="async" alt="Casa Puertas del Sol — Xalisco, Nayarit"/>
-      <div class="case-stamp">Xalisco, Nayarit · Residencial</div>
-    </div>
-    <div class="case-body">
-      <h3 class="case-title">Casa Puertas <em>del Sol</em></h3>
-      <div class="case-facts">
-        <div class="case-fact"><div class="case-fact-n">256</div><div class="case-fact-l">m² construidos</div></div>
-        <div class="case-fact"><div class="case-fact-n">2</div><div class="case-fact-l">Niveles</div></div>
-        <div class="case-fact"><div class="case-fact-n">Xalisco</div><div class="case-fact-l">Nayarit</div></div>
-      </div>
-      <div class="case-label">El proyecto</div>
-      <p class="case-text">Casa residencial diseñada buscando iluminación natural, distribución funcional y una relación directa entre el interior y el exterior. La orientación y los vanos se definieron desde el primer croquis para reducir carga térmica sin depender del aire acondicionado.</p>
-      <div class="case-label" style="margin-top:32px;">Alcance</div>
-      <ul class="case-scope">
-        <li>Diseño arquitectónico</li>
-        <li>Proyecto ejecutivo</li>
-        <li>Visualización</li>
+    <div class="svc-card reveal">
+      <div class="svc-ghost">02</div>
+      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="14" width="28" height="20"/>
+        <polyline points="2,14 18,4 34,14"/>
+        <rect x="11" y="22" width="6" height="12"/>
+        <rect x="20" y="22" width="6" height="8"/>
+      </svg>
+      <div class="svc-num">02 — Construcción</div>
+      <div class="svc-name">Construcción Integral</div>
+      <div class="svc-desc">Ejecutamos cada proyecto con los más altos estándares de calidad, en tiempo y forma, sin sorpresas.</div>
+      <ul class="svc-list">
+        <li>Construcción residencial</li>
+        <li>Edificios y locales comerciales</li>
+        <li>Remodelaciones</li>
         <li>Supervisión de obra</li>
       </ul>
-      <div class="case-label" style="margin-top:32px;">Proceso</div>
-      <div class="case-flow">
-        <span class="case-chip">Idea inicial</span><span class="case-arrow">→</span>
-        <span class="case-chip">Planos</span><span class="case-arrow">→</span>
-        <span class="case-chip">Desarrollo</span><span class="case-arrow">→</span>
-        <span class="case-chip">Resultado</span>
-      </div>
-      <div class="case-cta">
-        <a href="#contacto" class="btn outline-dark"><span>Quiero algo así →</span></a>
-      </div>
+    </div>
+    <div class="svc-card reveal">
+      <div class="svc-ghost">03</div>
+      <svg class="svc-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1" xmlns="http://www.w3.org/2000/svg">
+        <line x1="18" y1="4" x2="18" y2="32"/>
+        <line x1="18" y1="12" x2="5" y2="20"/>
+        <line x1="18" y1="12" x2="31" y2="20"/>
+        <path d="M5 20 Q5 27 11.5 27 Q18 27 18 20"/>
+        <path d="M18 20 Q18 27 24.5 27 Q31 27 31 20"/>
+        <line x1="12" y1="32" x2="24" y2="32"/>
+      </svg>
+      <div class="svc-num">03 — Valuación</div>
+      <div class="svc-name">Valuación Inmobiliaria</div>
+      <div class="svc-desc">Dictámenes técnicos certificados para tomar decisiones informadas sobre tus activos inmobiliarios.</div>
+      <ul class="svc-list">
+        <li>Avalúos comerciales</li>
+        <li>Valuación hipotecaria</li>
+        <li>Peritaje inmobiliario</li>
+        <li>Análisis de mercado</li>
+      </ul>
     </div>
   </div>
 </section>
 
-<!-- ═══ 07 · EN OBRA — del plano a la realidad ═══ -->
-<!-- Los .reel aceptan video vertical: pon el archivo en data-video (p.ej. imgs/reel-obra-1.mp4).
-     Si el archivo no existe, se queda la foto de portada y no se rompe nada.
-     Sirve tal cual el material que ya graban para Reels: recorrido de obra, concreto,
-     planos sobre mesa, supervisión, avance, materiales, detalles. -->
-<section id="obra">
-  <div class="eyebrow">En obra</div>
-  <h2 class="s-title reveal">Del plano<br>a la <em>realidad.</em></h2>
-  <div class="flow-strip reveal">
-    <div class="flow-frame">
-      <img src="imgs/port4-sm.webp" loading="lazy" decoding="async" alt="Plano del proyecto"/>
-      <div class="flow-label"><span class="flow-step">01</span> Plano</div>
+<!-- PORTFOLIO -->
+<section id="proyectos">
+  <div style="padding:0 var(--pad-h);">
+    <div class="eyebrow neutral">Portafolio</div>
+    <h2 class="s-title reveal">Proyectos que <em>hablan<br>por sí solos.</em></h2>
+  </div>
+  <div class="port-grid" style="margin:0 var(--pad-h);">
+    <!-- Proyecto 1 — gran tarjeta span2 -->
+    <div class="port-card span2 reveal">
+      <div class="port-bg pb1" style="background-position:center 50%;"></div>
+      <div class="port-grad"></div>
+      <div class="port-glass">
+        <div class="port-tag">Arquitectura · Residencial · Nayarit</div>
+        <div class="port-name">Casa Contemporánea — Fachada Doble Nivel</div>
+      </div>
     </div>
-    <div class="flow-frame">
-      <img src="imgs/hero2-sm.webp" loading="lazy" decoding="async" alt="Proceso constructivo"/>
-      <div class="flow-label"><span class="flow-step">02</span> Proceso</div>
+    <!-- Proyecto 2 -->
+    <div class="port-card reveal">
+      <div class="port-bg pb2" style="background-position:center 55%;"></div>
+      <div class="port-grad"></div>
+      <div class="port-glass">
+        <div class="port-tag">Diseño · Interiorismo · Residencial</div>
+        <div class="port-name">Sala — Comedor con Escalera Flotante</div>
+      </div>
     </div>
-    <div class="flow-frame">
-      <img src="imgs/hero4-sm.webp" loading="lazy" decoding="async" alt="Detalle constructivo en obra"/>
-      <div class="flow-label"><span class="flow-step">03</span> Obra</div>
+    <!-- Proyecto 3 -->
+    <div class="port-card reveal">
+      <div class="port-bg pb3" style="background-position:center 50%;"></div>
+      <div class="port-grad"></div>
+      <div class="port-glass">
+        <div class="port-tag">Cocina · Minimalista · Interiorismo</div>
+        <div class="port-name">Cocina Integral — Mármol y Madera</div>
+      </div>
     </div>
-    <div class="flow-frame">
-      <img src="imgs/port1-sm.webp" loading="lazy" decoding="async" alt="Resultado terminado"/>
-      <div class="flow-label"><span class="flow-step">04</span> Resultado</div>
+    <!-- Proyecto 4 -->
+    <div class="port-card reveal">
+      <div class="port-bg pb4" style="background-position:center 50%;"></div>
+      <div class="port-grad"></div>
+      <div class="port-glass">
+        <div class="port-tag">Suite · Diseño · Residencial</div>
+        <div class="port-name">Suite Principal — Vista al Jardín</div>
+      </div>
+    </div>
+    <!-- Proyecto 5 -->
+    <div class="port-card reveal">
+      <div class="port-bg pb5" style="background-position:center 40%;"></div>
+      <div class="port-grad"></div>
+      <div class="port-glass">
+        <div class="port-tag">Paisajismo · Alberca · Exterior</div>
+        <div class="port-name">Jardín con Alberca — Terraza Lounge</div>
+      </div>
     </div>
   </div>
-  <div class="reels-row reveal">
-    <div class="reel" data-video="" data-note="Recorrido de obra">
-      <img src="imgs/hero1-sm.webp" loading="lazy" decoding="async" alt="Recorrido de obra"/>
-      <div class="reel-play">▶</div>
-      <div class="reel-cap"><span>Video</span> Recorrido de obra</div>
-    </div>
-    <div class="reel" data-video="" data-note="Supervisión semanal">
-      <img src="imgs/hero3-sm.webp" loading="lazy" decoding="async" alt="Supervisión en obra"/>
-      <div class="reel-play">▶</div>
-      <div class="reel-cap"><span>Video</span> Supervisión semanal</div>
-    </div>
-    <div class="reel" data-video="" data-note="Detalles y materiales">
-      <img src="imgs/port3-sm.webp" loading="lazy" decoding="async" alt="Detalles y materiales"/>
-      <div class="reel-play">▶</div>
-      <div class="reel-cap"><span>Video</span> Detalles y materiales</div>
-    </div>
-  </div>
-  <div class="obra-note">Así trabajamos realmente — sin filtros de catálogo.</div>
 </section>
 
 <!-- NAYARIT -->
@@ -1839,37 +1344,12 @@ footer{
     <div class="garantia">
       <div class="garantia-check">✓ Garantía 03</div>
       <div class="garantia-title">Equipo directo, sin intermediarios</div>
-      <div class="garantia-body">No subcontratamos lo esencial. Quien diseña, construye y valúa forma parte del mismo equipo — eso protege la calidad y mantiene la comunicación directa contigo.</div>
+      <div class="garantia-body">No subcontratamos lo esencial. Quien diseña, construye y valúa forma parte de LAB A+A — eso protege la calidad y mantiene la comunicación directa contigo.</div>
     </div>
     <div class="garantia">
       <div class="garantia-check">✓ Garantía 04</div>
       <div class="garantia-title">Documentación completa al cierre</div>
       <div class="garantia-body">Planos finales, memorias de cálculo, facturas de materiales y garantías de instalaciones — todo en tu poder el día de la entrega, sin trámites pendientes.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ 08 · TESTIMONIOS ═══ -->
-<!-- PENDIENTE: sustituir cada tarjeta por un testimonio real (nombre, proyecto y año).
-     No publicar testimonios inventados: el texto actual es un marcador visible a propósito. -->
-<section id="testimonios">
-  <div class="eyebrow neutral">Clientes</div>
-  <h2 class="s-title reveal">Lo que dicen<br>quienes ya <em>construyeron.</em></h2>
-  <div class="testi-grid">
-    <div class="testi reveal">
-      <div class="testi-pending">Pendiente · testimonio real</div>
-      <div class="testi-quote">«Espacio reservado para el testimonio del cliente: qué contrató, cómo fue la obra y qué recibió al final.»</div>
-      <div class="testi-who">Nombre del cliente <span>· Proyecto · Año</span></div>
-    </div>
-    <div class="testi reveal">
-      <div class="testi-pending">Pendiente · testimonio real</div>
-      <div class="testi-quote">«Espacio reservado para el testimonio del cliente: qué contrató, cómo fue la obra y qué recibió al final.»</div>
-      <div class="testi-who">Nombre del cliente <span>· Proyecto · Año</span></div>
-    </div>
-    <div class="testi reveal">
-      <div class="testi-pending">Pendiente · testimonio real</div>
-      <div class="testi-quote">«Espacio reservado para el testimonio del cliente: qué contrató, cómo fue la obra y qué recibió al final.»</div>
-      <div class="testi-who">Nombre del cliente <span>· Proyecto · Año</span></div>
     </div>
   </div>
 </section>
@@ -1890,15 +1370,6 @@ footer{
     </div>
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)">
-        <span>¿Por qué dos presupuestos del mismo proyecto son tan distintos?</span>
-        <div class="faq-icon">+</div>
-      </div>
-      <div class="faq-a">
-        <div class="faq-a-inner">Porque casi nunca describen la misma casa: cambian materiales, instalaciones, acabados y, sobre todo, el alcance incluido. Un presupuesto sin proyecto ejecutivo es una estimación, no un compromiso. Lo explicamos a detalle en <a href="blog/por-que-varian-los-presupuestos-de-construccion/">esta lectura</a>.</div>
-      </div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)">
         <span>¿Cuánto tiempo tarda un proyecto residencial?</span>
         <div class="faq-icon">+</div>
       </div>
@@ -1912,7 +1383,7 @@ footer{
         <div class="faq-icon">+</div>
       </div>
       <div class="faq-a">
-        <div class="faq-a-inner">Sí. Los tres servicios — arquitectura, construcción y valuación — son contratables de forma independiente. Muchos clientes comienzan con una valuación antes de comprar un terreno, o contratan solo el proyecto para construir en otra etapa. Adaptamos el alcance a tu necesidad.</div>
+        <div class="faq-a-inner">Sí. Los tres servicios — diseño arquitectónico, construcción y valuación — son contratables de forma independiente. Muchos clientes comienzan con una valuación antes de comprar un terreno, o contratan solo el diseño para construir en otra etapa. Adaptamos el alcance a tu necesidad.</div>
       </div>
     </div>
     <div class="faq-item">
@@ -1936,63 +1407,48 @@ footer{
   </div>
 </section>
 
-<!-- ═══ 09 · INSTAGRAM — selección manual ═══ -->
-<!-- Selección manual (no feed automático): seis publicaciones que de verdad venden.
-     Cambia el href de cada mosaico por el permalink real de la publicación. -->
-<section id="instagram">
-  <div class="ig-head">
-    <div>
-      <div class="eyebrow">@isovalinc</div>
-      <h2 class="s-title reveal" style="margin-bottom:0;">Desde <em>la obra.</em></h2>
+<!-- PROCESO — TIMELINE -->
+<section id="proceso">
+  <div class="eyebrow neutral">Cómo trabajamos</div>
+  <h2 class="s-title reveal">De la idea a la <em>llave en mano.</em></h2>
+  <div class="timeline reveal">
+    <div class="tl-step">
+      <div class="tl-circle">01</div>
+      <div class="tl-tag">Sin costo</div>
+      <div class="tl-name">Consulta inicial</div>
+      <div class="tl-desc">Escuchamos tu proyecto, evaluamos viabilidad técnica y definimos el alcance exacto — sin compromiso.</div>
     </div>
-    <a class="ig-follow" href="https://instagram.com/isovalinc" target="_blank" rel="noopener">Ver más en Instagram <span>→</span></a>
-  </div>
-  <div class="ig-grid">
-    <a class="ig-tile reveal" href="https://instagram.com/isovalinc" target="_blank" rel="noopener">
-      <img src="imgs/hero2-sm.webp" loading="lazy" decoding="async" alt="Supervisión en obra"/>
-      <div class="ig-kind">Video</div>
-      <div class="ig-cap">Supervisión en obra</div>
-    </a>
-    <a class="ig-tile reveal" href="https://instagram.com/isovalinc" target="_blank" rel="noopener">
-      <img src="imgs/port1-sm.webp" loading="lazy" decoding="async" alt="Casa Puertas del Sol"/>
-      <div class="ig-kind">Proyecto</div>
-      <div class="ig-cap">Casa Puertas del Sol</div>
-    </a>
-    <a class="ig-tile reveal" href="blog/que-necesitas-antes-de-construir/">
-      <img src="imgs/quote-sm.webp" loading="lazy" decoding="async" alt="Antes de construir"/>
-      <div class="ig-kind">Consejo</div>
-      <div class="ig-cap">Antes de construir…</div>
-    </a>
-    <a class="ig-tile reveal" href="blog/que-incluye-un-proyecto-ejecutivo/">
-      <img src="imgs/port4-sm.webp" loading="lazy" decoding="async" alt="Proyecto ejecutivo"/>
-      <div class="ig-kind">Proceso</div>
-      <div class="ig-cap">Proyecto ejecutivo</div>
-    </a>
-    <a class="ig-tile reveal" href="https://instagram.com/isovalinc" target="_blank" rel="noopener">
-      <img src="imgs/hero4-sm.webp" loading="lazy" decoding="async" alt="Avance semanal de obra"/>
-      <div class="ig-kind">Obra</div>
-      <div class="ig-cap">Avance semanal</div>
-    </a>
-    <a class="ig-tile reveal" href="https://instagram.com/isovalinc" target="_blank" rel="noopener">
-      <img src="imgs/port5-sm.webp" loading="lazy" decoding="async" alt="Arquitectura y construcción"/>
-      <div class="ig-kind">Estudio</div>
-      <div class="ig-cap">Arquitectura + Construcción</div>
-    </a>
+    <div class="tl-step">
+      <div class="tl-circle">02</div>
+      <div class="tl-tag">Esta semana</div>
+      <div class="tl-name">Propuesta detallada</div>
+      <div class="tl-desc">Tiempos, costos y especificaciones técnicas. Cada línea es un compromiso. Sin letra chica, sin sorpresas.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-circle">03</div>
+      <div class="tl-tag">En obra</div>
+      <div class="tl-name">Ejecución supervisada</div>
+      <div class="tl-desc">Construcción con supervisión constante, reportes de avance y comunicación directa con el equipo.</div>
+    </div>
+    <div class="tl-step">
+      <div class="tl-circle">04</div>
+      <div class="tl-tag">Garantizado</div>
+      <div class="tl-name">Entrega llave en mano</div>
+      <div class="tl-desc">Inspección final de calidad, walkthrough completo y documentación total en tu poder.</div>
+    </div>
   </div>
 </section>
 
-<!-- ═══ 10 · CONTACTO ═══ -->
+<!-- CONTACTO -->
 <section id="contacto">
   <div class="eyebrow">Contacto</div>
-  <h2 class="s-title reveal" style="margin-bottom:18px;">¿Tienes un proyecto <em>en mente?</em></h2>
-  <p class="ct-lead reveal">La primera consulta no tiene costo. Nos cuentas qué quieres construir, revisamos viabilidad y te decimos con números qué implica.</p>
+  <h2 class="s-title reveal" style="margin-bottom:60px;">¿Listo para <em>empezar?</em></h2>
   <div class="ct-wrap">
     <div class="reveal">
       <img src="imgs/logo.png" alt="LAB A+A" class="ct-logo-img"/>
       <div class="ci-block"><div class="ci-label">Ubicación</div><div class="ci-val">Tepic, Nayarit · México</div></div>
       <div class="ci-block"><div class="ci-label">Teléfono</div><div class="ci-val"><a href="tel:3111614155">311 161 4155</a></div></div>
       <div class="ci-block"><div class="ci-label">Email</div><div class="ci-val"><a href="mailto:arqlabaa@gmail.com">arqlabaa@gmail.com</a></div></div>
-      <div class="ci-block"><div class="ci-label">Instagram</div><div class="ci-val"><a href="https://instagram.com/isovalinc" target="_blank" rel="noopener">@isovalinc</a></div></div>
       <div class="ct-channels">
         <div class="ct-channels-label">Contáctanos por</div>
         <div class="ct-btns">
@@ -2010,7 +1466,7 @@ footer{
           </a>
         </div>
       </div>
-      <div class="ci-list">Proyecto Arquitectónico<br>Proyecto Ejecutivo<br>Construcción y Supervisión<br>Valuación Inmobiliaria</div>
+      <div class="ci-list">Diseño Arquitectónico<br>Construcción Integral<br>Gestión y Supervisión<br>Valuación Inmobiliaria</div>
     </div>
     <form id="ctForm" class="reveal" onsubmit="onSub(event)">
       <div class="f-grid">
@@ -2022,12 +1478,11 @@ footer{
         <label class="f-label">Servicio de interés</label>
         <select class="f-inp" style="appearance:none;cursor:none;">
           <option value="">Selecciona un servicio</option>
-          <option>Proyecto arquitectónico</option>
-          <option>Proyecto ejecutivo</option>
-          <option>Construcción / obra</option>
-          <option>Remodelación</option>
-          <option>Diseño interior</option>
-          <option>Valuación / avalúo</option>
+          <option>Diseño Arquitectónico</option>
+          <option>Construcción Integral</option>
+          <option>Valuación Inmobiliaria</option>
+          <option>Diseño de Interiores</option>
+          <option>Gestión y Supervisión</option>
         </select>
       </div>
       <div class="f-group">
@@ -2038,7 +1493,7 @@ footer{
           <div class="f-method-btn" onclick="setMethod(this)">Email</div>
         </div>
       </div>
-      <div class="f-group"><label class="f-label">Cuéntanos tu proyecto</label><textarea class="f-inp" placeholder="Qué quieres construir, en qué zona, superficie aproximada y en qué etapa estás..."></textarea></div>
+      <div class="f-group"><label class="f-label">Cuéntanos tu proyecto</label><textarea class="f-inp" placeholder="Describe tu proyecto, ubicación, presupuesto aproximado..."></textarea></div>
       <button type="submit" class="btn-sub"><span>Enviar mensaje →</span></button>
       <div class="f-ok" id="fOk">Mensaje enviado. Te contactamos en menos de 24 horas.</div>
     </form>
@@ -2053,7 +1508,7 @@ footer{
     </div>
     <div class="closing-attr">LAB A+A — Appraiser & Architect · Tepic, Nayarit</div>
     <div class="closing-cta reveal">
-      <a href="#contacto" class="btn solid"><span>Agenda tu consulta →</span></a>
+      <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
       <a href="https://wa.me/523111614155" class="btn outline-dark" target="_blank"><span>WhatsApp directo</span></a>
     </div>
   </div>
@@ -2061,9 +1516,9 @@ footer{
 
 <!-- PRE-FOOTER CTA -->
 <div class="pre-footer">
-  <div class="pf-text">La primera consulta <strong>no tiene costo.</strong></div>
+  <div class="pf-text">¿Listo para construir algo <strong>extraordinario?</strong></div>
   <div class="pf-actions">
-    <a href="#contacto" class="btn solid"><span>Agenda tu consulta →</span></a>
+    <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
     <a href="tel:3111614155" class="btn outline"><span>311 161 4155</span></a>
   </div>
 </div>
@@ -2077,10 +1532,9 @@ footer{
   <div class="f-copy">© 2025 LAB A+A — Appraiser & Architect · Tepic, Nayarit</div>
   <ul class="f-links">
     <li><a href="#inicio">Inicio</a></li>
-    <li><a href="#proyectos">Proyectos</a></li>
     <li><a href="#servicios">Servicios</a></li>
-    <li><a href="#aprende">Aprende</a></li>
-    <li><a href="https://instagram.com/isovalinc" target="_blank" rel="noopener">Instagram</a></li>
+    <li><a href="#proyectos">Proyectos</a></li>
+    <li><a href="#nayarit">Nayarit</a></li>
     <li><a href="#contacto">Contacto</a></li>
   </ul>
 </footer>
@@ -2224,30 +1678,6 @@ function toggleFaq(el){
   document.querySelectorAll('.faq-item.open').forEach(function(i){i.classList.remove('open');});
   if(!isOpen){item.classList.add('open');}
 }
-</script>
-
-<script>
-/* Reels verticales: si .reel tiene data-video con un archivo válido, se reproduce en bucle.
-   Si el archivo no existe, se queda la foto de portada. */
-(function(){
-  var reels=document.querySelectorAll('.reel[data-video]');
-  if(!reels.length)return;
-  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
-  Array.prototype.forEach.call(reels,function(r){
-    var src=(r.getAttribute('data-video')||'').trim();
-    if(!src)return;
-    var v=document.createElement('video');
-    v.muted=true;v.loop=true;v.autoplay=true;v.playsInline=true;v.preload='metadata';
-    v.setAttribute('muted','');v.setAttribute('playsinline','');
-    v.addEventListener('loadeddata',function(){r.classList.add('playing');});
-    v.addEventListener('error',function(){
-      r.classList.remove('playing');
-      if(v.parentNode)v.parentNode.removeChild(v);
-    },true);
-    v.src=src;
-    r.appendChild(v);
-  });
-})();
 </script>
 </body>
 </html>
