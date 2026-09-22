@@ -9,11 +9,22 @@
 <meta property="og:description" content="Bases tipo box a la medida, +8 tonos, fabricación propia en Tepic. Cotiza por WhatsApp."/>
 <meta property="og:type" content="website"/>
 <link rel="icon" href="assets/logo-icon.svg"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<meta name="theme-color" content="#1A1A1A"/>
+<!-- Fuentes self-hosted (subset latin): sin CSS bloqueante ni saltos a Google -->
+<link rel="preload" href="fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="fonts/barlow-400-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="fonts/barlowcond-700-latin.woff2" as="font" type="font/woff2" crossorigin/>
 <style>
+@font-face{font-family:'Anton';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/anton-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/barlow-400-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url('fonts/barlow-600-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/barlow-700-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:600;font-display:swap;src:url('fonts/barlowcond-600-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/barlowcond-700-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
 :root{
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-spring:cubic-bezier(.34,1.4,.64,1);
   --graphite:#1A1A1A;
   --graphite-2:#242424;
   --steel:#3E4A54;
@@ -38,7 +49,7 @@ img,svg{max-width:100%;display:block}
 .tag-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;color:var(--muted);font-size:14px}
 
 /* buttons */
-.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;font-size:17px;padding:15px 26px;border:2px solid var(--graphite);transition:.15s;cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;font-size:17px;padding:15px 26px;border:2px solid var(--graphite);cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease,transform .28s var(--ease-spring),box-shadow .28s var(--ease-out)}
 .btn-primary{background:var(--orange);border-color:var(--orange);color:#fff}
 .btn-primary:hover{background:var(--orange-2);border-color:var(--orange-2)}
 .btn-dark{background:var(--graphite);color:var(--paper)}
@@ -48,7 +59,8 @@ img,svg{max-width:100%;display:block}
 .btn svg{width:20px;height:20px}
 
 /* header */
-header{position:sticky;top:0;z-index:50;background:rgba(244,242,237,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+header{position:sticky;top:0;z-index:50;background:rgba(244,242,237,.97);border-bottom:1px solid var(--border)}
+@media(min-width:1025px){header{background:rgba(244,242,237,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}}
 .nav{display:flex;align-items:center;justify-content:space-between;height:74px}
 .brand{display:flex;align-items:center;gap:12px}
 .brand .mark{width:42px;height:42px}
@@ -111,7 +123,7 @@ section{padding:96px 0}
 #medidas .sec-head h2{color:var(--paper)}
 #medidas .sec-head p{color:#b7b5af}
 .med-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-.med{border:1px solid #333;padding:26px 22px;transition:.15s;position:relative}
+.med{border:1px solid #333;padding:26px 22px;position:relative;transition:border-color .2s ease,background .2s ease,transform .3s var(--ease-out)}
 .med:hover{border-color:var(--orange);background:#202020}
 .med .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;text-transform:uppercase;color:var(--orange);font-size:14px;font-weight:700}
 .med .name{font-family:'Anton',sans-serif;font-size:30px;margin:8px 0 4px}
@@ -153,6 +165,46 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 .wa-float:hover{transform:scale(1.08)}
 .wa-float svg{width:32px;height:32px;fill:#fff}
 
+/* ===== MOVIMIENTO ===== */
+/* Entrada por bloque, disparada al acercarse al viewport */
+.rv{opacity:0;transform:translate3d(0,20px,0);transition:opacity .6s var(--ease-out),transform .6s var(--ease-out)}
+.rv.in{opacity:1;transform:none}
+
+/* Hero: entra solo, escalonado, sin esperar al scroll */
+.hero-grid .rv{transition-delay:var(--d,0ms)}
+
+@media(hover:hover) and (pointer:fine){
+  .btn:hover{transform:translate3d(0,-2px,0);box-shadow:0 8px 18px rgba(26,26,26,.18)}
+  .btn:active{transform:none;box-shadow:none;transition-duration:90ms}
+  .med:hover{transform:translate3d(0,-3px,0)}
+  .feat{transition:background .25s ease,transform .3s var(--ease-out)}
+  .feat:hover{transform:translate3d(0,-3px,0)}
+  .contact-card{transition:border-color .25s ease}
+  .contact-card:hover{border-color:var(--orange)}
+}
+
+/* El tono de la base cambia con una curva, no con un corte */
+.tone-face-l,.tone-face-r{transition:fill .45s var(--ease-out)}
+.sw{transition:transform .22s var(--ease-spring),box-shadow .22s ease}
+.sw:hover{transform:scale(1.1)}
+.sw:active{transform:scale(.96)}
+.sw[aria-pressed="true"]{transform:scale(1.06)}
+
+/* El botón flotante aparece al empezar a bajar: no tapa los CTA del hero */
+.wa-float{opacity:0;transform:translate3d(0,14px,0) scale(.9);pointer-events:none;
+  transition:opacity .3s ease,transform .3s var(--ease-spring),box-shadow .25s ease}
+.wa-float.show{opacity:1;transform:none;pointer-events:auto}
+.wa-float:hover{transform:scale(1.08);box-shadow:0 12px 30px rgba(0,0,0,.34)}
+
+/* ===== RENDIMIENTO ===== */
+/* Cada sección se maqueta al acercarse; el tamaño declarado evita saltos */
+#tonos,#medidas,#infantil,#contacto,footer{content-visibility:auto;contain-intrinsic-size:auto 640px}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .rv{opacity:1!important;transform:none!important}
+}
+
 @media(max-width:900px){
   .hero-grid,.tonos-grid,.kids,.contact-grid{grid-template-columns:1fr}
   .hero-art{order:-1}
@@ -166,6 +218,18 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
   .feat-grid,.med-grid{grid-template-columns:1fr}
   .hero-stats{gap:20px}
   section{padding:70px 0}
+  /* El encabezado cabe en una línea y el titular gana la parte alta */
+  .brand .mark{width:34px;height:34px}
+  .brand .name{font-size:21px}
+  .brand .sub{letter-spacing:3px;font-size:9px;white-space:nowrap}
+  .nav{height:62px}
+  .nav-cta .btn{padding:11px 14px;font-size:14px;letter-spacing:1px;gap:7px}
+  .nav-cta .btn svg{width:16px;height:16px}
+  .hero-grid{padding:36px 0 56px;gap:26px}
+  .hero-art svg{max-width:210px}
+  .hero p.lead{font-size:17px;margin:16px 0 24px}
+  .hero-cta .btn{width:100%;justify-content:center}
+  .hero-stats{margin-top:32px}
 }
 </style>
 </head>
@@ -477,6 +541,66 @@ tones.forEach(function(t,i){
 Array.prototype.forEach.call(document.querySelectorAll('#navlinks a'),function(a){
   a.addEventListener('click',function(){document.getElementById('navlinks').classList.remove('open')});
 });
+
+// ===== entradas al hacer scroll =====
+(function(){
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var sel = '.sec-head,.feat,.med,.med-custom,.contact-card,.contact-cta,.base-stage,.tonos-grid > div,.kids > div,.foot-grid';
+  var items = Array.prototype.slice.call(document.querySelectorAll(sel));
+
+  // el hero entra solo, escalonado, en cuanto la página pinta
+  var heroItems = Array.prototype.slice.call(document.querySelectorAll('.hero-grid > div'));
+  heroItems.forEach(function(el,i){ el.classList.add('rv'); el.style.setProperty('--d', (i*110)+'ms'); });
+
+  if(reduced || !('IntersectionObserver' in window)){
+    heroItems.concat(items).forEach(function(el){ el.classList.add('rv','in'); });
+    return;
+  }
+
+  requestAnimationFrame(function(){
+    heroItems.forEach(function(el){ el.classList.add('in'); });
+  });
+
+  items.forEach(function(el){ el.classList.add('rv'); });
+
+  // retraso corto dentro de cada rejilla: el grupo entra como bloque
+  ['.feat-grid','.med-grid','.contact-grid'].forEach(function(g){
+    var grid = document.querySelector(g);
+    if(!grid) return;
+    Array.prototype.forEach.call(grid.children,function(el,i){
+      el.style.transitionDelay = Math.min(i,5)*70 + 'ms';
+    });
+  });
+
+  var io = new IntersectionObserver(function(entries,obs){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      e.target.classList.add('in');
+      obs.unobserve(e.target);
+    });
+  },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  items.forEach(function(el){ io.observe(el); });
+
+  // red de seguridad: nada se queda invisible
+  setTimeout(function(){
+    document.querySelectorAll('.rv:not(.in)').forEach(function(el){ el.classList.add('in'); });
+  },2600);
+})();
+
+// ===== botón flotante de WhatsApp: entra al bajar =====
+(function(){
+  var wa = document.querySelector('.wa-float');
+  if(!wa) return;
+  var ticking = false;
+  function check(){
+    wa.classList.toggle('show', window.pageYOffset > 380);
+    ticking = false;
+  }
+  window.addEventListener('scroll',function(){
+    if(ticking) return; ticking = true; requestAnimationFrame(check);
+  },{passive:true});
+  check();
+})();
 </script>
 </body>
 </html>
