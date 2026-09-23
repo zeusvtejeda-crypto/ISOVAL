@@ -14,7 +14,7 @@ export interface CategoryMeta {
    * Los colores se definen en globals.css como --color-cat-<id> y --color-cat-<id>-soft.
    */
   tileClass: string; // fondo suave + borde + texto de la casilla
-  solidClass: string; // fondo sólido (chips, puntos, leyenda)
+  solidClass: string; // fondo sólido + texto legible en ambos temas (chips, puntos, leyenda)
   textClass: string; // texto con el color de la categoría
 }
 
@@ -26,7 +26,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '💥',
     blurb: 'Grupo 1 (sin el H): muy reactivos, blandos y reaccionan con el agua.',
     tileClass: 'bg-cat-alkali-metal-soft border-cat-alkali-metal text-fg',
-    solidClass: 'bg-cat-alkali-metal text-white',
+    solidClass: 'bg-cat-alkali-metal text-white dark:text-bg',
     textClass: 'text-cat-alkali-metal',
   },
   'alkaline-earth-metal': {
@@ -36,7 +36,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '🦴',
     blurb: 'Grupo 2: metales reactivos, forman iones 2+ (como el calcio de los huesos).',
     tileClass: 'bg-cat-alkaline-earth-metal-soft border-cat-alkaline-earth-metal text-fg',
-    solidClass: 'bg-cat-alkaline-earth-metal text-white',
+    solidClass: 'bg-cat-alkaline-earth-metal text-white dark:text-bg',
     textClass: 'text-cat-alkaline-earth-metal',
   },
   'transition-metal': {
@@ -46,7 +46,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '⚙️',
     blurb: 'Grupos 3–12 (bloque d): duros, buenos conductores y con muchos estados de oxidación.',
     tileClass: 'bg-cat-transition-metal-soft border-cat-transition-metal text-fg',
-    solidClass: 'bg-cat-transition-metal text-white',
+    solidClass: 'bg-cat-transition-metal text-white dark:text-bg',
     textClass: 'text-cat-transition-metal',
   },
   'post-transition-metal': {
@@ -56,7 +56,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '🥫',
     blurb: 'Metales del bloque p: más blandos y con puntos de fusión más bajos.',
     tileClass: 'bg-cat-post-transition-metal-soft border-cat-post-transition-metal text-fg',
-    solidClass: 'bg-cat-post-transition-metal text-white',
+    solidClass: 'bg-cat-post-transition-metal text-white dark:text-bg',
     textClass: 'text-cat-post-transition-metal',
   },
   metalloid: {
@@ -66,7 +66,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '💻',
     blurb: 'Propiedades intermedias entre metales y no metales; muchos son semiconductores.',
     tileClass: 'bg-cat-metalloid-soft border-cat-metalloid text-fg',
-    solidClass: 'bg-cat-metalloid text-white',
+    solidClass: 'bg-cat-metalloid text-white dark:text-bg',
     textClass: 'text-cat-metalloid',
   },
   nonmetal: {
@@ -76,7 +76,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '🌿',
     blurb: 'Malos conductores; forman la base de la vida (C, H, O, N, P, S).',
     tileClass: 'bg-cat-nonmetal-soft border-cat-nonmetal text-fg',
-    solidClass: 'bg-cat-nonmetal text-white',
+    solidClass: 'bg-cat-nonmetal text-white dark:text-bg',
     textClass: 'text-cat-nonmetal',
   },
   halogen: {
@@ -86,7 +86,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '🧂',
     blurb: 'Grupo 17: muy reactivos; con metales forman sales (halógeno = "formador de sal").',
     tileClass: 'bg-cat-halogen-soft border-cat-halogen text-fg',
-    solidClass: 'bg-cat-halogen text-white',
+    solidClass: 'bg-cat-halogen text-white dark:text-bg',
     textClass: 'text-cat-halogen',
   },
   'noble-gas': {
@@ -96,7 +96,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '🎈',
     blurb: 'Grupo 18: capa externa completa, casi no reaccionan.',
     tileClass: 'bg-cat-noble-gas-soft border-cat-noble-gas text-fg',
-    solidClass: 'bg-cat-noble-gas text-white',
+    solidClass: 'bg-cat-noble-gas text-white dark:text-bg',
     textClass: 'text-cat-noble-gas',
   },
   lanthanide: {
@@ -106,7 +106,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '🧲',
     blurb: 'Primera fila del bloque f (57–71): las "tierras raras" de imanes y pantallas.',
     tileClass: 'bg-cat-lanthanide-soft border-cat-lanthanide text-fg',
-    solidClass: 'bg-cat-lanthanide text-white',
+    solidClass: 'bg-cat-lanthanide text-white dark:text-bg',
     textClass: 'text-cat-lanthanide',
   },
   actinide: {
@@ -116,7 +116,7 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     emoji: '☢️',
     blurb: 'Segunda fila del bloque f (89–103): todos radiactivos.',
     tileClass: 'bg-cat-actinide-soft border-cat-actinide text-fg',
-    solidClass: 'bg-cat-actinide text-white',
+    solidClass: 'bg-cat-actinide text-white dark:text-bg',
     textClass: 'text-cat-actinide',
   },
 };

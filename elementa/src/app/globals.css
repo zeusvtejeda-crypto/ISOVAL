@@ -1,26 +1,460 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Modo oscuro por clase: el script inline de layout.tsx añade `.dark` a <html> antes del primer pintado. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* =============================================================================
+   Elementa · Sistema de diseño
+   Identidad: violeta eléctrico + acento cian, oro para XP, naranja para la racha.
+   Superficies ligeramente tintadas de violeta. Todos los pares texto/fondo
+   documentados cumplen WCAG AA (≥ 4.5:1) en ambos temas; en oscuro los rellenos
+   sólidos son luminosos y usan texto oscuro (`text-on-*`).
+   Los colores de categoría sólidos cumplen ≥ 4.5:1 con blanco en claro y ≥ 3:1
+   (+ ≥ 4.5:1 como texto sobre superficie) en oscuro. `text-fg` sobre `-soft`
+   supera 11:1 en ambos temas.
+   ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme static {
+  /* --- Base --- */
+  --color-bg: #f6f5fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #efedf8;
+  --color-border: #e2def0;
+  --color-border-strong: #cfc9e3;
+  --color-fg: #17142b;
+  --color-muted: #615c7a;
+  --color-overlay: rgb(14 12 24 / 0.45);
+
+  /* --- Marca --- */
+  --color-brand: #6841f0;
+  --color-brand-shade: #4b28c9;
+  --color-brand-soft: #efebff;
+  --color-on-brand: #ffffff;
+  --color-accent: #00b4e0;
+  --color-accent-soft: #ddf6fd;
+
+  /* --- Semánticos --- */
+  --color-success: #0e7c3a;
+  --color-success-shade: #0a5a2a;
+  --color-success-soft: #e0f6e7;
+  --color-on-success: #ffffff;
+  --color-danger: #cf2234;
+  --color-danger-shade: #9c1626;
+  --color-danger-soft: #ffe7e8;
+  --color-on-danger: #ffffff;
+  --color-warning: #866200;
+  --color-warning-soft: #fef2d8;
+  --color-on-warning: #ffffff;
+
+  /* --- Gamificación --- */
+  --color-xp: #965c00;
+  --color-xp-soft: #fff3cf;
+  --color-xp-glow: #ffb800;
+  --color-streak: #b04800;
+  --color-streak-soft: #ffebdf;
+  --color-streak-glow: #ff7a1a;
+
+  /* --- Categorías (data/categories.ts) --- */
+  --color-cat-alkali-metal: #c82d45;
+  --color-cat-alkali-metal-soft: #ffdddd;
+  --color-cat-alkaline-earth-metal: #b64e00;
+  --color-cat-alkaline-earth-metal-soft: #ffe0cd;
+  --color-cat-transition-metal: #3e6dc8;
+  --color-cat-transition-metal-soft: #d8e9ff;
+  --color-cat-post-transition-metal: #007e78;
+  --color-cat-post-transition-metal-soft: #c7f2ee;
+  --color-cat-metalloid: #945e00;
+  --color-cat-metalloid-soft: #f7e6c7;
+  --color-cat-nonmetal: #00813b;
+  --color-cat-nonmetal-soft: #d3f1d9;
+  --color-cat-halogen: #00779f;
+  --color-cat-halogen-soft: #c9efff;
+  --color-cat-noble-gas: #7f55c6;
+  --color-cat-noble-gas-soft: #ebe2ff;
+  --color-cat-lanthanide: #b23e88;
+  --color-cat-lanthanide-soft: #ffdcef;
+  --color-cat-actinide: #577800;
+  --color-cat-actinide-soft: #e1eecd;
+
+  /* --- Sombras --- */
+  --shadow-card: 0 1px 2px rgb(23 20 43 / 0.04), 0 6px 20px -8px rgb(23 20 43 / 0.12);
+  --shadow-float: 0 2px 6px rgb(23 20 43 / 0.06), 0 18px 48px -12px rgb(23 20 43 / 0.28);
+  --shadow-glow: 0 0 0 4px color-mix(in oklab, var(--color-brand) 22%, transparent);
+
+  /* --- Curvas --- */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-snappy: cubic-bezier(0.2, 0.9, 0.3, 1);
+
+  /* --- Animaciones --- */
+  --animate-pop: pop 320ms var(--ease-spring) both;
+  --animate-shake: shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  --animate-fade-in: fade-in 220ms ease-out both;
+  --animate-fade-out: fade-out 180ms ease-in both;
+  --animate-slide-up: slide-up 360ms var(--ease-snappy) both;
+  --animate-slide-down: slide-down 320ms var(--ease-snappy) both;
+  --animate-sheet-up: sheet-up 340ms var(--ease-snappy) both;
+  --animate-sheet-down: sheet-down 200ms ease-in both;
+  --animate-zoom-in: zoom-in 260ms var(--ease-spring) both;
+  --animate-zoom-out: zoom-out 160ms ease-in both;
+  --animate-bounce-in: bounce-in 520ms var(--ease-spring) both;
+  --animate-pulse-ring: pulse-ring 1.8s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  --animate-float: float 3.2s ease-in-out infinite;
+  --animate-float-up: float-up 1100ms var(--ease-snappy) both;
+  --animate-wiggle: wiggle 700ms ease-in-out both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-confetti-fall: confetti-fall 2.4s cubic-bezier(0.25, 0.6, 0.5, 1) both;
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08); }
+    70% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60% { transform: translateX(7px); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes sheet-down {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
+  }
+  @keyframes zoom-in {
+    from { opacity: 0; transform: scale(0.94) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes zoom-out {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.96); }
+  }
+  @keyframes bounce-in {
+    0% { opacity: 0; transform: scale(0.5); }
+    55% { opacity: 1; transform: scale(1.08); }
+    75% { transform: scale(0.96); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--pulse-color, var(--color-brand)) 55%, transparent); }
+    70% { box-shadow: 0 0 0 14px color-mix(in oklab, var(--pulse-color, var(--color-brand)) 0%, transparent); }
+    100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--pulse-color, var(--color-brand)) 0%, transparent); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes float-up {
+    0% { opacity: 0; transform: translateY(8px) scale(0.9); }
+    18% { opacity: 1; transform: translateY(0) scale(1.05); }
+    70% { opacity: 1; transform: translateY(-14px) scale(1); }
+    100% { opacity: 0; transform: translateY(-30px) scale(0.98); }
+  }
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(-12deg) scale(1.1); }
+    40% { transform: rotate(10deg) scale(1.1); }
+    60% { transform: rotate(-6deg); }
+    80% { transform: rotate(4deg); }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes confetti-fall {
+    from { opacity: 1; transform: translate3d(0, -10vh, 0) rotate(0deg); }
+    to { opacity: 0; transform: translate3d(var(--confetti-drift, 0px), 105vh, 0) rotate(720deg); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --font-sans: var(--font-nunito), ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+}
+
+/* --- Tema oscuro --- */
+@layer base {
+  .dark {
+    --color-bg: #0e0c18;
+    --color-surface: #181527;
+    --color-surface-2: #221e35;
+    --color-border: #2f2a47;
+    --color-border-strong: #433c63;
+    --color-fg: #f2f0ff;
+    --color-muted: #a6a0c4;
+    --color-overlay: rgb(4 3 10 / 0.66);
+
+    --color-brand: #a58fff;
+    --color-brand-shade: #6d52d9;
+    --color-brand-soft: #2b2452;
+    --color-on-brand: #150b38;
+    --color-accent: #3adbff;
+    --color-accent-soft: #0e3342;
+
+    --color-success: #4ade80;
+    --color-success-shade: #23a055;
+    --color-success-soft: #12301f;
+    --color-on-success: #052e14;
+    --color-danger: #ff6b7f;
+    --color-danger-shade: #c23a4e;
+    --color-danger-soft: #3a1620;
+    --color-on-danger: #3a0610;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #3a2c0b;
+    --color-on-warning: #2a1b00;
+
+    --color-xp: #ffcb3d;
+    --color-xp-soft: #3a2f0c;
+    --color-xp-glow: #ffd84d;
+    --color-streak: #ff8a3d;
+    --color-streak-soft: #3d2211;
+    --color-streak-glow: #ff9f4d;
+
+    --color-cat-alkali-metal: #e84e5f;
+    --color-cat-alkali-metal-soft: #4e2023;
+    --color-cat-alkaline-earth-metal: #d56a10;
+    --color-cat-alkaline-earth-metal-soft: #4b2409;
+    --color-cat-transition-metal: #5889e6;
+    --color-cat-transition-metal-soft: #1c2f53;
+    --color-cat-post-transition-metal: #04a19b;
+    --color-cat-post-transition-metal-soft: #003b38;
+    --color-cat-metalloid: #b98000;
+    --color-cat-metalloid-soft: #422c00;
+    --color-cat-nonmetal: #2ea55c;
+    --color-cat-nonmetal-soft: #0d3a1e;
+    --color-cat-halogen: #0f9ac3;
+    --color-cat-halogen-soft: #00374b;
+    --color-cat-noble-gas: #9a71e4;
+    --color-cat-noble-gas-soft: #35274f;
+    --color-cat-lanthanide: #d15aa3;
+    --color-cat-lanthanide-soft: #482038;
+    --color-cat-actinide: #779b1e;
+    --color-cat-actinide-soft: #283608;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -10px rgb(0 0 0 / 0.55);
+    --shadow-float: 0 2px 8px rgb(0 0 0 / 0.4), 0 24px 56px -12px rgb(0 0 0 / 0.7);
+  }
+}
+
+/* --- Base --- */
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+    scroll-padding-top: calc(env(safe-area-inset-top) + 4.5rem);
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: "tnum" 0;
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+    letter-spacing: -0.015em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-brand) 28%, transparent);
+  }
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 3px solid color-mix(in oklab, var(--color-brand) 75%, transparent);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  img,
+  svg {
+    -webkit-user-drag: none;
+  }
+  /* Sin scroll del fondo mientras hay un modal abierto (ver components/ui/scroll-lock.ts). */
+  html[data-scroll-locked],
+  html[data-scroll-locked] body {
+    overflow: hidden;
+  }
+  html[data-scroll-locked] body {
+    padding-right: var(--scrollbar-gap, 0px);
+  }
+}
+
+/* --- Utilidades propias ---------------------------------------------------
+   Tokens extra (además de los de ARCHITECTURE.md): border-strong, overlay, brand-shade,
+   accent(+soft), on-success/on-danger/on-warning, success-shade, danger-shade,
+   xp-soft/xp-glow, streak-soft/streak-glow, shadow-card/float/glow, ease-spring/snappy.
+   Utilidades: pressable (+ [--press-shade:…]), pt/pb/pl/pr/px-safe, top-safe, bottom-safe,
+   no-scrollbar, scroll-contained, perspective-card, preserve-3d, face-hidden, flip-y,
+   tabular, shimmer, bg-brand-gradient, text-brand-gradient.
+   Animaciones: pop, shake, fade-in/out, slide-up/down, sheet-up/down, zoom-in/out,
+   bounce-in, pulse-ring (color con --pulse-color), float, float-up, wiggle, shimmer,
+   confetti-fall (deriva con --confetti-drift).
+   ------------------------------------------------------------------------- */
+
+/** Botón "presionable" (estilo Duolingo): sombra inferior sólida que desaparece al pulsar. */
+@utility pressable {
+  --press-depth: 4px;
+  box-shadow: 0 var(--press-depth) 0 0 var(--press-shade, var(--color-border-strong));
+  transform: translateY(0);
+  transition-property: transform, box-shadow, background-color, border-color, color, opacity, filter;
+  transition-duration: 90ms, 90ms, 150ms, 150ms, 150ms, 150ms, 150ms;
+  transition-timing-function: ease-out;
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(var(--press-depth));
+    box-shadow: 0 0 0 0 var(--press-shade, var(--color-border-strong));
+  }
+}
+
+/** Relleno de las zonas seguras de iOS (modo standalone / notch). */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility pl-safe {
+  padding-left: env(safe-area-inset-left);
+}
+@utility pr-safe {
+  padding-right: env(safe-area-inset-right);
+}
+@utility px-safe {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+@utility top-safe {
+  top: env(safe-area-inset-top);
+}
+@utility bottom-safe {
+  bottom: env(safe-area-inset-bottom);
+}
+
+/** Oculta la barra de desplazamiento manteniendo el scroll (carruseles, tabla en móvil). */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/** Scroll con inercia y sin "rebote" hacia el contenedor padre. */
+@utility scroll-contained {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/** Ayudas para tarjetas que giran (flashcards): perspectiva + caras ocultas. */
+@utility perspective-card {
+  perspective: 1200px;
+}
+@utility preserve-3d {
+  transform-style: preserve-3d;
+}
+@utility face-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+@utility flip-y {
+  transform: rotateY(180deg);
+}
+
+/** Números de ancho fijo (contadores, temporizadores). */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/** Fondo de carga con brillo en movimiento (Skeleton). */
+@utility shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface-2) 0%,
+    color-mix(in oklab, var(--color-surface-2) 55%, var(--color-surface)) 50%,
+    var(--color-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/** Degradado de marca (violeta → cian eléctrico). */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-brand) 0%,
+    color-mix(in oklab, var(--color-brand) 55%, var(--color-accent)) 100%
+  );
+}
+@utility text-brand-gradient {
+  background-image: linear-gradient(
+    120deg,
+    var(--color-brand) 10%,
+    color-mix(in oklab, var(--color-brand) 45%, var(--color-accent)) 90%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* --- Movimiento reducido: sin animaciones ni transiciones largas --- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }
