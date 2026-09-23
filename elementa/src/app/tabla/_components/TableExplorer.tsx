@@ -14,13 +14,15 @@ import {
 import { ButtonLink, Chip } from '@/components/ui';
 import type { ElementCategory } from '@/types';
 import { ElementParamModal } from './ElementParamModal';
+import { FamilyParam } from './FamilyParam';
 import { FamilyInfo } from './FamilyInfo';
 import { TableGuide } from './TableGuide';
 
 /**
  * Tabla periódica interactiva: buscador, filtro por familias, capa de dominio, ajuste a pantalla
  * y ficha de cada elemento en un modal. La URL (`?e=<Z>`) es la fuente de verdad del elemento
- * abierto: se puede compartir y el botón «atrás» cierra la ficha.
+ * abierto: se puede compartir y el botón «atrás» cierra la ficha. `?family=<categoría>` abre la
+ * tabla con esa familia filtrada.
  */
 export function TableExplorer() {
   const [family, setFamily] = useState<ElementCategory | null>(null);
@@ -109,6 +111,7 @@ export function TableExplorer() {
       </div>
 
       <Suspense fallback={null}>
+        <FamilyParam onFamily={setFamily} />
         <ElementParamModal onClose={closeElement} onNavigate={showElement} />
       </Suspense>
     </>

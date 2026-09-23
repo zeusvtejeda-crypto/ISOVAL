@@ -97,6 +97,14 @@ function questionForElement(
   return null;
 }
 
+/**
+ * Firma de "la misma pregunta": varios elementos pueden producir el mismo enunciado
+ * ("Selecciona todos los gases nobles", "Toca un elemento del grupo 1"); no deben repetirse en una sesión.
+ */
+export function questionSignature(q: Pick<Question, 'type' | 'prompt' | 'subject'>): string {
+  return `${q.type}|${q.subject ?? ''}|${q.prompt}`;
+}
+
 function validPool(pool: readonly number[] | undefined): number[] {
   const src = pool && pool.length > 0 ? pool : ALL_ATOMIC_NUMBERS;
   return Array.from(new Set(src.filter((z) => ELEMENTS_BY_NUMBER[z] !== undefined)));
@@ -122,6 +130,7 @@ export function generateQuestions(opts: QuestionGenOptions, state?: ProgressStat
 
   const out: Question[] = [];
   const used = new Set<string>();
+  const signatures = new Set<string>();
   let queue = unique ? order() : [];
   let attempts = 0;
   const maxAttempts = count * 6 + pool.length * 4;
@@ -138,6 +147,9 @@ export function generateQuestions(opts: QuestionGenOptions, state?: ProgressStat
     const q = questionForElement(z, types, maxDifficulty, used);
     if (!q) continue;
     used.add(`${q.type}:${z}`);
+    const signature = questionSignature(q);
+    if (signatures.has(signature)) continue;
+    signatures.add(signature);
     out.push(q);
   }
   return out;

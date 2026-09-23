@@ -148,8 +148,10 @@ export const PeriodicTable = memo(function PeriodicTable({
   const firstSelectable = interactive ? (ELEMENTS.find((el) => canSelect(el.atomicNumber))?.atomicNumber ?? null) : null;
   const tabStop = activeZ !== null && canSelect(activeZ) ? activeZ : firstSelectable;
 
-  // Lleva a la vista (solo en horizontal) la primera casilla resaltada o correcta.
-  const scrollTarget = highlighted?.[0] ?? correct?.[0] ?? null;
+  // Lleva a la vista (solo en horizontal) la primera casilla resaltada o correcta, o la familia filtrada
+  // (los gases nobles, en la columna 18, quedan fuera de la pantalla en móvil).
+  const familyTarget = filterCategory ? (ELEMENTS.find((el) => el.category === filterCategory)?.atomicNumber ?? null) : null;
+  const scrollTarget = highlighted?.[0] ?? correct?.[0] ?? familyTarget;
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (compact || scrollTarget === null || !scroller) return;

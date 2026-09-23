@@ -27,6 +27,17 @@ export function useQuizKeys(onKey: (event: KeyboardEvent) => boolean | void, ena
   }, [enabled]);
 }
 
+/**
+ * ¿El foco está en un control que ya reacciona a Enter/Espacio (botón, enlace, radio…)? Los atajos
+ * globales de Enter/Espacio deben ignorar esas pulsaciones para no activar dos cosas a la vez.
+ */
+export function isActivationTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest('button, a, input, select, textarea, [role="button"], [role="radio"], [role="switch"]') !== null
+  );
+}
+
 /** "1"–"4" o "a"–"d" → 0–3; cualquier otra tecla → `null`. */
 export function optionIndexFromKey(key: string): number | null {
   if (/^[1-4]$/.test(key)) return Number(key) - 1;

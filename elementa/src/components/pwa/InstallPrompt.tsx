@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { CircleCheck, Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -20,6 +20,8 @@ export interface InstallPromptProps {
   variant?: 'card' | 'compact';
   /** Muestra el botón de ocultar y respeta el descarte guardado. Por defecto: `true` en `card`, `false` en `compact`. */
   dismissible?: boolean;
+  /** Se muestra en lugar de nada cuando no hay nada que ofrecer (navegador sin instalación, descartada…). */
+  fallback?: ReactNode;
   className?: string;
 }
 
@@ -64,13 +66,18 @@ const COMPACT_COPY: Record<Mode, { title: string; text: string }> = {
  * Sugerencia para instalar la PWA: botón nativo en Chrome/Edge (`beforeinstallprompt`) e instrucciones
  * en iOS y Safari para Mac. No se muestra si la app ya está instalada o si el usuario la ocultó.
  */
-export function InstallPrompt({ variant = 'card', dismissible = variant === 'card', className }: InstallPromptProps) {
+export function InstallPrompt({
+  variant = 'card',
+  dismissible = variant === 'card',
+  fallback = null,
+  className,
+}: InstallPromptProps) {
   const api = useInstallPrompt();
   const [prompting, setPrompting] = useState(false);
   const titleId = useId();
   const mode = resolveMode(api, variant, dismissible);
 
-  if (!mode) return null;
+  if (!mode) return <>{fallback}</>;
 
   const handleInstall = async () => {
     setPrompting(true);

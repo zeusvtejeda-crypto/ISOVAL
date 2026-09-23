@@ -1,6 +1,6 @@
 import { cn } from './cn';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'outline' | 'inverse';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonStyleOptions {
@@ -24,6 +24,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
     'pressable border-2 border-border bg-surface text-fg [--press-shade:var(--color-border)] hover:bg-surface-2',
   outline:
     'border-2 border-brand/40 bg-transparent text-brand transition-[transform,background-color,border-color] duration-150 hover:border-brand hover:bg-brand-soft active:scale-[0.97]',
+  /** Claro sobre fondos de marca (degradados, tarjetas `tone="brand"`); legible en ambos temas. */
+  inverse: 'pressable bg-surface text-brand [--press-shade:var(--color-brand-shade)] hover:brightness-[1.04]',
   ghost:
     'bg-transparent text-fg transition-[transform,background-color] duration-150 hover:bg-surface-2 active:scale-[0.97] active:bg-border/70',
 };

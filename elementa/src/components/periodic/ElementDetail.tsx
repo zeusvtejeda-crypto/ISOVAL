@@ -69,7 +69,7 @@ export function ElementDetail({ atomicNumber, onNavigate, showPager = true, titl
       <ElementNotes element={element} />
       <ElementLocation element={element} />
       <ElementMasteryPanel atomicNumber={z} />
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <ButtonLink href={`/practicar?elements=${z}`} block leftIcon={<BookOpenCheck aria-hidden />}>
           Practicar este elemento
         </ButtonLink>

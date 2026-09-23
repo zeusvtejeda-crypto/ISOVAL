@@ -41,12 +41,12 @@ export type ProgressEventType = ProgressEvent['type'];
 export interface ProgressActions {
   recordAnswer(input: AnswerInput): AnswerOutcome;
   rateFlashcard(input: FlashcardInput): AnswerOutcome;
-  /** Devuelve la XP ganada (+5 por elemento nuevo). */
-  markLearned(atomicNumbers: number[]): number;
+  /** XP ganada (+5 por elemento nuevo) y logros desbloqueados. */
+  markLearned(atomicNumbers: number[]): { xpGained: number; unlockedAchievements: string[] };
   addXp(amount: number): void;
   completeSession(input: SessionCompleteInput): { xpGained: number; unlockedAchievements: string[] };
-  /** Devuelve `true` si es un nuevo récord personal. */
-  submitRecord(kind: RecordKind, value: number): boolean;
+  /** ¿Nuevo récord personal? y logros desbloqueados por él. */
+  submitRecord(kind: RecordKind, value: number): { isNewRecord: boolean; unlockedAchievements: string[] };
   completeOnboarding(experience: ExperienceLevel, diagnostic: AnsweredQuestion[]): { level: number };
   updateSettings(patch: Partial<UserSettings>): void;
   updateProfile(patch: Partial<UserProfile>): void;
@@ -214,7 +214,7 @@ export function createProgressStore(
     markLearned(atomicNumbers) {
       const r = applyLearned(state, atomicNumbers, now());
       commit(r.state);
-      return r.xpGained;
+      return { xpGained: r.xpGained, unlockedAchievements: r.unlockedAchievements };
     },
     addXp(amount) {
       commit(applyXp(state, amount, now()).state);
@@ -227,7 +227,7 @@ export function createProgressStore(
     submitRecord(kind, value) {
       const r = applyRecord(state, kind, value, now());
       commit(r.state);
-      return r.isNewRecord;
+      return { isNewRecord: r.isNewRecord, unlockedAchievements: r.unlockedAchievements };
     },
     completeOnboarding(experience, diagnostic) {
       const r = applyOnboarding(state, experience, diagnostic, now());

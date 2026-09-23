@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { IconButton, ProgressBar, cn } from '@/components/ui';
-import { ExitConfirm } from './ExitConfirm';
+import { ExitConfirm, type ExitConfirmProps } from './ExitConfirm';
 import { LivesIndicator, StreakChip, TimeChip } from './QuizStats';
 
 export interface QuizHeaderProps {
@@ -23,6 +23,8 @@ export interface QuizHeaderProps {
   streak?: number;
   /** Título (se muestra si no hay barra de progreso ni de tiempo). */
   title?: string;
+  /** Textos del aviso de salida (por defecto los de `ExitConfirm`). */
+  exitCopy?: Pick<ExitConfirmProps, 'description' | 'stayLabel'>;
   className?: string;
 }
 
@@ -38,6 +40,7 @@ export function QuizHeader({
   timeLimitMs,
   streak = 0,
   title,
+  exitCopy,
   className,
 }: QuizHeaderProps) {
   const [confirming, setConfirming] = useState(false);
@@ -86,6 +89,7 @@ export function QuizHeader({
 
       <ExitConfirm
         open={confirming}
+        {...exitCopy}
         onStay={() => setConfirming(false)}
         onLeave={() => {
           setConfirming(false);

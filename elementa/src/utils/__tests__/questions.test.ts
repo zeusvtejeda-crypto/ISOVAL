@@ -319,6 +319,11 @@ describe('generateQuestions', () => {
     expect(qs).toHaveLength(1);
   });
 
+  it('no repite enunciados que comparten varios elementos (misma familia)', () => {
+    const qs = generateQuestions({ count: 5, pool: [2, 10, 18, 36, 54], types: ['table-select-category'] });
+    expect(qs).toHaveLength(1);
+  });
+
   it('modo adaptativo con progreso: los elementos fallados salen más', () => {
     const state = createInitialState(NOW);
     state.elements[26] = progress(26, { seen: 6, incorrect: 6, recent: [0, 0, 0, 0, 0, 0], due: NOW.toISOString() });

@@ -197,8 +197,8 @@ describe('progress store', () => {
     await store.hydrate();
     const events: ProgressEvent[] = [];
     store.onEvent((e) => events.push(e));
-    expect(store.submitRecord('survival', 5)).toBe(true);
-    expect(store.submitRecord('survival', 4)).toBe(false);
+    expect(store.submitRecord('survival', 5).isNewRecord).toBe(true);
+    expect(store.submitRecord('survival', 4)).toEqual({ isNewRecord: false, unlockedAchievements: [] });
     expect(store.completeSession({ mode: 'exam', total: 10, correct: 9, durationMs: 1000 }).xpGained).toBe(50);
     events.length = 0;
     expect(store.completeOnboarding('beginner', []).level).toBe(1);

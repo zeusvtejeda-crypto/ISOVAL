@@ -27,7 +27,9 @@ src/
     flashcards/           Flashcard, RatingButtons, DeckPicker
     stats/                Gráficas SVG
     pwa/                  ServiceWorkerRegister, InstallPrompt, AppIcon, hooks de instalación/conexión
-    <feature>/            Componentes propios de una página (dashboard/, onboarding/, exam/…)
+    <feature>/            Componentes propios de una página: dashboard/, onboarding/, hub/, settings/, learn/ (estudiar,
+                          aprende, bloques), flashcards/, games/ (preguntados, racha, contrarreloj, supervivencia),
+                          exam/, practice/, visual/, mistakes/, stats/ (+ charts/), achievements/
   data/                   Datos estáticos: elements.ts (118), categories.ts, levels.ts, achievements.ts, blocks.ts
   types/                  Contratos compartidos (element.ts, progress.ts, quiz.ts)
   utils/                  Lógica pura, sin React (motor de aprendizaje, preguntas, formato…)
@@ -45,19 +47,19 @@ PWA en `app/`: `manifest.ts` (→ `/manifest.webmanifest`), `icon.svg`, `apple-i
 | Ruta | Pantalla |
 |---|---|
 | `/` | Inicio (dashboard). Si `profile.onboarded === false` redirige a `/bienvenida`. |
-| `/bienvenida` | Primer uso: nivel de experiencia + diagnóstico de 10 preguntas → nivel inicial. |
+| `/bienvenida` | Primer uso: nivel de experiencia + diagnóstico de 10 preguntas → nivel inicial. `?repetir=1` va directo al paso 2 (repetir diagnóstico). |
 | `/estudiar` | "Estudiar ahora": sesión inteligente (nuevos + repasos + difíciles). |
 | `/aprende` | "Aprende 5": 5 elementos nuevos, uno por uno, y luego preguntas de comprobación. `?block=<id>` o `?family=<category>` limita los elementos. |
-| `/tabla` | Tabla periódica interactiva + buscador. `?e=<Z>` abre la ficha del elemento. |
-| `/flashcards` | Flashcards con repetición espaciada (7 modos). `?elements=1,2,3` limita el mazo. |
+| `/tabla` | Tabla periódica interactiva + buscador. `?e=<Z>` abre la ficha del elemento; `?family=<category>` abre con esa familia filtrada. |
+| `/flashcards` | Flashcards con repetición espaciada (7 modos). `?elements=1,2,3` limita el mazo (y empieza directamente); `?mode=<modo>` elige el modo. |
 | `/preguntados` | Trivia estilo Preguntados con ruleta de categorías. |
-| `/examen` | Mini exámenes: rápido (10), normal (20), completo (50), personalizado. |
+| `/examen` | Mini exámenes: rápido (10), normal (20), completo (50), personalizado (`?tipo=personalizado`). |
 | `/contrarreloj` | 60 segundos: máximo de aciertos. Récord personal. |
 | `/supervivencia` | 3 vidas ❤️❤️❤️. Récord personal. |
 | `/racha` | Preguntas encadenadas con multiplicador y bonus x5/x10/x20. |
 | `/visual` | Preguntas sobre la tabla: tocar casillas, selección múltiple. |
-| `/practicar` | Práctica genérica. `?focus=errores|dificiles|repaso`, `?elements=19,26`, `?block=<id>`, `?family=<category>`, `?n=10`. |
-| `/bloques` | Aprender por bloques (1–10, 11–20…) y por familias. |
+| `/practicar` | Práctica genérica. `?focus=errores|dificiles|repaso`, `?elements=19,26`, `?block=<id>`, `?family=<category>`, `?n=10`, `?types=<tipo>,…`. Prioridad: elements > block > family > focus; sin parámetros, menú. |
+| `/bloques` | Aprender por bloques (1–10, 11–20…) y por familias (`?vista=familias`). |
 | `/errores` | Mis errores: elementos más difíciles + preguntas falladas. |
 | `/estadisticas` | Dashboard de estadísticas y gráficas. |
 | `/logros` | Logros desbloqueables. |
@@ -66,7 +68,7 @@ PWA en `app/`: `manifest.ts` (→ `/manifest.webmanifest`), `icon.svg`, `apple-i
 | `/offline` | Página de respaldo del service worker (ya existe). |
 
 Navegación (`components/layout/nav-items.ts`): barra inferior en móvil (Inicio, Tabla, Jugar, Progreso=`/estadisticas`, Ajustes) y barra lateral en escritorio (≥ lg) con esos destinos + accesos rápidos (Flashcards, Examen, Mis errores, Logros). Cada destino marca como activas sus subrutas (`match`: p. ej. `/examen` activa «Jugar»).
-Existen hoy: `/`, `/tabla`, `/offline` y la 404 (`not-found.tsx`); el resto de rutas las crean los constructores de páginas. `app/page.tsx` es un inicio provisional.
+Todas las rutas de la tabla existen (más la 404, `not-found.tsx`) y `public/sw.js` las precachea en `APP_ROUTES`. Toda ruta con `useSearchParams` envuelve su pantalla en `<Suspense>`.
 
 ## Modelo de datos
 
@@ -166,7 +168,9 @@ interface AdaptiveQuestionOptions { types?: QuestionType[]; pool?: number[]; exc
 typesForTopics(topics: ExamTopic[]): QuestionType[]
 checkTableAnswer(q, selected: number[]): boolean
 describeTableSelection(selected: number[]): string   // "Na, K" o "—" (para givenAnswer)
+questionSignature(q): string                         // tipo + subject + enunciado: "la misma pregunta"
 ```
+`generateQuestions` nunca repite tipo+elemento ni enunciado (`questionSignature`: varios elementos comparten «Selecciona todos los gases nobles»). Con `uniqueElements` vuelve a recorrer el pool si descarta alguno, así que puede repetir elemento: quien necesite elementos únicos debe filtrarlos. **Un `pool` vacío significa los 118** (igual que `typesForTopics([])` → todos los tipos de opción múltiple): comprobar antes de llamar si el vacío debe dar cero preguntas.
 `checkTableAnswer`: `table-select` → exactamente UNA casilla y dentro de `targetAtomicNumbers` (en `table-group-member` todos los del grupo son objetivo); `table-multi-select` → conjunto exacto (sin orden ni duplicados); opción múltiple → `false`.
 Reglas: 4 opciones únicas y una correcta; distractores plausibles; explicaciones cortas; nunca preguntas ambiguas.
 
@@ -204,10 +208,10 @@ useProgress(): { state; ready; level: LevelInfo; streak: StreakInfo; today: Dail
 // ProgressActions:
 recordAnswer(input: AnswerInput): AnswerOutcome
 rateFlashcard(input: FlashcardInput): AnswerOutcome
-markLearned(atomicNumbers: number[]): number               // XP ganada
+markLearned(atomicNumbers: number[]): { xpGained; unlockedAchievements }
 addXp(amount: number): void
 completeSession(input: SessionCompleteInput): { xpGained; unlockedAchievements }
-submitRecord(kind: RecordKind, value: number): boolean      // ¿nuevo récord?
+submitRecord(kind: RecordKind, value: number): { isNewRecord; unlockedAchievements }
 completeOnboarding(experience: ExperienceLevel, diagnostic: AnsweredQuestion[]): { level }
 updateSettings(patch: Partial<UserSettings>): void
 updateProfile(patch: Partial<UserProfile>): void
@@ -245,12 +249,13 @@ Colores: `bg`, `surface`, `surface-2`, `border`, `border-strong`, `fg`, `muted`,
 Utilidades: `pressable` (sombra inferior, `[--press-shade:…]`), `pt/pb/pl/pr/px-safe`, `top-safe`, `bottom-safe`, `no-scrollbar`, `scroll-contained`, `perspective-card`, `preserve-3d`, `face-hidden`, `flip-y` (flashcards), `tabular`, `shimmer`, `bg-brand-gradient`, `text-brand-gradient`.
 Animaciones `animate-*`: pop, shake, fade-in/out, slide-up/down, sheet-up/down, zoom-in/out, bounce-in, pulse-ring (`--pulse-color`), float, float-up, wiggle, shimmer, confetti-fall; se desactivan con `prefers-reduced-motion`.
 Tipografía: Nunito (next/font, `font-sans`) — títulos en 800/900.
-Principios: mobile-first, tarjetas `rounded-3xl`, objetivos táctiles ≥ 44 px, contraste AA en ambos temas. Un elemento `sr-only` dentro de un contenedor con scroll horizontal necesita un ancestro `relative` (si no, ensancha la página en móvil).
+Principios: mobile-first, tarjetas `rounded-3xl`, objetivos táctiles ≥ 44 px, contraste AA en ambos temas. Un elemento `sr-only` dentro de un contenedor con scroll horizontal necesita un ancestro `relative` (si no, ensancha la página en móvil); una `<table>` no se encoge con `sr-only`: envolverla en un `div.sr-only`.
+Rejillas responsive: poner siempre la base `grid-cols-1` (`grid grid-cols-1 lg:grid-cols-2`). Sin ella la columna implícita mide lo que su contenido mínimo (p. ej. una mini tabla con `aspect-square`) y en móvil la página se ensancha.
 
 Todos los componentes usan exports con nombre; cada carpeta tiene `index.ts` (barrel).
 
 ### Primitivas (`@/components/ui`)
-- `Button`: props de `<button>` + `variant?: 'primary'|'secondary'|'ghost'|'danger'|'success'|'outline'`, `size?: 'sm'|'md'|'lg'` (≥ 44 px), `block?`, `loading?`, `leftIcon?`, `rightIcon?`. `ButtonLink`: props de `next/link` + los mismos estilos. `buttonClasses(opts)`.
+- `Button`: props de `<button>` + `variant?: 'primary'|'secondary'|'ghost'|'danger'|'success'|'outline'|'inverse'` (`inverse`: claro sobre fondos de marca/degradados), `size?: 'sm'|'md'|'lg'` (≥ 44 px), `block?`, `loading?`, `leftIcon?`, `rightIcon?`. `ButtonLink`: props de `next/link` + los mismos estilos. `buttonClasses(opts)`.
 - `Card`: `interactive?`, `padding?: 'none'|'sm'|'md'|'lg'`, `tone?: 'default'|'soft'|'brand'`, `as?: 'div'|'section'|'article'|'aside'|'li'` + props HTML (sin `ref`).
 - `ProgressBar`: `value` (0–1), `tone?`, `size?: 'sm'|'md'|'lg'`, `label?`, `showValue?`, `valueText?`, `ariaLabel?`. `ProgressRing`: `value` (0–1), `size?` (px, 56), `stroke?`, `tone?`, `label?` (lo expone como progressbar), `children?`, `trackClassName?`.
 - `Tone = 'brand'|'success'|'danger'|'warning'|'xp'|'streak'|'accent'|'neutral'`; mapas `TONE_TEXT|SOFT|SOLID|STROKE|FILL`.
@@ -260,7 +265,7 @@ Todos los componentes usan exports con nombre; cada carpeta tiene `index.ts` (ba
 - `Modal`: `open`, `onClose`, `title`, `description?`, `children?`, `footer?`, `size?: 'sm'|'md'|'lg'`, `hideTitle?`, `showClose?`, `dismissible?`, `initialFocusRef?`. Hoja inferior en móvil, centrado desde `sm`. Con un modal abierto `<html>` lleva `data-modal-open`; `isModalOpen()`.
 - `StatTile`: `icon?`, `label`, `value`, `hint?`, `tone?`. `EmptyState`: `icon?`, `title`, `description?`, `action?`. `Skeleton`: `rounded?` + props de div (tamaño con `className`).
 - `IconButton`: `label` (obligatorio), `icon`, `variant?: 'ghost'|'soft'|'secondary'|'primary'`, `size?: 'sm'|'md'|'lg'`. `IconLink`: igual con `href`.
-- Utilidades: `cn(...)`, `clamp01`, `useReducedMotion()`.
+- Utilidades: `cn(...)` (solo concatena: **no** resuelve clases de Tailwind en conflicto, así que `className` no sirve para sobrescribir p. ej. el `mb-5` de un componente; usar props o envolver), `clamp01`, `useReducedMotion()`.
 
 ### Layout (`@/components/layout`)
 - `AppShell` (ya montado en `layout.tsx` dentro de `ChromeProvider`): TopBar (solo < lg) + contenido (`max-w-5xl`) + BottomNav (< lg) / SideNav (≥ lg, con nivel, racha y tema). `immersive?: boolean` lo fuerza.
@@ -269,7 +274,7 @@ Todos los componentes usan exports con nombre; cada carpeta tiene `index.ts` (ba
   - `useChrome(): { immersive; setImmersive(v); acquireImmersive(): () => void }`; `setImmersive(true)` se desactiva solo al cambiar de ruta.
   - `IMMERSIVE_ROUTES = ['/bienvenida']` (siempre inmersiva). `ChromeProvider` ya está en `layout.tsx`.
 - `PageHeader`: `title`, `subtitle?`, `back?: string | true` (true = historial), `backLabel?`, `actions?`, `eyebrow?`.
-- `ThemeToggle`: `variant?: 'segmented'|'icon'` (☀️ Claro / 🌙 Oscuro / 🌓 Auto), `size?`. `Logo` (`compact?`), `LogoMark`. `TopBar`, `BottomNav`, `SideNav`, `UserStats` (`className?`).
+- `ThemeToggle`: `variant?: 'segmented'|'icon'` (☀️ Claro / 🌙 Oscuro / 💻 Sistema; lo usa Ajustes), `size?`, `block?`. `Logo` (`compact?`), `LogoMark`. `TopBar`, `BottomNav`, `SideNav`, `UserStats` (`className?`).
 - `MAIN_NAV`, `QUICK_NAV: NavItem[]` (`{ href; label; icon; match? }`), `navState(item, pathname): 'page'|'section'|null`.
 
 ### Gamificación (`@/components/gamification`)
@@ -285,7 +290,7 @@ Leen `useProgress()` por defecto (Skeleton hasta `ready`); todo valor se puede p
 
 ### Tabla periódica (`@/components/periodic`)
 - `ElementTile` (memo): `element`, `size?: 'xs'|'sm'|'md'|'lg'`, `status?: TileStatus` ('default'|'selected'|'correct'|'incorrect'|'dimmed'|'highlight'), `showMastery?`, `mastery?`, `onClick?(z)` (sin él es una figura estática), `fluid?`, `blind?` (sin texto), `neutral?` (sin color de familia), `pressed?`, `decorative?`, `tabIndex?`, `style?`, `className?`.
-- `PeriodicTable` (memo): `onSelect?(z)`, `selected?`, `highlighted?`, `dimmed?`, `correct?`, `incorrect?` (`readonly number[]`), `selectable?: boolean | readonly number[]` (el resto se atenúa), `showMastery?`, `hideLabels?` (**oculta los números de grupo/periodo**, no el texto de las casillas), `compact?` (controlado por el padre; ajusta al ancho), `filterCategory?: ElementCategory | null`, `blind?`, `neutral?`, `label?`, `bleed?` (móvil: scroll hasta el borde, por defecto true). Scroll horizontal en móvil con casillas ≥ 44 px (táctil); flechas del teclado con un solo punto de tabulación; la primera `highlighted`/`correct` se desplaza a la vista.
+- `PeriodicTable` (memo): `onSelect?(z)`, `selected?`, `highlighted?`, `dimmed?`, `correct?`, `incorrect?` (`readonly number[]`), `selectable?: boolean | readonly number[]` (el resto se atenúa), `showMastery?`, `hideLabels?` (**oculta los números de grupo/periodo**, no el texto de las casillas), `compact?` (controlado por el padre; ajusta al ancho), `filterCategory?: ElementCategory | null`, `blind?`, `neutral?`, `label?`, `bleed?` (móvil: scroll hasta el borde, por defecto true). Scroll horizontal en móvil con casillas ≥ 44 px (táctil); flechas del teclado con un solo punto de tabulación; la primera `highlighted`/`correct` (o, si no hay, el primer elemento de `filterCategory`) se desplaza a la vista.
 - `FitToggle` (`compact`, `onChange(compact)`, `size?`): chip «Ajustar a pantalla».
 - `ElementDetail` (`atomicNumber`, `onNavigate?(z)`, `showPager?`, `titleAs?: 'h1'|'h2'|'p'`): ficha completa + dominio + ubicación + botones Practicar (`/practicar?elements=Z`) y Flashcards (`/flashcards?elements=Z`).
 - `ElementModal` (`atomicNumber: number | null`, `onClose()`, `onNavigate?(z)`). En `/tabla` el elemento abierto vive en `?e=<Z>` (pushState: «atrás» cierra la ficha).
@@ -305,7 +310,8 @@ interface QuizConfig {
   autoAdvanceMs?: number;
   record?: boolean;                // registrar en el progreso (default true; false en /bienvenida)
   onFinish?: (ctx: { reason: 'completed'|'lives'|'time'|'manual'; answered; correct; total; bestStreak; durationMs })
-    => Partial<Pick<SessionSummaryData, 'newRecord' | 'title'>> | void;   // p. ej. submitRecord → { newRecord }
+    => Partial<Pick<SessionSummaryData, 'newRecord' | 'title' | 'unlockedAchievements'>> | void;
+    // p. ej. submitRecord → { newRecord, unlockedAchievements } (los logros se suman a los de la sesión)
 }
 interface QuizSession {
   ready; status: 'playing'|'feedback'|'finished'; mode; title; current: Question | null; index;
@@ -318,17 +324,17 @@ interface QuizSession {
 ```
 La primera pregunta se genera en el cliente tras cargar el progreso (`ready`); nunca generar preguntas durante el render. Con `record` el hook llama a `recordAnswer` y, al terminar, a `completeSession` (`isExam` si `mode === 'exam'`); también reproduce sonido y vibración de acierto/fallo.
 Componentes:
-- `QuizScreen` (`session`, `onExit()`, `renderTop?(session)`, `renderSummary?(summary, session)`): pantalla completa (usa `useImmersive()`): cabecera, pregunta, feedback, confirmación de salida, atajos 1–4/A–D y Enter, y `SessionSummary` al final.
-- `SessionSummary` (`summary`, `onRestart?`, `homeHref?` = '/'): %, correctas, XP, mejoras, "Elementos que debes repasar" y «Practicar mis errores» (`/practicar?elements=…`).
-- `QuestionRenderer` (`question`, `locked`, `response`, `onAnswer(r)`) · `QuestionCard` (`question`, `selectedId`, `locked`, `onAnswer(id)`) · `TableQuestion` (`question`, `locked`, `response: number[] | null`, `onAnswer(zs)`; multi con «Comprobar»)
+- `QuizScreen` (`session`, `onExit()`, `renderTop?(session)`, `renderSummary?(summary, session)`, `exitCopy?: { description?; stayLabel? }`): pantalla completa (usa `useImmersive()`): cabecera, pregunta, feedback, confirmación de salida, atajos 1–4/A–D y Enter, y `SessionSummary` al final.
+- `SessionSummary` (`summary`, `onRestart?`, `homeHref?` = '/', `onPracticeMistakes?(zs)`): %, correctas, XP, mejoras, "Elementos que debes repasar" y «Practicar mis errores» (enlace a `/practicar?elements=…`, o el callback si ya estás en `/practicar`). Sus piezas también se exportan: `SummaryScore`, `SummaryAchievements` (`ids`), `ImprovedList`, `ReviewList` (`atomicNumbers`).
+- `QuestionRenderer` (`question`, `locked`, `response`, `onAnswer(r)`) · `QuestionCard` (`question`, `selectedId`, `locked`, `onAnswer(id)`) · `TableQuestion` (`question`, `locked`, `response: number[] | null`, `onAnswer(zs)`; multi con «Comprobar»; en escritorio la tabla desborda la columna inmersiva con `lg:-mx-8` para verse entera)
 - `OptionButton` (`letter`, `label`, `sublabel?`, `state?: 'idle'|'selected'|'correct'|'incorrect'|'disabled'`, `onClick?`, `disabled?`, `shortcut?`) · `QuestionPrompt` (`question`, `headingId?`, `hint?`)
 - `FeedbackPanel` (`correct`, `xpGained?`, `bonusXp?`, `correctAnswer`, `explanation?`, `onContinue`, `continueLabel?`, `autoAdvanceMs?`)
-- `QuizHeader` (`onExit`, `confirmExit?`, `answered?`, `total?`, `lives?`, `maxLives?`, `remainingMs?`, `timeLimitMs?`, `streak?`, `title?`) · `ExitConfirm` (`open`, `onStay`, `onLeave`) · `LivesIndicator`, `TimeChip`, `StreakChip`, `isStreakMilestone(n)`
-- `useQuizKeys(onKey(e) => boolean | void, enabled = true)` (ignora campos de texto y modales abiertos) · `optionIndexFromKey(key): number | null`
+- `QuizHeader` (`onExit`, `confirmExit?`, `answered?`, `total?`, `lives?`, `maxLives?`, `remainingMs?`, `timeLimitMs?`, `streak?`, `title?`, `exitCopy?`) · `ExitConfirm` (`open`, `onStay`, `onLeave`, `description?`, `stayLabel?` = "Seguir jugando") · `LivesIndicator`, `TimeChip`, `StreakChip`, `isStreakMilestone(n)`
+- `useQuizKeys(onKey(e) => boolean | void, enabled = true)` (ignora campos de texto y modales abiertos) · `optionIndexFromKey(key): number | null` · `isActivationTarget(target)`: el foco está en un botón/enlace/radio que ya reacciona a Enter/Espacio (los atajos de Enter/Espacio deben ignorarlo).
 
 ### PWA (`@/components/pwa`)
 - `ServiceWorkerRegister` (ya en `layout.tsx`): registra `/sw.js?v=<NEXT_PUBLIC_BUILD_VERSION>` solo en producción (en desarrollo elimina SW/cachés previos); tras una actualización recarga en el siguiente cambio de ruta.
-- `InstallPrompt` (`variant?: 'card'|'compact'`, `dismissible?` (true en card), `className?`): devuelve `null` en SSR, si ya está instalada (card), si se descartó o si no se puede instalar.
+- `InstallPrompt` (`variant?: 'card'|'compact'`, `dismissible?` (true en card), `fallback?: ReactNode`, `className?`): muestra `fallback` (por defecto nada) en SSR, si ya está instalada (card), si se descartó o si no se puede instalar.
 - `useInstallPrompt(): { canPrompt; installed; dismissed; isStandalone; platform: 'ios'|'mac-safari'|'other'; promptInstall(): Promise<'accepted'|'dismissed'|'unavailable'>; dismiss() }` · `useIsStandalone()` · `isStandaloneDisplay()` · `useOnlineStatus(): boolean | null` · `AppIcon` (`size?`, `className?`).
 - `public/sw.js`: navegaciones red primero (~3,5 s) → caché → `/` → `/offline`; `/_next/static` caché primero; RSC red primero; resto stale-while-revalidate. Precachea las rutas de la tabla de Rutas (actualizar `APP_ROUTES` si se añaden rutas).
 

@@ -7,7 +7,7 @@ import type { QuizSession } from '@/hooks/useQuizSession';
 import type { SessionSummaryData } from '@/types';
 import { FeedbackPanel } from './FeedbackPanel';
 import { QuestionRenderer } from './QuestionRenderer';
-import { QuizHeader } from './QuizHeader';
+import { QuizHeader, type QuizHeaderProps } from './QuizHeader';
 import { SessionSummary } from './SessionSummary';
 
 export interface QuizScreenProps {
@@ -19,6 +19,8 @@ export interface QuizScreenProps {
   renderTop?: (session: QuizSession) => ReactNode;
   /** Resumen personalizado; por defecto `SessionSummary` con «Repetir». */
   renderSummary?: (summary: SessionSummaryData, session: QuizSession) => ReactNode;
+  /** Textos del aviso al salir a mitad (p. ej. si las respuestas no se guardan). */
+  exitCopy?: QuizHeaderProps['exitCopy'];
 }
 
 function QuizSkeleton() {
@@ -31,7 +33,7 @@ function QuizSkeleton() {
       </div>
       <Skeleton className="mx-auto h-8 w-3/4" />
       <Skeleton className="mx-auto h-24 w-40" rounded="3xl" />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-16" rounded="2xl" />
         ))}
@@ -44,7 +46,7 @@ function QuizSkeleton() {
  * Pantalla completa de juego usada por todos los modos: cabecera (salir, progreso, vidas,
  * tiempo, racha), pregunta, panel de feedback y resumen final. Oculta la navegación de la app.
  */
-export function QuizScreen({ session, onExit, renderTop, renderSummary }: QuizScreenProps) {
+export function QuizScreen({ session, onExit, renderTop, renderSummary, exitCopy }: QuizScreenProps) {
   useImmersive();
   const { current, status, summary } = session;
   const screenKey = status === 'finished' ? 'summary' : (current?.id ?? null);
@@ -88,6 +90,7 @@ export function QuizScreen({ session, onExit, renderTop, renderSummary }: QuizSc
         timeLimitMs={session.timeLimitMs}
         streak={session.streak}
         title={session.title}
+        exitCopy={exitCopy}
       />
       {renderTop?.(session)}
       <div key={current.id} className="flex flex-1 flex-col pt-4 pb-6 animate-slide-up sm:pt-6">

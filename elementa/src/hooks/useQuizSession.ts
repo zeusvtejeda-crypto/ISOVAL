@@ -63,9 +63,12 @@ export interface QuizConfig {
   record?: boolean;
   /**
    * Al terminar (una vez, antes de construir el resumen): p. ej. guardar un récord.
-   * Lo que devuelva se mezcla en el resumen (`newRecord`, `title`).
+   * Lo que devuelva se mezcla en el resumen (`newRecord`, `title`; `unlockedAchievements` se suma
+   * a los de la sesión, p. ej. los que desbloquea `submitRecord`).
    */
-  onFinish?: (ctx: QuizFinishContext) => Partial<Pick<SessionSummaryData, 'newRecord' | 'title'>> | void;
+  onFinish?: (
+    ctx: QuizFinishContext,
+  ) => Partial<Pick<SessionSummaryData, 'newRecord' | 'title' | 'unlockedAchievements'>> | void;
 }
 
 /** Id de opción (opción múltiple) o números atómicos elegidos (preguntas de tabla). */
@@ -297,7 +300,14 @@ export function useQuizSession(config: QuizConfig): QuizSession {
       bestStreak: run.bestStreak,
       durationMs,
     });
-    setRun({ ...run, status: 'finished', summary: extra ? { ...summary, ...extra } : summary });
+    const merged: SessionSummaryData = extra
+      ? {
+          ...summary,
+          ...extra,
+          unlockedAchievements: Array.from(new Set([...summary.unlockedAchievements, ...(extra.unlockedAchievements ?? [])])),
+        }
+      : summary;
+    setRun({ ...run, status: 'finished', summary: merged });
   };
 
   const answerImpl = (response: QuizResponse) => {

@@ -16,6 +16,11 @@ export interface SessionSummaryProps {
   onRestart?: () => void;
   /** Destino de «Volver al inicio». Por defecto "/". */
   homeHref?: string;
+  /**
+   * «Practicar mis errores» sin salir de la pantalla (p. ej. ya estás en `/practicar`). Sin él,
+   * el botón enlaza a `/practicar?elements=…`.
+   */
+  onPracticeMistakes?: (atomicNumbers: number[]) => void;
   className?: string;
 }
 
@@ -67,7 +72,7 @@ function RecordBanner({ label, value }: { label: string; value: number }) {
  * Pantalla de resultados de una sesión: marcador, XP, racha, récord, logros, elementos mejorados,
  * elementos a repasar y acciones (practicar errores, repetir, volver al inicio).
  */
-export function SessionSummary({ summary, onRestart, homeHref = '/', className }: SessionSummaryProps) {
+export function SessionSummary({ summary, onRestart, homeHref = '/', onPracticeMistakes, className }: SessionSummaryProps) {
   const { streak, ready } = useProgress();
   const { correct, total, toReview } = summary;
   const celebrate = total >= 5 && correct / total >= 0.8;
@@ -96,16 +101,21 @@ export function SessionSummary({ summary, onRestart, homeHref = '/', className }
       <ReviewList atomicNumbers={toReview} />
 
       <div className="mt-2 flex flex-col gap-2.5">
-        {toReview.length > 0 && (
-          <ButtonLink
-            href={`/practicar?elements=${toReview.join(',')}`}
-            size="lg"
-            block
-            leftIcon={<Target aria-hidden />}
-          >
-            Practicar mis errores
-          </ButtonLink>
-        )}
+        {toReview.length > 0 &&
+          (onPracticeMistakes ? (
+            <Button size="lg" block leftIcon={<Target aria-hidden />} onClick={() => onPracticeMistakes([...toReview])}>
+              Practicar mis errores
+            </Button>
+          ) : (
+            <ButtonLink
+              href={`/practicar?elements=${toReview.join(',')}`}
+              size="lg"
+              block
+              leftIcon={<Target aria-hidden />}
+            >
+              Practicar mis errores
+            </ButtonLink>
+          ))}
         {onRestart && (
           <Button
             variant={toReview.length > 0 ? 'secondary' : 'primary'}

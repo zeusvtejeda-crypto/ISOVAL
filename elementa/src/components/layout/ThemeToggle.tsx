@@ -10,21 +10,23 @@ import { SegmentedControl, type SegmentedOption } from '@/components/ui/Segmente
 
 export interface ThemeToggleProps {
   /**
-   * - `segmented` (por defecto): ☀️ Claro / 🌙 Oscuro / 🌓 Auto, para Ajustes.
+   * - `segmented` (por defecto): ☀️ Claro / 🌙 Oscuro / 💻 Sistema, para Ajustes.
    * - `icon`: botón compacto que alterna claro ↔ oscuro, para barras de navegación.
    */
   variant?: 'segmented' | 'icon';
   size?: IconButtonSize;
+  /** `segmented`: ocupa todo el ancho. */
+  block?: boolean;
   className?: string;
 }
 
 const OPTIONS: readonly SegmentedOption<ThemePreference>[] = [
   { value: 'light', label: 'Claro', icon: <span aria-hidden>☀️</span> },
   { value: 'dark', label: 'Oscuro', icon: <span aria-hidden>🌙</span> },
-  { value: 'system', label: 'Auto', ariaLabel: 'Automático (según el sistema)', icon: <span aria-hidden>🌓</span> },
+  { value: 'system', label: 'Sistema', ariaLabel: 'Sistema (como tu dispositivo)', icon: <span aria-hidden>💻</span> },
 ];
 
-export function ThemeToggle({ variant = 'segmented', size = 'md', className }: ThemeToggleProps) {
+export function ThemeToggle({ variant = 'segmented', size = 'md', block, className }: ThemeToggleProps) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const hydrated = useHydrated();
 
@@ -59,6 +61,7 @@ export function ThemeToggle({ variant = 'segmented', size = 'md', className }: T
       options={OPTIONS}
       value={hydrated ? theme : null}
       onChange={setTheme}
+      block={block}
       className={cn(className)}
     />
   );

@@ -1,4 +1,4 @@
-export { ExitConfirm, type ExitConfirmProps } from './ExitConfirm';
+export { DEFAULT_EXIT_DESCRIPTION, ExitConfirm, type ExitConfirmProps } from './ExitConfirm';
 export { FeedbackPanel, type FeedbackPanelProps } from './FeedbackPanel';
 export { OptionButton, type OptionButtonProps, type OptionState } from './OptionButton';
 export { QuestionCard, type QuestionCardProps } from './QuestionCard';
@@ -8,5 +8,8 @@ export { QuizHeader, type QuizHeaderProps } from './QuizHeader';
 export { QuizScreen, type QuizScreenProps } from './QuizScreen';
 export { isStreakMilestone, LivesIndicator, StreakChip, TimeChip } from './QuizStats';
 export { SessionSummary, type SessionSummaryProps } from './SessionSummary';
+export { SummaryAchievements } from './SummaryAchievements';
+export { ImprovedList, ReviewList } from './SummaryElements';
+export { SummaryScore } from './SummaryScore';
 export { TableQuestion, type TableQuestionProps } from './TableQuestion';
-export { optionIndexFromKey, useQuizKeys } from './use-quiz-keys';
+export { isActivationTarget, optionIndexFromKey, useQuizKeys } from './use-quiz-keys';

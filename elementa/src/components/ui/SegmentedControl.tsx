@@ -97,7 +97,7 @@ export function SegmentedControl<T extends string | number>({
             onClick={() => onChange(opt.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              'inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-3 font-extrabold',
+              'inline-flex min-w-0 items-center justify-center gap-1 rounded-xl px-2 font-extrabold sm:gap-1.5 sm:px-3',
               'transition-[background-color,color,box-shadow] duration-200 disabled:cursor-not-allowed disabled:opacity-40',
               '[&_svg]:size-4',
               size === 'sm' ? 'min-h-9 text-sm' : 'min-h-11 text-sm sm:text-base',

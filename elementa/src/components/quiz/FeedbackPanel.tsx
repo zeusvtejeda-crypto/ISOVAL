@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { Badge, Button, cn, useReducedMotion } from '@/components/ui';
-import { useQuizKeys } from './use-quiz-keys';
+import { isActivationTarget, useQuizKeys } from './use-quiz-keys';
 
 export interface FeedbackPanelProps {
   correct: boolean;
@@ -77,8 +77,7 @@ export function FeedbackPanel({
 
   useQuizKeys((event) => {
     if (event.key !== 'Enter') return false;
-    const target = event.target;
-    if (target instanceof HTMLElement && target.closest('button, a, [role="button"]')) return false;
+    if (isActivationTarget(event.target)) return false;
     onContinue();
     return true;
   });

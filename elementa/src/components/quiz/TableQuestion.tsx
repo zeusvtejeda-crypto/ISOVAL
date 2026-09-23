@@ -89,19 +89,22 @@ export function TableQuestion({ question, locked, response, onAnswer }: TableQue
         <FitToggle compact={compact} onChange={setCompact} size="sm" />
       </div>
 
-      <PeriodicTable
-        label={question.prompt}
-        onSelect={onSelect}
-        selectable={question.selectableAtomicNumbers ?? true}
-        selected={multi && !locked ? picked : undefined}
-        correct={reveal?.correct}
-        incorrect={reveal?.incorrect}
-        dimmed={reveal?.dimmed}
-        blind={view.blind}
-        neutral={view.neutral}
-        hideLabels={view.hideLabels}
-        compact={compact}
-      />
+      {/* La tabla completa (~750 px) no cabe en la columna inmersiva (720 px): en escritorio la desborda. */}
+      <div className="lg:-mx-8">
+        <PeriodicTable
+          label={question.prompt}
+          onSelect={onSelect}
+          selectable={question.selectableAtomicNumbers ?? true}
+          selected={multi && !locked ? picked : undefined}
+          correct={reveal?.correct}
+          incorrect={reveal?.incorrect}
+          dimmed={reveal?.dimmed}
+          blind={view.blind}
+          neutral={view.neutral}
+          hideLabels={view.hideLabels}
+          compact={compact}
+        />
+      </div>
 
       {multi && !locked && (
         <div className="sticky bottom-0 z-20 -mx-4 flex items-center gap-2 border-t border-border bg-bg/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:-mx-6 sm:px-6">
