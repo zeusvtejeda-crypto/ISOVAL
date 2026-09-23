@@ -14,6 +14,8 @@ export interface OptionButtonProps {
   disabled?: boolean;
   /** Atajos para `aria-keyshortcuts` (p. ej. "1 A"). */
   shortcut?: string;
+  /** Celda de una rejilla 2 × 2 (etiquetas cortas en pantallas bajas): texto e insignia más pequeños. */
+  dense?: boolean;
   className?: string;
 }
 
@@ -47,6 +49,7 @@ export function OptionButton({
   onClick,
   disabled = false,
   shortcut,
+  dense = false,
   className,
 }: OptionButtonProps) {
   const icon = state === 'correct' ? <Check strokeWidth={3} /> : state === 'incorrect' ? <X strokeWidth={3} /> : null;
@@ -59,6 +62,10 @@ export function OptionButton({
       className={cn(
         'pressable group relative flex min-h-16 w-full items-center gap-3 rounded-2xl border-2 px-3.5 py-3 text-left text-fg',
         'disabled:cursor-default',
+        // Pantallas bajas (≤ 700 px de alto): opciones más bajas para que quepan las 4 sin desplazarse.
+        dense
+          ? '[@media(max-height:700px)]:min-h-12 [@media(max-height:700px)]:gap-2 [@media(max-height:700px)]:px-2 [@media(max-height:700px)]:py-2'
+          : '[@media(max-height:700px)]:min-h-12 [@media(max-height:700px)]:gap-2.5 [@media(max-height:700px)]:py-2',
         BOX[state],
         className,
       )}
@@ -67,13 +74,21 @@ export function OptionButton({
         aria-hidden
         className={cn(
           'grid size-9 shrink-0 place-items-center rounded-xl border-2 text-sm font-black transition-colors [&_svg]:size-4',
+          dense ? '[@media(max-height:700px)]:size-7 [@media(max-height:700px)]:rounded-lg' : '[@media(max-height:700px)]:size-8',
           BADGE[state],
         )}
       >
         {icon ?? letter}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-lg leading-snug font-extrabold break-words">{label}</span>
+        <span
+          className={cn(
+            'block text-lg leading-snug font-extrabold break-words',
+            dense && 'hyphens-auto [@media(max-height:700px)]:text-[0.9375rem]',
+          )}
+        >
+          {label}
+        </span>
         {sublabel && <span className="block text-sm font-semibold text-muted">{sublabel}</span>}
         {SPEECH[state] && <span className="sr-only">{SPEECH[state]}</span>}
       </span>

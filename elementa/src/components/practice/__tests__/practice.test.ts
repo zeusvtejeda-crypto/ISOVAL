@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { getFamilyGroup } from '@/data/blocks';
+import { hardElements } from '@/components/mistakes/mistakes-data';
 import type { MistakeRecord, ProgressState } from '@/types';
-import { createInitialState } from '@/utils/engine';
+import { applyAnswer, createInitialState, type AnswerInput } from '@/utils/engine';
+import { difficultElements } from '@/utils/selection';
 import { createElementProgress } from '@/utils/srs';
-import { buildPracticeQuestions } from '../build-practice';
+import { buildPracticeQuestions, byPriority } from '../build-practice';
 import { DEFAULT_PRACTICE_COUNT, parsePracticeParams } from '../params';
-import { DEFAULT_PRACTICE_TYPES, practiceCounts, resolvePracticeTarget } from '../target';
+import {
+  DEFAULT_PRACTICE_TYPES,
+  difficultFocus,
+  isFocusSource,
+  MIN_FOCUS,
+  practiceCounts,
+  resolvePracticeTarget,
+} from '../target';
 
 const NOW = new Date(2026, 0, 15, 12, 0, 0);
 
@@ -22,6 +31,44 @@ function weakState(zs: number[]): ProgressState {
   for (const z of zs) {
     state.elements[z] = { ...createElementProgress(z), seen: 4, correct: 1, incorrect: 3, recent: [1, 0, 0, 0] };
   }
+  return state;
+}
+
+function answer(z: number, correct: boolean): AnswerInput {
+  return {
+    atomicNumber: z,
+    skill: 'symbol',
+    correct,
+    responseMs: 3000,
+    mode: 'trivia',
+    prompt: `Pregunta ${z}`,
+    correctAnswer: 'A',
+    givenAnswer: correct ? 'A' : 'B',
+  };
+}
+
+/** Na, Fe, K, Cu y Zn fallados (K y Na más veces); H…O acertados y nunca fallados (como en la auditoría). */
+const FAILED = [11, 26, 19, 29, 30];
+const NEVER_FAILED = [1, 2, 3, 4, 5, 6, 7, 8];
+function auditState(): ProgressState {
+  let state = createInitialState(NOW);
+  const plan: Array<[number, boolean]> = [
+    ...NEVER_FAILED.map((z): [number, boolean] => [z, true]),
+    [19, false],
+    [19, false],
+    [19, true],
+    [11, false],
+    [11, false],
+    [26, false],
+    [26, true],
+    [29, false],
+    [29, true],
+    [29, true],
+    [30, false],
+    [30, true],
+    [30, true],
+  ];
+  for (const [z, correct] of plan) state = applyAnswer(state, answer(z, correct), NOW).state;
   return state;
 }
 
@@ -93,10 +140,50 @@ describe('resolvePracticeTarget', () => {
     expect(target.types).toEqual(['element-to-number']);
   });
 
-  it('cuenta errores, difíciles y repasos', () => {
+  it('cuenta errores, difíciles y repasos (difíciles = los de «Mis errores»)', () => {
     const state = weakState([8, 11]);
     state.mistakes = [mistake(8), mistake(8), mistake(11)];
-    expect(practiceCounts(state, NOW)).toMatchObject({ mistakes: 2, weak: 2 });
+    expect(practiceCounts(state, NOW)).toMatchObject({ mistakes: 2, difficult: 2 });
+    const audit = auditState();
+    expect(practiceCounts(audit, NOW).difficult).toBe(hardElements(audit, NOW).length);
+    expect(practiceCounts(audit, NOW).difficult).toBe(5);
+  });
+
+  it('difíciles: exactamente los fallados que ves en /errores, nunca los acertados', () => {
+    const state = auditState();
+    const target = resolvePracticeTarget(params('focus=dificiles'), state, NOW);
+    expect([...target.elements].sort((a, b) => a - b)).toEqual([...FAILED].sort((a, b) => a - b));
+    expect(target.elements).toEqual(hardElements(state, NOW).map((h) => h.atomicNumber));
+    expect(target.elements.some((z) => NEVER_FAILED.includes(z))).toBe(false);
+    expect(target.description).toBe('Los que has fallado y aún no dominas.');
+  });
+
+  it('difíciles: con menos de 4 fallados se completa con los que menos dominas', () => {
+    let state = createInitialState(NOW);
+    for (const z of [1, 2, 3, 4, 5, 6]) state = applyAnswer(state, answer(z, true), NOW).state;
+    state = applyAnswer(state, answer(26, false), NOW).state;
+    const focus = difficultFocus(state, NOW);
+    expect(focus).toHaveLength(MIN_FOCUS);
+    expect(focus[0]).toMatchObject({ atomicNumber: 26, failed: true });
+    expect(focus.slice(1).every((f) => !f.failed)).toBe(true);
+    const target = resolvePracticeTarget(params('focus=dificiles'), state, NOW);
+    expect(target.elements[0]).toBe(26);
+    expect(target.elements).toHaveLength(MIN_FOCUS);
+    // Con 4 o más fallados, no se añade ninguno sin fallos.
+    expect(difficultFocus(auditState(), NOW).every((f) => f.failed)).toBe(true);
+  });
+
+  it('errores sin errores recientes → prefiere los difíciles', () => {
+    const state = auditState();
+    state.mistakes = [];
+    const target = resolvePracticeTarget(params('focus=errores'), state, NOW);
+    expect(target.fallback).toBe(true);
+    expect(target.elements).toEqual(difficultElements(state, NOW).map((d) => d.atomicNumber));
+  });
+
+  it('fuentes enfocadas', () => {
+    expect(['errores', 'dificiles', 'repaso'].every((s) => isFocusSource(s as never))).toBe(true);
+    expect(['elements', 'block', 'family', 'none'].some((s) => isFocusSource(s as never))).toBe(false);
   });
 });
 
@@ -127,6 +214,53 @@ describe('buildPracticeQuestions', () => {
       easy += qs.filter((q) => q.atomicNumber === 19).length;
     }
     expect(weak).toBeGreaterThan(easy);
+  });
+
+  it('enfocada (difíciles, 10 preguntas): solo los fallados y cada uno al menos dos veces', () => {
+    const state = auditState();
+    const elements = resolvePracticeTarget(params('focus=dificiles'), state, NOW).elements;
+    for (let run = 0; run < 15; run++) {
+      const qs = buildPracticeQuestions({ elements, count: 10, focused: true }, state, NOW);
+      expect(qs).toHaveLength(10);
+      for (const q of qs) expect(FAILED).toContain(q.atomicNumber);
+      for (const z of FAILED) expect(qs.filter((q) => q.atomicNumber === z).length).toBeGreaterThanOrEqual(2);
+      expect(new Set(qs.map((q) => `${q.type}:${q.atomicNumber}`)).size).toBe(10);
+      for (let i = 1; i < qs.length; i++) expect(qs[i].atomicNumber).not.toBe(qs[i - 1].atomicNumber);
+    }
+  });
+
+  it('enfocada con más preguntas: los que más fallas salen más veces', () => {
+    const state = auditState();
+    const elements = resolvePracticeTarget(params('focus=dificiles'), state, NOW).elements;
+    const ranked = byPriority(elements, state, NOW);
+    const [weakest] = ranked;
+    const strongest = ranked[ranked.length - 1];
+    let weak = 0;
+    let strong = 0;
+    for (let run = 0; run < 20; run++) {
+      const qs = buildPracticeQuestions({ elements, count: 20, focused: true }, state, NOW);
+      expect(qs).toHaveLength(20);
+      for (const z of FAILED) expect(qs.filter((q) => q.atomicNumber === z).length).toBeGreaterThanOrEqual(2);
+      weak += qs.filter((q) => q.atomicNumber === weakest).length;
+      strong += qs.filter((q) => q.atomicNumber === strongest).length;
+    }
+    expect(weak).toBeGreaterThan(strong);
+  });
+
+  it('enfocada con muchos elementos: la primera pasada cubre solo los más prioritarios', () => {
+    const state = weakState([3, 11, 19, 37, 55]);
+    const pool = [...Array.from({ length: 12 }, (_, i) => i + 20), 3, 11, 19, 37, 55];
+    const ranked = byPriority(pool, state, NOW);
+    expect(ranked.slice(0, 5).sort((a, b) => a - b)).toEqual([3, 11, 19, 37, 55]);
+    let failedShare = 0;
+    for (let run = 0; run < 10; run++) {
+      const qs = buildPracticeQuestions({ elements: pool, count: 10, focused: true }, state, NOW);
+      expect(qs).toHaveLength(10);
+      for (const z of [3, 11, 19, 37, 55]) expect(qs.some((q) => q.atomicNumber === z)).toBe(true);
+      failedShare += qs.filter((q) => [3, 11, 19, 37, 55].includes(q.atomicNumber)).length;
+    }
+    // Sin enfoque saldría 1 pregunta por elemento (5 de 10 serían de los fallados).
+    expect(failedShare / 10).toBeGreaterThan(5);
   });
 
   it('un solo elemento: tantas preguntas como tipos distintos', () => {

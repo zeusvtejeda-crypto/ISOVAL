@@ -3,14 +3,14 @@ import { getStudyBlock } from '@/data/blocks';
 import { ELEMENTS_BY_NUMBER, getElement } from '@/data/elements';
 import type { ProgressState } from '@/types';
 import { createInitialState } from '@/utils/engine';
-import { ALL_ATOMIC_NUMBERS } from '@/utils/selection';
+import { ALL_ATOMIC_NUMBERS, difficultElements } from '@/utils/selection';
 import { createElementProgress } from '@/utils/srs';
-import { applicableNumbers, buildDeck, deckCount, deckPool, deckTitle, smartDeck } from '../deck';
+import { applicableNumbers, buildDeck, deckCount, deckPool, deckTitle, mistakeNumbers, smartDeck } from '../deck';
 import { FLASHCARD_MODES, getFlashcardMode, isFlashcardModeId } from '../modes';
 import { parseFlashcardParams } from '../params';
 import { createQueue, MAX_REQUEUES, requeue, type QueueCard } from '../queue';
 import { ratingFromKey } from '../ratings';
-import { difficultElements, improvedElements, knownCount, ratingCounts, type ReviewRecord } from '../session';
+import { difficultCards, improvedCards, knownCount, ratingCounts, tallyEntries, type ReviewRecord } from '../session';
 
 const NOW = new Date(2026, 0, 15, 12, 0, 0);
 
@@ -134,6 +134,15 @@ describe('mazos', () => {
     ]);
     expect(buildDeck({ kind: 'mistakes' }, withErrors, NOW, symbolMode, 10, seeded()).sort()).toEqual([17, 35]);
 
+    // Acertados pero sin dominar: no son errores (antes entraban en el mazo «Mis errores»).
+    const withCorrect = withProgress(withErrors, [
+      [8, { correct: 1, incorrect: 0, recent: [1] }],
+      [26, { correct: 2, incorrect: 0, recent: [1, 1] }],
+    ]);
+    expect(mistakeNumbers(withCorrect, NOW).sort()).toEqual([17, 35]);
+    expect(mistakeNumbers(withCorrect, NOW)).toEqual(difficultElements(withCorrect, NOW).map((d) => d.atomicNumber));
+    expect(deckPool({ kind: 'mistakes' }, withCorrect, NOW, symbolMode).sort()).toEqual([17, 35]);
+
     const custom = { kind: 'custom', elements: [79, 1, 79, 57] } as const;
     expect(buildDeck(custom, fresh, NOW, symbolMode, 10)).toEqual([79, 1, 57]);
     expect(buildDeck(custom, fresh, NOW, getFlashcardMode('element-group'), 10)).toEqual([79, 1]);
@@ -207,11 +216,27 @@ describe('resultado de la sesión', () => {
     const counts = ratingCounts(reviews);
     expect(counts).toEqual({ again: 2, hard: 2, good: 1, easy: 1 });
     expect(knownCount(counts)).toBe(2);
-    expect(difficultElements(reviews)).toEqual([3, 1, 5]);
+    expect(difficultCards(reviews)).toEqual([3, 1, 5]);
   });
 
-  it('elementos mejorados de mayor a menor', () => {
-    expect(improvedElements({ 1: 10, 2: 50, 3: 40 }, { 1: 30, 2: 45, 3: 70 })).toEqual([3, 1]);
+  it('«Lo sabía»/«Muy fácil» son aciertos del recuento; «No lo sabía»/«Casi», fallos', () => {
+    const reviews = [review(1, 'again'), review(2, 'hard'), review(3, 'good'), review(4, 'easy')];
+    expect(tallyEntries(reviews).map((e) => e.correct)).toEqual([false, false, true, true]);
+  });
+
+  it('elementos mejorados de mayor a menor, solo si nunca fallaste la tarjeta', () => {
+    const reviews = [review(1, 'good'), review(2, 'good'), review(3, 'easy')];
+    expect(improvedCards(reviews, { 1: 10, 2: 50, 3: 40 }, { 1: 30, 2: 45, 3: 70 })).toEqual([3, 1]);
+  });
+
+  it('una tarjeta fallada y luego acertada va a «repasar», nunca a «mejoraste»', () => {
+    // Potasio: «No lo sabía» y, al volver a salir, «Lo sabía»: su dominio final puede ser mayor.
+    const reviews = [review(19, 'again'), review(8, 'good'), review(19, 'good'), review(6, 'hard'), review(6, 'good')];
+    const improved = improvedCards(reviews, { 19: 20, 8: 30, 6: 30 }, { 19: 35, 8: 50, 6: 40 });
+    const difficult = difficultCards(reviews);
+    expect(improved).toEqual([8]);
+    expect(difficult).toEqual([19, 6]);
+    expect(improved.some((z) => difficult.includes(z))).toBe(false);
   });
 
   it('teclas 1–4', () => {

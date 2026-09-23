@@ -1,6 +1,7 @@
 'use client';
 
-import { QuizScreen, SessionSummary } from '@/components/quiz';
+import { QuizScreen } from '@/components/quiz/QuizScreen';
+import { SessionSummary } from '@/components/quiz/SessionSummary';
 import { useProgress } from '@/hooks/useProgress';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import type { QuestionType } from '@/types';
@@ -14,6 +15,8 @@ export interface PracticePlan {
   elements: number[];
   types: QuestionType[];
   count: number;
+  /** Errores, difíciles o repasos: los más prioritarios salen varias veces (`PracticeSpec.focused`). */
+  focused: boolean;
 }
 
 export interface PracticeRunProps {
@@ -32,7 +35,12 @@ export function PracticeRun({ plan, onExit, onPracticeElements }: PracticeRunPro
   const session = useQuizSession({
     mode: 'practice',
     title: plan.title,
-    questions: () => buildPracticeQuestions({ elements: plan.elements, count: plan.count, types: plan.types }, state, new Date()),
+    questions: () =>
+      buildPracticeQuestions(
+        { elements: plan.elements, count: plan.count, types: plan.types, focused: plan.focused },
+        state,
+        new Date(),
+      ),
   });
 
   return (

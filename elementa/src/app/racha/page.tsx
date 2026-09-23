@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { RachaGame } from '@/components/games';
+import { RachaGame } from '@/components/games/racha/RachaGame';
 
 export const metadata: Metadata = {
   title: 'Modo Racha',

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PreguntadosGame } from '@/components/games';
+import { PreguntadosGame } from '@/components/games/preguntados/PreguntadosGame';
 
 export const metadata: Metadata = {
   title: 'Preguntados',

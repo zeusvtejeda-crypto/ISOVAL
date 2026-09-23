@@ -104,7 +104,8 @@ export const CATEGORIES: Record<ElementCategory, CategoryMeta> = {
     label: 'Lantánidos',
     singular: 'Lantánido',
     emoji: '🧲',
-    blurb: 'Primera fila del bloque f (57–71): las "tierras raras" de imanes y pantallas.',
+    blurb:
+      'Serie del 57 al 71 que se dibuja aparte, bajo la tabla: junto con Sc e Y forman las "tierras raras" de imanes y pantallas.',
     tileClass: 'bg-cat-lanthanide-soft border-cat-lanthanide text-fg',
     solidClass: 'bg-cat-lanthanide text-white dark:text-bg',
     textClass: 'text-cat-lanthanide',

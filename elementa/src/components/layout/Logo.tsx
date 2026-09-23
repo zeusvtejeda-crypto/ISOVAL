@@ -20,8 +20,11 @@ export function LogoMark({ className }: { className?: string }) {
 
 export interface LogoProps {
   className?: string;
-  /** Solo el isotipo, sin el nombre. */
-  compact?: boolean;
+  /**
+   * Solo el isotipo, sin el nombre: `true` siempre; `'narrow'` solo en pantallas de menos de 360 px
+   * (teléfonos de 320 px, donde el nombre no cabe junto a racha, nivel y tema).
+   */
+  compact?: boolean | 'narrow';
 }
 
 /** Logotipo con enlace al inicio. */
@@ -30,10 +33,21 @@ export function Logo({ className, compact = false }: LogoProps) {
     <Link
       href="/"
       aria-label="Elementa, ir al inicio"
-      className={cn('group inline-flex min-h-11 items-center gap-2.5 rounded-2xl pr-1', className)}
+      className={cn(
+        'group inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-2xl pr-1',
+        compact === 'narrow' && 'max-[359px]:pr-0',
+        className,
+      )}
     >
       <LogoMark className="group-hover:-rotate-6 group-active:scale-95" />
-      {!compact && <span className="text-xl font-black tracking-tight text-fg">Elementa</span>}
+      {compact !== true && (
+        <span
+          aria-hidden
+          className={cn('text-xl font-black tracking-tight text-fg', compact === 'narrow' && 'max-[359px]:hidden')}
+        >
+          Elementa
+        </span>
+      )}
     </Link>
   );
 }

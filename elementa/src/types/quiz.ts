@@ -59,6 +59,11 @@ export interface Question {
   options?: QuestionOption[];
   /** Solo preguntas de tabla: casillas correctas. En `table-select` hay una sola. */
   targetAtomicNumbers?: number[];
+  /**
+   * Solo `table-multi-select`: subconjunto de `targetAtomicNumbers` que se acepta pero no se exige
+   * (clasificación discutida, p. ej. el Po en "Selecciona todos los metaloides").
+   */
+  optionalAtomicNumbers?: number[];
   /** Solo preguntas de tabla: casillas seleccionables (por defecto las 118). */
   selectableAtomicNumbers?: number[];
   /** Respuesta correcta legible: "Na", "Sodio", "Grupo 1"… */

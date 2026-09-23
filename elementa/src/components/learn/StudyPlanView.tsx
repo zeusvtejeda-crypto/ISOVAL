@@ -98,7 +98,7 @@ export function StudyPlanView({ plan, onStart }: StudyPlanViewProps) {
                 emoji="🎯"
                 tone="danger"
                 title={`${nHard} ${pluralize(nHard, 'elemento difícil', 'elementos difíciles')}`}
-                hint={nHard > 0 ? 'Los que más te cuestan, con preguntas clave.' : '¡Ninguno se te resiste!'}
+                hint={nHard > 0 ? 'Los que has fallado y aún no dominas.' : '¡Ninguno se te resiste!'}
                 atomicNumbers={plan.hard}
                 chipTone="danger"
               />

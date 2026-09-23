@@ -75,6 +75,8 @@ function RecordBanner({ label, value }: { label: string; value: number }) {
 export function SessionSummary({ summary, onRestart, homeHref = '/', onPracticeMistakes, className }: SessionSummaryProps) {
   const { streak, ready } = useProgress();
   const { correct, total, toReview } = summary;
+  // Un elemento que hay que repasar no «mejoró» hoy (el motor ya lo garantiza; esto cubre otros productores).
+  const improved = summary.improved.filter((z) => !toReview.includes(z));
   const celebrate = total >= 5 && correct / total >= 0.8;
 
   return (
@@ -97,7 +99,7 @@ export function SessionSummary({ summary, onRestart, homeHref = '/', onPracticeM
       {summary.newRecord && <RecordBanner label={summary.newRecord.label} value={summary.newRecord.value} />}
       {ready && streak.current > 0 && <StreakBanner days={streak.current} todayMet={streak.todayMet} />}
       <SummaryAchievements ids={summary.unlockedAchievements} />
-      <ImprovedList atomicNumbers={summary.improved} />
+      <ImprovedList atomicNumbers={improved} />
       <ReviewList atomicNumbers={toReview} />
 
       <div className="mt-2 flex flex-col gap-2.5">

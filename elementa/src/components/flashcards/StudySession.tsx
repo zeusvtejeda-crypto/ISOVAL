@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Eye } from 'lucide-react';
-import { isActivationTarget, useQuizKeys } from '@/components/quiz';
+import { isActivationTarget, useQuizKeys } from '@/components/quiz/use-quiz-keys';
 import { Button, cn, useReducedMotion } from '@/components/ui';
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -15,8 +15,8 @@ import { createQueue, requeue, type QueueCard } from './queue';
 import { ratingFromKey } from './ratings';
 import { RatingButtons } from './RatingButtons';
 import {
-  difficultElements,
-  improvedElements,
+  difficultCards,
+  improvedCards,
   knownCount,
   ratingCounts,
   type FlashcardSessionResult,
@@ -181,8 +181,8 @@ export function StudySession({ deck, onFinish, onExit }: StudySessionProps) {
       counts,
       xpGained: state.xp + session.xpGained,
       durationMs,
-      improved: improvedElements(state.masteryStart, state.masteryEnd),
-      difficult: difficultElements(state.reviews),
+      improved: improvedCards(state.reviews, state.masteryStart, state.masteryEnd),
+      difficult: difficultCards(state.reviews),
       unlockedAchievements: Array.from(new Set([...state.unlocked, ...session.unlockedAchievements])),
     });
   };
@@ -269,7 +269,7 @@ export function StudySession({ deck, onFinish, onExit }: StudySessionProps) {
         </p>
       </div>
 
-      <div className="flex flex-1 flex-col justify-center py-4 sm:py-6">
+      <div className="flex flex-1 flex-col justify-center py-4 sm:py-6 [@media(max-height:700px)]:py-2">
         <div key={card.key} className="relative" style={swipe.style} {...swipe.handlers}>
           <SwipeStamp progress={swipe.progress} />
           <div
@@ -291,7 +291,7 @@ export function StudySession({ deck, onFinish, onExit }: StudySessionProps) {
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-20 -mx-4 flex min-h-[8.5rem] flex-col justify-end bg-bg/90 px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:-mx-6 sm:min-h-[8rem] sm:px-6">
+      <div className="sticky bottom-0 z-20 -mx-4 flex min-h-[8.5rem] flex-col justify-end bg-bg/90 px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:-mx-6 sm:min-h-[8rem] sm:px-6 [@media(max-height:700px)]:min-h-0">
         {run.revealed ? (
           <>
             <RatingButtons
@@ -301,7 +301,7 @@ export function StudySession({ deck, onFinish, onExit }: StudySessionProps) {
               selected={run.leaving}
               describedBy={answerId}
             />
-            <p aria-hidden className="mt-2 hidden text-center text-xs font-bold text-muted pointer-coarse:block">
+            <p aria-hidden className="mt-2 hidden text-center text-xs font-bold text-muted pointer-coarse:[@media(min-height:701px)]:block">
               Desliza la tarjeta: → Lo sabía · ← No lo sabía
             </p>
           </>

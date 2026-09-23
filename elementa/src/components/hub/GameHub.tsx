@@ -4,27 +4,27 @@ import { useMemo, type ReactNode } from 'react';
 import { ContinueCard } from '@/components/dashboard/ContinueCard';
 import { PageHeader } from '@/components/layout';
 import { Badge, Skeleton } from '@/components/ui';
-import { TOTAL_ELEMENTS } from '@/data/elements';
 import { useNow } from '@/hooks/useNow';
 import { useProgress } from '@/hooks/useProgress';
 import type { ProgressState } from '@/types';
 import { formatNumber } from '@/utils/format';
-import { weakElements } from '@/utils/planner';
+import { difficultElements } from '@/utils/selection';
 import { ModeCard } from './ModeCard';
 import { LEARN_MODES, MODES, PLAY_MODES, type ModeId, type ModeInfo } from './modes';
 
 interface FooterContext {
   ready: boolean;
   state: ProgressState;
-  weakCount: number;
+  /** Elementos difíciles: el mismo número que «Elementos difíciles» en /errores. */
+  difficultCount: number;
 }
 
-function modeFooter(mode: ModeInfo, { ready, state, weakCount }: FooterContext): ReactNode {
+function modeFooter(mode: ModeInfo, { ready, state, difficultCount }: FooterContext): ReactNode {
   if (mode.id === 'errores') {
     if (!ready) return <Skeleton rounded="full" className="h-6 w-32" />;
-    return weakCount > 0 ? (
+    return difficultCount > 0 ? (
       <Badge tone="danger" icon={<span aria-hidden>🎯</span>}>
-        {formatNumber(weakCount)} por reforzar
+        {formatNumber(difficultCount)} por reforzar
       </Badge>
     ) : (
       <Badge tone="success" icon={<span aria-hidden>✅</span>}>
@@ -69,11 +69,8 @@ function ModeSection({ id, title, subtitle, modes, ctx }: { id: string; title: s
 export function GameHub() {
   const { ready, state } = useProgress();
   const now = useNow();
-  const weakCount = useMemo(
-    () => (ready ? weakElements(state, now, TOTAL_ELEMENTS).length : 0),
-    [ready, state, now],
-  );
-  const ctx: FooterContext = { ready, state, weakCount };
+  const difficultCount = useMemo(() => (ready ? difficultElements(state, now).length : 0), [ready, state, now]);
+  const ctx: FooterContext = { ready, state, difficultCount };
 
   return (
     <>

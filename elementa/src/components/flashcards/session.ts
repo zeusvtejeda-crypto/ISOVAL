@@ -1,3 +1,4 @@
+import { improvedElements, type TallyEntry } from '@/components/quiz/session-tally';
 import type { FlashcardRating } from '@/types';
 import type { FlashcardModeId } from './modes';
 
@@ -27,7 +28,7 @@ export interface FlashcardSessionResult {
   /** XP de las tarjetas + bonus por completar la sesión. */
   xpGained: number;
   durationMs: number;
-  /** Elementos cuyo dominio subió, mayor mejora primero. */
+  /** «Hoy mejoraste»: siempre «Lo sabía»/«Muy fácil», nunca «No lo sabía»/«Casi», y el dominio subió. */
   improved: number[];
   /** Elementos calificados «No lo sabía» o «Casi» al menos una vez («No lo sabía» primero). */
   difficult: number[];
@@ -45,7 +46,18 @@ export function knownCount(counts: Record<FlashcardRating, number>): number {
   return counts.good + counts.easy;
 }
 
-export function difficultElements(reviews: readonly ReviewRecord[]): number[] {
+/** «Lo sabía» y «Muy fácil» cuentan como acierto; «No lo sabía» y «Casi», como fallo. */
+export function isKnownRating(rating: FlashcardRating): boolean {
+  return rating === 'good' || rating === 'easy';
+}
+
+/** Las calificaciones como respuestas del recuento de sesión (`session-tally`). */
+export function tallyEntries(reviews: readonly ReviewRecord[]): TallyEntry[] {
+  return reviews.map((r) => ({ atomicNumber: r.atomicNumber, correct: isKnownRating(r.rating) }));
+}
+
+/** «Elementos que debes repasar»: calificados «No lo sabía» o «Casi» alguna vez («No lo sabía» primero). */
+export function difficultCards(reviews: readonly ReviewRecord[]): number[] {
   const again: number[] = [];
   const hard: number[] = [];
   for (const r of reviews) {
@@ -55,11 +67,14 @@ export function difficultElements(reviews: readonly ReviewRecord[]): number[] {
   return [...again, ...hard.filter((z) => !again.includes(z))];
 }
 
-export function improvedElements(start: Record<number, number>, end: Record<number, number>): number[] {
-  return Object.keys(end)
-    .map(Number)
-    .map((z) => ({ z, delta: (end[z] ?? 0) - (start[z] ?? 0) }))
-    .filter((d) => d.delta > 0)
-    .sort((a, b) => b.delta - a.delta)
-    .map((d) => d.z);
+/**
+ * «Hoy mejoraste» con la regla común de `session-tally`: al menos un «Lo sabía»/«Muy fácil», ningún
+ * «No lo sabía»/«Casi» y más dominio que al empezar. Nunca coincide con `difficultCards`.
+ */
+export function improvedCards(
+  reviews: readonly ReviewRecord[],
+  masteryStart: Record<number, number>,
+  masteryEnd: Record<number, number>,
+): number[] {
+  return improvedElements(tallyEntries(reviews), masteryStart, masteryEnd);
 }

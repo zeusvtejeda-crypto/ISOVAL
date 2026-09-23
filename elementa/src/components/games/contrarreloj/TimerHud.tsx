@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Badge, ProgressRing, cn } from '@/components/ui';
+import { Badge, ProgressBar, ProgressRing, cn } from '@/components/ui';
 import type { QuizSession } from '@/hooks/useQuizSession';
 import { useSound } from '@/hooks/useSound';
 import { formatNumber, formatPercent } from '@/utils/format';
@@ -13,13 +13,20 @@ export interface TimerHudProps {
   best: number;
 }
 
-/** Reloj grande (rojo en los últimos 10 s, con tic) y marcador de aciertos. */
-export function TimerHud({ session, best }: TimerHudProps) {
-  const sound = useSound();
+function clock(session: QuizSession) {
   const remaining = session.remainingMs ?? 0;
   const limit = session.timeLimitMs ?? TIME_ATTACK_MS;
   const seconds = Math.max(0, Math.ceil(remaining / 1000));
-  const low = seconds <= LOW_TIME_SECONDS;
+  return { remaining, limit, seconds, low: seconds <= LOW_TIME_SECONDS };
+}
+
+/**
+ * Reloj grande (rojo en los últimos 10 s, con tic) y marcador de aciertos. En pantallas bajas la
+ * tarjeta se oculta (queda `TimerHudCompact` en la cabecera), pero sigue sonando el tic.
+ */
+export function TimerHud({ session, best }: TimerHudProps) {
+  const sound = useSound();
+  const { remaining, limit, seconds, low } = clock(session);
   const { correctCount } = session;
   const answeredCount = session.answered.length;
   const beatingRecord = best > 0 && correctCount > best;
@@ -34,6 +41,7 @@ export function TimerHud({ session, best }: TimerHudProps) {
       aria-label="Marcador"
       className={cn(
         'mt-1 flex items-center gap-3 rounded-3xl border px-3.5 py-3 transition-colors duration-300 sm:gap-5 sm:px-5',
+        '[@media(max-height:700px)]:hidden',
         low ? 'border-danger/40 bg-danger-soft' : 'border-border bg-surface shadow-card',
       )}
     >
@@ -74,5 +82,35 @@ export function TimerHud({ session, best }: TimerHudProps) {
         </Badge>
       </div>
     </section>
+  );
+}
+
+/** Barra de tiempo, «⏱ 45» y aciertos en una fila, para la cabecera en pantallas bajas. */
+export function TimerHudCompact({ session }: { session: QuizSession }) {
+  const { remaining, limit, seconds, low } = clock(session);
+  return (
+    <div role="group" aria-label="Marcador" className="flex min-w-0 flex-1 items-center gap-2">
+      <ProgressBar value={remaining / limit} size="md" tone={low ? 'danger' : 'accent'} ariaLabel="Tiempo restante" />
+      <span
+        role="timer"
+        aria-label={`Quedan ${seconds} segundos`}
+        className={cn(
+          'inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-2.5 font-black tabular',
+          low ? 'bg-danger-soft text-danger' : 'bg-surface-2 text-fg',
+        )}
+      >
+        <span aria-hidden>⏱</span>
+        <span aria-hidden className={cn('min-w-[2ch] text-center', low && seconds > 0 && 'animate-pulse')}>
+          {seconds}
+        </span>
+      </span>
+      <span className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-success-soft px-2.5 font-black text-success tabular">
+        <span aria-hidden>✅</span>
+        <span key={session.correctCount} className="inline-block animate-pop">
+          {formatNumber(session.correctCount)}
+        </span>
+        <span className="sr-only"> aciertos</span>
+      </span>
+    </div>
   );
 }

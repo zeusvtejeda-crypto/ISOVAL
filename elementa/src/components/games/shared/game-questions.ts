@@ -46,22 +46,3 @@ export function formatSeconds(ms: number | null): string {
   if (ms === null || !Number.isFinite(ms)) return '—';
   return `${(ms / 1000).toFixed(1)} s`;
 }
-
-/** Elementos cuyo dominio subió, de mayor a menor mejora. */
-export function improvedElements(start: Record<number, number>, end: Record<number, number>): number[] {
-  return Object.keys(end)
-    .map(Number)
-    .map((z) => ({ z, delta: (end[z] ?? 0) - (start[z] ?? 0) }))
-    .filter((d) => d.delta > 0)
-    .sort((a, b) => b.delta - a.delta)
-    .map((d) => d.z);
-}
-
-/** Elementos fallados, sin repetir, en el orden del primer fallo. */
-export function failedElements(answered: readonly AnsweredQuestion[]): number[] {
-  const out: number[] = [];
-  for (const a of answered) {
-    if (!a.correct && !out.includes(a.question.atomicNumber)) out.push(a.question.atomicNumber);
-  }
-  return out;
-}

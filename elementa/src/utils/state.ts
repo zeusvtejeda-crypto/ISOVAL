@@ -11,6 +11,8 @@ import type {
 export const STATE_VERSION = 1 as const;
 export const DAILY_GOALS: readonly DailyGoal[] = [5, 10, 20, 50];
 export const MAX_MISTAKES = 300;
+/** Tope de XP aceptado al cargar o importar un progreso (evita valores absurdos de archivos editados). */
+export const MAX_XP = 10_000_000;
 
 export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'system',
@@ -62,5 +64,5 @@ export function createInitialState(now: Date): ProgressState {
 
 /** Día sin actividad. */
 export function emptyDay(date: string, goal: number): DailyActivity {
-  return { date, questions: 0, correct: 0, xp: 0, timeMs: 0, newLearned: 0, goal, goalMet: false };
+  return { date, questions: 0, correct: 0, flashcards: 0, xp: 0, timeMs: 0, newLearned: 0, goal, goalMet: false };
 }

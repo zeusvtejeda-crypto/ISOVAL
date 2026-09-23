@@ -94,9 +94,12 @@ interface PlaceholderProps {
   dimmed: boolean;
 }
 
+/** El texto mezcla el color de la familia con `fg` (más oscuro en claro, más claro en oscuro): ≥ 6:1. */
 const PLACEHOLDER_COLORS: Record<PlaceholderProps['category'], string> = {
-  lanthanide: 'border-cat-lanthanide bg-cat-lanthanide-soft/60 text-cat-lanthanide',
-  actinide: 'border-cat-actinide bg-cat-actinide-soft/60 text-cat-actinide',
+  lanthanide:
+    'border-cat-lanthanide bg-cat-lanthanide-soft/60 text-[color-mix(in_oklab,var(--color-cat-lanthanide)_70%,var(--color-fg))]',
+  actinide:
+    'border-cat-actinide bg-cat-actinide-soft/60 text-[color-mix(in_oklab,var(--color-cat-actinide)_70%,var(--color-fg))]',
 };
 
 function Placeholder({ category, label, style, dimmed }: PlaceholderProps) {
@@ -117,7 +120,7 @@ function Placeholder({ category, label, style, dimmed }: PlaceholderProps) {
     >
       <span
         aria-hidden
-        className="absolute inset-0 hidden items-center justify-center text-center text-[length:21cqw] leading-tight font-black tabular @min-[2.5rem]:flex"
+        className="absolute inset-0 hidden items-center justify-center text-center text-[length:max(10px,21cqw)] leading-tight font-black tabular @min-[2.5rem]:flex"
       >
         <span>
           {from}

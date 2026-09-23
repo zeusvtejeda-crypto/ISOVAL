@@ -15,11 +15,13 @@ import {
   elementToMass,
   elementToPeriod,
   elementToPhase,
+  hasContestedCategory,
+  hasKnownPhase,
 } from './question-gen/facts';
 import { elementToNumber, nameToSymbol, numberToElement, symbolToName } from './question-gen/identity';
 import { locationQuestion, locationVariants } from './question-gen/location';
 import { ALL_QUESTION_TYPES, MC_TYPES, QUESTION_TYPE_META, TABLE_TYPES } from './question-gen/meta';
-import { propertyQuestion } from './question-gen/property';
+import { propertyQuestion, propertyVariants } from './question-gen/property';
 import {
   SELECTABLE_CATEGORIES,
   tableFindElement,
@@ -31,6 +33,7 @@ import { shuffle, weightedSample } from './random';
 import { adaptivePool, ALL_ATOMIC_NUMBERS, selectionWeight } from './selection';
 
 export { MC_TYPES, QUESTION_TYPE_META, TABLE_TYPES, ALL_QUESTION_TYPES };
+export { answerAttribution, checkTableAnswer, describeTableSelection, type AnswerAttribution } from './answer-check';
 export type { QuestionTypeMeta } from './question-gen/meta';
 
 const GENERATORS: Record<QuestionType, (el: ChemicalElement) => Question | null> = {
@@ -60,9 +63,13 @@ export function isApplicable(type: QuestionType, el: ChemicalElement): boolean {
     case 'table-group-member':
       return el.group !== null;
     case 'element-to-phase':
-      return el.phase !== 'unknown';
+      return hasKnownPhase(el);
     case 'location':
       return locationVariants(el).length > 0;
+    case 'property':
+      return propertyVariants(el).length > 0;
+    case 'classification':
+      return !hasContestedCategory(el);
     case 'table-select-category':
       return SELECTABLE_CATEGORIES.includes(el.category);
     default:
@@ -194,30 +201,4 @@ export function typesForTopics(topics: ExamTopic[]): QuestionType[] {
   const set = new Set(topics);
   const types = ALL_QUESTION_TYPES.filter((t) => set.has(QUESTION_TYPE_META[t].topic));
   return types.length > 0 ? types : [...MC_TYPES];
-}
-
-/**
- * Corrige una pregunta de tabla.
- * - `table-select`: se debe tocar exactamente UNA casilla y debe estar en `targetAtomicNumbers`.
- *   Normalmente hay un solo objetivo; en `table-group-member` ("Toca un elemento del grupo 1")
- *   los objetivos son todos los miembros del grupo y cualquiera cuenta como acierto.
- * - `table-multi-select`: el conjunto seleccionado debe ser exactamente el de objetivos.
- * Para preguntas de opción múltiple devuelve `false`.
- */
-export function checkTableAnswer(q: Question, selected: number[]): boolean {
-  const targets = q.targetAtomicNumbers ?? [];
-  const picked = Array.from(new Set(selected));
-  if (q.kind === 'table-select') return picked.length === 1 && targets.includes(picked[0]);
-  if (q.kind === 'table-multi-select') {
-    return picked.length === targets.length && picked.every((z) => targets.includes(z));
-  }
-  return false;
-}
-
-/** Texto legible de una selección en la tabla (para `givenAnswer`): "Na, K" o "—". */
-export function describeTableSelection(selected: number[]): string {
-  const symbols = Array.from(new Set(selected))
-    .map((z) => ELEMENTS_BY_NUMBER[z]?.symbol)
-    .filter((s): s is string => Boolean(s));
-  return symbols.length > 0 ? symbols.join(', ') : '—';
 }

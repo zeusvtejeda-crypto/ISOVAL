@@ -10,7 +10,7 @@ import { PracticeHub } from './PracticeHub';
 import { PracticeIntro, practiceQuestionCount } from './PracticeIntro';
 import { PracticeRun, type PracticePlan } from './PracticeRun';
 import { PracticeSkeleton } from './PracticeSkeleton';
-import { resolvePracticeTarget } from './target';
+import { isFocusSource, resolvePracticeTarget } from './target';
 
 function PracticeFlow({ params }: { params: PracticeParams }) {
   const { state, ready } = useProgress();
@@ -29,7 +29,8 @@ function PracticeFlow({ params }: { params: PracticeParams }) {
   const practiceElements = (elements: number[]) => {
     if (!plan || elements.length === 0) return;
     planIds.current += 1;
-    setPlan({ ...plan, id: planIds.current, title: 'Tus errores', elements });
+    // Los fallos de la sesión se practican enfocados: cada uno sale varias veces.
+    setPlan({ ...plan, id: planIds.current, title: 'Tus errores', elements, focused: true });
   };
 
   if (!ready) return <PracticeSkeleton />;
@@ -48,6 +49,7 @@ function PracticeFlow({ params }: { params: PracticeParams }) {
       elements: [...target.elements],
       types: [...target.types],
       count,
+      focused: isFocusSource(target.source),
     });
   };
 

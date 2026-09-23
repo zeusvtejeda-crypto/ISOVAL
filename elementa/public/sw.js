@@ -8,7 +8,8 @@
  * mano solo cuando cambia la lógica de este archivo de forma incompatible con las cachés existentes.
  *
  * Estrategias:
- *   navegaciones            → red primero (máx. ~3,5 s) → página en caché → "/" en caché → "/offline"
+ *   navegaciones            → red primero (máx. ~3,5 s) → página en caché → "/offline" en caché
+ *                             (solo "/", la start_url, recurre al "/" en caché antes que a "/offline")
  *   /_next/static/*         → caché primero (archivos inmutables con hash)
  *   RSC (RSC: 1 o ?_rsc=)   → red primero → caché
  *   resto same-origin GET   → stale-while-revalidate (iconos, manifiesto, fuentes…)
@@ -294,8 +295,9 @@ async function runPool(items, limit, task) {
 
 /**
  * Navegación: red primero con límite de tiempo. Si la red tarda o falla, la copia guardada de esa página.
- * Si no hay copia y la red falla del todo: "/" en caché → "/offline" en caché → página mínima en línea.
- * (Si solo tarda y no hay copia, se sigue esperando a la red: una ruta nueva no debe acabar en "/".)
+ * Si no hay copia y la red falla del todo: "/offline" en caché → página mínima en línea. Nunca se sirve
+ * otra pantalla bajo esa URL (p. ej. el inicio en "/no-existe"): solo "/" usa su propia copia.
+ * (Si solo tarda y no hay copia, se sigue esperando a la red.)
  */
 function handleNavigation(event, url) {
   const network = fetchNavigation(event).then((response) => {
@@ -303,7 +305,7 @@ function handleNavigation(event, url) {
     return response;
   });
   keepAlive(event, network);
-  return networkFirst(network, () => matchPage(pageKey(url)), NAVIGATION_TIMEOUT_MS, offlinePageFallback);
+  return networkFirst(network, () => matchPage(pageKey(url)), NAVIGATION_TIMEOUT_MS, () => offlinePageFallback(url));
 }
 
 /** Usa la respuesta de la precarga de navegación si el navegador la ofrece. */
@@ -327,8 +329,17 @@ async function matchPage(key) {
   return (await cache.match(key, { ignoreSearch: true, ignoreVary: true })) || null;
 }
 
-async function offlinePageFallback() {
-  return (await matchPage(toAbsolute('/'))) || (await matchPage(toAbsolute('/offline'))) || offlineResponse();
+/** URL de inicio del manifiesto (`start_url`). */
+const START_URL = '/';
+
+/**
+ * Respaldo sin conexión cuando la página pedida no está en caché. El "/" guardado solo vale para la
+ * propia "/" (start_url); cualquier otra ruta, conocida o no, recibe "/offline" en lugar de otra pantalla.
+ */
+async function offlinePageFallback(url) {
+  const path = pageKey(url);
+  const home = path === toAbsolute('/') || path === toAbsolute(START_URL) ? await matchPage(toAbsolute('/')) : null;
+  return home || (await matchPage(toAbsolute('/offline'))) || offlineResponse();
 }
 
 /** Carga útil RSC de Next (navegación del lado del cliente y prefetch). */

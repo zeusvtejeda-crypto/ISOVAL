@@ -12,9 +12,14 @@ export {
 export {
   CORE_PRACTICE_TYPES,
   DEFAULT_PRACTICE_TYPES,
+  difficultFocus,
+  FOCUS_LIMIT,
+  isFocusSource,
+  MIN_FOCUS,
   practiceCounts,
   recentMistakeElements,
   resolvePracticeTarget,
+  type FocusElement,
   type PracticeSource,
   type PracticeTarget,
 } from './target';

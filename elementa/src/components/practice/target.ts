@@ -1,11 +1,19 @@
 import { getFamilyGroup, getStudyBlock } from '@/data/blocks';
 import { ELEMENTS_BY_NUMBER, TOTAL_ELEMENTS } from '@/data/elements';
 import type { ProgressState, QuestionSkill, QuestionType } from '@/types';
-import { dueReviews, weakElements } from '@/utils/planner';
-import { ALL_QUESTION_TYPES, QUESTION_TYPE_META } from '@/utils/questions';
+import { ALL_QUESTION_TYPES, QUESTION_TYPE_META } from '@/utils/question-gen/meta';
+import { difficultElements, dueReviews, weakElements } from '@/utils/selection';
 import type { PracticeParams } from './params';
 
 export type PracticeSource = 'elements' | 'block' | 'family' | 'errores' | 'dificiles' | 'repaso' | 'none';
+
+/**
+ * Fuentes «enfocadas» (errores, difíciles, repasos): la sesión se concentra en los elementos de más
+ * prioridad y los repite (ver `buildPracticeQuestions`), en lugar de repartir una pregunta por elemento.
+ */
+export function isFocusSource(source: PracticeSource): boolean {
+  return source === 'errores' || source === 'dificiles' || source === 'repaso';
+}
 
 export interface PracticeTarget {
   source: PracticeSource;
@@ -15,7 +23,7 @@ export interface PracticeTarget {
   /** Elementos a practicar (vacío = nada que practicar). */
   elements: number[];
   types: QuestionType[];
-  /** `errores` sin errores recientes: se usan los elementos que menos dominas. */
+  /** `errores` sin errores recientes: se usan tus elementos difíciles. */
   fallback: boolean;
   /** El bloque/familia de la URL no existe. */
   invalid: boolean;
@@ -23,6 +31,11 @@ export interface PracticeTarget {
 
 /** Máximo de elementos al practicar errores / difíciles / repasos (sesiones cortas y enfocadas). */
 export const FOCUS_LIMIT = 12;
+/**
+ * «Los difíciles» con menos elementos fallados que esto se completan con los que menos dominas
+ * (intentados y no dominados), para que la sesión no se reduzca a uno o dos elementos.
+ */
+export const MIN_FOCUS = 4;
 const REVIEW_LIMIT = 20;
 
 /** Tipos básicos: sirven para cualquier elemento. */
@@ -64,15 +77,48 @@ export function typesForMistakes(state: ProgressState, elements: readonly number
   return [...CORE_PRACTICE_TYPES, ...extra];
 }
 
-function weakNumbers(state: ProgressState, now: Date): number[] {
-  return weakElements(state, now, FOCUS_LIMIT).map((w) => w.atomicNumber);
+export interface FocusElement {
+  atomicNumber: number;
+  /** Dominio actual 0–100. */
+  mastery: number;
+  /** `true` si lo has fallado alguna vez (`difficultElements`); `false` si solo completa la lista. */
+  failed: boolean;
 }
 
-/** Resumen para `/practicar` sin parámetros. */
-export function practiceCounts(state: ProgressState, now: Date): { mistakes: number; weak: number; due: number } {
+/**
+ * Elementos de «Los difíciles» (`/practicar?focus=dificiles`): los que has fallado y aún no dominas
+ * (`difficultElements`, la misma definición que «Mis errores»), el menor dominio primero. Solo si
+ * son menos de `MIN_FOCUS` se completan con los intentados que menos dominas (`weakElements`).
+ */
+export function difficultFocus(state: ProgressState, now: Date, limit = FOCUS_LIMIT): FocusElement[] {
+  const difficult: FocusElement[] = difficultElements(state, now, limit).map(({ atomicNumber, mastery }) => ({
+    atomicNumber,
+    mastery,
+    failed: true,
+  }));
+  const room = Math.min(limit, MIN_FOCUS) - difficult.length;
+  if (room <= 0) return difficult;
+  const taken = new Set(difficult.map((d) => d.atomicNumber));
+  const extra = weakElements(state, now, TOTAL_ELEMENTS)
+    .filter((w) => !taken.has(w.atomicNumber))
+    .slice(0, room)
+    .map(({ atomicNumber, mastery }) => ({ atomicNumber, mastery, failed: false }));
+  return [...difficult, ...extra];
+}
+
+/** Descripción de «Los difíciles» según de dónde salen sus elementos. */
+function difficultDescription(focus: readonly FocusElement[]): string {
+  const failed = focus.filter((f) => f.failed).length;
+  if (failed === focus.length) return 'Los que has fallado y aún no dominas.';
+  if (failed > 0) return 'Los que has fallado y, para completar, los que menos dominas.';
+  return 'Aún no has fallado ninguno: practica los que menos dominas.';
+}
+
+/** Resumen para `/practicar` sin parámetros. `difficult` es el mismo número que «Mis errores». */
+export function practiceCounts(state: ProgressState, now: Date): { mistakes: number; difficult: number; due: number } {
   return {
     mistakes: recentMistakeElements(state, TOTAL_ELEMENTS).length,
-    weak: weakElements(state, now, TOTAL_ELEMENTS).length,
+    difficult: difficultElements(state, now).length,
     due: dueReviews(state, now, TOTAL_ELEMENTS).length,
   };
 }
@@ -141,27 +187,32 @@ export function resolvePracticeTarget(params: PracticeParams, state: ProgressSta
           types: types(typesForMistakes(state, mistakes)),
         };
       }
+      const focus = difficultFocus(state, now);
       return {
         ...base,
         source: 'errores',
         emoji: '🎯',
         title: 'Mis errores',
-        description: 'No tienes errores recientes: practica los que menos dominas.',
-        elements: weakNumbers(state, now),
+        description: focus.some((f) => f.failed)
+          ? 'No tienes errores recientes: practica tus elementos difíciles.'
+          : 'No tienes errores recientes: practica los que menos dominas.',
+        elements: focus.map((f) => f.atomicNumber),
         types: types(DEFAULT_PRACTICE_TYPES),
         fallback: true,
       };
     }
-    case 'dificiles':
+    case 'dificiles': {
+      const focus = difficultFocus(state, now);
       return {
         ...base,
         source: 'dificiles',
         emoji: '💪',
         title: 'Los difíciles',
-        description: 'Los elementos que menos dominas.',
-        elements: weakNumbers(state, now),
+        description: difficultDescription(focus),
+        elements: focus.map((f) => f.atomicNumber),
         types: types(DEFAULT_PRACTICE_TYPES),
       };
+    }
     case 'repaso':
       return {
         ...base,

@@ -4,12 +4,16 @@ import type { ChemicalElement } from '@/types';
  * Los 118 elementos reconocidos por la IUPAC.
  *
  * Fuentes de los datos numéricos:
- * - Masas: pesos atómicos estándar abreviados de la IUPAC (CIAAW). Para elementos sin
- *   isótopos estables se da el número másico del isótopo más estable (se muestra entre corchetes).
+ * - Masas: pesos atómicos estándar abreviados de la IUPAC (CIAAW, Atomic Weights 2021, rev. 2024:
+ *   Gd, Lu y Zr). Para elementos sin isótopos estables se da el número másico del isótopo más
+ *   estable (se muestra entre corchetes). Los ceros finales de la tabla ("1.0080") se conservan
+ *   en `MASS_DISPLAY_DECIMALS`.
  * - Configuraciones electrónicas: NIST Atomic Spectra Database (estado fundamental), en orden
  *   de llenado (diagrama de Möller). Para Z ≥ 104 son predicciones teóricas.
  * - Categoría, estado y electronegatividad (Pauling): PubChem Periodic Table (NIH).
  * - Estado de agregación a 25 °C y 1 atm; `unknown` para Z ≥ 100 (nunca obtenidos en cantidad visible).
+ *   El astato y el francio tampoco se han visto nunca en cantidad visible: su estado (sólido) es
+ *   una predicción (`phasePredicted`).
  */
 export const ELEMENTS: ChemicalElement[] = [
   {
@@ -875,7 +879,7 @@ export const ELEMENTS: ChemicalElement[] = [
     symbol: "Zr",
     name: "Circonio",
     altNames: ["Zirconio"],
-    atomicMass: 91.224,
+    atomicMass: 91.222,
     massIsMassNumber: false,
     group: 4,
     period: 5,
@@ -1350,7 +1354,7 @@ export const ELEMENTS: ChemicalElement[] = [
     predicted: false,
     description: "Lantánido radiactivo que casi no existe en la naturaleza. Se obtiene en reactores nucleares y se ha usado en baterías atómicas de larga duración.",
     funFact: "Es el único lantánido sin isótopos estables; por eso fue el último de su familia en descubrirse, en 1945.",
-    memoryTip: "Pm = 61: 'Prometeo Maldito' robó el fuego; el prometio lleva el suyo: la radiación. Es el único lantánido radiactivo.",
+    memoryTip: "Pm = 61: 'Prometeo Maldito' robó el fuego; el prometio lleva el suyo: la radiación. Es el único lantánido sin isótopos estables.",
     etymology: "De Prometeo, el titán griego que robó el fuego de los dioses, símbolo del poder y el riesgo de la energía nuclear.",
     uses: ["Baterías nucleares", "Medidores de espesor", "Investigación científica"],
   },
@@ -1872,6 +1876,7 @@ export const ELEMENTS: ChemicalElement[] = [
     block: "p",
     category: "halogen",
     phase: "solid",
+    phasePredicted: true,
     electronConfiguration: "[Xe] 6s2 4f14 5d10 6p5",
     electronegativity: 2.2,
     radioactive: true,
@@ -1916,6 +1921,7 @@ export const ELEMENTS: ChemicalElement[] = [
     block: "s",
     category: "alkali-metal",
     phase: "solid",
+    phasePredicted: true,
     electronConfiguration: "[Rn] 7s1",
     electronegativity: 0.7,
     radioactive: true,
@@ -2609,6 +2615,22 @@ export const ELEMENTS: ChemicalElement[] = [
     uses: ["Investigación científica", "Límites de la tabla periódica"],
   },
 ];
+
+/**
+ * Decimales con que la tabla abreviada de la CIAAW imprime los pesos atómicos que terminan en cero
+ * (H 1.0080, Ne 20.180, Na 22.990, Ge 72.630, Te 127.60, I 126.90, Dy 162.50). `atomicMass` es
+ * un número y los pierde; `formatMass` los recupera. En los demás, `String(atomicMass)` ya
+ * coincide con la tabla.
+ */
+export const MASS_DISPLAY_DECIMALS: Readonly<Record<number, number>> = {
+  1: 4,
+  10: 3,
+  11: 3,
+  32: 3,
+  52: 2,
+  53: 2,
+  66: 2,
+};
 
 /** Acceso O(1) por número atómico. */
 export const ELEMENTS_BY_NUMBER: Record<number, ChemicalElement> = Object.fromEntries(

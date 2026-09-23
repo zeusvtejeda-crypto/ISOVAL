@@ -1,14 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  buildSessionSummary,
+  EMPTY_TALLY,
+  tallyAnswer,
+  type AnswerResponse,
+  type SessionTally,
+} from '@/components/quiz/session-tally';
+import { useAnswerRecorder } from '@/components/quiz/use-answer-recorder';
 import type { AnswerOutcome, AnsweredQuestion, GameMode, Question, SessionSummaryData } from '@/types';
-import { checkTableAnswer, describeTableSelection } from '@/utils/questions';
 import { useCountdown } from './useCountdown';
-import { useHaptics } from './useHaptics';
 import { useHydrated } from './useHydrated';
 import { useProgress } from './useProgress';
 import { useResponseTimer } from './useResponseTimer';
-import { useSound } from './useSound';
 
 // ---------------------------------------------------------------------------------------------
 // Contrato
@@ -19,6 +24,8 @@ export interface QuizQuestionContext {
   index: number;
   /** Racha de aciertos actual en la sesión. */
   streak: number;
+  /** Aciertos de la sesión hasta ahora. */
+  correctCount: number;
   /** Números atómicos ya preguntados, del más antiguo al más reciente. */
   asked: number[];
 }
@@ -28,6 +35,24 @@ export interface QuizXpContext {
   /** Racha de la sesión TRAS esta respuesta (1 = primer acierto; 0 si falló). */
   streak: number;
   question: Question;
+}
+
+/**
+ * XP de un acierto con su desglose para el feedback (p. ej. Modo Racha: "+15 XP · x1.5" y
+ * "+25 XP de bonus"). `xp` es el total otorgado (multiplicado + bonus).
+ */
+export interface XpAward {
+  xp: number;
+  /** Multiplicador aplicado (se muestra aparte: "x1.5"). Por defecto 1. */
+  multiplier?: number;
+  /** Parte de `xp` que es bonus por hito. Por defecto 0. */
+  bonus?: number;
+}
+
+/** Desglose de la XP de la última respuesta (solo si `xpFor` devolvió un `XpAward`). */
+export interface XpDetail {
+  multiplier: number;
+  bonus: number;
 }
 
 export type QuizEndReason = 'completed' | 'lives' | 'time' | 'manual';
@@ -55,8 +80,11 @@ export interface QuizConfig {
   lives?: number;
   /** Límite global de tiempo (contrarreloj: 60_000). */
   timeLimitMs?: number;
-  /** XP a otorgar en lugar de la regla por defecto (p. ej. Modo Racha). */
-  xpFor?: (ctx: QuizXpContext) => number | undefined;
+  /**
+   * XP a otorgar en lugar de la regla por defecto (p. ej. Modo Racha). Con un `XpAward`, el
+   * multiplicador y el bonus se muestran por separado en el feedback (`lastXp`).
+   */
+  xpFor?: (ctx: QuizXpContext) => number | XpAward | undefined;
   /** Avanza solo tras responder, sin pulsar "Continuar". */
   autoAdvanceMs?: number;
   /** Registrar respuestas y sesión en el progreso. Por defecto `true`. */
@@ -72,7 +100,7 @@ export interface QuizConfig {
 }
 
 /** Id de opción (opción múltiple) o números atómicos elegidos (preguntas de tabla). */
-export type QuizResponse = string | number[];
+export type QuizResponse = AnswerResponse;
 
 export type QuizStatus = 'playing' | 'feedback' | 'finished';
 
@@ -100,6 +128,8 @@ export interface QuizSession {
   autoAdvanceMs: number | null;
   lastOutcome: AnswerOutcome | null;
   lastAnswer: AnsweredQuestion | null;
+  /** Desglose de la XP de la última respuesta (multiplicador y bonus), si el modo lo da. */
+  lastXp: XpDetail | null;
   /** Respuesta dada a la pregunta actual (durante el feedback). */
   response: QuizResponse | null;
   /** `true` durante el feedback si `next()` terminará la sesión. */
@@ -129,12 +159,10 @@ interface RunState {
   answered: AnsweredQuestion[];
   lastOutcome: AnswerOutcome | null;
   lastAnswer: AnsweredQuestion | null;
+  lastXp: XpDetail | null;
   response: QuizResponse | null;
-  /** Dominio de cada elemento al empezar la sesión (primer `masteryBefore`). */
-  masteryStart: Record<number, number>;
-  /** Último dominio conocido de cada elemento. */
-  masteryEnd: Record<number, number>;
-  unlocked: string[];
+  /** Elementos respondidos (atribuidos), dominio antes/después y logros. */
+  tally: SessionTally;
   summary: SessionSummaryData | null;
 }
 
@@ -161,7 +189,7 @@ function createRun(config: QuizConfig, runId: number): RunState {
   if (fixed) {
     queue = typeof config.questions === 'function' ? config.questions() : (config.questions ?? []);
   } else if (config.nextQuestion) {
-    queue = [config.nextQuestion({ index: 0, streak: 0, asked: [] })];
+    queue = [config.nextQuestion({ index: 0, streak: 0, correctCount: 0, asked: [] })];
   }
   return {
     runId,
@@ -176,22 +204,20 @@ function createRun(config: QuizConfig, runId: number): RunState {
     answered: [],
     lastOutcome: null,
     lastAnswer: null,
+    lastXp: null,
     response: null,
-    masteryStart: {},
-    masteryEnd: {},
-    unlocked: [],
+    tally: EMPTY_TALLY,
     summary: null,
   };
 }
 
-function evaluate(question: Question, response: QuizResponse): { correct: boolean; given: string } {
-  if (question.kind === 'multiple-choice') {
-    const option = typeof response === 'string' ? question.options?.find((o) => o.id === response) : undefined;
-    if (!option) return { correct: false, given: '—' };
-    return { correct: option.correct, given: option.sublabel ? `${option.label} (${option.sublabel})` : option.label };
-  }
-  const selected = Array.isArray(response) ? response : [];
-  return { correct: checkTableAnswer(question, selected), given: describeTableSelection(selected) };
+function xpOf(award: number | XpAward | undefined): number | undefined {
+  return typeof award === 'number' ? award : award?.xp;
+}
+
+function xpDetail(award: number | XpAward | undefined): XpDetail | null {
+  if (award === undefined || typeof award === 'number') return null;
+  return { multiplier: award.multiplier ?? 1, bonus: award.bonus ?? 0 };
 }
 
 /** Motivo por el que `next()` terminaría la sesión, o `null` si continúa. */
@@ -199,25 +225,6 @@ function pendingEnd(run: RunState): QuizEndReason | null {
   if (run.lives === 0) return 'lives';
   if (run.fixed && run.index + 1 >= run.queue.length) return 'completed';
   return null;
-}
-
-/** Elementos cuyo dominio subió, de mayor a menor mejora. */
-function improvedElements(start: Record<number, number>, end: Record<number, number>): number[] {
-  return Object.keys(end)
-    .map(Number)
-    .map((z) => ({ z, delta: (end[z] ?? 0) - (start[z] ?? 0) }))
-    .filter((d) => d.delta > 0)
-    .sort((a, b) => b.delta - a.delta)
-    .map((d) => d.z);
-}
-
-/** Elementos fallados, sin repetir, en el orden del primer fallo. */
-function failedElements(answered: AnsweredQuestion[]): number[] {
-  const out: number[] = [];
-  for (const a of answered) {
-    if (!a.correct && !out.includes(a.question.atomicNumber)) out.push(a.question.atomicNumber);
-  }
-  return out;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -233,12 +240,11 @@ function failedElements(answered: AnsweredQuestion[]): number[] {
  */
 export function useQuizSession(config: QuizConfig): QuizSession {
   const hydrated = useHydrated();
-  const { recordAnswer, completeSession, ready: progressReady } = useProgress();
-  const sound = useSound();
-  const haptics = useHaptics();
+  const { completeSession, ready: progressReady } = useProgress();
+  const record = config.record ?? true;
+  const recorder = useAnswerRecorder(config.mode, { record });
   const timer = useResponseTimer();
 
-  const record = config.record ?? true;
   const maxLives = normalizeLives(config.lives);
   const timeLimitMs = positiveMs(config.timeLimitMs);
   const autoAdvanceMs = positiveMs(config.autoAdvanceMs);
@@ -249,7 +255,6 @@ export function useQuizSession(config: QuizConfig): QuizSession {
   if (run === null && canStart) setRun(createRun(config, 1));
 
   const handlers = useRef<Handlers | null>(null);
-  const answeredId = useRef<string | null>(null);
   const endedRun = useRef<number | null>(null);
   const startedAt = useRef(0);
 
@@ -267,31 +272,26 @@ export function useQuizSession(config: QuizConfig): QuizSession {
 
     const durationMs = Math.max(0, Math.round(performance.now() - startedAt.current));
     const total = run.answered.length;
-    const unlocked = [...run.unlocked];
-    let sessionXp = 0;
-    if (record && total > 0) {
-      const result = completeSession({
-        mode: config.mode,
-        total,
-        correct: run.correctCount,
-        durationMs,
-        isExam: config.mode === 'exam',
-      });
-      sessionXp = result.xpGained;
-      unlocked.push(...result.unlockedAchievements);
-    }
+    const session =
+      record && total > 0
+        ? completeSession({
+            mode: config.mode,
+            total,
+            correct: run.correctCount,
+            durationMs,
+            isExam: config.mode === 'exam',
+          })
+        : null;
 
-    const summary: SessionSummaryData = {
+    const summary = buildSessionSummary({
       mode: config.mode,
       title: config.title,
-      total,
-      correct: run.correctCount,
-      xpGained: run.answered.reduce((sum, a) => sum + a.xpGained, 0) + sessionXp,
+      answered: run.answered,
+      tally: run.tally,
       durationMs,
-      improved: improvedElements(run.masteryStart, run.masteryEnd),
-      toReview: failedElements(run.answered),
-      unlockedAchievements: Array.from(new Set(unlocked)),
-    };
+      extraXp: session?.xpGained ?? 0,
+      unlocked: session?.unlockedAchievements ?? [],
+    });
     const extra = config.onFinish?.({
       reason,
       answered: run.answered,
@@ -313,38 +313,17 @@ export function useQuizSession(config: QuizConfig): QuizSession {
   const answerImpl = (response: QuizResponse) => {
     if (!run || run.status !== 'playing') return;
     const question = run.queue[run.index];
-    if (!question || answeredId.current === question.id) return;
-    answeredId.current = question.id;
+    if (!question) return;
 
-    const { correct, given } = evaluate(question, response);
-    const responseMs = timer.elapsed();
+    const awardFor = (correct: boolean) => config.xpFor?.({ correct, streak: correct ? run.streak + 1 : 0, question });
+    const result = recorder.submit(question, response, {
+      responseMs: timer.elapsed(),
+      xpFor: (correct) => xpOf(awardFor(correct)),
+    });
+    if (!result) return;
+
+    const { correct, outcome, entry } = result;
     const streak = correct ? run.streak + 1 : 0;
-    const xpOverride = config.xpFor?.({ correct, streak, question });
-    const outcome = record
-      ? recordAnswer({
-          atomicNumber: question.atomicNumber,
-          skill: question.skill,
-          correct,
-          responseMs,
-          mode: config.mode,
-          prompt: question.prompt,
-          correctAnswer: question.correctAnswer,
-          givenAnswer: given,
-          difficulty: question.difficulty,
-          xpOverride,
-        })
-      : null;
-
-    if (correct) {
-      sound.correct();
-      haptics.success();
-    } else {
-      sound.wrong();
-      haptics.error();
-    }
-
-    const z = question.atomicNumber;
-    const entry: AnsweredQuestion = { question, correct, givenAnswer: given, responseMs, xpGained: outcome?.xpGained ?? 0 };
     setRun({
       ...run,
       status: 'feedback',
@@ -355,13 +334,9 @@ export function useQuizSession(config: QuizConfig): QuizSession {
       answered: [...run.answered, entry],
       lastOutcome: outcome,
       lastAnswer: entry,
+      lastXp: xpDetail(awardFor(correct)),
       response,
-      masteryStart:
-        outcome && !(z in run.masteryStart) ? { ...run.masteryStart, [z]: outcome.masteryBefore } : run.masteryStart,
-      masteryEnd: outcome ? { ...run.masteryEnd, [z]: outcome.masteryAfter } : run.masteryEnd,
-      unlocked: outcome?.unlockedAchievements.length
-        ? [...run.unlocked, ...outcome.unlockedAchievements]
-        : run.unlocked,
+      tally: tallyAnswer(run.tally, result, outcome),
     });
   };
 
@@ -381,6 +356,7 @@ export function useQuizSession(config: QuizConfig): QuizSession {
       const upcoming = config.nextQuestion({
         index: run.index + 1,
         streak: run.streak,
+        correctCount: run.correctCount,
         asked: run.queue.map((q) => q.atomicNumber),
       });
       queue = [...run.queue, upcoming];
@@ -389,7 +365,7 @@ export function useQuizSession(config: QuizConfig): QuizSession {
   };
 
   const restartImpl = () => {
-    answeredId.current = null;
+    recorder.reset();
     setRun(createRun(config, (run?.runId ?? 0) + 1));
   };
 
@@ -449,6 +425,7 @@ export function useQuizSession(config: QuizConfig): QuizSession {
     autoAdvanceMs,
     lastOutcome: run?.lastOutcome ?? null,
     lastAnswer: run?.lastAnswer ?? null,
+    lastXp: run?.lastXp ?? null,
     response: run?.response ?? null,
     willFinish: run !== null && run.status === 'feedback' && pendingEnd(run) !== null,
     answer,

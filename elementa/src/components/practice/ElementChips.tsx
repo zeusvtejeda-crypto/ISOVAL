@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { cn } from '@/components/ui';
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import { useMasteryMap } from '@/hooks/useMasteryMap';

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useHydrated } from '@/hooks/useHydrated';
 import { cn } from './cn';
-import { getFocusable, trapTab } from './focus';
+import { trapTab } from './focus';
 import { IconButton } from './IconButton';
 import { lockScroll, unlockScroll } from './scroll-lock';
 
@@ -27,7 +27,10 @@ export interface ModalProps {
   showClose?: boolean;
   /** Permite cerrar con Escape o tocando el fondo. Por defecto `true`. */
   dismissible?: boolean;
-  /** Elemento que recibe el foco al abrir (por defecto, el primer control que no sea ✕). */
+  /**
+   * Elemento que recibe el foco al abrir. Por defecto, el propio panel del diálogo (así el lector de
+   * pantalla anuncia el título y nunca se enfoca un control fuera de la vista); Tab lleva al primer control.
+   */
   initialFocusRef?: RefObject<HTMLElement | null>;
   className?: string;
 }
@@ -103,11 +106,7 @@ function ModalPanel({
   const focusInitial = useEffectEvent(() => {
     const panel = panelRef.current;
     if (!panel) return;
-    const preferred = initialFocusRef?.current;
-    const candidates = getFocusable(panel);
-    const target =
-      preferred ?? candidates.find((el) => !el.hasAttribute('data-modal-close')) ?? candidates[0] ?? panel;
-    target.focus({ preventScroll: true });
+    (initialFocusRef?.current ?? panel).focus({ preventScroll: true });
   });
 
   // Bloqueo de scroll + foco inicial y restauración al desmontar.

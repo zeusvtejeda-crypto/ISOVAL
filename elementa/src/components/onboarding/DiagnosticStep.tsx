@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { QuizScreen } from '@/components/quiz';
+import { QuizScreen } from '@/components/quiz/QuizScreen';
 import { Button, Modal } from '@/components/ui';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import type { AnsweredQuestion, ExperienceLevel } from '@/types';

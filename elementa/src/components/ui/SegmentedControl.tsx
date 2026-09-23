@@ -25,7 +25,11 @@ export interface SegmentedControlProps<T extends string | number> {
   className?: string;
 }
 
-/** Selector de una opción entre varias (`radiogroup` con navegación por flechas). */
+/**
+ * Selector de una opción entre varias (`radiogroup` con navegación por flechas).
+ * Cada opción mide al menos lo que su contenido (nunca se trunca): con `block` se reparten el ancho
+ * y, si no caben en una fila, pasan a la siguiente.
+ */
 export function SegmentedControl<T extends string | number>({
   options,
   value,
@@ -75,7 +79,7 @@ export function SegmentedControl<T extends string | number>({
       role="radiogroup"
       aria-label={label}
       className={cn(
-        'gap-1 rounded-2xl border border-border bg-surface-2 p-1',
+        'flex-wrap gap-1 rounded-2xl border border-border bg-surface-2 p-1',
         block ? 'flex w-full' : 'inline-flex max-w-full',
         className,
       )}
@@ -97,7 +101,7 @@ export function SegmentedControl<T extends string | number>({
             onClick={() => onChange(opt.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              'inline-flex min-w-0 items-center justify-center gap-1 rounded-xl px-2 font-extrabold sm:gap-1.5 sm:px-3',
+              'relative inline-flex min-w-fit items-center justify-center gap-1 rounded-xl px-2 font-extrabold whitespace-nowrap sm:gap-1.5 sm:px-3',
               'transition-[background-color,color,box-shadow] duration-200 disabled:cursor-not-allowed disabled:opacity-40',
               '[&_svg]:size-4',
               size === 'sm' ? 'min-h-9 text-sm' : 'min-h-11 text-sm sm:text-base',
@@ -106,7 +110,7 @@ export function SegmentedControl<T extends string | number>({
             )}
           >
             {opt.icon}
-            <span className="truncate">{opt.label}</span>
+            <span>{opt.label}</span>
           </button>
         );
       })}

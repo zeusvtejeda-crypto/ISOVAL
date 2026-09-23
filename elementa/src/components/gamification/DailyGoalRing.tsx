@@ -46,7 +46,7 @@ export function DailyGoalRing({ size = 88, stroke, showLabel = true, done, goal,
         size={size}
         stroke={width}
         tone={met ? 'success' : 'streak'}
-        label={`Meta diaria: ${Math.min(count, safeTarget)} de ${safeTarget} preguntas`}
+        label={`Meta diaria: ${count} de ${safeTarget} preguntas`}
       >
         {met ? (
           <span aria-hidden className={cn('animate-pop leading-none', large ? 'text-3xl' : 'text-lg')}>

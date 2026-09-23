@@ -70,8 +70,12 @@ export interface MistakeRecord {
 /** Actividad agregada por día local (clave YYYY-MM-DD). */
 export interface DailyActivity {
   date: string;
+  /** Actividad que cuenta para la meta diaria: respuestas de quiz + flashcards calificadas. */
   questions: number;
+  /** Aciertos de quiz (las flashcards no cuentan). Precisión del día: `correct / (questions − flashcards)`. */
   correct: number;
+  /** Flashcards calificadas (incluidas en `questions`). */
+  flashcards: number;
   xp: number;
   timeMs: number;
   /** Elementos marcados como aprendidos ese día. */
@@ -140,7 +144,11 @@ export type MasteryTier = 'practice' | 'learning' | 'almost' | 'mastered'; // �
 /** Lo que devuelve registrar una respuesta (para feedback inmediato en la UI). */
 export interface AnswerOutcome {
   xpGained: number;
-  /** Bonus de racha incluido en xpGained (Modo Racha / rachas de aciertos). */
+  /**
+   * XP por encima de la regla por defecto incluida en `xpGained` (`xpOverride − xpForAnswer`): en Modo
+   * Racha, el extra del multiplicador MÁS el bonus del hito. Para mostrar solo el bonus del hito usar
+   * `streakModeXp(streak, difficulty).bonus`.
+   */
   bonusXp: number;
   masteryBefore: number;
   masteryAfter: number;

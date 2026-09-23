@@ -7,7 +7,7 @@ import { Badge, type Tone } from '@/components/ui';
 import { FAMILY_GROUPS, STUDY_BLOCKS } from '@/data/blocks';
 import { useNow } from '@/hooks/useNow';
 import { useProgress } from '@/hooks/useProgress';
-import { pluralize } from '@/utils/format';
+import { formatNumber, pluralize } from '@/utils/format';
 import { practiceCounts } from './target';
 
 interface HubOption {
@@ -35,7 +35,7 @@ export function PracticeHub() {
       badge:
         counts.mistakes > 0
           ? `${counts.mistakes} ${pluralize(counts.mistakes, 'elemento', 'elementos')}`
-          : counts.weak > 0
+          : counts.difficult > 0
             ? 'Usa tus difíciles'
             : 'Sin errores',
     },
@@ -43,9 +43,9 @@ export function PracticeHub() {
       href: '/practicar?focus=dificiles',
       emoji: '💪',
       title: 'Los difíciles',
-      description: 'Los que menos dominas, hasta que los domines.',
+      description: 'Los que has fallado, hasta que los domines.',
       tone: 'streak',
-      badge: counts.weak > 0 ? `${counts.weak} por reforzar` : 'Nada difícil',
+      badge: counts.difficult > 0 ? `${formatNumber(counts.difficult)} por reforzar` : 'Nada difícil',
     },
     {
       href: '/practicar?focus=repaso',

@@ -3,11 +3,10 @@
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { InstallPrompt } from '@/components/pwa';
-import { TOTAL_ELEMENTS } from '@/data/elements';
 import { useNow } from '@/hooks/useNow';
 import { useProgress } from '@/hooks/useProgress';
 import { todayKey } from '@/utils/dates';
-import { weakElements } from '@/utils/planner';
+import { difficultElements } from '@/utils/selection';
 import { ContinueCard } from './ContinueCard';
 import { DailyGoalCard } from './DailyGoalCard';
 import { DashboardSkeleton } from './DashboardSkeleton';
@@ -37,7 +36,8 @@ export function Dashboard() {
 function DashboardContent() {
   const { state } = useProgress();
   const now = useNow();
-  const weakCount = useMemo(() => weakElements(state, now, TOTAL_ELEMENTS).length, [state, now]);
+  // Mismo número que «Elementos difíciles» en /errores.
+  const difficultCount = useMemo(() => difficultElements(state, now).length, [state, now]);
   const name = state.profile.name.trim();
 
   return (
@@ -59,7 +59,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      <QuickAccess weakCount={weakCount} className="animate-slide-up [animation-delay:180ms]" />
+      <QuickAccess difficultCount={difficultCount} className="animate-slide-up [animation-delay:180ms]" />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 lg:items-start">
         <TableProgressCard className="lg:col-span-3" />

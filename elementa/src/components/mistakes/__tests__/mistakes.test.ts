@@ -3,9 +3,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { MistakeRecord, ProgressState } from '@/types';
 import { applyAnswer, type AnswerInput } from '@/utils/engine';
+import { difficultElements, weakElements } from '@/utils/selection';
 import { createInitialState } from '@/utils/state';
 import { HardElements } from '../HardElements';
 import { MistakeCard } from '../MistakeCard';
+import { MistakeHistory } from '../MistakeHistory';
 import { hardElements, mistakeGroups, relativeTime } from '../mistakes-data';
 
 const NOW = new Date(2026, 8, 23, 12, 0, 0);
@@ -59,6 +61,17 @@ describe('hardElements', () => {
     expect(hard[0].mastery).toBeLessThanOrEqual(hard[1].mastery);
     expect(hardElements(createInitialState(NOW), NOW)).toEqual([]);
   });
+
+  it('es la definición única de «difíciles» (difficultElements): nunca un elemento sin fallos', () => {
+    let state = build();
+    // Acertados pocas veces: débiles (sin dominar), pero no difíciles.
+    for (const z of [21, 23, 34]) state = applyAnswer(state, input(z, true), NOW).state;
+    const hard = hardElements(state, NOW);
+    expect(hard).toEqual(difficultElements(state, NOW));
+    expect(hard.map((x) => x.atomicNumber)).toEqual([19, 26]);
+    expect(weakElements(state, NOW, 118).map((w) => w.atomicNumber)).toEqual(expect.arrayContaining([21, 23, 34]));
+    expect(hard.every((x) => x.incorrect > 0)).toBe(true);
+  });
 });
 
 describe('mistakeGroups', () => {
@@ -104,6 +117,13 @@ describe('componentes', () => {
     expect(html).toContain('Correcta: </span><span class="font-black">K');
     expect(html).toContain('Preguntados');
     expect(html).toContain('hace 5 min');
+  });
+
+  it('MistakeHistory: los recuentos de los filtros no usan opacidad (contraste AA)', () => {
+    const state = build();
+    const html = renderToStaticMarkup(h(MistakeHistory, { mistakes: state.mistakes, now: NOW, onClear: () => {} }));
+    expect(html).toContain('Todos<span class="text-muted tabular">');
+    expect(html).not.toContain('opacity-70');
   });
 
   it('HardElements: ranking con práctica y ficha por elemento', () => {

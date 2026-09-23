@@ -1,4 +1,5 @@
 import { CATEGORIES, PHASE_LABELS } from '@/data/categories';
+import { MASS_DISPLAY_DECIMALS } from '@/data/elements';
 import type { ChemicalElement, ElementCategory, Phase } from '@/types';
 
 const SUPERSCRIPTS: Record<string, string> = {
@@ -16,9 +17,14 @@ const SUPERSCRIPTS: Record<string, string> = {
 
 const numberFormatter = new Intl.NumberFormat('es-MX');
 
-/** "15.999"; entre corchetes si es el número másico del isótopo más estable: "[98]". */
-export function formatMass(el: Pick<ChemicalElement, 'atomicMass' | 'massIsMassNumber'>): string {
-  return el.massIsMassNumber ? `[${el.atomicMass}]` : String(el.atomicMass);
+/**
+ * Peso atómico con la precisión de la tabla abreviada de la IUPAC: "15.999", "1.0080", "20.180";
+ * entre corchetes si es el número másico del isótopo más estable: "[98]".
+ */
+export function formatMass(el: Pick<ChemicalElement, 'atomicNumber' | 'atomicMass' | 'massIsMassNumber'>): string {
+  if (el.massIsMassNumber) return `[${el.atomicMass}]`;
+  const decimals = MASS_DISPLAY_DECIMALS[el.atomicNumber];
+  return decimals === undefined ? String(el.atomicMass) : el.atomicMass.toFixed(decimals);
 }
 
 /** "[He] 2s2 2p4" → "[He] 2s² 2p⁴". */
@@ -65,6 +71,11 @@ export function groupLabel(el: Pick<ChemicalElement, 'group'>): string {
 /** "Sólido", "Líquido", "Gas", "Desconocido". */
 export function phaseLabel(phase: Phase): string {
   return PHASE_LABELS[phase];
+}
+
+/** Estado de un elemento para mostrarlo: "Gas", o "Sólido (predicho)" si nunca se ha visto una muestra (At, Fr). */
+export function elementPhaseLabel(el: Pick<ChemicalElement, 'phase' | 'phasePredicted'>): string {
+  return el.phasePredicted ? `${PHASE_LABELS[el.phase]} (predicho)` : PHASE_LABELS[el.phase];
 }
 
 /** "Gas noble" o, con `plural`, "Gases nobles". */

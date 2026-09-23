@@ -2,7 +2,7 @@
 
 import { ArrowRight } from 'lucide-react';
 import { Confetti, LevelEmblem } from '@/components/gamification';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { goalMinutes } from '@/components/settings/goal-options';
 import { ButtonLink, ProgressRing, cn } from '@/components/ui';
 import { getElement } from '@/data/elements';

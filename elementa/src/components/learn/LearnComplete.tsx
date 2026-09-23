@@ -2,7 +2,7 @@
 
 import { ArrowRight, House, Layers, LayoutGrid, Target } from 'lucide-react';
 import { Confetti } from '@/components/gamification';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { SummaryAchievements } from '@/components/quiz';
 import { Button, ButtonLink, cn } from '@/components/ui';
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';

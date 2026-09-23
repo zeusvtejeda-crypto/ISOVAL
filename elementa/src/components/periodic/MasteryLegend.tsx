@@ -7,10 +7,14 @@ import { useMasteryMap } from '@/hooks/useMasteryMap';
 import { useProgress } from '@/hooks/useProgress';
 import type { MasteryTier } from '@/types';
 import { masteryTier, TIER_META } from '@/utils/mastery';
+import { TIER_TEXTURE } from './mastery-cues';
 
 const TIERS: MasteryTier[] = ['mastered', 'almost', 'learning', 'practice'];
 
-/** Resumen del dominio de la tabla: cuántos elementos hay en cada nivel y cuántos sin practicar. */
+/**
+ * Resumen del dominio de la tabla: cuántos elementos hay en cada nivel y cuántos sin practicar.
+ * Cada nivel muestra la misma muestra de barra que las casillas (color + textura), su emoji y su nombre.
+ */
 export function MasteryLegend({ className }: { className?: string }) {
   const { state, ready } = useProgress();
   const mastery = useMasteryMap();
@@ -31,7 +35,8 @@ export function MasteryLegend({ className }: { className?: string }) {
     <ul aria-label="Dominio de la tabla" className={cn('flex flex-wrap gap-x-4 gap-y-2 text-sm font-bold', className)}>
       {TIERS.map((tier) => (
         <li key={tier} className="inline-flex items-center gap-1.5">
-          <span aria-hidden className={cn('h-1.5 w-5 rounded-full', TIER_META[tier].barClass)} />
+          <span aria-hidden className={cn('h-1.5 w-5 rounded-full', TIER_META[tier].barClass, TIER_TEXTURE[tier])} />
+          <span aria-hidden>{TIER_META[tier].emoji}</span>
           <span>{TIER_META[tier].label}</span>
           <span className={cn('font-black tabular', TIER_META[tier].textClass)}>{counts[tier]}</span>
         </li>

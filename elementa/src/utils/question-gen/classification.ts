@@ -1,26 +1,23 @@
-import { CATEGORIES, metallicCharacter } from '@/data/categories';
+import { CATEGORIES } from '@/data/categories';
 import { ELEMENTS } from '@/data/elements';
 import type { ChemicalElement, ElementCategory, Question } from '@/types';
 import { elementDifficulty } from '../difficulty';
 import { shuffle } from '../random';
-import { ALT_CATEGORIES, categorySentence } from './facts';
+import { categorySentence, hasContestedCategory, isAmbiguousCategoryFor } from './facts';
 import { buildMultipleChoice, elementOption } from './helpers';
 
 /**
  * ¿Puede `d` ser un distractor NO ambiguo en "¿Cuál de estos es un <target>?"
- * Excluye superpesados, elementos con clasificación discutida hacia esa familia, los
- * "metales de transición internos" cuando se pregunta por transición y halógenos/gases
- * nobles cuando se pregunta por "no metal" (también lo son).
+ * Excluye superpesados y todo elemento del que `target` no sea claramente falso
+ * (misma regla que las familias incorrectas de "¿A qué familia pertenece…?": `isAmbiguousCategoryFor`).
  */
 export function isSafeClassificationDistractor(d: ChemicalElement, target: ElementCategory): boolean {
-  if (d.predicted || d.category === target) return false;
-  if ((ALT_CATEGORIES[d.atomicNumber] ?? []).includes(target)) return false;
-  if (target === 'transition-metal' && (d.category === 'lanthanide' || d.category === 'actinide')) return false;
-  if (target === 'nonmetal' && metallicCharacter(d.category) === 'nonmetal') return false;
-  return true;
+  return !d.predicted && !isAmbiguousCategoryFor(d, target);
 }
 
+/** "¿Cuál de estos es un <familia>?" sobre `el`. `null` si su propia familia está discutida (Po, Se, At…). */
 export function classificationQuestion(el: ChemicalElement): Question | null {
+  if (hasContestedCategory(el)) return null;
   const target = el.category;
   const pool = ELEMENTS.filter((d) => isSafeClassificationDistractor(d, target));
   const dist = (e: ChemicalElement) => Math.abs(e.atomicNumber - el.atomicNumber) + (e.period === el.period ? 0 : 6);

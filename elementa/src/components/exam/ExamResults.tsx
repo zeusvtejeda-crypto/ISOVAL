@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { House, ListChecks, RotateCcw, Target } from 'lucide-react';
 import { Confetti, XpBadge } from '@/components/gamification';
-import { ReviewList, SummaryAchievements } from '@/components/quiz';
-import { Badge, Button, ButtonLink, cn, ProgressBar, TONE_SOFT } from '@/components/ui';
+import { SummaryAchievements } from '@/components/quiz/SummaryAchievements';
+import { ReviewList } from '@/components/quiz/SummaryElements';
+import { Badge, Button, ButtonLink, cn, ProgressBar, TONE_SOFT, type Tone } from '@/components/ui';
 import type { AnsweredQuestion, SessionSummaryData } from '@/types';
 import { formatDuration, formatNumber } from '@/utils/format';
 import { XP_RULES } from '@/utils/xp';
@@ -23,6 +24,18 @@ export interface ExamResultsProps {
   onNewExam: () => void;
 }
 
+/** Color de arriba del degradado de la tarjeta, según el tono de la nota. */
+const GRADE_WASH: Record<Tone, string> = {
+  brand: 'from-brand-soft',
+  success: 'from-success-soft',
+  danger: 'from-danger-soft',
+  warning: 'from-warning-soft',
+  xp: 'from-xp-soft',
+  streak: 'from-streak-soft',
+  accent: 'from-accent-soft',
+  neutral: 'from-surface-2',
+};
+
 function ScoreCard({ summary }: { summary: SessionSummaryData }) {
   const { correct, total } = summary;
   const pct = examPercent(correct, total);
@@ -34,7 +47,8 @@ function ScoreCard({ summary }: { summary: SessionSummaryData }) {
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border bg-surface px-5 pt-6 pb-5 text-center shadow-card sm:px-7">
-      <div aria-hidden className={cn('absolute inset-x-0 top-0 h-28 opacity-70', TONE_SOFT[grade.tone])} />
+      {/* Degradado del tono de la nota: se desvanece sin cortar el marcador «7 / 10». */}
+      <div aria-hidden className={cn('absolute inset-x-0 top-0 h-48 bg-linear-to-b to-transparent', GRADE_WASH[grade.tone])} />
       <div className="relative">
         <span aria-hidden className="inline-block text-5xl animate-bounce-in">
           {grade.emoji}

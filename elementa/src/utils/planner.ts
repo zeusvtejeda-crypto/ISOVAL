@@ -1,12 +1,21 @@
 import { ELEMENTS } from '@/data/elements';
 import type { ProgressState, Question, QuestionType } from '@/types';
-import { computeMastery, MASTERED_THRESHOLD } from './mastery';
 import { generateQuestion } from './questions';
 import { pick, shuffle } from './random';
-import { adaptivePool, ALL_ATOMIC_NUMBERS, elementPriority } from './selection';
-import { isDue } from './srs';
+import {
+  adaptivePool,
+  ALL_ATOMIC_NUMBERS,
+  difficultElements,
+  dueReviews,
+  elementPriority,
+  newElements,
+  weakElements,
+} from './selection';
 
-export { adaptivePool, elementPriority };
+// Las listas de selección viven en `selection.ts` (sin generadores de preguntas); se re-exportan
+// aquí para no romper los imports existentes.
+export { adaptivePool, difficultElements, dueReviews, elementPriority, newElements, weakElements };
+export type { DifficultElement } from './selection';
 
 export interface StudyPlan {
   newElements: number[];
@@ -46,36 +55,6 @@ const REVIEW_TYPES: QuestionType[] = [
 /** Para elementos difíciles: primero lo esencial (símbolo y número). */
 const HARD_TYPES: QuestionType[] = ['name-to-symbol', 'symbol-to-name', 'element-to-number', 'number-to-element'];
 
-/** Elementos intentados que aún no se dominan, del menor dominio al mayor. */
-export function weakElements(
-  state: ProgressState,
-  now: Date,
-  limit = 10,
-): Array<{ atomicNumber: number; mastery: number }> {
-  return Object.values(state.elements)
-    .filter((p) => p.correct + p.incorrect > 0)
-    .map((p) => ({ atomicNumber: p.atomicNumber, mastery: computeMastery(p, now), incorrect: p.incorrect }))
-    .filter((x) => x.mastery < MASTERED_THRESHOLD)
-    .sort((a, b) => a.mastery - b.mastery || b.incorrect - a.incorrect || a.atomicNumber - b.atomicNumber)
-    .slice(0, limit)
-    .map(({ atomicNumber, mastery }) => ({ atomicNumber, mastery }));
-}
-
-/** Elementos cuyo repaso ya toca, los más atrasados primero. */
-export function dueReviews(state: ProgressState, now: Date, n: number): number[] {
-  return Object.values(state.elements)
-    .filter((p) => isDue(p, now))
-    .sort((a, b) => Date.parse(a.due as string) - Date.parse(b.due as string))
-    .slice(0, Math.max(0, n))
-    .map((p) => p.atomicNumber);
-}
-
-/** Elementos aún no aprendidos, en orden atómico (limitado al `pool` si se da). */
-export function newElements(state: ProgressState, n: number, pool?: number[]): number[] {
-  const src = pool && pool.length > 0 ? [...pool].sort((a, b) => a - b) : ALL_ATOMIC_NUMBERS;
-  return src.filter((z) => !state.elements[z]?.learned).slice(0, Math.max(0, n));
-}
-
 /** Aprendidos más recientemente (para completar sesiones de usuarios nuevos). */
 function recentlyLearned(state: ProgressState, exclude: Set<number>, n: number): number[] {
   return Object.values(state.elements)
@@ -111,22 +90,37 @@ function spreadOut(questions: Question[]): Question[] {
 }
 
 /**
- * Sesión inteligente: elementos nuevos + repasos pendientes + difíciles.
- * Nunca queda vacía: si faltan repasos/difíciles se completa con nuevos, recientes o una
- * selección adaptativa.
+ * Sesión inteligente (§25/§26): difíciles + repasos pendientes + elementos nuevos, UNA pregunta por
+ * elemento planificado (los nuevos ya ven su ficha antes del quiz en `/estudiar`). Con 5 nuevos,
+ * 10 repasos y 5 difíciles son 20 preguntas, ~5 minutos.
+ * - `hard`: primero, de `difficultElements` (fallados alguna vez y sin dominar; menor dominio y más
+ *   fallos primero). Nunca incluye elementos sin fallos: si hay menos que `hardCount`, queda corto.
+ * - `reviews`: repasos que ya tocan (`dueReviews`) que no estén en `hard`; los huecos que queden se
+ *   completan con elementos intentados aún sin dominar (p. ej. acertados pero lentos).
+ * - `newElements`: no aprendidos, en orden atómico.
+ * Nunca queda vacía: si hay menos de `MIN_SESSION_QUESTIONS` preguntas se completa con elementos
+ * aprendidos recientemente y una selección adaptativa.
  */
 export function planStudySession(state: ProgressState, now: Date, opts: StudyPlanOptions = {}): StudyPlan {
-  const newCount = opts.newCount ?? 5;
-  const reviewCount = opts.reviewCount ?? 10;
-  const hardCount = opts.hardCount ?? 5;
+  const newCount = Math.max(0, opts.newCount ?? 5);
+  const reviewCount = Math.max(0, opts.reviewCount ?? 10);
+  const hardCount = Math.max(0, opts.hardCount ?? 5);
 
-  const reviews = dueReviews(state, now, reviewCount);
-  const taken = new Set(reviews);
-  const hard = weakElements(state, now, hardCount + reviews.length)
-    .map((w) => w.atomicNumber)
+  const hard = difficultElements(state, now, hardCount).map((d) => d.atomicNumber);
+  const taken = new Set(hard);
+
+  const reviews = dueReviews(state, now, reviewCount + taken.size)
     .filter((z) => !taken.has(z))
-    .slice(0, hardCount);
-  hard.forEach((z) => taken.add(z));
+    .slice(0, reviewCount);
+  reviews.forEach((z) => taken.add(z));
+  if (reviews.length < reviewCount) {
+    for (const { atomicNumber: z } of weakElements(state, now, reviewCount + taken.size)) {
+      if (reviews.length >= reviewCount) break;
+      if (taken.has(z)) continue;
+      reviews.push(z);
+      taken.add(z);
+    }
+  }
 
   const newEls = newElements(state, newCount + taken.size)
     .filter((z) => !taken.has(z))
@@ -135,9 +129,9 @@ export function planStudySession(state: ProgressState, now: Date, opts: StudyPla
 
   const used = new Set<string>();
   const questions: Question[] = [];
-  for (const z of newEls) questions.push(...questionsFor(z, NEW_TYPES, 2, used));
+  for (const z of newEls) questions.push(...questionsFor(z, NEW_TYPES, 1, used));
   for (const z of reviews) questions.push(...questionsFor(z, REVIEW_TYPES, 1, used));
-  for (const z of hard) questions.push(...questionsFor(z, HARD_TYPES, 2, used));
+  for (const z of hard) questions.push(...questionsFor(z, HARD_TYPES, 1, used));
 
   // Completar sesiones cortas con recientes y, si hace falta, con una selección adaptativa.
   if (questions.length < MIN_SESSION_QUESTIONS) {

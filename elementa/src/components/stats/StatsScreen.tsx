@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { LevelBar } from '@/components/gamification';
 import { PageHeader } from '@/components/layout';
+import { difficultFocus } from '@/components/practice/target';
 import { ButtonLink, Card, TONE_SOFT, cn, type Tone } from '@/components/ui';
 import { ACHIEVEMENTS } from '@/data/achievements';
 import { TOTAL_ELEMENTS } from '@/data/elements';
@@ -13,7 +14,6 @@ import { useProgress } from '@/hooks/useProgress';
 import { todayKey } from '@/utils/dates';
 import { formatDuration, formatNumber, formatPercent, pluralize } from '@/utils/format';
 import { MASTERED_THRESHOLD, countLearned, masteryMap } from '@/utils/mastery';
-import { weakElements } from '@/utils/planner';
 import { AccuracyChart, LearnedChart, QuestionsChart, WeeklyChart } from './ActivityCharts';
 import { BestFamilies } from './BestFamilies';
 import { KpiGrid, type Kpi } from './KpiGrid';
@@ -73,7 +73,8 @@ export function StatsScreen() {
       learned: countLearned(state),
       best,
       weakest: weakestFamilies(families, best),
-      weak: weakElements(state, now, 8),
+      // Los mismos que practica «Practicar los más flojos» (`/practicar?focus=dificiles`).
+      weak: difficultFocus(state, now, 8),
       skills: skillAccuracy(state),
       achievements: ACHIEVEMENTS.filter((a) => state.achievements[a.id]).length,
     };

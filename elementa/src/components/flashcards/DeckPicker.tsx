@@ -6,7 +6,7 @@ import { Chip, cn } from '@/components/ui';
 import { FAMILY_GROUPS, STUDY_BLOCKS } from '@/data/blocks';
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import type { ElementCategory } from '@/types';
-import { pluralize } from '@/utils/format';
+import { formatNumber, pluralize } from '@/utils/format';
 import type { DeckKind, DeckSelection } from './deck';
 
 export interface DeckPickerProps {
@@ -16,8 +16,8 @@ export interface DeckPickerProps {
   custom: readonly number[] | null;
   /** Repasos pendientes (para la pista del repaso inteligente). */
   dueCount: number;
-  /** Elementos débiles («Mis errores»); 0 = opción desactivada. */
-  weakCount: number;
+  /** Elementos difíciles del mazo «Mis errores» (igual que en /errores); 0 = opción desactivada. */
+  mistakeCount: number;
   /** Bloque que se elige al tocar «Por bloque». */
   defaultBlock: string;
   defaultFamily: ElementCategory;
@@ -91,7 +91,7 @@ export function DeckPicker({
   onChange,
   custom,
   dueCount,
-  weakCount,
+  mistakeCount,
   defaultBlock,
   defaultFamily,
   labelledBy,
@@ -155,11 +155,11 @@ export function DeckPicker({
           emoji="🎯"
           title="Mis errores"
           description={
-            weakCount > 0
-              ? `${weakCount} ${pluralize(weakCount, 'elemento', 'elementos')} por reforzar`
+            mistakeCount > 0
+              ? `${formatNumber(mistakeCount)} ${pluralize(mistakeCount, 'elemento', 'elementos')} por reforzar`
               : 'Aún no tienes errores. ¡Juega un poco y vuelve!'
           }
-          disabled={weakCount === 0}
+          disabled={mistakeCount === 0}
           selected={is('mistakes')}
           onSelect={() => onChange({ kind: 'mistakes' })}
         />
@@ -192,7 +192,7 @@ export function DeckPicker({
               icon={<span aria-hidden>{family.emoji}</span>}
             >
               {family.title}
-              <span className="text-xs font-black opacity-70 tabular">{family.atomicNumbers.length}</span>
+              <span className="text-xs font-black text-muted tabular">{family.atomicNumbers.length}</span>
             </Chip>
           ))}
         </div>

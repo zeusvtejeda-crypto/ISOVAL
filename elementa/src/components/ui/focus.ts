@@ -18,7 +18,10 @@ export function getFocusable(root: HTMLElement | null): HTMLElement[] {
   );
 }
 
-/** Mantiene el foco dentro de `root` al pulsar Tab / Mayús+Tab. */
+/**
+ * Mantiene el foco dentro de `root` al pulsar Tab / Mayús+Tab. Si el foco está en el propio `root`
+ * (p. ej. el panel de un modal recién abierto), Tab va al primer control y Mayús+Tab al último.
+ */
 export function trapTab(event: KeyboardEvent, root: HTMLElement | null): void {
   if (!root) return;
   const items = getFocusable(root);
@@ -30,11 +33,11 @@ export function trapTab(event: KeyboardEvent, root: HTMLElement | null): void {
   const first = items[0];
   const last = items[items.length - 1];
   const active = document.activeElement;
-  const inside = active instanceof Node && root.contains(active);
-  if (event.shiftKey && (active === first || !inside)) {
+  const outside = !(active instanceof Node && root.contains(active)) || active === root;
+  if (event.shiftKey && (active === first || outside)) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && (active === last || !inside)) {
+  } else if (!event.shiftKey && (active === last || outside)) {
     event.preventDefault();
     first.focus();
   }

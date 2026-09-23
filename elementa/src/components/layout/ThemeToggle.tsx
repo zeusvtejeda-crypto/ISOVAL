@@ -17,16 +17,36 @@ export interface ThemeToggleProps {
   size?: IconButtonSize;
   /** `segmented`: ocupa todo el ancho. */
   block?: boolean;
+  /** `segmented`: por debajo de 360 px muestra solo los iconos (cada opción conserva su `aria-label`). */
+  compactBelow360?: boolean;
   className?: string;
 }
 
-const OPTIONS: readonly SegmentedOption<ThemePreference>[] = [
-  { value: 'light', label: 'Claro', icon: <span aria-hidden>☀️</span> },
-  { value: 'dark', label: 'Oscuro', icon: <span aria-hidden>🌙</span> },
-  { value: 'system', label: 'Sistema', ariaLabel: 'Sistema (como tu dispositivo)', icon: <span aria-hidden>💻</span> },
+const THEMES: readonly { value: ThemePreference; label: string; ariaLabel: string; emoji: string }[] = [
+  { value: 'light', label: 'Claro', ariaLabel: 'Claro', emoji: '☀️' },
+  { value: 'dark', label: 'Oscuro', ariaLabel: 'Oscuro', emoji: '🌙' },
+  { value: 'system', label: 'Sistema', ariaLabel: 'Sistema (como tu dispositivo)', emoji: '💻' },
 ];
 
-export function ThemeToggle({ variant = 'segmented', size = 'md', block, className }: ThemeToggleProps) {
+function themeOptions(compact: boolean): SegmentedOption<ThemePreference>[] {
+  return THEMES.map(({ value, label, ariaLabel, emoji }) => ({
+    value,
+    ariaLabel,
+    icon: <span aria-hidden>{emoji}</span>,
+    label: compact ? <span className="max-[359px]:sr-only">{label}</span> : label,
+  }));
+}
+
+const OPTIONS = themeOptions(false);
+const COMPACT_OPTIONS = themeOptions(true);
+
+export function ThemeToggle({
+  variant = 'segmented',
+  size = 'md',
+  block,
+  compactBelow360 = false,
+  className,
+}: ThemeToggleProps) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const hydrated = useHydrated();
 
@@ -58,7 +78,7 @@ export function ThemeToggle({ variant = 'segmented', size = 'md', block, classNa
   return (
     <SegmentedControl<ThemePreference>
       label="Tema"
-      options={OPTIONS}
+      options={compactBelow360 ? COMPACT_OPTIONS : OPTIONS}
       value={hydrated ? theme : null}
       onChange={setTheme}
       block={block}

@@ -1,18 +1,19 @@
 'use client';
 
+import { QuizScreen } from '@/components/quiz';
 import { Badge, cn } from '@/components/ui';
 import { useProgress } from '@/hooks/useProgress';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import { formatNumber } from '@/utils/format';
 import { streakModeXp } from '@/utils/xp';
 import { GameFlow } from '../shared/GameFlow';
+import { GameHeader, GameHeaderTitle } from '../shared/GameHeader';
 import { GameIntro, RecordPill } from '../shared/GameIntro';
-import { GameScreen } from '../shared/GameScreen';
 import { gameQuestion } from '../shared/game-questions';
 import { useRecordKeeper } from '../shared/use-record-keeper';
 import { RachaResults } from './RachaResults';
-import { StreakHud } from './StreakHud';
-import { STREAK_LADDER, formatMultiplier, streakTier } from './streak-rules';
+import { StreakHud, StreakHudCompact } from './StreakHud';
+import { STREAK_LADDER, formatMultiplier, streakAward, streakTier } from './streak-rules';
 
 function StreakLadder() {
   return (
@@ -39,7 +40,7 @@ function StreakLadder() {
             <span className="min-w-0 flex-1">
               <span className="block font-black">Racha {step.range}</span>
               <span className="block text-sm font-semibold text-muted">
-                {step.xp} XP por acierto{step.special ? ' · bonus especial' : ''}
+                {step.xp} XP por acierto ({step.hardXp} si es difícil){step.special ? ' · bonus especial' : ''}
               </span>
             </span>
             {step.bonus !== null && (
@@ -104,7 +105,7 @@ function RachaPlay({ onExit }: { onExit: () => void }) {
     // Una sola vida: la racha termina al primer error.
     lives: 1,
     nextQuestion: ({ streak, asked }) => gameQuestion(state, { tier: streakTier(streak), asked }),
-    xpFor: ({ correct, streak }) => (correct ? streakModeXp(streak).xp : 0),
+    xpFor: ({ correct, streak, question }) => (correct ? streakAward(streak, question.difficulty) : 0),
     onFinish: ({ bestStreak }) => records.submit(bestStreak, 'Mejor racha'),
   });
 
@@ -114,17 +115,19 @@ function RachaPlay({ onExit }: { onExit: () => void }) {
   };
 
   return (
-    <GameScreen
+    <QuizScreen
       session={session}
       onExit={exit}
-      hud={<StreakHud session={session} best={records.best} />}
-      renderSummary={(summary) => (
-        <RachaResults
-          summary={summary}
-          session={session}
-          previousBest={records.previousBest}
+      renderHeader={(s) => (
+        <GameHeader
+          onExit={exit}
+          confirmExit={s.answered.length > 0}
+          center={<GameHeaderTitle>{s.title}</GameHeaderTitle>}
+          compact={<StreakHudCompact session={s} best={records.best} />}
         />
       )}
+      renderTop={(s) => <StreakHud session={s} best={records.best} />}
+      renderSummary={(summary, s) => <RachaResults summary={summary} session={s} previousBest={records.previousBest} />}
     />
   );
 }

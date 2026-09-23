@@ -2,7 +2,7 @@
 
 import { RotateCw } from 'lucide-react';
 import { cn } from '@/components/ui';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { CATEGORIES } from '@/data/categories';
 import type { ChemicalElement } from '@/types';
 import { categoryLabel, formatMass } from '@/utils/format';
@@ -108,7 +108,7 @@ export function Flashcard({ element, mode, flipped, onFlip, repeat = false, fron
         {/* --- Reverso --- */}
         <div inert={!flipped} className={cn(FACE, 'flip-y')}>
           <div aria-hidden className={cn('h-1.5 w-full shrink-0', category.solidClass)} />
-          <div className="flex flex-1 flex-col gap-4 p-5">
+          <div className="flex flex-1 flex-col gap-4 p-5 [@media(max-height:700px)]:gap-2.5 [@media(max-height:700px)]:p-3.5">
             <div className="flex flex-col items-center gap-1 text-center">
               <span className="rounded-full bg-success-soft px-3 py-1 text-xs font-black tracking-wide text-success uppercase">
                 {mode.backLabel}

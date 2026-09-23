@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { ProgressState, QuestionSkill } from '@/types';
 import { addDays, lastNDays, todayKey } from '@/utils/dates';
-import { applyAnswer, applyLearned, type AnswerInput } from '@/utils/engine';
+import { applyAnswer, applyFlashcard, applyLearned, type AnswerInput } from '@/utils/engine';
 import { masteryMap } from '@/utils/mastery';
 import { createInitialState } from '@/utils/state';
 import { BestFamilies } from '../BestFamilies';
@@ -26,6 +26,8 @@ import { PracticeFocus } from '../PracticeFocus';
 import { RecordsGrid } from '../RecordsGrid';
 import {
   accuracyPerDay,
+  accuracyTotals,
+  activityPerDay,
   bestFamilies,
   familyStats,
   learnedCumulative,
@@ -83,7 +85,28 @@ describe('stats-data', () => {
     const keys = lastNDays(7, TODAY);
     const q = questionsPerDay(state.daily, keys);
     expect(q).toEqual([0, 0, 0, 5, 0, 5, 7]);
+    expect(activityPerDay(state.daily, keys)).toEqual(q);
     expect(accuracyPerDay(state.daily, keys)).toEqual([null, null, null, 60, null, 60, 86]);
+  });
+
+  it('las flashcards cuentan para la actividad (meta), no para las preguntas ni la precisión', () => {
+    let withCards = state;
+    for (const [z, rating] of [[8, 'good'], [6, 'again'], [7, 'easy']] as const) {
+      withCards = applyFlashcard(withCards, { atomicNumber: z, skill: 'symbol', rating, responseMs: 2000 }, NOW).state;
+    }
+    // Un día solo de flashcards (anteayer): actividad, pero sin precisión.
+    const twoDaysAgo = addDaysDate(NOW, -2);
+    withCards = applyFlashcard(withCards, { atomicNumber: 9, skill: 'symbol', rating: 'good', responseMs: 2000 }, twoDaysAgo).state;
+    const keys = lastNDays(7, TODAY);
+    expect(activityPerDay(withCards.daily, keys)).toEqual([0, 0, 0, 5, 1, 5, 10]);
+    expect(questionsPerDay(withCards.daily, keys)).toEqual([0, 0, 0, 5, 0, 5, 7]);
+    // Hoy: 6 de 7 preguntas (86 %), no 6 de 10.
+    expect(accuracyPerDay(withCards.daily, keys)).toEqual([null, null, null, 60, null, 60, 86]);
+    // La media del periodo usa las mismas respuestas que «Precisión» (aciertos / preguntas de quiz).
+    const totals = accuracyTotals(withCards.daily, keys);
+    expect(totals).toEqual({ correct: 12, answered: 17 });
+    const all = accuracyTotals(withCards.daily, lastNDays(60, TODAY));
+    expect(all).toEqual({ correct: withCards.stats.totalCorrect, answered: withCards.stats.totalQuestions });
   });
 
   it('aprendidos acumulados por día (incluye los anteriores a la ventana)', () => {
@@ -227,6 +250,23 @@ describe('geometría de los gráficos', () => {
         h(StackedBarPlot, { width, ariaLabel: 'Dominio', segments: [{ key: 'x', label: 'X', value: 3, fillClass: 'fill-success' }] }),
       );
       expect(stack).not.toContain('NaN');
+
+      const labelled = renderToStaticMarkup(
+        h(StackedBarPlot, {
+          width,
+          ariaLabel: 'Dominio',
+          showValues: true,
+          segments: [
+            { key: 'a', label: 'A', value: 40, fillClass: 'fill-tier-mastered' },
+            { key: 'p', label: 'P', value: 1, fillClass: 'fill-tier-practice', hatched: true },
+          ],
+        }),
+      );
+      expect(labelled).not.toContain('NaN');
+      expect(labelled).toMatch(/<pattern id="hatch-[^"]+"/);
+      expect(labelled).toMatch(/fill="url\(#hatch-[^"]+\)"/);
+      expect(labelled).toContain('>40</text>'); // cabe
+      expect(labelled).not.toContain('>1</text>'); // tramo de 2 px: sin pastilla (queda la leyenda)
     }
     const empty = renderToStaticMarkup(h(LineChartPlot, { data: [], width: 300, active: null, onActive: noop, ariaLabel: 'x', describe: String }));
     expect(empty).not.toContain('NaN');
@@ -244,6 +284,21 @@ describe('tarjetas de estadísticas', () => {
     expect(html).toContain('<caption>Elementos por nivel de dominio</caption>');
     expect(html).toContain('Sin empezar');
     expect(html).toContain('href="/tabla"');
+  });
+
+  it('MasteryOverview: señales que no dependen del color', () => {
+    const html = renderToStaticMarkup(h(MasteryOverview, { state, mastery }));
+    // «Necesita práctica» rayado en la leyenda y en las casillas (mismo patrón que la tabla).
+    const practiceCells = Object.keys(mastery)
+      .map(Number)
+      .filter((z) => state.elements[z] && state.elements[z].correct + state.elements[z].incorrect > 0 && mastery[z] < 40);
+    expect(practiceCells.length).toBeGreaterThan(0);
+    expect(html).toContain('repeating-linear-gradient');
+    // Cada casilla dice su elemento y su dominio al pasar el cursor.
+    expect(html).toContain('title="Li · ');
+    expect(html).toContain('title="H · Sin empezar"');
+    // La leyenda nombra cada nivel con su emoji.
+    for (const label of ['🟢', 'Dominado', '🔴', 'Necesita práctica']) expect(html).toContain(label);
   });
 
   it('BestFamilies: medallas y enlace a practicar la familia; vacío amable', () => {

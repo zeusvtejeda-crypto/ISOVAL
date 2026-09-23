@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ContrarrelojGame } from '@/components/games';
+import { ContrarrelojGame } from '@/components/games/contrarreloj/ContrarrelojGame';
 
 export const metadata: Metadata = {
   title: 'Contrarreloj',

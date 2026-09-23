@@ -1,4 +1,4 @@
-import { CATEGORIES, CATEGORY_ORDER, PHASE_LABELS } from '@/data/categories';
+import { CATEGORIES, CATEGORY_ORDER, metallicCharacter, PHASE_LABELS } from '@/data/categories';
 import type { ChemicalElement, ElementCategory, Question } from '@/types';
 import { elementDifficulty } from '../difficulty';
 import { formatConfig, formatMass, pluralize } from '../format';
@@ -32,6 +32,23 @@ export const ALT_CATEGORIES: Record<number, ElementCategory[]> = {
   117: ['metalloid', 'post-transition-metal'],
   34: ['metalloid'],
 };
+
+/** Su clasificación en familias está discutida (tiene `ALT_CATEGORIES`). */
+export function hasContestedCategory(el: ChemicalElement): boolean {
+  return (ALT_CATEGORIES[el.atomicNumber] ?? []).length > 0;
+}
+
+/**
+ * ¿Se conoce su estado a temperatura ambiente? No para los de fase `unknown` ni para los que solo
+ * tienen un estado predicho (`phasePredicted`: At y Fr nunca se han visto en cantidad visible).
+ */
+export function hasKnownPhase(el: ChemicalElement): boolean {
+  return el.phase !== 'unknown' && !el.phasePredicted;
+}
+
+/** Frase común sobre los elementos gaseosos (el oganesón está en el grupo 18 pero su estado se desconoce). */
+export const GASEOUS_ELEMENTS_NOTE =
+  'Los elementos gaseosos son H, N, O, F, Cl y los gases nobles (del oganesón aún no se sabe).';
 
 export function elementToMass(el: ChemicalElement): Question | null {
   const mass = formatMass(el);
@@ -96,9 +113,18 @@ export function elementToPeriod(el: ChemicalElement): Question | null {
   });
 }
 
-/** `true` si `category` no debe ofrecerse como respuesta incorrecta para `el`. */
+/**
+ * `true` si decir que `el` es un `category` NO es claramente falso, así que esa familia no puede ser
+ * una respuesta incorrecta sobre `el` (ni `el` un distractor de "¿Cuál de estos es un <category>?"):
+ * - su propia familia o una clasificación alternativa (`ALT_CATEGORIES`);
+ * - "no metal" para halógenos y gases nobles (también son no metales);
+ * - "metal de transición" para lantánidos y actínidos (a veces, "metales de transición internos").
+ */
 export function isAmbiguousCategoryFor(el: ChemicalElement, category: ElementCategory): boolean {
-  return category === el.category || (ALT_CATEGORIES[el.atomicNumber] ?? []).includes(category);
+  if (category === el.category || (ALT_CATEGORIES[el.atomicNumber] ?? []).includes(category)) return true;
+  if (category === 'nonmetal') return metallicCharacter(el.category) === 'nonmetal';
+  if (category === 'transition-metal') return el.category === 'lanthanide' || el.category === 'actinide';
+  return false;
 }
 
 export function categorySentence(el: ChemicalElement): string {
@@ -130,13 +156,13 @@ function phaseExplanation(el: ChemicalElement): string {
     return `${withArticleCap(el)} está en estado líquido a temperatura ambiente. Solo dos elementos lo están: el mercurio (Hg) y el bromo (Br).`;
   }
   if (el.phase === 'gas') {
-    return `${withArticleCap(el)} es un gas a temperatura ambiente. Los elementos gaseosos son H, N, O, F, Cl y los gases nobles.`;
+    return `${withArticleCap(el)} es un gas a temperatura ambiente. ${GASEOUS_ELEMENTS_NOTE}`;
   }
   return `${withArticleCap(el)} está en estado sólido a temperatura ambiente, como la mayoría de los elementos.${PHASE_NOTES[el.atomicNumber] ?? ''}`;
 }
 
 export function elementToPhase(el: ChemicalElement): Question | null {
-  if (el.phase === 'unknown') return null;
+  if (!hasKnownPhase(el)) return null;
   return buildMultipleChoice({
     type: 'element-to-phase',
     el,

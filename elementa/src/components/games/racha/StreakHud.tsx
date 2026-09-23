@@ -1,9 +1,10 @@
 'use client';
 
 import { Confetti } from '@/components/gamification';
-import { ProgressBar, cn } from '@/components/ui';
+import { Badge, ProgressBar, cn } from '@/components/ui';
 import type { QuizSession } from '@/hooks/useQuizSession';
 import { streakModeXp } from '@/utils/xp';
+import { GameKeyframes } from '../shared/GameKeyframes';
 import { currentMultiplier, formatMultiplier, isBonusMilestone, lastMilestone, nextMilestone } from './streak-rules';
 
 export interface StreakHudProps {
@@ -12,12 +13,41 @@ export interface StreakHudProps {
   best: number;
 }
 
-/** Contador gigante «🔥 RACHA x12» con llama que crece, multiplicador y próximo bonus. */
+/** Hito con bonus alcanzado con la última respuesta (y su bonus), o `null`. */
+function milestoneNow(session: QuizSession): { streak: number; bonus: number } | null {
+  const { streak, status, lastAnswer } = session;
+  if (status !== 'feedback' || lastAnswer?.correct !== true || !isBonusMilestone(streak)) return null;
+  return { streak, bonus: streakModeXp(streak).bonus };
+}
+
+function recordLabel(streak: number, best: number): string {
+  if (best > 0 && streak > best) return '🏆 ¡Nuevo récord!';
+  return best > 0 ? `🏆 Récord: ${best}` : '🏆 Sin récord aún';
+}
+
+/** Llama que parpadea (más viva con racha). */
+function Flame({ active, className }: { active: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'inline-block origin-bottom',
+        active ? '[animation:eg-flicker_1.1s_ease-in-out_infinite]' : 'opacity-50 grayscale',
+        className,
+      )}
+    >
+      🔥
+    </span>
+  );
+}
+
+/**
+ * Contador gigante «🔥 RACHA x12» con llama que crece, multiplicador y próximo bonus. En pantallas
+ * bajas se oculta: allí se ve `StreakHudCompact` en la cabecera.
+ */
 export function StreakHud({ session, best }: StreakHudProps) {
-  const { streak, status, lastAnswer, answered } = session;
-  const scored = status === 'feedback' && lastAnswer?.correct === true;
-  const milestoneNow = scored && isBonusMilestone(streak);
-  const milestoneBonus = milestoneNow ? streakModeXp(streak).bonus : 0;
+  const { streak, answered } = session;
+  const milestone = milestoneNow(session);
   const multiplier = currentMultiplier(streak);
   const next = nextMilestone(streak);
   const remaining = next.at - streak;
@@ -27,6 +57,7 @@ export function StreakHud({ session, best }: StreakHudProps) {
 
   return (
     <>
+      <GameKeyframes />
       {/* Fuera de la tarjeta (que aísla su apilamiento) para caer por encima del panel de feedback. */}
       {celebration && (
         <Confetti
@@ -39,6 +70,7 @@ export function StreakHud({ session, best }: StreakHudProps) {
         aria-label="Tu racha"
         className={cn(
           'relative isolate mt-1 overflow-hidden rounded-3xl border px-4 py-2.5 transition-colors duration-500 sm:px-5 sm:py-3',
+          '[@media(max-height:700px)]:hidden',
           streak > 0 ? 'border-streak/35 bg-streak-soft' : 'border-border bg-surface shadow-card',
         )}
       >
@@ -53,14 +85,7 @@ export function StreakHud({ session, best }: StreakHudProps) {
               className="inline-block origin-bottom text-5xl leading-none transition-transform duration-500 ease-spring sm:text-6xl"
               style={{ transform: `scale(${1 + heat * 0.55})` }}
             >
-              <span
-                className={cn(
-                  'inline-block origin-bottom',
-                  streak > 0 ? '[animation:eg-flicker_1.1s_ease-in-out_infinite]' : 'opacity-50 grayscale',
-                )}
-              >
-                🔥
-              </span>
+              <Flame active={streak > 0} />
             </span>
           </div>
 
@@ -86,13 +111,13 @@ export function StreakHud({ session, best }: StreakHudProps) {
         </div>
 
         <div className="mt-2 min-h-10 sm:mt-3">
-          {milestoneNow ? (
+          {milestone ? (
             <p
               role="status"
               className="flex min-h-10 items-center justify-center gap-2 rounded-2xl bg-streak px-3 py-1.5 text-center font-black text-bg animate-bounce-in"
             >
               <span aria-hidden>{streak >= 20 ? '🌟' : '🎉'}</span>
-              ¡Racha {streak}! +{milestoneBonus} XP {streak === 20 ? 'de bonus especial' : 'de bonus'}
+              ¡Racha {streak}! +{milestone.bonus} XP {streak === 20 ? 'de bonus especial' : 'de bonus'}
             </p>
           ) : (
             <>
@@ -109,14 +134,50 @@ export function StreakHud({ session, best }: StreakHudProps) {
                     +{next.bonus} XP{next.special ? ' · bonus especial' : ''}
                   </span>
                 </span>
-                <span className={cn('tabular', beatingRecord && 'font-black text-xp')}>
-                  {beatingRecord ? '🏆 ¡Nuevo récord!' : best > 0 ? `🏆 Récord: ${best}` : '🏆 Sin récord aún'}
-                </span>
+                <span className={cn('tabular', beatingRecord && 'font-black text-xp')}>{recordLabel(streak, best)}</span>
               </p>
             </>
           )}
         </div>
       </section>
     </>
+  );
+}
+
+/** «🔥 x12 ⚡x1.5 · 🏆 18» en una fila, para la cabecera en pantallas bajas. */
+export function StreakHudCompact({ session, best }: StreakHudProps) {
+  const { streak } = session;
+  const milestone = milestoneNow(session);
+  const multiplier = currentMultiplier(streak);
+  const beatingRecord = best > 0 && streak > best;
+
+  return (
+    <div role="group" aria-label="Tu racha" className="flex min-w-0 flex-1 items-center gap-2">
+      <GameKeyframes />
+      <p className="inline-flex items-center gap-1 text-2xl leading-none font-black text-streak tabular" aria-live="polite">
+        <Flame active={streak > 0} className="text-xl" />
+        <span key={streak} className="inline-block animate-pop">
+          <span className="sr-only">Racha </span>x{streak}
+        </span>
+      </p>
+      <span
+        key={multiplier}
+        className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded-full bg-streak px-2 text-sm font-black text-bg tabular animate-bounce-in"
+      >
+        <span aria-hidden>⚡</span>
+        {formatMultiplier(multiplier)}
+        <span className="sr-only"> XP por acierto</span>
+      </span>
+      {milestone ? (
+        <Badge role="status" tone="streak" variant="solid" size="md" className="ml-auto animate-bounce-in">
+          <span aria-hidden>{milestone.streak >= 20 ? '🌟' : '🎉'}</span>+{milestone.bonus} XP
+          <span className="sr-only"> de bonus</span>
+        </Badge>
+      ) : (
+        <span className={cn('ml-auto truncate text-sm font-bold text-muted tabular', beatingRecord && 'font-black text-xp')}>
+          {recordLabel(streak, best)}
+        </span>
+      )}
+    </div>
   );
 }

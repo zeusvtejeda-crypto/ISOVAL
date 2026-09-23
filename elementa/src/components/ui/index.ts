@@ -14,6 +14,7 @@ export { Modal, type ModalProps, type ModalSize } from './Modal';
 export { StatTile, type StatTileProps } from './StatTile';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { Skeleton, type SkeletonProps } from './Skeleton';
+export { StickyActions, type StickyActionsProps } from './StickyActions';
 export {
   IconButton,
   IconLink,

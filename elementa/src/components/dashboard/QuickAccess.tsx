@@ -10,11 +10,11 @@ interface QuickLink {
   label: string;
   hint: string;
   tone: Tone;
-  /** Contador en la esquina (p. ej. elementos por reforzar). */
+  /** Contador en la esquina (p. ej. elementos difíciles por reforzar). */
   count?: number;
 }
 
-function quickLinks(weakCount: number): QuickLink[] {
+function quickLinks(difficultCount: number): QuickLink[] {
   return [
     { href: '/flashcards', emoji: '🃏', label: 'Flashcards', hint: 'Voltea y recuerda', tone: 'brand' },
     { href: '/examen', emoji: '📝', label: 'Mini examen', hint: 'Ponte a prueba', tone: 'accent' },
@@ -25,25 +25,31 @@ function quickLinks(weakCount: number): QuickLink[] {
       emoji: '🎯',
       label: 'Mis errores',
       hint:
-        weakCount > 0
-          ? `${formatNumber(weakCount)} ${pluralize(weakCount, 'elemento', 'elementos')} por reforzar`
+        difficultCount > 0
+          ? `${formatNumber(difficultCount)} ${pluralize(difficultCount, 'elemento', 'elementos')} por reforzar`
           : '¡Nada pendiente!',
       tone: 'danger',
-      count: weakCount,
+      count: difficultCount,
     },
     { href: '/estadisticas', emoji: '📊', label: 'Estadísticas', hint: 'Mira cómo mejoras', tone: 'streak' },
   ];
 }
 
+export interface QuickAccessProps {
+  /** Elementos difíciles (`difficultElements`): el mismo número que «Elementos difíciles» en /errores. */
+  difficultCount: number;
+  className?: string;
+}
+
 /** Rejilla de accesos rápidos: icono, nombre y una pista de una línea. */
-export function QuickAccess({ weakCount, className }: { weakCount: number; className?: string }) {
+export function QuickAccess({ difficultCount, className }: QuickAccessProps) {
   return (
     <section aria-labelledby="quick-access-title" className={className}>
       <h2 id="quick-access-title" className="mb-3 text-xl font-black">
         Accesos rápidos
       </h2>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {quickLinks(weakCount).map((item) => (
+        {quickLinks(difficultCount).map((item) => (
           <li key={item.href} className="min-w-0">
             <Link href={item.href} className={cn(LINK_CARD, 'flex h-full min-h-32 flex-col gap-3 p-4')}>
               <span className="flex items-start justify-between gap-2">

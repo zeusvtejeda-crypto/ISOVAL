@@ -55,19 +55,20 @@ export function AchievementsScreen() {
   const next = nextAchievement(statuses);
   const recentIds = statuses.filter((s) => isRecent(s, now)).map((s) => s.def.id);
   const recentKey = ready ? recentIds.join(',') : '';
+  const owner = state.profile.createdAt;
 
-  // Confeti la primera vez que ves aquí un logro recién conseguido (una vez por logro y navegador).
+  // Confeti la primera vez que ves aquí un logro recién conseguido (una vez por logro, progreso y navegador).
   useEffect(() => {
     if (!recentKey) return;
     const ids = recentKey.split(',');
-    const celebrated = readCelebrated();
+    const celebrated = readCelebrated(owner);
     if (ids.every((id) => celebrated.has(id))) return;
     const timer = window.setTimeout(() => {
-      writeCelebrated([...celebrated, ...ids]);
+      writeCelebrated(owner, [...celebrated, ...ids]);
       setConfetti((n) => n + 1);
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [recentKey]);
+  }, [recentKey, owner]);
 
   if (!ready) return <AchievementsSkeleton />;
 

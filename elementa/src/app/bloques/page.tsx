@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
-import { BlocksApp, BlocksSkeleton } from '@/components/learn';
+import { BlocksApp } from '@/components/learn/BlocksApp';
+import { BlocksSkeleton } from '@/components/learn/LearnSkeletons';
 
 export default function BloquesPage() {
   return (

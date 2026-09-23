@@ -1,8 +1,10 @@
 'use client';
 
 import { House, Layers, RotateCcw } from 'lucide-react';
-import { Confetti } from '@/components/gamification';
-import { ImprovedList, ReviewList, SummaryAchievements } from '@/components/quiz';
+import { Confetti } from '@/components/gamification/Confetti';
+import { ElementChips } from '@/components/learn/ElementChips';
+import { SummaryRow } from '@/components/learn/SummaryParts';
+import { SummaryAchievements } from '@/components/quiz/SummaryAchievements';
 import { Button, ButtonLink, ProgressRing, StatTile, cn, type Tone } from '@/components/ui';
 import { formatDuration, formatNumber, formatPercent, pluralize } from '@/utils/format';
 import { getFlashcardMode } from './modes';
@@ -122,8 +124,21 @@ export function FlashcardsSummary({ result, onRetryDifficult, onNewDeck, homeHre
       </div>
 
       <SummaryAchievements ids={result.unlockedAchievements} />
-      <ImprovedList atomicNumbers={result.improved} />
-      <ReviewList atomicNumbers={difficult} />
+      {/* Listas compactas: una fila de fichas cada una, lo que no cabe se resume en «+N». */}
+      {(result.improved.length > 0 || difficult.length > 0) && (
+        <div className="divide-y divide-border rounded-3xl border border-border bg-surface p-4 shadow-card">
+          {result.improved.length > 0 && (
+            <SummaryRow emoji="📈" title="Hoy mejoraste">
+              <ElementChips atomicNumbers={result.improved} showNames tone="success" singleRow label="Elementos que mejoraste" />
+            </SummaryRow>
+          )}
+          {difficult.length > 0 && (
+            <SummaryRow emoji="🔁" title="Elementos que debes repasar">
+              <ElementChips atomicNumbers={difficult} showNames tone="danger" singleRow label="Elementos que debes repasar" />
+            </SummaryRow>
+          )}
+        </div>
+      )}
 
       <div className="mt-2 flex flex-col gap-2.5">
         {difficult.length > 0 && (

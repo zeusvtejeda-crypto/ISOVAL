@@ -70,7 +70,7 @@ export function ScopePicker({ scope, onChange, lastBlock = DEFAULT_BLOCK_ID, las
               icon={<span aria-hidden>{family.emoji}</span>}
             >
               {family.title}
-              <span className="text-xs font-black opacity-70 tabular">{family.atomicNumbers.length}</span>
+              <span className="text-xs font-black text-muted tabular">{family.atomicNumbers.length}</span>
             </Chip>
           ))}
         </div>

@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from 'react';
 import { Play } from 'lucide-react';
 import { PageHeader } from '@/components/layout';
 import { Button, cn, SegmentedControl } from '@/components/ui';
+import { StickyActions } from '@/components/ui/StickyActions';
 import type { ElementCategory } from '@/types';
 import { pluralize } from '@/utils/format';
 import { typesForTopics } from '@/utils/questions';
@@ -131,7 +132,7 @@ export function CustomExamBuilder({ config, onChange, onStart }: CustomExamBuild
         </section>
       </div>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-6 bg-linear-to-t from-bg via-bg/95 to-bg/0 px-4 pt-6 pb-2 sm:-mx-6 sm:px-6 lg:bottom-0 lg:-mx-10 lg:px-10 lg:pb-6">
+      <StickyActions className="mt-6">
         <Button size="lg" block disabled={count === 0} onClick={onStart} leftIcon={<Play aria-hidden />}>
           {count === 0 ? 'Elige al menos un tema' : `Empezar · ${count} ${pluralize(count, 'pregunta', 'preguntas')}`}
         </Button>
@@ -140,7 +141,7 @@ export function CustomExamBuilder({ config, onChange, onStart }: CustomExamBuild
             ? 'Marca los temas que quieres evaluar.'
             : `${topicsText} · ${scopeLabel(config.scope)} · ≈ ${estimatedMinutes(count)} min`}
         </p>
-      </div>
+      </StickyActions>
     </>
   );
 }

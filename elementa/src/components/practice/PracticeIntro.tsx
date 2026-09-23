@@ -7,6 +7,7 @@ import { estimatedMinutes } from '@/components/exam/presets';
 import { TOPIC_META, topicsOfTypes } from '@/components/exam/topics';
 import { PageHeader } from '@/components/layout';
 import { Badge, Button, SegmentedControl } from '@/components/ui';
+import { StickyActions } from '@/components/ui/StickyActions';
 import { pluralize } from '@/utils/format';
 import { ElementChips } from './ElementChips';
 import type { PracticeTarget } from './target';
@@ -90,14 +91,14 @@ export function PracticeIntro({ target, suggestedCount, count, onCountChange, on
         </p>
       </div>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-6 bg-linear-to-t from-bg via-bg/95 to-bg/0 px-4 pt-6 pb-2 sm:-mx-6 sm:px-6 lg:bottom-0 lg:-mx-10 lg:px-10 lg:pb-6">
+      <StickyActions className="mt-6">
         <Button size="lg" block disabled={questions === 0} onClick={onStart} leftIcon={<Play aria-hidden />}>
           Empezar · {questions} {pluralize(questions, 'pregunta', 'preguntas')}
         </Button>
         <p className="mt-2 text-center text-sm font-bold text-muted" aria-live="polite">
           ≈ {estimatedMinutes(questions)} min · +XP por cada acierto
         </p>
-      </div>
+      </StickyActions>
     </>
   );
 }

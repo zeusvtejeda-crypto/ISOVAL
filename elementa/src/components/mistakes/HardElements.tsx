@@ -3,7 +3,7 @@
 import { useId, useState } from 'react';
 import { BookOpen, ChevronDown, Dumbbell, Target } from 'lucide-react';
 import { MasteryBar } from '@/components/gamification';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { Button, ButtonLink, cn } from '@/components/ui';
 import { getElement } from '@/data/elements';
 import { formatPercent, pluralize } from '@/utils/format';

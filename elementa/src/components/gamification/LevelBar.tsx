@@ -11,7 +11,7 @@ import { LevelEmblem } from './LevelEmblem';
 export interface LevelBarProps {
   /** Nivel a mostrar; por defecto, el del usuario. */
   level?: LevelInfo;
-  /** Versión de una línea (barras laterales, tarjetas pequeñas). */
+  /** Versión estrecha (barra lateral): nivel y XP arriba, el título en su propia fila y la barra. */
   compact?: boolean;
   className?: string;
 }
@@ -21,13 +21,26 @@ export function LevelBar({ level: levelProp, compact = false, className }: Level
   const { level: current, ready } = useProgress();
   const level = levelProp ?? (ready ? current : null);
 
+  if (!level && compact) {
+    return (
+      <div className={cn('space-y-2', className)}>
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="size-9" rounded="xl" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-2" rounded="full" />
+      </div>
+    );
+  }
   if (!level) {
     return (
-      <div className={cn('flex items-center gap-3', className)}>
-        <Skeleton className={compact ? 'size-9' : 'size-14'} rounded="2xl" />
+      <div className={cn('flex items-center gap-4', className)}>
+        <Skeleton className="size-14" rounded="2xl" />
         <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-2/5" />
-          <Skeleton className={compact ? 'h-2' : 'h-3'} rounded="full" />
+          <Skeleton className="h-5 w-2/5" />
+          <Skeleton className="h-3" rounded="full" />
+          <Skeleton className="h-3.5 w-1/3" />
         </div>
       </div>
     );
@@ -38,24 +51,37 @@ export function LevelBar({ level: levelProp, compact = false, className }: Level
   const remaining = Math.max(0, level.xpForNext - level.xpIntoLevel);
   const valueText = `${into} / ${next} XP`;
 
+  const hint =
+    remaining > 0
+      ? `Te faltan ${formatNumber(remaining)} XP para el nivel ${level.level + 1}`
+      : `¡Listo para el nivel ${level.level + 1}!`;
+
+  // Compacta (barra lateral): nivel y XP en la primera fila y el título en una fila propia a todo el
+  // ancho, para que «Maestro de los Elementos» o «Gran Maestro» se lean enteros.
   if (compact) {
     return (
-      <div className={cn('flex items-center gap-3', className)}>
-        <LevelEmblem level={level.level} size="sm" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="truncate text-sm font-black">{level.title}</p>
-            <p className="shrink-0 text-xs font-extrabold tabular text-muted">{valueText}</p>
+      <div className={cn('min-w-0', className)}>
+        <div className="flex items-center gap-2.5">
+          <LevelEmblem level={level.level} size="sm" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-2">
+            <p className="text-xs font-black tracking-wider text-muted uppercase">Nivel {level.level}</p>
+            <p className="text-xs font-extrabold tabular text-muted">{valueText}</p>
           </div>
-          <ProgressBar
-            value={level.progress}
-            tone="xp"
-            size="sm"
-            ariaLabel={`Nivel ${level.level}: ${valueText}`}
-            valueText={valueText}
-            className="mt-1.5"
-          />
         </div>
+        <p className="mt-2 line-clamp-2 text-sm leading-snug font-black">
+          <span aria-hidden className="mr-1">
+            {levelEmoji(level.level)}
+          </span>
+          {level.title}
+        </p>
+        <ProgressBar
+          value={level.progress}
+          tone="xp"
+          size="sm"
+          ariaLabel={`Nivel ${level.level}: ${valueText}`}
+          valueText={valueText}
+          className="mt-1.5"
+        />
       </div>
     );
   }
@@ -64,15 +90,12 @@ export function LevelBar({ level: levelProp, compact = false, className }: Level
     <div className={cn('flex items-center gap-4', className)}>
       <LevelEmblem level={level.level} size="md" />
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="truncate text-lg font-black leading-tight">
-            <span aria-hidden className="mr-1.5">
-              {levelEmoji(level.level)}
-            </span>
-            {level.title}
-          </p>
-          <p className="shrink-0 text-sm font-extrabold tabular text-muted">{valueText}</p>
-        </div>
+        <p className="line-clamp-2 text-lg leading-tight font-black">
+          <span aria-hidden className="mr-1.5">
+            {levelEmoji(level.level)}
+          </span>
+          {level.title}
+        </p>
         <ProgressBar
           value={level.progress}
           tone="xp"
@@ -81,11 +104,10 @@ export function LevelBar({ level: levelProp, compact = false, className }: Level
           valueText={valueText}
           className="mt-2"
         />
-        <p className="mt-1.5 text-xs font-bold text-muted">
-          {remaining > 0
-            ? `Te faltan ${formatNumber(remaining)} XP para el nivel ${level.level + 1}`
-            : `¡Listo para el nivel ${level.level + 1}!`}
-        </p>
+        <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <p className="text-sm font-extrabold tabular text-muted">{valueText}</p>
+          <p className="text-xs font-bold text-muted">{hint}</p>
+        </div>
       </div>
     </div>
   );

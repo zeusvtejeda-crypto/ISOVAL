@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Badge, cn } from '@/components/ui';
-import { CATEGORIES, PHASE_EMOJI, PHASE_LABELS } from '@/data/categories';
+import { CATEGORIES, PHASE_EMOJI } from '@/data/categories';
 import type { ChemicalElement } from '@/types';
-import { formatConfig, formatMass } from '@/utils/format';
+import { elementPhaseLabel, formatConfig, formatMass } from '@/utils/format';
 
 interface Fact {
   label: string;
@@ -24,10 +24,11 @@ function facts(el: ChemicalElement): Fact[] {
     { label: 'Periodo', value: el.period },
     {
       label: 'Familia',
+      // Texto en `fg`: varios colores de familia no llegan a 4.5:1 sobre `surface-2`.
       value: (
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden>{category.emoji}</span>
-          <span className={category.textClass}>{category.singular}</span>
+          {category.singular}
         </span>
       ),
     },
@@ -36,10 +37,15 @@ function facts(el: ChemicalElement): Fact[] {
       value: (
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden>{PHASE_EMOJI[el.phase]}</span>
-          {PHASE_LABELS[el.phase]}
+          {elementPhaseLabel(el)}
         </span>
       ),
-      hint: el.phase === 'unknown' ? 'Nunca se ha visto en cantidad' : 'A 25 °C',
+      hint:
+        el.phase === 'unknown'
+          ? 'Nunca se ha visto en cantidad'
+          : el.phasePredicted
+            ? 'Nunca se ha visto una muestra'
+            : 'A 25 °C',
     },
     { label: 'Bloque', value: el.block },
   ];

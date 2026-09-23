@@ -67,10 +67,44 @@ export function lastMilestone(answered: readonly AnsweredQuestion[]): { index: n
   return found;
 }
 
-/** Escalera de multiplicadores y bonus (pantalla de presentación). */
-export const STREAK_LADDER = [
-  { range: '1–4', multiplier: 1, xp: 10, bonus: null, special: false },
-  { range: '5–9', multiplier: 1.5, xp: 15, bonus: streakModeXp(5).bonus, special: false },
-  { range: '10–19', multiplier: 2, xp: 20, bonus: streakModeXp(10).bonus, special: false },
-  { range: '20+', multiplier: 3, xp: 30, bonus: streakModeXp(20).bonus, special: true },
-] as const;
+/** Escalón de la escalera de multiplicadores (pantalla de presentación). */
+export interface StreakStep {
+  range: string;
+  multiplier: number;
+  /** XP por acierto en este tramo (preguntas normales). */
+  xp: number;
+  /** XP por acierto en preguntas difíciles (base 15). */
+  hardXp: number;
+  /** Bonus al llegar al tramo (`null` en el primero). */
+  bonus: number | null;
+  special: boolean;
+}
+
+function step(range: string, from: number, special = false): StreakStep {
+  const normal = streakModeXp(from, 1);
+  return {
+    range,
+    multiplier: normal.multiplier,
+    xp: normal.multiplied,
+    hardXp: streakModeXp(from, 3).multiplied,
+    bonus: normal.bonus > 0 ? normal.bonus : null,
+    special,
+  };
+}
+
+/** Escalera de multiplicadores y bonus (pantalla de presentación), calculada con `streakModeXp`. */
+export const STREAK_LADDER: readonly StreakStep[] = [
+  step('1–4', 1),
+  step('5–9', 5),
+  step('10–19', 10),
+  step('20+', 20, true),
+];
+
+/**
+ * XP de un acierto en Modo Racha con su desglose para el feedback: "+15 XP · x1.5" y, en los hitos,
+ * "+25 XP de bonus" (el mismo número que el aviso del marcador). `streak` es la racha tras el acierto.
+ */
+export function streakAward(streak: number, difficulty: Difficulty): { xp: number; multiplier: number; bonus: number } {
+  const { xp, multiplier, bonus } = streakModeXp(streak, difficulty);
+  return { xp, multiplier, bonus };
+}

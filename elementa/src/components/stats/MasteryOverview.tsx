@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Card, cn } from '@/components/ui';
 import { ELEMENTS, TOTAL_ELEMENTS } from '@/data/elements';
-import type { ProgressState } from '@/types';
+import { TIER_TEXTURE } from '@/components/periodic/mastery-cues';
+import type { MasteryTier, ProgressState } from '@/types';
 import { TIER_META, masteryTier } from '@/utils/mastery';
 import { getGridPosition } from '@/utils/table-layout';
 import { ChartTable, StackedBar, type StackedSegment } from './charts';
@@ -13,25 +14,34 @@ import { DISTRIBUTION_ORDER, hasAnswers, masteryDistribution, type DistributionK
 interface TierStyle {
   emoji: string;
   label: string;
-  /** Relleno SVG (barra apilada). */
+  /** Relleno SVG (barra apilada): el mismo color que las casillas. */
   fill: string;
   /** Fondo HTML (mini tabla y leyenda). */
   bg: string;
+  /**
+   * Señal que no depende del color: rayado en «Necesita práctica» (igual que en la tabla,
+   * `TIER_TEXTURE`). Vacío en el resto.
+   */
+  texture: string;
 }
+
+const tierStyle = (tier: MasteryTier, fill: string): TierStyle => ({
+  emoji: TIER_META[tier].emoji,
+  label: TIER_META[tier].label,
+  fill,
+  bg: TIER_META[tier].barClass,
+  texture: TIER_TEXTURE[tier],
+});
 
 const STYLES: Record<DistributionKey, TierStyle> = {
-  mastered: { ...pick('mastered'), fill: 'fill-success', bg: TIER_META.mastered.barClass },
-  almost: { ...pick('almost'), fill: 'fill-warning', bg: TIER_META.almost.barClass },
-  learning: { ...pick('learning'), fill: 'fill-streak', bg: TIER_META.learning.barClass },
-  practice: { ...pick('practice'), fill: 'fill-danger', bg: TIER_META.practice.barClass },
-  unseen: { emoji: '⚪', label: 'Sin empezar', fill: 'fill-border-strong', bg: 'bg-border-strong/70' },
+  mastered: tierStyle('mastered', 'fill-tier-mastered'),
+  almost: tierStyle('almost', 'fill-tier-almost'),
+  learning: tierStyle('learning', 'fill-tier-learning'),
+  practice: tierStyle('practice', 'fill-tier-practice'),
+  unseen: { emoji: '⚪', label: 'Sin empezar', fill: 'fill-border-strong', bg: 'bg-border-strong/70', texture: '' },
 };
 
-function pick(tier: keyof typeof TIER_META): { emoji: string; label: string } {
-  return { emoji: TIER_META[tier].emoji, label: TIER_META[tier].label };
-}
-
-const CELLS = ELEMENTS.map((el) => ({ z: el.atomicNumber, ...getGridPosition(el) }));
+const CELLS = ELEMENTS.map((el) => ({ z: el.atomicNumber, symbol: el.symbol, ...getGridPosition(el) }));
 
 const GRID_STYLE = {
   gridTemplateColumns: 'repeat(18, minmax(0, 1fr))',
@@ -43,7 +53,11 @@ export interface MasteryOverviewProps {
   mastery: Readonly<Record<number, number>>;
 }
 
-/** Dominio de la tabla: barra apilada 🟢 🟡 🟠 🔴 ⚪ con recuentos y mini tabla coloreada por dominio. */
+/**
+ * Dominio de la tabla: barra apilada 🟢 🟡 🟠 🔴 ⚪ con el recuento en cada tramo, leyenda con
+ * nombre y emoji de cada nivel y mini tabla coloreada por dominio. «Necesita práctica» va rayado
+ * (barra, leyenda y casillas) para no depender solo del color.
+ */
 export function MasteryOverview({ state, mastery }: MasteryOverviewProps) {
   const dist = masteryDistribution(state, mastery);
   const segments: StackedSegment[] = DISTRIBUTION_ORDER.map((key) => ({
@@ -51,6 +65,7 @@ export function MasteryOverview({ state, mastery }: MasteryOverviewProps) {
     label: STYLES[key].label,
     value: dist[key],
     fillClass: STYLES[key].fill,
+    hatched: key === 'practice',
   }));
   const describe = DISTRIBUTION_ORDER.map((k) => `${STYLES[k].label}: ${dist[k]}`).join(', ');
 
@@ -73,7 +88,7 @@ export function MasteryOverview({ state, mastery }: MasteryOverviewProps) {
       </div>
 
       <div className="relative">
-        <StackedBar segments={segments} ariaLabel={`Elementos por nivel de dominio. ${describe}.`} />
+        <StackedBar segments={segments} showValues ariaLabel={`Elementos por nivel de dominio. ${describe}.`} />
         <ChartTable
           caption="Elementos por nivel de dominio"
           headers={['Nivel', 'Elementos']}
@@ -84,7 +99,7 @@ export function MasteryOverview({ state, mastery }: MasteryOverviewProps) {
       <ul aria-hidden className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 lg:grid-cols-5">
         {DISTRIBUTION_ORDER.map((k) => (
           <li key={k} className="flex min-w-0 items-center gap-2">
-            <span className={cn('size-3 shrink-0 rounded-[4px]', STYLES[k].bg)} />
+            <span className={cn('size-3.5 shrink-0 rounded-[4px]', STYLES[k].bg, STYLES[k].texture)} />
             <span className="min-w-0 text-sm leading-tight font-bold text-muted">
               <span className="mr-1">{STYLES[k].emoji}</span>
               {STYLES[k].label}
@@ -100,13 +115,17 @@ export function MasteryOverview({ state, mastery }: MasteryOverviewProps) {
         className="group mt-1 block rounded-2xl border border-border p-2.5 transition-[transform,border-color] duration-200 hover:border-border-strong active:scale-[0.99] sm:p-3.5"
       >
         <div aria-hidden className="mx-auto grid max-w-2xl gap-[2px] sm:gap-[3px]" style={GRID_STYLE}>
-          {CELLS.map(({ z, col, row }) => (
-            <span
-              key={z}
-              className={cn('aspect-square rounded-[22%] transition-colors duration-500', STYLES[tierOf(z)].bg)}
-              style={{ gridColumn: col, gridRow: row }}
-            />
-          ))}
+          {CELLS.map(({ z, symbol, col, row }) => {
+            const tier = tierOf(z);
+            return (
+              <span
+                key={z}
+                title={tier === 'unseen' ? `${symbol} · ${STYLES.unseen.label}` : `${symbol} · ${mastery[z] ?? 0}% · ${STYLES[tier].label}`}
+                className={cn('aspect-square rounded-[22%] transition-colors duration-500', STYLES[tier].bg, STYLES[tier].texture)}
+                style={{ gridColumn: col, gridRow: row }}
+              />
+            );
+          })}
         </div>
         <span className="mt-2.5 flex items-center justify-end gap-1 text-sm font-extrabold text-brand">
           Ver la tabla

@@ -3,6 +3,7 @@ import { ELEMENTS } from '@/data/elements';
 import type { Block, ChemicalElement, Question } from '@/types';
 import { elementDifficulty, maxDifficulty } from '../difficulty';
 import { pick, shuffle } from '../random';
+import { GASEOUS_ELEMENTS_NOTE, hasKnownPhase } from './facts';
 import { buildMultipleChoice, elementOption, withArticle, withArticleCap } from './helpers';
 
 export type PropertyVariant =
@@ -19,25 +20,43 @@ export type PropertyVariant =
 const NEAR_LIQUID = new Set([31, 37, 55, 87]);
 /** Clasificación metálica discutida: no se usan en preguntas metal/no metal/metaloide. */
 const BORDERLINE_METALLIC = new Set([34, 84, 85]);
+/**
+ * Bloque discutido: La y Ac (bloque f en la app) o Lu y Lr pueden ir en el grupo 3 (bloque d)
+ * según la convención; la IUPAC (2021) no lo zanja. No se pregunta su bloque.
+ */
+const CONTESTED_BLOCK = new Set([57, 71, 89, 103]);
 /** Diferencia mínima de electronegatividad para que la respuesta no sea ambigua. */
 export const MIN_EN_DIFF = 0.3;
 const EN_MIN_DISTRACTORS = 3;
 
-/** Elementos con datos experimentales conocidos (no superpesados ni de fase desconocida). */
-const KNOWN = ELEMENTS.filter((e) => !e.predicted && e.phase !== 'unknown');
+/** Elementos con datos experimentales conocidos (no superpesados ni de fase desconocida o predicha). */
+const KNOWN = ELEMENTS.filter((e) => !e.predicted && hasKnownPhase(e));
 
 function hasReliableEn(e: ChemicalElement): boolean {
   return e.electronegativity !== null && !e.predicted && e.block !== 'f' && e.category !== 'noble-gas';
 }
 
-function enDistractors(el: ChemicalElement): ChemicalElement[] {
+/**
+ * `d` está en el mismo grupo más arriba, en el mismo periodo más a la derecha o arriba a la
+ * derecha de `el`: según la tendencia ("aumenta hacia arriba y a la derecha") debería ser MÁS
+ * electronegativo. Si no lo es (Pb frente a Si, Ge o Sn; Au frente a Ag…) la explicación se
+ * contradiría, así que no sirve de distractor.
+ */
+function isAboveOrRightOf(d: ChemicalElement, el: ChemicalElement): boolean {
+  if (d.group === null || el.group === null) return false;
+  return d.atomicNumber !== el.atomicNumber && d.period <= el.period && d.group >= el.group;
+}
+
+/** Elementos claramente menos electronegativos que `el` y coherentes con la tendencia de la tabla. */
+export function enDistractors(el: ChemicalElement): ChemicalElement[] {
   const en = el.electronegativity;
   if (en === null || !hasReliableEn(el)) return [];
   return ELEMENTS.filter(
     (e) =>
       e.atomicNumber !== el.atomicNumber &&
       hasReliableEn(e) &&
-      (e.electronegativity ?? Infinity) <= en - MIN_EN_DIFF + 1e-9,
+      (e.electronegativity ?? Infinity) <= en - MIN_EN_DIFF + 1e-9 &&
+      !isAboveOrRightOf(e, el),
   );
 }
 
@@ -48,7 +67,7 @@ function character(el: ChemicalElement): 'metal' | 'nonmetal' | 'metalloid' | nu
 
 /** Variantes de pregunta de propiedades en las que `el` es la respuesta correcta. */
 export function propertyVariants(el: ChemicalElement): PropertyVariant[] {
-  const out: PropertyVariant[] = ['block'];
+  const out: PropertyVariant[] = CONTESTED_BLOCK.has(el.atomicNumber) ? [] : ['block'];
   if (el.phase === 'liquid') out.push('liquid');
   if (el.phase === 'gas') out.push('gas');
   if (el.radioactive) out.push('radioactive');
@@ -99,7 +118,7 @@ function variantSpec(el: ChemicalElement, variant: Exclude<PropertyVariant, 'blo
       return {
         prompt: '¿Cuál de estos elementos es un gas a temperatura ambiente?',
         distractors: closestFirst(el, KNOWN.filter((e) => e.phase === 'solid' || e.phase === 'liquid')),
-        explanation: `${name} es un gas a temperatura ambiente. Los elementos gaseosos son H, N, O, F, Cl y los gases nobles.`,
+        explanation: `${name} es un gas a temperatura ambiente. ${GASEOUS_ELEMENTS_NOTE}`,
       };
     case 'radioactive':
       return {
@@ -122,13 +141,13 @@ function variantSpec(el: ChemicalElement, variant: Exclude<PropertyVariant, 'blo
             return ch !== null && ch !== variant;
           }),
         ),
-        explanation: `${name} es ${CHARACTER_LABEL[variant]}. Los metales están a la izquierda de la "escalera" de los metaloides (B, Si, Ge, As, Sb, Te) y los no metales a la derecha (salvo el hidrógeno).`,
+        explanation: `${name} es ${CHARACTER_LABEL[variant]}. Los metales están a la izquierda de la "escalera" de los metaloides (B, Si, Ge, As, Sb, Te; a veces también Po) y los no metales a la derecha (salvo el hidrógeno).`,
       };
     case 'electronegativity':
       return {
         prompt: '¿Cuál de estos elementos es el más electronegativo?',
         distractors: closestFirst(el, enDistractors(el)),
-        explanation: `${name} tiene la electronegatividad más alta de estas opciones (${el.electronegativity}). Aumenta hacia arriba y a la derecha de la tabla${
+        explanation: `${name} tiene la electronegatividad más alta de estas opciones (${el.electronegativity}). En general aumenta hacia arriba y a la derecha de la tabla${
           el.atomicNumber === 9 ? ': ¡el flúor es el máximo de todos!' : '; el máximo es el flúor (3.98).'
         }`,
       };
@@ -151,6 +170,7 @@ function blockQuestion(el: ChemicalElement): Question | null {
 
 export function propertyQuestion(el: ChemicalElement, variant?: PropertyVariant): Question | null {
   const variants = propertyVariants(el);
+  if (variants.length === 0) return null;
   const chosen = variant && variants.includes(variant) ? variant : pick(variants);
   if (chosen === 'block') return blockQuestion(el);
   const spec = variantSpec(el, chosen);

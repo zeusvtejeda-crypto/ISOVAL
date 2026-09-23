@@ -37,10 +37,19 @@ export interface AnswerInput {
   difficulty?: 1 | 2 | 3;
   /** XP a otorgar en vez de la regla por defecto (p. ej. Modo Racha). */
   xpOverride?: number;
+  /**
+   * Si es `false`, la respuesta no se atribuye a `atomicNumber` (preguntas de tabla donde la casilla
+   * tocada o el conjunto no corresponde a un único elemento): no crea ni modifica
+   * `state.elements[atomicNumber]` (ni SRS, ni aprendido, ni dominio). XP, actividad diaria,
+   * estadísticas, racha de aciertos y el registro de errores (con `atomicNumber`) sí se aplican.
+   * Por defecto `true`.
+   */
+  trackElement?: boolean;
 }
 
 export interface FlashcardInput {
   atomicNumber: number;
+  /** Habilidad de la tarjeta (informativa: las flashcards no suman a la precisión por habilidad). */
   skill: QuestionSkill;
   rating: FlashcardRating;
   responseMs: number;
@@ -69,6 +78,8 @@ const EMA_ALPHA = 0.3;
 const MAX_EMA_MS = 30_000;
 /** Tope de tiempo por respuesta para las estadísticas de tiempo de estudio. */
 const MAX_COUNTED_MS = 60_000;
+/** Preguntas mínimas de una sesión (no examen) para pagar el bonus de sesión. */
+export const SESSION_BONUS_MIN_QUESTIONS = 5;
 
 const RECORD_FIELDS: Record<RecordKind, keyof PersonalRecords> = {
   timeAttack: 'timeAttackBest',
@@ -83,6 +94,7 @@ function safeMs(ms: number, cap: number): number {
 interface DayDelta {
   questions?: number;
   correct?: number;
+  flashcards?: number;
   xp?: number;
   timeMs?: number;
   newLearned?: number;
@@ -96,6 +108,7 @@ function touchDay(state: ProgressState, now: Date, delta: DayDelta): Record<stri
     ...prev,
     questions: prev.questions + (delta.questions ?? 0),
     correct: prev.correct + (delta.correct ?? 0),
+    flashcards: prev.flashcards + (delta.flashcards ?? 0),
     xp: prev.xp + (delta.xp ?? 0),
     timeMs: prev.timeMs + (delta.timeMs ?? 0),
     newLearned: prev.newLearned + (delta.newLearned ?? 0),
@@ -121,17 +134,29 @@ function finalize(prev: ProgressState, next: ProgressState, now: Date): XpResult
   return { state, leveledUp: after > before, newLevel: after, unlockedAchievements: unlocked };
 }
 
-/** Contadores, racha, recientes, EMA de tiempo y habilidades de un elemento. */
-function recordResult(
-  p: ElementProgress,
-  correct: boolean,
-  responseMs: number,
-  skill: QuestionSkill,
-  now: Date,
-): ElementProgress {
+/** Suma un resultado a la precisión por habilidad (solo preguntas de quiz). */
+function addSkillResult(p: ElementProgress, skill: QuestionSkill, correct: boolean): ElementProgress {
+  const prev = p.skills[skill] ?? { correct: 0, incorrect: 0 };
+  return {
+    ...p,
+    skills: {
+      ...p.skills,
+      [skill]: { correct: prev.correct + (correct ? 1 : 0), incorrect: prev.incorrect + (correct ? 0 : 1) },
+    },
+  };
+}
+
+/**
+ * Contadores, racha, recientes y EMA de tiempo de un elemento.
+ * La media de tiempo solo se actualiza con aciertos: un fallo rápido no mejora la velocidad.
+ */
+function recordResult(p: ElementProgress, correct: boolean, responseMs: number, now: Date): ElementProgress {
   const iso = now.toISOString();
   const ms = safeMs(responseMs, MAX_EMA_MS);
-  const prevSkill = p.skills[skill] ?? { correct: 0, incorrect: 0 };
+  let avgResponseMs = p.avgResponseMs;
+  if (correct) {
+    avgResponseMs = avgResponseMs === null ? ms : Math.round(avgResponseMs * (1 - EMA_ALPHA) + ms * EMA_ALPHA);
+  }
   return {
     ...p,
     seen: p.seen + 1,
@@ -139,16 +164,9 @@ function recordResult(
     incorrect: p.incorrect + (correct ? 0 : 1),
     streak: correct ? p.streak + 1 : 0,
     recent: [...p.recent, correct ? 1 : 0].slice(-RECENT_WINDOW),
-    avgResponseMs: p.avgResponseMs === null ? ms : Math.round(p.avgResponseMs * (1 - EMA_ALPHA) + ms * EMA_ALPHA),
+    avgResponseMs,
     lastSeen: iso,
     lastCorrect: correct ? iso : p.lastCorrect,
-    skills: {
-      ...p.skills,
-      [skill]: {
-        correct: prevSkill.correct + (correct ? 1 : 0),
-        incorrect: prevSkill.incorrect + (correct ? 0 : 1),
-      },
-    },
   };
 }
 
@@ -156,11 +174,24 @@ function markLearned(p: ElementProgress, now: Date): ElementProgress {
   return p.learned ? p : { ...p, learned: true, learnedAt: now.toISOString() };
 }
 
+/** Progreso de un elemento tras una respuesta de quiz (contadores, habilidad, SRS y aprendido). */
+function answeredProgress(base: ElementProgress, input: AnswerInput, now: Date): ElementProgress {
+  let p = recordResult(base, input.correct, input.responseMs, now);
+  p = addSkillResult(p, input.skill, input.correct);
+  if (!input.correct) p = applyRating(p, 'again', now);
+  else if (base.due === null || isDue(base, now)) p = applyRating(p, ratingFromAnswer(true, input.responseMs), now);
+  return input.correct ? markLearned(p, now) : p;
+}
+
 /**
  * Registra una respuesta: progreso del elemento (SRS incluido), XP, actividad diaria, errores,
  * racha global de aciertos, estadísticas y logros.
- * SRS: un fallo siempre reprograma ("again"); un acierto solo avanza el intervalo si el elemento
- * es nuevo o ya tocaba repasarlo (repetir el mismo día no infla los intervalos).
+ * - SRS: un fallo siempre reprograma ("again"); un acierto solo avanza el intervalo si el elemento
+ *   es nuevo o ya tocaba repasarlo (repetir el mismo día no infla los intervalos).
+ * - Cada fallo guarda un `MistakeRecord` (también en el diagnóstico, con `mode: 'diagnostic'`).
+ * - Diagnóstico (`mode: 'diagnostic'`): cuenta en `stats` (preguntas, aciertos, tiempo) pero NO en
+ *   `daily.questions`/`daily.correct`: la meta diaria y la racha empiezan con la primera sesión real.
+ * - `trackElement: false`: no toca `state.elements` (ver `AnswerInput.trackElement`).
  */
 export function applyAnswer(
   state: ProgressState,
@@ -169,15 +200,20 @@ export function applyAnswer(
 ): { state: ProgressState; outcome: AnswerOutcome } {
   const z = input.atomicNumber;
   const prevProgress = state.elements[z];
-  const base = prevProgress ?? createElementProgress(z);
   const masteryBefore = computeMastery(prevProgress, now);
+  const track = input.trackElement ?? true;
+  const isDiagnostic = input.mode === 'diagnostic';
 
-  let p = recordResult(base, input.correct, input.responseMs, input.skill, now);
-  if (!input.correct) p = applyRating(p, 'again', now);
-  else if (base.due === null || isDue(base, now)) p = applyRating(p, ratingFromAnswer(true, input.responseMs), now);
-  const newlyLearned = input.correct && !base.learned;
-  if (newlyLearned) p = markLearned(p, now);
-  const masteryAfter = computeMastery(p, now);
+  let elements = state.elements;
+  let masteryAfter = masteryBefore;
+  let newlyLearned = false;
+  if (track) {
+    const base = prevProgress ?? createElementProgress(z);
+    const p = answeredProgress(base, input, now);
+    newlyLearned = p.learned && !base.learned;
+    masteryAfter = computeMastery(p, now);
+    elements = { ...state.elements, [z]: p };
+  }
 
   const defaultXp = xpForAnswer(input.correct, input.difficulty ?? 1);
   const xpGained = Math.max(0, Math.round(input.xpOverride ?? defaultXp));
@@ -186,7 +222,7 @@ export function applyAnswer(
   const ms = safeMs(input.responseMs, MAX_COUNTED_MS);
 
   let mistakes = state.mistakes;
-  if (!input.correct && input.mode !== 'diagnostic') {
+  if (!input.correct) {
     const record: MistakeRecord = {
       id: uid(),
       atomicNumber: z,
@@ -203,11 +239,11 @@ export function applyAnswer(
   const next: ProgressState = {
     ...state,
     xp: state.xp + xpGained,
-    elements: { ...state.elements, [z]: p },
+    elements,
     mistakes,
     daily: touchDay(state, now, {
-      questions: 1,
-      correct: input.correct ? 1 : 0,
+      questions: isDiagnostic ? 0 : 1,
+      correct: input.correct && !isDiagnostic ? 1 : 0,
       xp: xpGained,
       timeMs: ms,
       newLearned: newlyLearned ? 1 : 0,
@@ -238,8 +274,14 @@ export function applyAnswer(
 }
 
 /**
- * Registra una flashcard calificada. Cuenta como pregunta del día (meta diaria), pero no para
- * `stats.totalQuestions` ni para la racha global de aciertos (es autoevaluación).
+ * Registra una flashcard calificada (autoevaluación).
+ * - Cuenta para la meta diaria (`daily.questions` y `daily.flashcards`), pero no para
+ *   `daily.correct`, `stats.totalQuestions`, la racha global de aciertos, los errores ni la precisión
+ *   por habilidad (`p.skills`): las precisiones son solo de quiz. Sí suma a aciertos/fallos del
+ *   elemento y, por tanto, a su dominio.
+ * - SRS: "No lo sabía" siempre reprograma; "Casi", "Lo sabía" y "Muy fácil" solo avanzan el
+ *   intervalo si el elemento es nuevo o ya tocaba repasarlo (repasar el mazo varias veces seguidas
+ *   no infla los intervalos).
  */
 export function applyFlashcard(
   state: ProgressState,
@@ -252,8 +294,8 @@ export function applyFlashcard(
   const masteryBefore = computeMastery(prevProgress, now);
   const correct = input.rating !== 'again';
 
-  let p = recordResult(base, correct, input.responseMs, input.skill, now);
-  p = applyRating(p, input.rating, now);
+  let p = recordResult(base, correct, input.responseMs, now);
+  if (!correct || base.due === null || isDue(base, now)) p = applyRating(p, input.rating, now);
   const newlyLearned = correct && !base.learned;
   if (newlyLearned) p = markLearned(p, now);
   const masteryAfter = computeMastery(p, now);
@@ -266,7 +308,7 @@ export function applyFlashcard(
     elements: { ...state.elements, [z]: p },
     daily: touchDay(state, now, {
       questions: 1,
-      correct: correct ? 1 : 0,
+      flashcards: 1,
       xp: xpGained,
       timeMs: ms,
       newLearned: newlyLearned ? 1 : 0,
@@ -331,7 +373,14 @@ export function applyXp(state: ProgressState, amount: number, now: Date): XpResu
   return finalize(state, next, now);
 }
 
-/** Cierra una sesión: +50 XP por examen (+100 si es perfecto) o +20 por sesión. El diagnóstico no suma. */
+/**
+ * Cierra una sesión.
+ * - Examen: +50 XP (+100 más si es perfecto).
+ * - Otros modos: +20 XP solo si la sesión tuvo al menos `SESSION_BONUS_MIN_QUESTIONS` (5) preguntas y
+ *   al menos la mitad de aciertos (`correct × 2 ≥ total`); si no, 0 (evita farmear XP con «Repetir»
+ *   en sesiones de 1 pregunta). La sesión cuenta igualmente en `stats.sessionsCompleted`.
+ * - Diagnóstico o sesiones vacías: nada.
+ */
 export function applySessionComplete(
   state: ProgressState,
   input: SessionCompleteInput,
@@ -353,14 +402,15 @@ export function applySessionComplete(
     records.bestExamPct = Math.max(records.bestExamPct, Math.round((correct / total) * 100));
     xpGained = XP_RULES.examComplete + (perfect ? XP_RULES.perfectExam : 0);
   } else {
-    xpGained = XP_RULES.sessionComplete;
+    const earned = total >= SESSION_BONUS_MIN_QUESTIONS && correct * 2 >= total;
+    xpGained = earned ? XP_RULES.sessionComplete : 0;
   }
   const next: ProgressState = {
     ...state,
     xp: state.xp + xpGained,
     stats,
     records,
-    daily: touchDay(state, now, { xp: xpGained }),
+    daily: xpGained > 0 ? touchDay(state, now, { xp: xpGained }) : state.daily,
   };
   const result = finalize(state, next, now);
   return {
@@ -398,7 +448,11 @@ export function diagnosticLevel(correct: number, total: number, experience: Expe
   return level;
 }
 
-/** Completa la bienvenida: guarda la experiencia, registra el diagnóstico y fija la XP inicial. */
+/**
+ * Completa la bienvenida: guarda la experiencia, registra el diagnóstico y fija la XP inicial.
+ * Las respuestas se registran con `mode: 'diagnostic'`: los fallos quedan en «Mis errores», pero no
+ * suman a la actividad del día (la meta diaria y la racha empiezan con la primera sesión real).
+ */
 export function applyOnboarding(
   state: ProgressState,
   experience: ExperienceLevel,

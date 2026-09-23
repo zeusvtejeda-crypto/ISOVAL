@@ -1,9 +1,9 @@
 import type { ReactNode, Ref } from 'react';
-import { ElementLocation } from '@/components/periodic';
+import { ElementLocation } from '@/components/periodic/ElementLocation';
 import { cn } from '@/components/ui';
-import { CATEGORIES, PHASE_EMOJI, PHASE_LABELS } from '@/data/categories';
+import { CATEGORIES, PHASE_EMOJI } from '@/data/categories';
 import type { ChemicalElement } from '@/types';
-import { formatMass } from '@/utils/format';
+import { elementPhaseLabel, formatMass } from '@/utils/format';
 
 export type LearnCardVariant = 'full' | 'quick';
 
@@ -124,7 +124,7 @@ export function LearnCard({ element, variant = 'full', headingRef, className }: 
         <Fact label={element.phase === 'unknown' ? 'Estado' : 'Estado a 25 °C'}>
           <span className="inline-flex items-center gap-1 text-sm sm:text-base">
             <span aria-hidden>{PHASE_EMOJI[element.phase]}</span>
-            {PHASE_LABELS[element.phase]}
+            {elementPhaseLabel(element)}
           </span>
         </Fact>
       </dl>

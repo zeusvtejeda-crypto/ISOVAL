@@ -11,7 +11,7 @@ export function ThemeSetting() {
 
   return (
     <div>
-      <ThemeToggle block />
+      <ThemeToggle block compactBelow360 />
       <p className="mt-2 text-sm font-semibold text-muted">
         {hydrated && theme === 'system'
           ? `Sigue a tu dispositivo: ahora está en modo ${resolvedTheme === 'dark' ? 'oscuro 🌙' : 'claro ☀️'}.`

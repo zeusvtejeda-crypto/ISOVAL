@@ -32,6 +32,11 @@ export interface ChemicalElement {
   block: Block;
   category: ElementCategory;
   phase: Phase;
+  /**
+   * El estado es una predicción: nunca se ha reunido una muestra visible (astato y francio).
+   * No se pregunta y la ficha lo muestra como "Sólido (predicho)".
+   */
+  phasePredicted?: boolean;
   /** Configuración en orden de llenado (Möller) con dígitos planos, p. ej. "[He] 2s2 2p4". */
   electronConfiguration: string;
   /** Electronegatividad de Pauling, `null` si no está definida. */

@@ -1,9 +1,15 @@
 import { getFamilyGroup, getStudyBlock } from '@/data/blocks';
 import { ELEMENTS_BY_NUMBER, TOTAL_ELEMENTS } from '@/data/elements';
 import type { ElementCategory, ProgressState } from '@/types';
-import { adaptivePool, dueReviews, newElements, weakElements } from '@/utils/planner';
 import { sample, shuffle, type Rng } from '@/utils/random';
-import { ALL_ATOMIC_NUMBERS } from '@/utils/selection';
+import {
+  adaptivePool,
+  ALL_ATOMIC_NUMBERS,
+  difficultElements,
+  dueReviews,
+  newElements,
+  weakElements,
+} from '@/utils/selection';
 import type { FlashcardMode } from './modes';
 
 /** De dónde salen las tarjetas del mazo. */
@@ -43,8 +49,16 @@ export function applicableNumbers(mode: FlashcardMode, pool: readonly number[]):
   });
 }
 
-/** Elementos débiles (intentados y no dominados), del menor dominio al mayor. */
-export function weakNumbers(state: ProgressState, now: Date): number[] {
+/**
+ * Mazo «Mis errores»: los elementos difíciles (fallados alguna vez y aún sin dominar), del menor
+ * dominio al mayor. Misma definición y mismo número que «Elementos difíciles» en /errores.
+ */
+export function mistakeNumbers(state: ProgressState, now: Date): number[] {
+  return difficultElements(state, now).map((d) => d.atomicNumber);
+}
+
+/** Elementos débiles (intentados y no dominados, fallados o no), del menor dominio al mayor. */
+function weakNumbers(state: ProgressState, now: Date): number[] {
   return weakElements(state, now, TOTAL_ELEMENTS).map((w) => w.atomicNumber);
 }
 
@@ -62,7 +76,7 @@ export function deckPool(selection: DeckSelection, state: ProgressState, now: Da
     case 'family':
       return applicableNumbers(mode, getFamilyGroup(selection.id)?.atomicNumbers ?? []);
     case 'mistakes':
-      return applicableNumbers(mode, weakNumbers(state, now));
+      return applicableNumbers(mode, mistakeNumbers(state, now));
     case 'custom':
       return applicableNumbers(mode, sanitizeElements(selection.elements));
   }
@@ -103,6 +117,8 @@ export function smartDeck(
   const reviewQuota = Math.max(0, target - newQuota);
   const due = dueReviews(state, now, TOTAL_ELEMENTS);
   take(due, Math.ceil(reviewQuota * DUE_SHARE));
+  // Difíciles: primero los fallados (los de «Mis errores») y luego los que menos dominas.
+  take(mistakeNumbers(state, now), reviewQuota - picked.length);
   take(weakNumbers(state, now), reviewQuota - picked.length);
   take(due, reviewQuota - picked.length);
   take(newElements(state, newQuota + picked.length, [...pool]), newQuota);

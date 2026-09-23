@@ -1,5 +1,6 @@
 export { ContinueCard, type ContinueCardProps } from './ContinueCard';
 export { DailyGoalCard } from './DailyGoalCard';
+export { dailyGoalStatus, type DailyGoalStatus } from './daily-goal';
 export { Dashboard } from './Dashboard';
 export { DashboardSkeleton } from './DashboardSkeleton';
 export { ElementOfTheDay, type ElementOfTheDayProps } from './ElementOfTheDay';

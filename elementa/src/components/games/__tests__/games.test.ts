@@ -7,8 +7,16 @@ import { streakModeXp } from '@/utils/xp';
 import { TIME_ATTACK_TYPES, timeAttackTier } from '../contrarreloj/time-attack';
 import { TRIVIA_CATEGORIES, categoryOfType } from '../preguntados/categories';
 import { categoryAtPointer, wheelTarget, wheelTickTimes } from '../preguntados/wheel-math';
-import { isBonusMilestone, lastMilestone, nextMilestone, streakTier, totalStreakBonus } from '../racha/streak-rules';
-import { failedElements, gameQuestion, improvedElements } from '../shared/game-questions';
+import {
+  STREAK_LADDER,
+  isBonusMilestone,
+  lastMilestone,
+  nextMilestone,
+  streakAward,
+  streakTier,
+  totalStreakBonus,
+} from '../racha/streak-rules';
+import { gameQuestion } from '../shared/game-questions';
 import { survivalTier } from '../supervivencia/survival';
 import type { AnsweredQuestion, Question } from '@/types';
 
@@ -85,6 +93,27 @@ describe('Modo Racha', () => {
   it('la dificultad sube con la racha', () => {
     expect([0, 4, 5, 9, 10, 30].map(streakTier)).toEqual([1, 1, 2, 2, 3, 3]);
   });
+
+  it('XP por acierto: la regla común (difíciles con base 15), con multiplicador y bonus aparte', () => {
+    expect(streakAward(1, 1)).toEqual({ xp: 10, multiplier: 1, bonus: 0 });
+    expect(streakAward(1, 3)).toEqual({ xp: 15, multiplier: 1, bonus: 0 });
+    // Hito x5: el bonus es el mismo +25 que anuncia el marcador; el resto es 10 × 1.5.
+    expect(streakAward(5, 1)).toEqual({ xp: 40, multiplier: 1.5, bonus: 25 });
+    // #11 (media) y #12 (difícil): mismo multiplicador, sin bonus que confunda.
+    expect(streakAward(11, 2)).toEqual({ xp: 20, multiplier: 2, bonus: 0 });
+    expect(streakAward(12, 3)).toEqual({ xp: 30, multiplier: 2, bonus: 0 });
+    expect(streakAward(20, 3)).toEqual({ xp: 45 + 150, multiplier: 3, bonus: 150 });
+    for (const s of [5, 10, 20, 30]) expect(streakAward(s, 3).bonus).toBe(streakModeXp(s).bonus);
+  });
+
+  it('la escalera de la portada sale de streakModeXp', () => {
+    expect(STREAK_LADDER.map((s) => [s.range, s.multiplier, s.xp, s.hardXp, s.bonus])).toEqual([
+      ['1–4', 1, 10, 15, null],
+      ['5–9', 1.5, 15, 23, 25],
+      ['10–19', 2, 20, 30, 50],
+      ['20+', 3, 30, 45, 150],
+    ]);
+  });
 });
 
 describe('preguntas de los modos infinitos', () => {
@@ -113,11 +142,5 @@ describe('preguntas de los modos infinitos', () => {
   it('contrarreloj y supervivencia endurecen poco a poco', () => {
     expect([0, 9, 10, 24, 25].map(timeAttackTier)).toEqual([1, 1, 2, 2, 3]);
     expect([0, 7, 8, 19, 20].map(survivalTier)).toEqual([1, 1, 2, 2, 3]);
-  });
-
-  it('resumen: mejorados y fallados', () => {
-    expect(improvedElements({ 1: 10, 2: 50 }, { 1: 40, 2: 45, 3: 5 })).toEqual([1, 3]);
-    const list = answered([true, false, false, true]);
-    expect(failedElements(list)).toEqual([2, 3]);
   });
 });

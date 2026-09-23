@@ -25,7 +25,7 @@ function CategoryPill({ category, className }: { category: TriviaCategory; class
   return (
     <span
       className={cn(
-        'inline-flex h-10 items-center gap-2 rounded-full px-4 text-base font-black shadow-card',
+        'inline-flex h-10 items-center gap-2 rounded-full px-4 text-base font-black shadow-card [@media(max-height:700px)]:h-8 [@media(max-height:700px)]:text-sm',
         category.solid,
         className,
       )}
@@ -47,24 +47,28 @@ function WheelStage({ game, spinRef }: { game: TriviaGame; spinRef: RefObject<HT
   if (landed) title = `¡${landed.label}!`;
 
   return (
-    <section aria-labelledby="trivia-wheel-title" className="flex flex-1 flex-col items-center justify-center gap-5 py-4 sm:gap-6">
+    <section
+      aria-labelledby="trivia-wheel-title"
+      className="flex flex-1 flex-col items-center justify-center gap-5 py-4 sm:gap-6 [@media(max-height:700px)]:gap-3 [@media(max-height:700px)]:py-2"
+    >
       <div className="text-center">
-        <p className="text-sm font-black tracking-wide text-muted uppercase tabular">
+        <p className="text-sm font-black tracking-wide text-muted uppercase tabular [@media(max-height:700px)]:text-xs">
           Giro {spinNumber} de {TRIVIA_SPINS}
         </p>
-        <h2 id="trivia-wheel-title" className="mt-1 text-3xl font-black sm:text-4xl">
+        <h2 id="trivia-wheel-title" className="mt-1 text-3xl font-black sm:text-4xl [@media(max-height:700px)]:mt-0 [@media(max-height:700px)]:text-2xl">
           <span key={title} className="inline-block animate-pop">
             {title}
           </span>
         </h2>
-        <p className="mt-1 font-semibold text-muted">
+        <p className="mt-1 font-semibold text-muted [@media(max-height:700px)]:mt-0.5 [@media(max-height:700px)]:text-sm">
           {missing > 0
             ? `Te ${missing === 1 ? 'falta 1 insignia' : `faltan ${missing} insignias`} para la 👑 Corona química.`
             : '¡Tienes las 6 insignias!'}
         </p>
       </div>
 
-      <div className="relative w-[min(78vw,21rem)] pt-3">
+      {/* En pantallas bajas la ruleta encoge con el alto (40dvh) para que «¡Girar!» quepa sin desplazarse. */}
+      <div className="relative w-[min(78vw,21rem,40dvh)] pt-3">
         <RouletteWheel
           rotation={game.rotation}
           spinning={phase === 'spinning'}
@@ -99,7 +103,7 @@ function QuestionPill({ game, category }: { game: TriviaGame; category: TriviaCa
     return (
       <p
         role="status"
-        className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-xp-glow bg-xp-soft px-4 font-black text-xp shadow-card animate-bounce-in"
+        className="inline-flex h-10 items-center gap-2 rounded-full border-2 border-xp-glow bg-xp-soft px-4 font-black text-xp shadow-card animate-bounce-in [@media(max-height:700px)]:h-8 [@media(max-height:700px)]:text-sm"
       >
         <span aria-hidden>👑</span>
         ¡Corona química! +{CROWN_XP} XP
@@ -109,7 +113,10 @@ function QuestionPill({ game, category }: { game: TriviaGame; category: TriviaCa
   return (
     <p
       role="status"
-      className={cn('inline-flex h-10 items-center gap-2 rounded-full px-4 font-black shadow-card animate-bounce-in', category.solid)}
+      className={cn(
+        'inline-flex h-10 items-center gap-2 rounded-full px-4 font-black shadow-card animate-bounce-in [@media(max-height:700px)]:h-8 [@media(max-height:700px)]:text-sm',
+        category.solid,
+      )}
     >
       <span aria-hidden>🏅</span>
       ¡Insignia de {category.label}! {game.badges.length}/{TRIVIA_CATEGORIES.length}
@@ -183,20 +190,25 @@ export function PreguntadosPlay({ onExit }: { onExit: () => void }) {
         right={<LivesIndicator lives={TRIVIA_MAX_MISTAKES - game.mistakes} maxLives={TRIVIA_MAX_MISTAKES} />}
       />
 
-      <BadgeRow badges={game.badges} fresh={game.newBadge} className="mt-2" />
+      <BadgeRow badges={game.badges} fresh={game.newBadge} size="sm" className="mt-2 [@media(max-height:700px)]:mt-0.5" />
 
       {onWheel || !question || !category ? (
         <WheelStage game={game} spinRef={spinRef} />
       ) : (
-        <div key={question.id} className="flex flex-1 flex-col gap-4 pt-5 pb-6 animate-slide-up sm:pt-6">
+        <div
+          key={question.id}
+          className="flex flex-1 flex-col gap-4 pt-5 pb-6 animate-slide-up sm:pt-6 [@media(max-height:700px)]:gap-2 [@media(max-height:700px)]:pt-2 [@media(max-height:700px)]:pb-3"
+        >
           <div className="flex justify-center">
             <QuestionPill game={game} category={category} />
           </div>
+          {/* La píldora de la categoría ya dice de qué va: en pantallas bajas sobra la del tipo de pregunta. */}
           <QuestionCard
             question={question}
             selectedId={game.response}
             locked={phase !== 'question'}
             onAnswer={game.answer}
+            showType="tall"
           />
         </div>
       )}

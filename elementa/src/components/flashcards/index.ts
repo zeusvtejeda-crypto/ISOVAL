@@ -5,6 +5,7 @@ export {
   DECK_SIZES,
   deckPool,
   deckTitle,
+  mistakeNumbers,
   sanitizeElements,
   smartDeck,
   type DeckSelection,

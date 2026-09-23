@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import type { ChemicalElement } from '@/types';
 

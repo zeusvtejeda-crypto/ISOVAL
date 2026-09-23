@@ -1,16 +1,17 @@
 'use client';
 
+import { QuizScreen } from '@/components/quiz';
 import { ProgressBar } from '@/components/ui';
 import { useProgress } from '@/hooks/useProgress';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import { formatNumber, pluralize } from '@/utils/format';
 import { GameFlow } from '../shared/GameFlow';
+import { GameHeader } from '../shared/GameHeader';
 import { GameIntro, RecordPill } from '../shared/GameIntro';
-import { GameScreen } from '../shared/GameScreen';
 import { gameQuestion } from '../shared/game-questions';
 import { useRecordKeeper } from '../shared/use-record-keeper';
 import { ContrarrelojResults } from './ContrarrelojResults';
-import { TimerHud } from './TimerHud';
+import { TimerHud, TimerHudCompact } from './TimerHud';
 import {
   LOW_TIME_SECONDS,
   TIME_ATTACK_ADVANCE_MS,
@@ -73,19 +74,22 @@ function ContrarrelojPlay({ onExit }: { onExit: () => void }) {
   const low = remaining <= LOW_TIME_SECONDS * 1000;
 
   return (
-    <GameScreen
+    <QuizScreen
       session={session}
       onExit={exit}
-      headerCenter={
-        <ProgressBar value={remaining / TIME_ATTACK_MS} size="md" tone={low ? 'danger' : 'accent'} ariaLabel="Tiempo restante" />
-      }
-      hud={<TimerHud session={session} best={records.best} />}
-      renderSummary={(summary) => (
-        <ContrarrelojResults
-          summary={summary}
-          session={session}
-          previousBest={records.previousBest}
+      renderHeader={(s) => (
+        <GameHeader
+          onExit={exit}
+          confirmExit={s.answered.length > 0}
+          center={
+            <ProgressBar value={remaining / TIME_ATTACK_MS} size="md" tone={low ? 'danger' : 'accent'} ariaLabel="Tiempo restante" />
+          }
+          compact={<TimerHudCompact session={s} />}
         />
+      )}
+      renderTop={(s) => <TimerHud session={s} best={records.best} />}
+      renderSummary={(summary, s) => (
+        <ContrarrelojResults summary={summary} session={s} previousBest={records.previousBest} />
       )}
     />
   );

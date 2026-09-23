@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useImmersive } from '@/components/layout';
-import { isActivationTarget, useQuizKeys } from '@/components/quiz';
+import { ImmersiveHeader, isActivationTarget, useQuizKeys } from '@/components/quiz';
 import { Button, IconButton, cn } from '@/components/ui';
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import { LearnCard, type LearnCardVariant } from './LearnCard';
@@ -109,15 +109,17 @@ export function LessonStepper({
   return (
     <div className="flex flex-1 flex-col">
       <h1 className="sr-only">{title}</h1>
-      <header className="sticky top-safe z-30 -mx-4 bg-bg/90 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <IconButton label="Salir de la lección" icon={<X />} onClick={onExit} className="-ml-2" />
-          <StepDots step={step} total={total} />
+      <ImmersiveHeader
+        onExit={onExit}
+        confirmExit={false}
+        exitLabel="Salir de la lección"
+        center={<StepDots step={step} total={total} />}
+        right={
           <span className="shrink-0 text-sm font-black text-muted tabular" aria-hidden>
             {step + 1}/{total}
           </span>
-        </div>
-      </header>
+        }
+      />
 
       <div key={element.atomicNumber} className="flex-1 pt-3 pb-4 animate-slide-up sm:pt-5">
         <p className="mb-2.5 text-center text-xs font-black tracking-wider text-brand uppercase sm:text-left">

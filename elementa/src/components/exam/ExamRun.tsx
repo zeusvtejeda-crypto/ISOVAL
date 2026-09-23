@@ -1,6 +1,6 @@
 'use client';
 
-import { QuizScreen } from '@/components/quiz';
+import { QuizScreen } from '@/components/quiz/QuizScreen';
 import { useProgress } from '@/hooks/useProgress';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import { buildExam, type ExamSpec } from './build-exam';

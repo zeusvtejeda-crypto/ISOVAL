@@ -6,6 +6,8 @@
  * el layout raíz) y el evento se guarda para usarlo más tarde.
  */
 
+import { INSTALL_DISMISSED_KEY } from '@/services/storage/keys';
+
 /** Evento de Chromium para instalar la app (no está en lib.dom). */
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -23,8 +25,6 @@ export interface InstallSnapshot {
   /** El usuario ocultó la sugerencia de instalación (persistido en este dispositivo). */
   dismissed: boolean;
 }
-
-export const INSTALL_DISMISSED_KEY = 'elementa:install-dismissed';
 
 /** En el servidor la sugerencia se considera oculta: nunca se renderiza en el HTML estático. */
 const SERVER_SNAPSHOT: InstallSnapshot = Object.freeze({ deferred: null, installed: false, dismissed: true });

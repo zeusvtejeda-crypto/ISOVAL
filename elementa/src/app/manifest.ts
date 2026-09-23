@@ -23,7 +23,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    orientation: 'portrait',
+    // Sin bloqueo de orientación: en tabletas la app también se usa en horizontal.
+    orientation: 'any',
     background_color: BACKGROUND_COLOR,
     theme_color: THEME_COLOR,
     categories: ['education', 'games'],

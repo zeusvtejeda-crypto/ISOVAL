@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { cn } from '@/components/ui';
 import { CATEGORIES } from '@/data/categories';
 import { getElement } from '@/data/elements';

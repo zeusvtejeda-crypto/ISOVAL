@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { DailyActivity, ElementProgress } from '@/types';
-import { applyAnswer } from '@/utils/engine';
+import type { AnsweredQuestion, DailyActivity, ElementProgress, ProgressState, Question } from '@/types';
+import { applyAnswer, applyOnboarding } from '@/utils/engine';
 import {
   computeMastery,
   countLearned,
@@ -10,6 +13,7 @@ import {
   masteryTier,
   TIER_META,
 } from '@/utils/mastery';
+import * as planner from '@/utils/planner';
 import {
   adaptivePool,
   dueReviews,
@@ -18,6 +22,9 @@ import {
   planStudySession,
   weakElements,
 } from '@/utils/planner';
+import { generateQuestion } from '@/utils/questions';
+import * as selection from '@/utils/selection';
+import { difficultElements, selectionWeight } from '@/utils/selection';
 import {
   AGAIN_DELAY_MS,
   applyRating,
@@ -93,9 +100,11 @@ describe('srs', () => {
 });
 
 describe('mastery', () => {
-  it('0 sin respuestas', () => {
+  it('0 sin respuestas o sin ningún acierto', () => {
     expect(computeMastery(undefined, NOW)).toBe(0);
     expect(computeMastery(progress(8, { learned: true }), NOW)).toBe(0);
+    expect(computeMastery(progress(8, { incorrect: 1, recent: [0] }), NOW)).toBe(0);
+    expect(computeMastery(progress(8, { incorrect: 5, recent: [0, 0, 0, 0, 0] }), NOW)).toBe(0);
   });
 
   it('siempre entre 0 y 100 (entero)', () => {
@@ -132,10 +141,14 @@ describe('mastery', () => {
     const slow = computeMastery(progress(8, { ...base, avgResponseMs: 15_000 }), NOW);
     expect(slow).toBeLessThan(fast);
     expect(slow).toBeGreaterThanOrEqual(Math.floor(fast * 0.85));
-    const fresh = computeMastery(progress(8, { ...base, due: daysFrom(NOW, 1).toISOString() }), NOW);
-    const forgotten = computeMastery(progress(8, { ...base, due: daysFrom(NOW, -30).toISOString() }), NOW);
+    // El olvido se mide desde el último acierto: 2 días (dentro del intervalo) frente a 33 (30 de retraso).
+    const fresh = computeMastery(progress(8, { ...base, lastCorrect: daysFrom(NOW, -2).toISOString() }), NOW);
+    const forgotten = computeMastery(progress(8, { ...base, lastCorrect: daysFrom(NOW, -33).toISOString() }), NOW);
     expect(forgotten).toBeLessThan(fresh);
     expect(forgotten).toBeGreaterThanOrEqual(Math.floor(fresh * 0.6));
+    // `due` ya no interviene: un fallo (due a +10 min) no borra el olvido.
+    const afterAgain = progress(8, { ...base, lastCorrect: daysFrom(NOW, -33).toISOString(), intervalDays: 0, due: NOW.toISOString() });
+    expect(computeMastery(afterAgain, NOW)).toBeLessThanOrEqual(forgotten);
   });
 
   it('niveles de dominio', () => {
@@ -145,6 +158,10 @@ describe('mastery', () => {
     expect(masteryTier(65)).toBe('almost');
     expect(masteryTier(85)).toBe('mastered');
     expect(TIER_META.mastered.emoji).toBe('🟢');
+    expect(TIER_META.practice.barClass).toBe('bg-tier-practice');
+    expect(TIER_META.learning.barClass).toBe('bg-tier-learning');
+    expect(TIER_META.almost.barClass).toBe('bg-tier-almost');
+    expect(TIER_META.mastered.barClass).toBe('bg-tier-mastered');
   });
 
   it('mapa, dominados y aprendidos', () => {
@@ -160,7 +177,7 @@ describe('mastery', () => {
 });
 
 function day(date: string, goalMet: boolean, questions = goalMet ? 10 : 3): DailyActivity {
-  return { date, questions, correct: questions, xp: 0, timeMs: 0, newLearned: 0, goal: 10, goalMet };
+  return { date, questions, correct: questions, flashcards: 0, xp: 0, timeMs: 0, newLearned: 0, goal: 10, goalMet };
 }
 
 describe('streak', () => {
@@ -249,6 +266,26 @@ describe('planner', () => {
     expect(plan.questions.some((q) => q.atomicNumber === 29)).toBe(true);
   });
 
+  it('§25: fallados > nuevos > lentos pero acertados (sin tocar repaso)', () => {
+    const state = createInitialState(NOW);
+    const slowCorrect = { correct: 6, recent: [1, 1, 1, 1, 1, 1], streak: 6, avgResponseMs: 25_000, learned: true, due: daysFrom(NOW, 3).toISOString(), intervalDays: 3 };
+    const recentFail = { correct: 9, incorrect: 1, recent: [1, 1, 1, 1, 1, 1, 1, 1, 1, 0], streak: 0, avgResponseMs: 3_000, learned: true, due: daysFrom(NOW, 1).toISOString(), intervalDays: 0 };
+    // Dificultad 1 (Z ≤ 20) y 2 (p. ej. 22, 23, 24).
+    for (const [newZ, slowZ, failZ] of [
+      [3, 4, 5],
+      [22, 23, 24],
+    ]) {
+      state.elements[slowZ] = progress(slowZ, slowCorrect);
+      state.elements[failZ] = progress(failZ, recentFail);
+      const wNew = selectionWeight(state, newZ, NOW);
+      const wSlow = selectionWeight(state, slowZ, NOW);
+      const wFail = selectionWeight(state, failZ, NOW);
+      expect(wNew).toBeGreaterThan(wSlow);
+      expect(wFail).toBeGreaterThan(wNew);
+      expect(wFail).toBeGreaterThan(wSlow);
+    }
+  });
+
   it('prioridad: fallados > nuevos > dominados; atrasados y lentos suben', () => {
     const failed = progress(8, { incorrect: 4, correct: 1, recent: [0, 0, 1, 0, 0] });
     const mastered = progress(8, { correct: 10, recent: [1, 1, 1, 1, 1], streak: 10, due: daysFrom(NOW, 5).toISOString() });
@@ -282,5 +319,149 @@ describe('planner', () => {
     expect(dueReviews(state, NOW, 1)).toEqual([6]);
     expect(newElements(state, 3)).toEqual([1, 2, 3]);
     expect(newElements(state, 3, [9, 8, 5])).toEqual([8, 9]);
+  });
+
+  it('planner re-exporta las listas de selection', () => {
+    expect(planner.weakElements).toBe(selection.weakElements);
+    expect(planner.dueReviews).toBe(selection.dueReviews);
+    expect(planner.newElements).toBe(selection.newElements);
+    expect(planner.difficultElements).toBe(selection.difficultElements);
+  });
+});
+
+/** 12 elementos acertados una vez (dominio 38) + Potasio: 2 fallos y luego 4 aciertos. */
+function onceCorrectPlusPotassium(): ProgressState {
+  let state = createInitialState(NOW);
+  const answerAt = (z: number, correct: boolean) =>
+    applyAnswer(
+      state,
+      { atomicNumber: z, skill: 'symbol', correct, responseMs: 2500, mode: 'practice', prompt: 'p', correctAnswer: 'a', givenAnswer: 'b' },
+      NOW,
+    ).state;
+  for (let z = 1; z <= 12; z++) state = answerAt(z, true);
+  for (const correct of [false, false, true, true, true, true]) state = answerAt(19, correct);
+  return state;
+}
+
+describe('difficultElements (definición única de «difíciles»)', () => {
+  it('solo elementos fallados y sin dominar: un acierto suelto no desplaza a los fallados', () => {
+    const state = onceCorrectPlusPotassium();
+    expect(computeMastery(state.elements[1], NOW)).toBe(38);
+    const k = computeMastery(state.elements[19], NOW);
+    expect(difficultElements(state, NOW)).toEqual([
+      { atomicNumber: 19, mastery: k, correct: 4, incorrect: 2, accuracy: 4 / 6 },
+    ]);
+    // weakElements (intentados sin dominar) sí se llena con los acertados una vez y deja fuera al Potasio.
+    expect(weakElements(state, NOW, 12).map((w) => w.atomicNumber)).not.toContain(19);
+  });
+
+  it('orden: menor dominio, más fallos, número atómico; ignora dominados y Z inválidos; respeta el límite', () => {
+    const state = createInitialState(NOW);
+    state.elements[26] = progress(26, { correct: 0, incorrect: 2, recent: [0, 0] });
+    state.elements[29] = progress(29, { correct: 0, incorrect: 5, recent: [0, 0, 0, 0, 0] });
+    state.elements[19] = progress(19, { correct: 0, incorrect: 2, recent: [0, 0] });
+    state.elements[8] = progress(8, { correct: 3, incorrect: 1, recent: [1, 0, 1, 1] });
+    state.elements[9] = progress(9, { correct: 20, incorrect: 1, recent: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1] });
+    state.elements[10] = progress(10, { correct: 4 });
+    state.elements[200] = progress(200, { incorrect: 3, recent: [0, 0, 0] });
+    const list = difficultElements(state, NOW);
+    expect(list.map((d) => d.atomicNumber)).toEqual([29, 19, 26, 8]);
+    expect(list[0]).toMatchObject({ mastery: 0, correct: 0, incorrect: 5, accuracy: 0 });
+    expect(list[3].accuracy).toBe(0.75);
+    expect(difficultElements(state, NOW, 2).map((d) => d.atomicNumber)).toEqual([29, 19]);
+    expect(difficultElements(createInitialState(NOW), NOW)).toEqual([]);
+  });
+
+  it('selection.ts no importa el generador de preguntas (ni planner.ts)', () => {
+    const src = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+    const seen = new Set<string>();
+    const visit = (file: string) => {
+      if (seen.has(file)) return;
+      seen.add(file);
+      const code = readFileSync(file, 'utf8');
+      for (const m of code.matchAll(/^(?:import|export)\s[^;]*?from\s+'([^']+)'/gm)) {
+        const spec = m[1];
+        if (!spec.startsWith('.') && !spec.startsWith('@/')) continue;
+        const base = spec.startsWith('@/') ? resolve(src, spec.slice(2)) : resolve(dirname(file), spec);
+        const target = [`${base}.ts`, `${base}.tsx`, resolve(base, 'index.ts')].find((f) => {
+          try {
+            readFileSync(f);
+            return true;
+          } catch {
+            return false;
+          }
+        });
+        if (target) visit(target);
+      }
+    };
+    visit(resolve(src, 'utils/selection.ts'));
+    const files = Array.from(seen).map((f) => f.slice(src.length + 1));
+    expect(files).toContain('utils/mastery.ts');
+    expect(files.filter((f) => /utils\/(questions|planner)\.ts$|question-gen\//.test(f))).toEqual([]);
+  });
+});
+
+function diagnosticAnswers(correctCount: number, total = 10): AnsweredQuestion[] {
+  return Array.from({ length: total }, (_, i) => {
+    const question = generateQuestion('symbol-to-name', i + 1) as Question;
+    return { question, correct: i < correctCount, givenAnswer: 'x', responseMs: 3000, xpGained: 0 };
+  });
+}
+
+describe('planStudySession: buckets', () => {
+  it('sesión del brief: 5 nuevos, 10 repasos y 5 difíciles → 20 preguntas, ~5 min', () => {
+    const state = createInitialState(NOW);
+    // 10 repasos pendientes (acertados, sin fallos).
+    for (let z = 1; z <= 10; z++) {
+      state.elements[z] = progress(z, { learned: true, correct: 3, recent: [1, 1, 1], streak: 3, intervalDays: 3, due: daysFrom(NOW, -1).toISOString(), avgResponseMs: 3000 });
+    }
+    // 6 difíciles (fallados), uno más de los que caben.
+    for (const [z, incorrect] of [[19, 6], [26, 6], [29, 6], [30, 2], [47, 1], [50, 1]] as const) {
+      const recent = [...Array<number>(incorrect).fill(0), 1, 1];
+      state.elements[z] = progress(z, { learned: true, correct: 2, incorrect, recent, due: daysFrom(NOW, 1).toISOString() });
+    }
+    const plan = planStudySession(state, NOW);
+    expect(plan.hard).toHaveLength(5);
+    expect(plan.hard.slice(0, 3).sort((a, b) => a - b)).toEqual([19, 26, 29]);
+    expect([...plan.reviews].sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(plan.newElements).toEqual([11, 12, 13, 14, 15]);
+    expect(plan.questions).toHaveLength(20);
+    expect(plan.estimatedMinutes).toBe(5);
+    // Una pregunta por elemento planificado.
+    const asked = plan.questions.map((q) => q.atomicNumber).sort((a, b) => a - b);
+    expect(asked).toEqual([...plan.hard, ...plan.reviews, ...plan.newElements].sort((a, b) => a - b));
+  });
+
+  it('los fallados van a «difíciles» aunque toque repasarlos; los lentos pero acertados, nunca', () => {
+    const state = createInitialState(NOW);
+    const dueNow = new Date(NOW.getTime() - 60_000).toISOString();
+    for (const z of [19, 26, 29]) {
+      state.elements[z] = progress(z, { learned: true, correct: 4, incorrect: 6, recent: [0, 1, 0, 0, 1, 0, 1, 0, 1, 0], due: dueNow });
+    }
+    for (const z of [50, 51, 52]) {
+      state.elements[z] = progress(z, { learned: true, correct: 5, recent: [1, 1, 1, 1, 1], streak: 5, avgResponseMs: 14_000, due: dueNow, intervalDays: 7 });
+    }
+    const plan = planStudySession(state, NOW);
+    expect([...plan.hard].sort((a, b) => a - b)).toEqual([19, 26, 29]);
+    for (const z of [50, 51, 52]) {
+      expect(plan.hard).not.toContain(z);
+      expect(plan.reviews).toContain(z);
+    }
+  });
+
+  it('con menos difíciles que hardCount, «difíciles» queda corto (no se rellena)', () => {
+    const state = onceCorrectPlusPotassium();
+    const plan = planStudySession(state, NOW);
+    expect(plan.hard).toEqual([19]);
+    // Los acertados sin fallos pueden ocupar huecos de repaso.
+    expect(plan.reviews.length).toBeGreaterThan(0);
+    expect(plan.reviews).not.toContain(19);
+  });
+
+  it('tras el diagnóstico solo son difíciles los fallados', () => {
+    const { state } = applyOnboarding(createInitialState(NOW), 'some', diagnosticAnswers(7), NOW);
+    const plan = planStudySession(state, NOW);
+    expect(plan.hard).toEqual([8, 9, 10]);
+    expect(plan.questions.length).toBeGreaterThanOrEqual(8);
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AnsweredQuestion, ProgressState, Question } from '@/types';
+import { parseProgressJson, parseProgressState } from '@/services/storage/validate';
+import type { AnsweredQuestion, FlashcardRating, ProgressState, Question } from '@/types';
 import { ACHIEVEMENTS, achievementStatuses, evaluateAchievements } from '@/utils/achievements';
 import { todayKey } from '@/utils/dates';
 import {
@@ -16,8 +17,10 @@ import {
   diagnosticLevel,
   type AnswerInput,
 } from '@/utils/engine';
+import { computeMastery } from '@/utils/mastery';
 import { generateQuestion } from '@/utils/questions';
-import { createInitialState } from '@/utils/state';
+import { AGAIN_DELAY_MS } from '@/utils/srs';
+import { createInitialState, MAX_XP } from '@/utils/state';
 import { daysFrom, NOW } from './helpers';
 
 const TODAY = todayKey(NOW);
@@ -61,7 +64,7 @@ describe('applyAnswer', () => {
     expect(p.reps).toBe(1);
     expect(p.due).not.toBeNull();
     expect(next.xp).toBe(10);
-    expect(next.daily[TODAY]).toMatchObject({ questions: 1, correct: 1, xp: 10, newLearned: 1, goalMet: false });
+    expect(next.daily[TODAY]).toMatchObject({ questions: 1, correct: 1, flashcards: 0, xp: 10, newLearned: 1, goalMet: false });
     expect(next.stats).toMatchObject({ totalQuestions: 1, totalCorrect: 1, currentAnswerStreak: 1, totalTimeMs: 4000 });
     expect(next.records.bestAnswerStreak).toBe(1);
     expect(next.achievements['first-element']).toBe(NOW.toISOString());
@@ -95,6 +98,44 @@ describe('applyAnswer', () => {
   it('un fallo no marca el elemento como aprendido', () => {
     const s = applyAnswer(fresh(), input({ correct: false }), NOW).state;
     expect(s.elements[11].learned).toBe(false);
+  });
+
+  it('diagnóstico: guarda los fallos en errores pero no suma a la actividad del día', () => {
+    const s = createInitialState(NOW);
+    const wrong = applyAnswer(s, input({ correct: false, mode: 'diagnostic', givenAnswer: 'So' }), NOW).state;
+    expect(wrong.mistakes).toHaveLength(1);
+    expect(wrong.mistakes[0]).toMatchObject({ atomicNumber: 11, mode: 'diagnostic', givenAnswer: 'So' });
+    expect(wrong.daily[TODAY]).toMatchObject({ questions: 0, correct: 0, goalMet: false });
+    expect(wrong.stats).toMatchObject({ totalQuestions: 1, totalCorrect: 0, totalTimeMs: 4000 });
+    const right = applyAnswer(wrong, input({ mode: 'diagnostic', xpOverride: 0 }), NOW).state;
+    expect(right.daily[TODAY]).toMatchObject({ questions: 0, correct: 0, newLearned: 1 });
+    expect(right.stats).toMatchObject({ totalQuestions: 2, totalCorrect: 1, totalTimeMs: 8000 });
+    expect(right.elements[11]).toMatchObject({ correct: 1, incorrect: 1, learned: true });
+  });
+
+  it('trackElement: false no toca el progreso del elemento, pero sí XP, día, estadísticas y errores', () => {
+    const base = applyAnswer(fresh(), input({ atomicNumber: 87 }), NOW).state;
+    const franciumBefore = base.elements[87];
+    const mastery = computeMastery(franciumBefore, NOW);
+
+    const right = applyAnswer(base, input({ atomicNumber: 87, trackElement: false }), NOW);
+    expect(right.state.elements[87]).toBe(franciumBefore);
+    expect(right.state.elements).toBe(base.elements);
+    expect(right.outcome).toMatchObject({ xpGained: 10, masteryBefore: mastery, masteryAfter: mastery, answerStreak: 2 });
+    expect(right.state.daily[TODAY]).toMatchObject({ questions: 2, correct: 2, newLearned: 1 });
+    expect(right.state.stats).toMatchObject({ totalQuestions: 2, totalCorrect: 2 });
+
+    const wrong = applyAnswer(right.state, input({ atomicNumber: 2, correct: false, trackElement: false }), NOW);
+    expect(wrong.state.elements[2]).toBeUndefined();
+    expect(wrong.outcome).toMatchObject({ xpGained: 0, masteryBefore: 0, masteryAfter: 0, answerStreak: 0 });
+    expect(wrong.state.mistakes[0]).toMatchObject({ atomicNumber: 2 });
+    expect(wrong.state.stats.totalQuestions).toBe(3);
+
+    // Sin atribución no se aprende ningún elemento (ni logro «Primer elemento»).
+    const untracked = applyAnswer(fresh(), input({ atomicNumber: 87, trackElement: false }), NOW);
+    expect(untracked.state.elements).toEqual({});
+    expect(untracked.state.daily[TODAY]).toMatchObject({ questions: 1, newLearned: 0 });
+    expect(untracked.outcome.unlockedAchievements).not.toContain('first-element');
   });
 
   it('errores: máximo 300, el más reciente primero', () => {
@@ -141,18 +182,47 @@ describe('applyAnswer', () => {
 });
 
 describe('applyFlashcard', () => {
-  it('XP por calificación, cuenta para la meta y reprograma', () => {
-    const r = applyFlashcard(fresh(), { atomicNumber: 8, skill: 'symbol', rating: 'good', responseMs: 3000 }, NOW);
+  const card = (rating: FlashcardRating, z = 8) => ({ atomicNumber: z, skill: 'symbol' as const, rating, responseMs: 3000 });
+
+  it('XP por calificación, cuenta para la meta (no para la precisión) y reprograma', () => {
+    const r = applyFlashcard(fresh(), card('good'), NOW);
     expect(r.outcome.xpGained).toBe(5);
     expect(r.state.stats.flashcardsReviewed).toBe(1);
     expect(r.state.stats.totalQuestions).toBe(0);
-    expect(r.state.daily[TODAY].questions).toBe(1);
-    expect(r.state.elements[8]).toMatchObject({ learned: true, reps: 1, intervalDays: 1 });
+    expect(r.state.daily[TODAY]).toMatchObject({ questions: 1, flashcards: 1, correct: 0 });
+    expect(r.state.elements[8]).toMatchObject({ learned: true, reps: 1, intervalDays: 1, correct: 1 });
+    expect(r.state.elements[8].skills).toEqual({});
 
-    const again = applyFlashcard(r.state, { atomicNumber: 8, skill: 'symbol', rating: 'again', responseMs: 3000 }, NOW);
+    const again = applyFlashcard(r.state, card('again'), NOW);
     expect(again.outcome.xpGained).toBe(1);
-    expect(again.state.elements[8]).toMatchObject({ reps: 0, incorrect: 1 });
+    expect(again.state.elements[8]).toMatchObject({ reps: 0, intervalDays: 0, incorrect: 1 });
+    expect(Date.parse(again.state.elements[8].due as string) - NOW.getTime()).toBe(AGAIN_DELAY_MS);
     expect(again.state.mistakes).toHaveLength(0);
+    expect(again.state.daily[TODAY]).toMatchObject({ questions: 2, flashcards: 2, correct: 0 });
+  });
+
+  it('la precisión del día solo cuenta el quiz', () => {
+    let s = applyFlashcard(fresh(), card('good'), NOW).state;
+    s = applyAnswer(s, input(), NOW).state;
+    s = applyAnswer(s, input({ correct: false }), NOW).state;
+    const day = s.daily[TODAY];
+    expect(day).toMatchObject({ questions: 3, flashcards: 1, correct: 1 });
+    expect(day.correct / (day.questions - day.flashcards)).toBe(0.5);
+    expect(s.elements[11].skills.symbol).toEqual({ correct: 1, incorrect: 1 });
+  });
+
+  it('repasar la misma tarjeta varias veces seguidas no infla el intervalo', () => {
+    let s: ProgressState = fresh();
+    for (let i = 0; i < 5; i++) s = applyFlashcard(s, card('good'), new Date(NOW.getTime() + i * 60_000)).state;
+    expect(s.elements[8]).toMatchObject({ intervalDays: 1, reps: 1, correct: 5 });
+
+    let h = applyFlashcard(fresh(), card('hard'), NOW).state;
+    h = applyFlashcard(h, card('good'), new Date(NOW.getTime() + 2 * 60_000)).state;
+    expect(h.elements[8].intervalDays).toBe(1);
+
+    // Cuando ya toca repasarla, sí avanza.
+    const due = daysFrom(NOW, 1);
+    expect(applyFlashcard(s, card('good'), due).state.elements[8]).toMatchObject({ intervalDays: 3, reps: 2 });
   });
 });
 
@@ -187,9 +257,25 @@ describe('applySessionComplete', () => {
     expect(r2.state.records.bestExamPct).toBe(100);
   });
 
-  it('otras sesiones: +20; diagnóstico o vacías: 0', () => {
-    expect(applySessionComplete(fresh(), { mode: 'study', total: 10, correct: 3, durationMs: 1 }, NOW).xpGained).toBe(20);
-    expect(applySessionComplete(fresh(), { mode: 'diagnostic', total: 10, correct: 3, durationMs: 1 }, NOW).xpGained).toBe(0);
+  it('otras sesiones: +20 solo con ≥ 5 preguntas y al menos la mitad de aciertos', () => {
+    const xp = (total: number, correct: number) =>
+      applySessionComplete(fresh(), { mode: 'study', total, correct, durationMs: 1 }, NOW).xpGained;
+    expect(xp(10, 5)).toBe(20);
+    expect(xp(5, 3)).toBe(20);
+    expect(xp(20, 20)).toBe(20);
+    expect(xp(10, 4)).toBe(0);
+    expect(xp(4, 4)).toBe(0);
+    expect(xp(1, 0)).toBe(0);
+    expect(xp(1, 1)).toBe(0);
+  });
+
+  it('sin bonus la sesión cuenta igual; diagnóstico o vacías: nada', () => {
+    const r = applySessionComplete(fresh(), { mode: 'practice', total: 1, correct: 0, durationMs: 1 }, NOW);
+    expect(r.xpGained).toBe(0);
+    expect(r.state.xp).toBe(0);
+    expect(r.state.stats.sessionsCompleted).toBe(1);
+    expect(r.state.daily[TODAY]).toBeUndefined();
+    expect(applySessionComplete(fresh(), { mode: 'diagnostic', total: 10, correct: 10, durationMs: 1 }, NOW).xpGained).toBe(0);
     expect(applySessionComplete(fresh(), { mode: 'study', total: 0, correct: 0, durationMs: 1 }, NOW).xpGained).toBe(0);
   });
 });
@@ -237,9 +323,20 @@ describe('applyOnboarding', () => {
     expect(Object.keys(r.state.elements)).toHaveLength(10);
     expect(r.state.elements[1].learned).toBe(true);
     expect(r.state.elements[10]).toMatchObject({ learned: false, incorrect: 1 });
-    expect(r.state.mistakes).toHaveLength(0);
     expect(r.state.stats.totalQuestions).toBe(10);
     expect(r.unlockedAchievements).toContain('first-element');
+  });
+
+  it('los fallos del diagnóstico van a «Mis errores» y no cumplen la meta del día', () => {
+    const s = applySettings(createInitialState(NOW), { dailyGoal: 5 }, NOW);
+    const r = applyOnboarding(s, 'some', diagnostic(7), NOW);
+    expect(r.state.mistakes).toHaveLength(3);
+    expect(r.state.mistakes.every((m) => m.mode === 'diagnostic')).toBe(true);
+    expect(r.state.mistakes.map((m) => m.atomicNumber).sort((a, b) => a - b)).toEqual([8, 9, 10]);
+    expect(r.state.daily[TODAY]).toMatchObject({ questions: 0, correct: 0, goalMet: false, newLearned: 7 });
+    expect(r.state.stats).toMatchObject({ totalQuestions: 10, totalCorrect: 7 });
+    expect(r.state.achievements['first-goal']).toBeUndefined();
+    expect(r.unlockedAchievements).not.toContain('first-goal');
   });
 
   it('principiante con 2 aciertos empieza en el nivel 1', () => {
@@ -303,5 +400,36 @@ describe('achievements', () => {
   it('primer bloque al aprender del 1 al 10', () => {
     const r = applyLearned(createInitialState(NOW), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], NOW);
     expect(r.unlockedAchievements).toEqual(expect.arrayContaining(['first-block', 'ten-learned']));
+  });
+});
+
+describe('validación del guardado (flashcards del día y XP)', () => {
+  it('ida y vuelta del estado inicial y de un día con flashcards', () => {
+    const initial = createInitialState(NOW);
+    expect(parseProgressState(JSON.parse(JSON.stringify(initial)), NOW)).toEqual(initial);
+    let s = applyFlashcard(initial, { atomicNumber: 8, skill: 'symbol', rating: 'good', responseMs: 3000 }, NOW).state;
+    s = applyAnswer(s, input(), NOW).state;
+    expect(parseProgressJson(JSON.stringify(s), NOW)).toEqual(s);
+  });
+
+  it('guardados antiguos sin `flashcards` valen 0; nunca más que la actividad del día', () => {
+    const raw = {
+      version: 1,
+      profile: { onboarded: true },
+      daily: {
+        [TODAY]: { questions: 4, correct: 3, xp: 30, timeMs: 1000, newLearned: 0, goal: 10, goalMet: false },
+        '2026-01-14': { questions: 2, correct: 0, flashcards: 9, xp: 0, timeMs: 0, newLearned: 0, goal: 10, goalMet: false },
+      },
+    };
+    const s = parseProgressState(raw, NOW) as ProgressState;
+    expect(s.daily[TODAY].flashcards).toBe(0);
+    expect(s.daily['2026-01-14'].flashcards).toBe(2);
+  });
+
+  it('la XP importada se limita a [0, 10 000 000]', () => {
+    const base = { version: 1, profile: {} };
+    expect((parseProgressState({ ...base, xp: 1e20 }, NOW) as ProgressState).xp).toBe(MAX_XP);
+    expect((parseProgressState({ ...base, xp: -40 }, NOW) as ProgressState).xp).toBe(0);
+    expect((parseProgressState({ ...base, xp: 1234.7 }, NOW) as ProgressState).xp).toBe(1234);
   });
 });

@@ -1,6 +1,6 @@
 import type { GameMode, QuestionSkill, QuestionType } from '@/types';
 import { keyToDate } from '@/utils/dates';
-import { ALL_QUESTION_TYPES, QUESTION_TYPE_META } from '@/utils/questions';
+import { ALL_QUESTION_TYPES, QUESTION_TYPE_META } from '@/utils/question-gen/meta';
 
 export const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] as const;
 const WEEKDAYS_SHORT = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'] as const;

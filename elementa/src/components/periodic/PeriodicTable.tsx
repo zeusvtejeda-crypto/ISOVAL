@@ -31,6 +31,8 @@ export interface PeriodicTableProps {
   correct?: readonly number[];
   /** Casillas marcadas como incorrectas (rojo). */
   incorrect?: readonly number[];
+  /** Casillas que había que marcar y no se marcaron (contorno discontinuo + «faltó»). */
+  missed?: readonly number[];
   /**
    * Qué casillas se pueden tocar: `true` (por defecto) todas, `false` ninguna o una lista
    * (el resto se atenúa).
@@ -89,6 +91,7 @@ export const PeriodicTable = memo(function PeriodicTable({
   dimmed,
   correct,
   incorrect,
+  missed,
   selectable = true,
   showMastery = false,
   hideLabels = false,
@@ -120,8 +123,9 @@ export const PeriodicTable = memo(function PeriodicTable({
       dimmed: toSet(dimmed),
       correct: toSet(correct),
       incorrect: toSet(incorrect),
+      missed: toSet(missed),
     }),
-    [selected, highlighted, dimmed, correct, incorrect],
+    [selected, highlighted, dimmed, correct, incorrect, missed],
   );
   const selectableSet = useMemo(
     () => (typeof selectable === 'object' ? new Set(selectable) : null),
@@ -137,6 +141,7 @@ export const PeriodicTable = memo(function PeriodicTable({
   const statusOf = (z: number, category: ElementCategory): TileStatus => {
     if (sets.correct?.has(z)) return 'correct';
     if (sets.incorrect?.has(z)) return 'incorrect';
+    if (sets.missed?.has(z)) return 'missed';
     if (sets.selected?.has(z)) return 'selected';
     if (sets.highlighted?.has(z)) return 'highlight';
     if (sets.dimmed?.has(z)) return 'dimmed';
@@ -148,10 +153,10 @@ export const PeriodicTable = memo(function PeriodicTable({
   const firstSelectable = interactive ? (ELEMENTS.find((el) => canSelect(el.atomicNumber))?.atomicNumber ?? null) : null;
   const tabStop = activeZ !== null && canSelect(activeZ) ? activeZ : firstSelectable;
 
-  // Lleva a la vista (solo en horizontal) la primera casilla resaltada o correcta, o la familia filtrada
-  // (los gases nobles, en la columna 18, quedan fuera de la pantalla en móvil).
+  // Lleva a la vista (solo en horizontal) la primera casilla resaltada, correcta o que faltó, o la familia
+  // filtrada (los gases nobles, en la columna 18, quedan fuera de la pantalla en móvil).
   const familyTarget = filterCategory ? (ELEMENTS.find((el) => el.category === filterCategory)?.atomicNumber ?? null) : null;
-  const scrollTarget = highlighted?.[0] ?? correct?.[0] ?? familyTarget;
+  const scrollTarget = highlighted?.[0] ?? correct?.[0] ?? missed?.[0] ?? familyTarget;
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (compact || scrollTarget === null || !scroller) return;
@@ -214,7 +219,7 @@ export const PeriodicTable = memo(function PeriodicTable({
           const z = el.atomicNumber;
           const status = statusOf(z, el.category);
           const clickable = canSelect(z);
-          const revealed = status === 'correct' || status === 'incorrect';
+          const revealed = status === 'correct' || status === 'incorrect' || status === 'missed';
           return (
             <ElementTile
               key={z}

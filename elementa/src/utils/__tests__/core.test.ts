@@ -165,6 +165,38 @@ describe('levels y XP', () => {
     expect(l7).toMatchObject({ level: 7, xpForNext: 1000, title: 'Gran Maestro' });
   });
 
+  it('levelFromXp en forma cerrada coincide con el cálculo nivel a nivel', () => {
+    const reference = (xp: number) => {
+      let level = 1;
+      while (xpAtLevelStart(level + 1) <= xp) level++;
+      return level;
+    };
+    expect(levelFromXp(0)).toMatchObject({ level: 1, xpIntoLevel: 0 });
+    expect(levelFromXp(99)).toMatchObject({ level: 1, xpIntoLevel: 99 });
+    expect(levelFromXp(100)).toMatchObject({ level: 2, xpIntoLevel: 0 });
+    expect(levelFromXp(249)).toMatchObject({ level: 2, xpIntoLevel: 149 });
+    expect(levelFromXp(250)).toMatchObject({ level: 2, xpIntoLevel: 150 });
+    expect(levelFromXp(1e7).level).toBe(reference(1e7));
+    for (let xp = 0; xp <= 60_000; xp += 7) expect(levelFromXp(xp).level).toBe(reference(xp));
+    for (let level = 2; level <= 400; level++) {
+      const start = xpAtLevelStart(level);
+      expect(levelFromXp(start - 1).level).toBe(level - 1);
+      expect(levelFromXp(start)).toMatchObject({ level, xpIntoLevel: 0 });
+    }
+  });
+
+  it('levelFromXp es inmediato incluso con XP enorme', () => {
+    const t0 = performance.now();
+    const info = levelFromXp(1e15);
+    expect(performance.now() - t0).toBeLessThan(5);
+    expect(xpAtLevelStart(info.level)).toBeLessThanOrEqual(1e15);
+    expect(xpAtLevelStart(info.level + 1)).toBeGreaterThan(1e15);
+    expect(info.progress).toBeGreaterThanOrEqual(0);
+    expect(info.progress).toBeLessThan(1);
+    expect(Number.isFinite(levelFromXp(1e20).level)).toBe(true);
+    expect(levelFromXp(Number.POSITIVE_INFINITY).level).toBe(1);
+  });
+
   it('títulos (9+ Mente Cuántica)', () => {
     expect(levelTitle(3)).toBe('Químico Junior');
     expect(levelTitle(6)).toBe('Maestro de los Elementos');
@@ -176,12 +208,28 @@ describe('levels y XP', () => {
     expect(xpForAnswer(false, 3)).toBe(0);
     expect(xpForAnswer(true, 1)).toBe(XP_RULES.correct);
     expect(xpForAnswer(true, 3)).toBe(XP_RULES.hardCorrect);
-    expect(streakModeXp(1)).toMatchObject({ xp: 10, bonus: 0, milestone: null });
-    expect(streakModeXp(5)).toMatchObject({ xp: 15 + 25, bonus: 25, milestone: 5 });
-    expect(streakModeXp(10)).toMatchObject({ xp: 20 + 50, bonus: 50, milestone: 10 });
-    expect(streakModeXp(20)).toMatchObject({ xp: 30 + 150, bonus: 150, milestone: 20 });
-    expect(streakModeXp(30)).toMatchObject({ xp: 30 + 100, bonus: 100, milestone: null });
+    expect(streakModeXp(0)).toEqual({ xp: 0, base: 0, multiplier: 1, multiplied: 0, bonus: 0, milestone: null });
+    expect(streakModeXp(1)).toEqual({ xp: 10, base: 10, multiplier: 1, multiplied: 10, bonus: 0, milestone: null });
+    expect(streakModeXp(4)).toMatchObject({ xp: 10, bonus: 0, milestone: null });
+    expect(streakModeXp(5)).toEqual({ xp: 15 + 25, base: 10, multiplier: 1.5, multiplied: 15, bonus: 25, milestone: 5 });
+    expect(streakModeXp(10)).toMatchObject({ xp: 20 + 50, multiplied: 20, bonus: 50, milestone: 10 });
+    expect(streakModeXp(20)).toMatchObject({ xp: 30 + 150, multiplied: 30, bonus: 150, milestone: 20 });
+    expect(streakModeXp(30)).toMatchObject({ xp: 30 + 100, multiplied: 30, bonus: 100, milestone: null });
     expect(streakModeXp(31)).toMatchObject({ xp: 30, bonus: 0 });
+  });
+
+  it('Modo Racha respeta la dificultad (+15 base en difíciles)', () => {
+    expect(streakModeXp(1, 3)).toEqual({ xp: 15, base: 15, multiplier: 1, multiplied: 15, bonus: 0, milestone: null });
+    expect(streakModeXp(1, 2)).toMatchObject({ xp: 10, base: 10 });
+    // x1.5 sobre 15 = 22.5 → 23; el bonus del hito va aparte.
+    expect(streakModeXp(5, 3)).toEqual({ xp: 23 + 25, base: 15, multiplier: 1.5, multiplied: 23, bonus: 25, milestone: 5 });
+    expect(streakModeXp(10, 3)).toMatchObject({ xp: 30 + 50, multiplied: 30, bonus: 50 });
+    expect(streakModeXp(20, 3)).toMatchObject({ xp: 45 + 150, multiplied: 45, bonus: 150, milestone: 20 });
+    expect(streakModeXp(0, 3)).toMatchObject({ xp: 0, base: 0, multiplied: 0 });
+    // El panel puede separar el extra del multiplicador del bonus del hito.
+    const x5 = streakModeXp(5);
+    expect(x5.multiplied - x5.base).toBe(5);
+    expect(x5.bonus).toBe(25);
   });
 });
 

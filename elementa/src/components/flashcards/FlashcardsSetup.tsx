@@ -4,15 +4,16 @@ import { useId, useMemo } from 'react';
 import { Play } from 'lucide-react';
 import { PageHeader } from '@/components/layout';
 import { Button, cn, SegmentedControl, Skeleton } from '@/components/ui';
+import { StickyActions } from '@/components/ui/StickyActions';
 import { CATEGORY_ORDER } from '@/data/categories';
 import { STUDY_BLOCKS } from '@/data/blocks';
 import { TOTAL_ELEMENTS } from '@/data/elements';
 import { useNow } from '@/hooks/useNow';
 import { useProgress } from '@/hooks/useProgress';
-import { dueReviews } from '@/utils/planner';
 import { formatNumber, pluralize } from '@/utils/format';
+import { dueReviews } from '@/utils/selection';
 import { DeckPicker } from './DeckPicker';
-import { DECK_SIZES, deckCount, deckPool, deckTitle, weakNumbers, type DeckSelection, type DeckSize } from './deck';
+import { DECK_SIZES, deckCount, deckPool, deckTitle, mistakeNumbers, type DeckSelection, type DeckSize } from './deck';
 import { ModePicker } from './ModePicker';
 import { getFlashcardMode, type FlashcardModeId } from './modes';
 
@@ -82,10 +83,11 @@ export function FlashcardsSetup({
 
   const info = useMemo(() => {
     const dueCount = dueReviews(state, now, TOTAL_ELEMENTS).length;
-    const weakCount = weakNumbers(state, now).length;
+    // Mismo número que «Elementos difíciles» en /errores (sin filtrar por modo).
+    const mistakeCount = mistakeNumbers(state, now).length;
     const defaultBlock =
       STUDY_BLOCKS.find((b) => b.atomicNumbers.some((z) => !state.elements[z]?.learned))?.id ?? STUDY_BLOCKS[0].id;
-    return { dueCount, weakCount, defaultBlock };
+    return { dueCount, mistakeCount, defaultBlock };
   }, [state, now]);
 
   const poolSize = useMemo(() => deckPool(selection, state, now, mode).length, [selection, state, now, mode]);
@@ -111,7 +113,7 @@ export function FlashcardsSetup({
 
       <ul aria-label="Tu repaso" className="mb-6 flex gap-2">
         <Stat emoji="🔁" value={info.dueCount} label="Pendientes" />
-        <Stat emoji="🎯" value={info.weakCount} label="Por reforzar" />
+        <Stat emoji="🎯" value={info.mistakeCount} label="Por reforzar" />
         <Stat emoji="🃏" value={state.stats.flashcardsReviewed} label="Repasadas" />
       </ul>
 
@@ -132,7 +134,7 @@ export function FlashcardsSetup({
             onChange={onSelectionChange}
             custom={custom}
             dueCount={info.dueCount}
-            weakCount={info.weakCount}
+            mistakeCount={info.mistakeCount}
             defaultBlock={info.defaultBlock}
             defaultFamily={CATEGORY_ORDER[0]}
             labelledBy={deckTitleId}
@@ -152,14 +154,14 @@ export function FlashcardsSetup({
         )}
       </div>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-6 bg-linear-to-t from-bg via-bg/95 to-bg/0 px-4 pt-6 pb-2 sm:-mx-6 sm:px-6 lg:bottom-0 lg:-mx-10 lg:px-10 lg:pb-6">
+      <StickyActions className="mt-6">
         <Button size="lg" block disabled={count === 0} onClick={onStart} leftIcon={<Play aria-hidden />}>
           {count === 0 ? 'Sin tarjetas' : `Empezar · ${count} ${pluralize(count, 'tarjeta', 'tarjetas')}`}
         </Button>
         <p className={cn('mt-2 text-center text-sm font-bold text-muted', count > 0 && 'truncate')} aria-live="polite">
           {count === 0 ? emptyHint : `${mode.title} · ${deckTitle(selection)}`}
         </p>
-      </div>
+      </StickyActions>
     </>
   );
 }

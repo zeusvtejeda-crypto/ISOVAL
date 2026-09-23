@@ -1,5 +1,5 @@
 import { ArrowRight, LayoutGrid } from 'lucide-react';
-import { ElementTile } from '@/components/periodic';
+import { ElementTile } from '@/components/periodic/ElementTile';
 import { Button, ButtonLink, ProgressBar, cn } from '@/components/ui';
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import type { ChemicalElement } from '@/types';

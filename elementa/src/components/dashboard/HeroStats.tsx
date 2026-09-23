@@ -16,11 +16,14 @@ interface MiniStatProps {
   value: ReactNode;
 }
 
-/** Métrica compacta dentro de la tarjeta principal (término = etiqueta, definición = valor). */
+/**
+ * Métrica compacta dentro de la tarjeta principal (término = etiqueta, definición = valor). Nada se
+ * corta con «…»: la etiqueta pasa a dos líneas y el valor («12 días») puede partirse en pantallas estrechas.
+ */
 function MiniStat({ emoji, tone, label, value }: MiniStatProps) {
   return (
     <div className="flex min-w-0 flex-col-reverse justify-center gap-0.5 rounded-2xl bg-surface-2 p-3">
-      <dt className="truncate text-xs font-bold text-muted sm:text-sm">{label}</dt>
+      <dt className="line-clamp-2 text-xs leading-tight font-bold text-muted sm:text-sm">{label}</dt>
       <dd className="flex min-w-0 items-center gap-2">
         <span
           aria-hidden
@@ -28,7 +31,7 @@ function MiniStat({ emoji, tone, label, value }: MiniStatProps) {
         >
           {emoji}
         </span>
-        <span className="min-w-0 truncate text-xl leading-tight font-black tabular sm:text-2xl">{value}</span>
+        <span className="min-w-0 text-xl leading-tight font-black break-words tabular sm:text-2xl">{value}</span>
       </dd>
     </div>
   );

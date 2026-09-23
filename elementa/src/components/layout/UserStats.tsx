@@ -27,7 +27,7 @@ export function UserStats({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
       <Link href="/estadisticas" className={cn(HIT, 'rounded-full transition-transform active:scale-95')}>
-        <StreakBadge count={streak.current} active={streak.todayMet} size="md" className="h-10" />
+        <StreakBadge count={streak.current} active={streak.todayMet} size="md" className="h-10 max-[359px]:px-2.5" />
       </Link>
       <Link
         href="/logros"

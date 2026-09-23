@@ -1,6 +1,7 @@
 'use client';
 
-import { cn } from '@/components/ui';
+import { useEffect, useEffectEvent, useRef } from 'react';
+import { cn, useReducedMotion } from '@/components/ui';
 import { CATEGORIES, CATEGORY_ORDER } from '@/data/categories';
 import { ELEMENTS } from '@/data/elements';
 import type { ElementCategory } from '@/types';
@@ -25,8 +26,26 @@ const COUNTS: Record<ElementCategory, number> = CATEGORY_ORDER.reduce(
 /** Leyenda de familias con su color. Con `onToggle` sirve de filtro. */
 export function CategoryLegend({ active = null, onToggle, showCounts = true, layout = 'scroll', className }: CategoryLegendProps) {
   const interactive = onToggle !== undefined;
+  const rowRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+
+  // En móvil la fila se desliza: lleva a la vista la familia activa (p. ej. `/tabla?family=noble-gas`).
+  const revealActive = useEffectEvent((category: ElementCategory) => {
+    const row = rowRef.current;
+    if (!row || row.scrollWidth <= row.clientWidth) return;
+    row.querySelector<HTMLElement>(`[data-category="${category}"]`)?.scrollIntoView({
+      inline: 'center',
+      block: 'nearest',
+      behavior: reducedMotion ? 'instant' : 'smooth',
+    });
+  });
+  useEffect(() => {
+    if (active) revealActive(active);
+  }, [active]);
+
   return (
     <div
+      ref={rowRef}
       role={interactive ? 'group' : 'list'}
       aria-label="Familias de elementos"
       className={cn(
@@ -57,7 +76,7 @@ export function CategoryLegend({ active = null, onToggle, showCounts = true, lay
 
         if (!interactive) {
           return (
-            <span key={cat} role="listitem" className={cn(base, 'border-border bg-surface')}>
+            <span key={cat} role="listitem" data-category={cat} className={cn(base, 'border-border bg-surface')}>
               {inner}
             </span>
           );
@@ -66,6 +85,7 @@ export function CategoryLegend({ active = null, onToggle, showCounts = true, lay
           <button
             key={cat}
             type="button"
+            data-category={cat}
             aria-pressed={isActive}
             onClick={() => onToggle(cat)}
             className={cn(

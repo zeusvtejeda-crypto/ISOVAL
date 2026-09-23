@@ -5,7 +5,8 @@ export interface BadgeRowProps {
   badges: readonly TriviaCategoryId[];
   /** Insignia recién ganada (rebota). */
   fresh?: TriviaCategoryId | null;
-  size?: 'md' | 'lg';
+  /** `sm`: como `md`, pero más pequeña en pantallas bajas (≤ 700 px de alto). */
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export function BadgeRow({ badges, fresh = null, size = 'md', className }: Badge
               className={cn(
                 'grid place-items-center rounded-full leading-none transition-[opacity,filter,box-shadow] duration-300',
                 large ? 'size-14 text-3xl' : 'size-10 text-xl',
+                size === 'sm' && '[@media(max-height:700px)]:size-8 [@media(max-height:700px)]:text-base',
                 won
                   ? cn(cat.solid, cat.ring, 'shadow-card ring-2 ring-offset-2 ring-offset-bg')
                   : 'border-2 border-dashed border-border-strong bg-surface-2 opacity-60 grayscale',

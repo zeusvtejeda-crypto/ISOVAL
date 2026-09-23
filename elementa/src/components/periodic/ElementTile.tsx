@@ -1,14 +1,20 @@
 'use client';
 
 import { memo, type CSSProperties } from 'react';
+import { Check, X, type LucideIcon } from 'lucide-react';
 import { cn } from '@/components/ui';
 import { CATEGORIES } from '@/data/categories';
 import type { ChemicalElement } from '@/types';
 import { masteryTier, TIER_META } from '@/utils/mastery';
+import { TIER_TEXTURE } from './mastery-cues';
 import { positionLabel } from './table-geometry';
 
 export type TileSize = 'xs' | 'sm' | 'md' | 'lg';
-export type TileStatus = 'default' | 'selected' | 'correct' | 'incorrect' | 'dimmed' | 'highlight';
+/**
+ * `correct` / `incorrect`: respuesta revisada (✓ / ✗ además del color).
+ * `missed`: casilla que había que marcar y no se marcó (contorno discontinuo + «faltó»).
+ */
+export type TileStatus = 'default' | 'selected' | 'correct' | 'incorrect' | 'missed' | 'dimmed' | 'highlight';
 
 export interface ElementTileProps {
   element: ChemicalElement;
@@ -45,11 +51,12 @@ const SIZES: Record<TileSize, string> = {
 
 const FLUID = 'aspect-square w-full rounded-[14%] border-[1.5px]';
 
-/** Colores sólidos que sustituyen al color de la familia. */
+/** Colores que sustituyen al color de la familia. */
 const SOLID: Partial<Record<TileStatus, string>> = {
   selected: 'border-brand-shade bg-brand text-on-brand',
   correct: 'border-success-shade bg-success text-on-success',
   incorrect: 'border-danger-shade bg-danger text-on-danger',
+  missed: 'border-transparent bg-success-soft text-fg',
 };
 
 const EFFECTS: Record<TileStatus, string> = {
@@ -57,6 +64,8 @@ const EFFECTS: Record<TileStatus, string> = {
   selected: 'z-10 shadow-card animate-pop',
   correct: 'z-10 shadow-card animate-pop',
   incorrect: 'z-10 animate-shake',
+  // Contorno discontinuo sobre el borde (no depende del color).
+  missed: 'z-10 outline-2 -outline-offset-2 outline-dashed outline-success',
   highlight: 'z-10 scale-110 shadow-float ring-[3px] ring-brand animate-pop',
   dimmed: 'opacity-30 saturate-50',
 };
@@ -64,6 +73,13 @@ const EFFECTS: Record<TileStatus, string> = {
 const STATUS_SPEECH: Partial<Record<TileStatus, string>> = {
   correct: ', correcto',
   incorrect: ', incorrecto',
+  missed: ', faltó marcarlo',
+};
+
+/** Símbolo de la corrección (esquina superior derecha), para no depender solo del color. */
+const STATUS_GLYPH: Partial<Record<TileStatus, LucideIcon>> = {
+  correct: Check,
+  incorrect: X,
 };
 
 function clampMastery(m: number): number {
@@ -73,7 +89,7 @@ function clampMastery(m: number): number {
 /**
  * Casilla de un elemento: número (arriba a la izquierda), símbolo grande y nombre.
  * Con `fluid` la tipografía se adapta al ancho: por debajo de ~40 px solo se ve el símbolo y
- * por debajo de ~60 px se oculta el nombre.
+ * por debajo de ~52 px se oculta el nombre. Número y nombre nunca bajan de 10 px.
  */
 export const ElementTile = memo(function ElementTile({
   element,
@@ -94,8 +110,11 @@ export const ElementTile = memo(function ElementTile({
   const z = element.atomicNumber;
   const value = clampMastery(mastery);
   const hasMastery = showMastery && !blind && value > 0;
+  const tier = masteryTier(value);
   const color = SOLID[status] ?? (neutral ? 'border-border bg-surface-2 text-fg' : CATEGORIES[element.category].tileClass);
   const interactive = onClick !== undefined;
+  const Glyph = STATUS_GLYPH[status];
+  const missed = status === 'missed';
 
   const label =
     (blind ? positionLabel(element) : `${element.name}, ${element.symbol}, número atómico ${z}`) +
@@ -119,28 +138,50 @@ export const ElementTile = memo(function ElementTile({
       {!blind && (
         <span
           aria-hidden
-          className="absolute top-[6%] left-[9%] hidden text-[length:19cqw] leading-none font-extrabold tabular opacity-80 @min-[2.5rem]:block"
+          className="absolute top-[6%] left-[9%] hidden text-[length:max(10px,19cqw)] leading-none font-extrabold tabular opacity-80 @min-[2.5rem]:block"
         >
           {z}
         </span>
       )}
+      {Glyph && (
+        <Glyph
+          aria-hidden
+          strokeWidth={3.5}
+          className="absolute top-[5%] right-[5%] hidden size-[max(0.625rem,24cqw)] @min-[2rem]:block"
+        />
+      )}
       {!blind && (
         <span
           aria-hidden
-          className="absolute inset-0 flex flex-col items-center justify-center @min-[2.5rem]:pt-[13cqw]"
+          className={cn(
+            'absolute inset-0 flex flex-col items-center justify-center @min-[2.5rem]:pt-[13cqw]',
+            hasMastery && '@min-[2.5rem]:pb-[8cqw]',
+          )}
         >
-          <span className="text-[length:46cqw] leading-none font-black tracking-tight @min-[2.5rem]:text-[length:40cqw]">
+          <span
+            className={cn(
+              'text-[length:46cqw] leading-none font-black tracking-tight @min-[2.5rem]:text-[length:40cqw]',
+              // Sin sitio para el ✗ (casillas diminutas): el símbolo tachado lo sustituye.
+              status === 'incorrect' && 'decoration-2 @max-[2rem]:line-through',
+            )}
+          >
             {element.symbol}
           </span>
-          <span className="mt-[5cqw] hidden w-full truncate px-[7%] text-center text-[length:13.5cqw] leading-tight font-bold @min-[3.75rem]:block">
-            {element.name}
-          </span>
+          {missed ? (
+            <span className="mt-[4cqw] hidden rounded-full bg-success px-[0.35em] text-[length:max(9px,15cqw)] leading-snug font-black text-on-success @min-[2rem]:block">
+              faltó
+            </span>
+          ) : (
+            <span className="mt-[4cqw] hidden w-full truncate px-[4%] text-center text-[length:max(10px,13.5cqw)] leading-tight font-bold @min-[3.25rem]:block">
+              {element.name}
+            </span>
+          )}
         </span>
       )}
       {hasMastery && (
-        <span aria-hidden className="absolute inset-x-[12%] bottom-[6%] h-[7%] min-h-0.5 overflow-hidden rounded-full bg-fg/15">
+        <span aria-hidden className="absolute inset-x-[12%] bottom-[6%] h-[8%] min-h-[3px] overflow-hidden rounded-full bg-fg/15">
           <span
-            className={cn('block h-full rounded-full', TIER_META[masteryTier(value)].barClass)}
+            className={cn('block h-full rounded-full', TIER_META[tier].barClass, TIER_TEXTURE[tier])}
             style={{ width: `${value}%` }}
           />
         </span>

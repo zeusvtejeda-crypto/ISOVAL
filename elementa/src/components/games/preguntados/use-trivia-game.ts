@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { buildSessionSummary, EMPTY_TALLY, tallyAnswer, type SessionTally } from '@/components/quiz/session-tally';
+import { useAnswerRecorder } from '@/components/quiz/use-answer-recorder';
 import { useReducedMotion } from '@/components/ui';
-import { useHaptics } from '@/hooks/useHaptics';
 import { useProgress } from '@/hooks/useProgress';
 import { useSound } from '@/hooks/useSound';
 import type { AnswerOutcome, AnsweredQuestion, Question, SessionSummaryData } from '@/types';
 import { generateAdaptiveQuestion } from '@/utils/questions';
 import { weightedSample } from '@/utils/random';
-import { failedElements, improvedElements } from '../shared/game-questions';
 import { TRIVIA_CATEGORIES, TRIVIA_CATEGORY_BY_ID, categoryOfType, type TriviaCategoryId } from './categories';
 import { WHEEL_TURNS, wheelTarget } from './wheel-math';
 
@@ -47,9 +47,8 @@ export interface TriviaState {
   /** Corona química conseguida (termina la partida). */
   crown: boolean;
   lastOutcome: AnswerOutcome | null;
-  masteryStart: Record<number, number>;
-  masteryEnd: Record<number, number>;
-  unlocked: string[];
+  /** Elementos respondidos, dominio antes/después y logros (para el resumen). */
+  tally: SessionTally;
   endReason: TriviaEndReason | null;
   summary: SessionSummaryData | null;
 }
@@ -78,9 +77,7 @@ const INITIAL: TriviaState = {
   newBadge: null,
   crown: false,
   lastOutcome: null,
-  masteryStart: {},
-  masteryEnd: {},
-  unlocked: [],
+  tally: EMPTY_TALLY,
   endReason: null,
   summary: null,
 };
@@ -104,16 +101,15 @@ function pickCategory(badges: readonly TriviaCategoryId[]): TriviaCategoryId {
  * las 6 insignias dan la Corona química (+50 XP). Registra cada respuesta y la sesión.
  */
 export function useTriviaGame(): TriviaGame {
-  const { state, recordAnswer, completeSession, addXp } = useProgress();
+  const { state, completeSession, addXp } = useProgress();
+  const recorder = useAnswerRecorder('trivia');
   const sound = useSound();
-  const haptics = useHaptics();
   const reducedMotion = useReducedMotion();
   const spinMs = reducedMotion ? REDUCED_SPIN_MS : SPIN_MS;
 
   const [game, setGame] = useState<TriviaState>(INITIAL);
   const startedAt = useRef<number | null>(null);
   const shownAt = useRef(0);
-  const answeredId = useRef<string | null>(null);
   /** Evita cerrar la partida dos veces (doble clic en «Ver resultados»). */
   const ended = useRef(false);
 
@@ -142,7 +138,6 @@ export function useTriviaGame(): TriviaGame {
     });
     // La ruleta cae siempre en la categoría real de la pregunta.
     const category = categoryOfType(question.type) ?? picked;
-    answeredId.current = null;
     setGame({
       ...game,
       phase: 'spinning',
@@ -159,43 +154,19 @@ export function useTriviaGame(): TriviaGame {
   const answer = (optionId: string) => {
     const q = game.question;
     const category = game.category;
-    if (game.phase !== 'question' || !q || !category || answeredId.current === q.id) return;
-    answeredId.current = q.id;
+    if (game.phase !== 'question' || !q || !category) return;
+    const result = recorder.submit(q, optionId, { responseMs: Math.max(0, Math.round(performance.now() - shownAt.current)) });
+    if (!result) return;
 
-    const option = q.options?.find((o) => o.id === optionId);
-    const correct = option?.correct ?? false;
-    const given = option ? (option.sublabel ? `${option.label} (${option.sublabel})` : option.label) : '—';
-    const responseMs = Math.max(0, Math.round(performance.now() - shownAt.current));
-    const outcome = recordAnswer({
-      atomicNumber: q.atomicNumber,
-      skill: q.skill,
-      correct,
-      responseMs,
-      mode: 'trivia',
-      prompt: q.prompt,
-      correctAnswer: q.correctAnswer,
-      givenAnswer: given,
-      difficulty: q.difficulty,
-    });
-
+    const { correct, outcome, entry } = result;
     const newBadge = correct && !game.badges.includes(category) ? category : null;
     const badges = newBadge ? [...game.badges, newBadge] : game.badges;
     const crownNow = !game.crown && badges.length === TRIVIA_CATEGORIES.length;
-
-    if (correct) {
-      sound.correct();
-      haptics.success();
-    } else {
-      sound.wrong();
-      haptics.error();
-    }
     if (crownNow) {
       addXp(CROWN_XP);
       window.setTimeout(() => sound.levelUp(), 350);
     }
 
-    const z = q.atomicNumber;
-    const entry: AnsweredQuestion = { question: q, correct, givenAnswer: given, responseMs, xpGained: outcome.xpGained };
     setGame({
       ...game,
       phase: 'feedback',
@@ -207,9 +178,7 @@ export function useTriviaGame(): TriviaGame {
       newBadge,
       crown: game.crown || crownNow,
       lastOutcome: outcome,
-      masteryStart: z in game.masteryStart ? game.masteryStart : { ...game.masteryStart, [z]: outcome.masteryBefore },
-      masteryEnd: { ...game.masteryEnd, [z]: outcome.masteryAfter },
-      unlocked: [...game.unlocked, ...outcome.unlockedAchievements],
+      tally: tallyAnswer(game.tally, result, outcome),
     });
   };
 
@@ -218,25 +187,16 @@ export function useTriviaGame(): TriviaGame {
     ended.current = true;
     const total = game.answered.length;
     const durationMs = startedAt.current === null ? 0 : Math.max(0, Math.round(performance.now() - startedAt.current));
-    const unlocked = [...game.unlocked];
-    let sessionXp = 0;
-    if (total > 0) {
-      const result = completeSession({ mode: 'trivia', total, correct: game.correctCount, durationMs });
-      sessionXp = result.xpGained;
-      unlocked.push(...result.unlockedAchievements);
-    }
-    const answersXp = game.answered.reduce((sum, a) => sum + a.xpGained, 0);
-    const summary: SessionSummaryData = {
+    const session = total > 0 ? completeSession({ mode: 'trivia', total, correct: game.correctCount, durationMs }) : null;
+    const summary = buildSessionSummary({
       mode: 'trivia',
       title: 'Preguntados',
-      total,
-      correct: game.correctCount,
-      xpGained: answersXp + (game.crown ? CROWN_XP : 0) + sessionXp,
+      answered: game.answered,
+      tally: game.tally,
       durationMs,
-      improved: improvedElements(game.masteryStart, game.masteryEnd),
-      toReview: failedElements(game.answered),
-      unlockedAchievements: Array.from(new Set(unlocked)),
-    };
+      extraXp: (game.crown ? CROWN_XP : 0) + (session?.xpGained ?? 0),
+      unlocked: session?.unlockedAchievements ?? [],
+    });
     setGame({ ...game, phase: 'finished', endReason: reason, summary });
   };
 
@@ -252,7 +212,7 @@ export function useTriviaGame(): TriviaGame {
 
   const restart = () => {
     startedAt.current = null;
-    answeredId.current = null;
+    recorder.reset();
     ended.current = false;
     setGame(INITIAL);
   };

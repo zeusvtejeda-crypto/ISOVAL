@@ -11,4 +11,5 @@ export { ElementTile, type ElementTileProps, type TileSize, type TileStatus } fr
 export { FitToggle, type FitToggleProps } from './FitToggle';
 export { MasteryLegend } from './MasteryLegend';
 export { PeriodicTable, type PeriodicTableProps } from './PeriodicTable';
+export { TIER_TEXTURE } from './mastery-cues';
 export { ALL_ATOMIC_NUMBERS, positionLabel } from './table-geometry';

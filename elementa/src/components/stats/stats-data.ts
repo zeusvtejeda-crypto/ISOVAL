@@ -11,18 +11,46 @@ import { MASTERED_THRESHOLD, masteryTier } from '@/utils/mastery';
 
 type DailyMap = Record<string, DailyActivity>;
 
-/** Actividad (preguntas + flashcards) de cada día. */
-export function questionsPerDay(daily: DailyMap, keys: readonly string[]): number[] {
+/**
+ * Actividad de cada día que cuenta para la meta diaria: preguntas de quiz + flashcards calificadas
+ * (`DailyActivity.questions`). Es lo que se compara con la meta en «Progreso semanal».
+ */
+export function activityPerDay(daily: DailyMap, keys: readonly string[]): number[] {
   return keys.map((k) => daily[k]?.questions ?? 0);
 }
 
-/** Precisión 0–100 de cada día; `null` si ese día no hubo actividad. */
+/** Respuestas de quiz de un día (sin flashcards): la base de la precisión. */
+export function quizAnswers(day: DailyActivity | undefined): number {
+  if (!day) return 0;
+  return Math.max(0, day.questions - (day.flashcards ?? 0));
+}
+
+/** Preguntas de quiz respondidas cada día (sin flashcards), igual que el KPI «Preguntas respondidas». */
+export function questionsPerDay(daily: DailyMap, keys: readonly string[]): number[] {
+  return keys.map((k) => quizAnswers(daily[k]));
+}
+
+/**
+ * Precisión 0–100 de cada día, solo con respuestas de quiz (`correct / (questions − flashcards)`),
+ * igual que «Precisión» y «Precisión general»; `null` si ese día no hubo preguntas de quiz.
+ */
 export function accuracyPerDay(daily: DailyMap, keys: readonly string[]): Array<number | null> {
   return keys.map((k) => {
-    const day = daily[k];
-    if (!day || day.questions <= 0) return null;
-    return Math.round((100 * Math.min(day.correct, day.questions)) / day.questions);
+    const answered = quizAnswers(daily[k]);
+    if (answered <= 0) return null;
+    return Math.round((100 * Math.min(daily[k]?.correct ?? 0, answered)) / answered);
   });
+}
+
+/** Aciertos y respuestas de quiz sumados en esos días (para la precisión media del periodo). */
+export function accuracyTotals(daily: DailyMap, keys: readonly string[]): { correct: number; answered: number } {
+  return keys.reduce(
+    (acc, k) => {
+      const answered = quizAnswers(daily[k]);
+      return { correct: acc.correct + Math.min(daily[k]?.correct ?? 0, answered), answered: acc.answered + answered };
+    },
+    { correct: 0, answered: 0 },
+  );
 }
 
 /** Día (clave local) en que se aprendió cada elemento aprendido; los antiguos sin fecha cuentan desde siempre. */

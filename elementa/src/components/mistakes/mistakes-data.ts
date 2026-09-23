@@ -1,36 +1,20 @@
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import type { MistakeRecord, ProgressState } from '@/types';
 import { dateKey, daysBetween } from '@/utils/dates';
-import { MASTERED_THRESHOLD, computeMastery } from '@/utils/mastery';
 import { pluralize } from '@/utils/format';
+import { difficultElements, type DifficultElement } from '@/utils/selection';
 import { MONTHS_SHORT } from '@/components/stats/labels';
 
-export interface HardElement {
-  atomicNumber: number;
-  /** Dominio actual 0–100. */
-  mastery: number;
-  correct: number;
-  incorrect: number;
-  /** Aciertos / respuestas (0–1). */
-  accuracy: number;
-}
+/** Elemento difícil de «Mis errores» (misma forma que `DifficultElement` de `utils/selection`). */
+export type HardElement = DifficultElement;
 
 /**
- * "Tus elementos más difíciles": los que has fallado alguna vez y aún no dominas,
- * del menor dominio al mayor (a igual dominio, más fallos primero).
+ * "Tus elementos más difíciles": los que has fallado alguna vez y aún no dominas, del menor dominio
+ * al mayor (a igual dominio, más fallos primero). Delega en `difficultElements`, la definición
+ * única que comparten `/practicar?focus=dificiles`, el mazo «Mis errores» y los contadores.
  */
 export function hardElements(state: ProgressState, now: Date): HardElement[] {
-  return Object.values(state.elements)
-    .filter((p) => p.incorrect > 0 && ELEMENTS_BY_NUMBER[p.atomicNumber] !== undefined)
-    .map((p) => ({
-      atomicNumber: p.atomicNumber,
-      mastery: computeMastery(p, now),
-      correct: p.correct,
-      incorrect: p.incorrect,
-      accuracy: p.correct / (p.correct + p.incorrect),
-    }))
-    .filter((h) => h.mastery < MASTERED_THRESHOLD)
-    .sort((a, b) => a.mastery - b.mastery || b.incorrect - a.incorrect || a.atomicNumber - b.atomicNumber);
+  return difficultElements(state, now);
 }
 
 export interface MistakeGroup {

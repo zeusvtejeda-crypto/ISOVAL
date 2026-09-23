@@ -1,6 +1,6 @@
 import { ELEMENTS_BY_NUMBER } from '@/data/elements';
 import type { QuestionType } from '@/types';
-import { ALL_QUESTION_TYPES } from '@/utils/questions';
+import { ALL_QUESTION_TYPES } from '@/utils/question-gen/meta';
 
 export type PracticeFocus = 'errores' | 'dificiles' | 'repaso';
 

@@ -1,15 +1,16 @@
 'use client';
 
+import { QuizScreen } from '@/components/quiz';
 import { useProgress } from '@/hooks/useProgress';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import { formatNumber, pluralize } from '@/utils/format';
 import { GameFlow } from '../shared/GameFlow';
+import { GameHeader, GameHeaderTitle } from '../shared/GameHeader';
 import { GameIntro, RecordPill } from '../shared/GameIntro';
-import { GameScreen } from '../shared/GameScreen';
 import { gameQuestion } from '../shared/game-questions';
 import { useRecordKeeper } from '../shared/use-record-keeper';
 import { SupervivenciaResults } from './SupervivenciaResults';
-import { SurvivalHud } from './SurvivalHud';
+import { SurvivalHud, SurvivalHudCompact } from './SurvivalHud';
 import { SURVIVAL_LIVES, survivalTier } from './survival';
 
 function SupervivenciaIntro({ onPlay }: { onPlay: () => void }) {
@@ -68,16 +69,20 @@ function SupervivenciaPlay({ onExit }: { onExit: () => void }) {
   };
 
   return (
-    <GameScreen
+    <QuizScreen
       session={session}
       onExit={exit}
-      hud={<SurvivalHud session={session} best={records.best} />}
-      renderSummary={(summary) => (
-        <SupervivenciaResults
-          summary={summary}
-          session={session}
-          previousBest={records.previousBest}
+      renderHeader={(s) => (
+        <GameHeader
+          onExit={exit}
+          confirmExit={s.answered.length > 0}
+          center={<GameHeaderTitle>{s.title}</GameHeaderTitle>}
+          compact={<SurvivalHudCompact session={s} />}
         />
+      )}
+      renderTop={(s) => <SurvivalHud session={s} best={records.best} />}
+      renderSummary={(summary, s) => (
+        <SupervivenciaResults summary={summary} session={s} previousBest={records.previousBest} />
       )}
     />
   );

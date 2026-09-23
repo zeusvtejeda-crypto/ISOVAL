@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { X } from 'lucide-react';
-import { ExitConfirm } from '@/components/quiz';
-import { IconButton, ProgressBar, cn } from '@/components/ui';
+import { ImmersiveHeader } from '@/components/quiz/ImmersiveHeader';
+import { ProgressBar, cn } from '@/components/ui';
 import { formatNumber } from '@/utils/format';
 
 export interface StudyHeaderProps {
@@ -18,20 +16,21 @@ export interface StudyHeaderProps {
   confirmExit: boolean;
 }
 
-/** Cabecera fija del estudio: salir, progreso "x / total" y XP de la sesión. */
+const EXIT_COPY = {
+  description: 'Las tarjetas que ya calificaste cuentan para tu progreso, pero no verás el resumen final.',
+  stayLabel: 'Seguir estudiando',
+};
+
+/** Cabecera fija del estudio (la de las pantallas inmersivas): salir, progreso "x / total" y XP de la sesión. */
 export function StudyHeader({ done, total, xp, onExit, confirmExit }: StudyHeaderProps) {
-  const [confirming, setConfirming] = useState(false);
-
-  const requestExit = () => {
-    if (confirmExit) setConfirming(true);
-    else onExit();
-  };
-
   return (
-    <header className="sticky top-safe z-30 -mx-4 bg-bg/90 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6">
-      <div className="flex items-center gap-2 sm:gap-3">
-        <IconButton label="Salir de las flashcards" icon={<X />} onClick={requestExit} className="-ml-2" />
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+    <ImmersiveHeader
+      onExit={onExit}
+      confirmExit={confirmExit}
+      exitLabel="Salir de las flashcards"
+      exitCopy={EXIT_COPY}
+      center={
+        <>
           <ProgressBar
             value={total > 0 ? done / total : 0}
             size="lg"
@@ -40,7 +39,9 @@ export function StudyHeader({ done, total, xp, onExit, confirmExit }: StudyHeade
           <span className="shrink-0 text-sm font-black text-muted tabular">
             {done}/{total}
           </span>
-        </div>
+        </>
+      }
+      right={
         <span
           role="img"
           aria-label={`XP de la sesión: ${xp}`}
@@ -54,18 +55,7 @@ export function StudyHeader({ done, total, xp, onExit, confirmExit }: StudyHeade
           </span>
           <span aria-hidden>{formatNumber(xp)}</span>
         </span>
-      </div>
-
-      <ExitConfirm
-        open={confirming}
-        description="Las tarjetas que ya calificaste cuentan para tu progreso, pero no verás el resumen final."
-        stayLabel="Seguir estudiando"
-        onStay={() => setConfirming(false)}
-        onLeave={() => {
-          setConfirming(false);
-          onExit();
-        }}
-      />
-    </header>
+      }
+    />
   );
 }

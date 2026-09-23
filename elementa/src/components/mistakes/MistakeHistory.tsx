@@ -113,7 +113,7 @@ export function MistakeHistory({ mistakes, now, onClear }: MistakeHistoryProps) 
           <div role="group" aria-label="Filtrar por elemento" className="flex flex-wrap gap-2">
               <Chip size="md" selected={active === null} onClick={() => choose(null)}>
                 Todos
-                <span className="tabular opacity-70">{mistakes.length}</span>
+                <span className="text-muted tabular">{mistakes.length}</span>
               </Chip>
               {chipGroups.map((g) => {
                 const el = getElement(g.atomicNumber);
@@ -127,7 +127,7 @@ export function MistakeHistory({ mistakes, now, onClear }: MistakeHistoryProps) 
                     title={el.name}
                   >
                     <span className="font-black">{el.symbol}</span>
-                    <span className="tabular opacity-70">{g.count}</span>
+                    <span className="text-muted tabular">{g.count}</span>
                   </Chip>
                 );
               })}

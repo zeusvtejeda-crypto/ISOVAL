@@ -11,7 +11,7 @@ import type {
 } from '@/types';
 import { isDateKey } from '@/utils/dates';
 import { createElementProgress, MAX_INTERVAL_DAYS } from '@/utils/srs';
-import { createInitialState, DAILY_GOALS, MAX_MISTAKES, STATE_VERSION } from '@/utils/state';
+import { createInitialState, DAILY_GOALS, MAX_MISTAKES, MAX_XP, STATE_VERSION } from '@/utils/state';
 
 /**
  * Valida y normaliza datos desconocidos (localStorage, archivo importado) a un `ProgressState`.
@@ -147,6 +147,8 @@ function parseDaily(v: unknown, goalFallback: number): Record<string, DailyActiv
       date: key,
       questions,
       correct: num(value.correct, 0),
+      // Guardados anteriores no tienen `flashcards`: 0. Nunca más que la actividad total del día.
+      flashcards: Math.min(questions, num(value.flashcards, 0)),
       xp: num(value.xp, 0),
       timeMs: num(value.timeMs, 0),
       newLearned: num(value.newLearned, 0),
@@ -202,7 +204,7 @@ export function parseProgressState(input: unknown, now: Date = new Date()): Prog
       sound: bool(settings.sound, d.settings.sound),
       haptics: bool(settings.haptics, d.settings.haptics),
     },
-    xp: Math.floor(num(raw.xp, 0)),
+    xp: Math.min(MAX_XP, Math.floor(num(raw.xp, 0))),
     elements: parseElements(raw.elements),
     mistakes: Array.isArray(raw.mistakes)
       ? raw.mistakes
