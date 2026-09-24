@@ -1,0 +1,91 @@
+// Formatos en español de México. Fechas de cita = 'YYYY-MM-DD' (hora local de la barbería).
+import { addDays, weekday, parseDateKey, nowInTz, pad2, diffDays } from '../../core/util.js';
+
+export { addDays, weekday, diffDays };
+
+const nf0 = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+export function money(n, opts) {
+  n = Number(n) || 0;
+  const cents = Math.round(n * 100) % 100 !== 0;
+  const s = (cents || (opts && opts.cents) ? nf2 : nf0).format(Math.abs(n));
+  return (n < 0 ? '−$' : '$') + s;
+}
+export function compactMoney(n) {
+  n = Number(n) || 0;
+  if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1).replace('.0', '') + ' M';
+  if (Math.abs(n) >= 1e4) return '$' + (n / 1e3).toFixed(1).replace('.0', '') + ' k';
+  return money(n);
+}
+export const number = (n) => nf0.format(Number(n) || 0);
+export const pct = (n, d) => (Number.isFinite(n) ? (Math.round(n * 10) / 10).toString().replace('.', ',') : '0') + '%';
+
+export function time(min) { if (min == null) return ''; return pad2(Math.floor(min / 60)) + ':' + pad2(min % 60); }
+export function timeRange(a, b) { return time(a) + '–' + time(b); }
+export function duration(m) { m = Number(m) || 0; const h = Math.floor(m / 60), r = m % 60; return h ? (r ? h + ' h ' + r + ' min' : h + ' h') : r + ' min'; }
+
+const DOW = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const DOW_S = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const MON = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MON_S = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+export const WEEKDAYS = DOW, WEEKDAYS_SHORT = DOW_S, MONTHS = MON, MONTHS_SHORT = MON_S;
+
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+export function dateLong(k) { const d = parseDateKey(k); return DOW[d.getUTCDay()] + ' ' + d.getUTCDate() + ' de ' + MON[d.getUTCMonth()]; }
+export function dateLongCap(k) { return cap(dateLong(k)); }
+export function dateShort(k) { const d = parseDateKey(k); return DOW_S[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MON_S[d.getUTCMonth()]; }
+export function dateNum(k) { const d = parseDateKey(k); return d.getUTCDate() + ' ' + MON_S[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+export function monthYear(k) { const d = parseDateKey(k); return cap(MON[d.getUTCMonth()]) + ' ' + d.getUTCFullYear(); }
+export function dayNum(k) { return parseDateKey(k).getUTCDate(); }
+
+// "Hoy", "Mañana", "Ayer" o fecha corta, relativo a `today`.
+export function relDay(k, today) {
+  const d = diffDays(today, k);
+  if (d === 0) return 'Hoy';
+  if (d === 1) return 'Mañana';
+  if (d === -1) return 'Ayer';
+  return cap(dateShort(k));
+}
+// "hace 5 min" a partir de un ISO.
+export function ago(iso) {
+  const s = Math.round((Date.now() - Date.parse(iso)) / 1000);
+  if (!isFinite(s)) return '';
+  if (s < 45) return 'hace un momento';
+  if (s < 3600) return 'hace ' + Math.round(s / 60) + ' min';
+  if (s < 86400) return 'hace ' + Math.round(s / 3600) + ' h';
+  if (s < 86400 * 7) { const d = Math.round(s / 86400); return 'hace ' + d + (d === 1 ? ' día' : ' días'); }
+  return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+}
+export function dateTimeIso(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+export function todayIn(tz) { return nowInTz(tz).date; }
+export function nowMinIn(tz) { return nowInTz(tz).minutes; }
+export function startOfWeek(k) { const wd = weekday(k); return addDays(k, -((wd + 6) % 7)); } // lunes
+export function startOfMonth(k) { return k.slice(0, 8) + '01'; }
+export function endOfMonth(k) { const d = parseDateKey(startOfMonth(k)); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); }
+export function addMonths(k, n) { const d = parseDateKey(startOfMonth(k)); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); }
+
+export function phone(p) { const d = String(p || '').replace(/\D/g, ''); return d.length === 10 ? d.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : d; }
+export function initials(name) { const w = String(name || '?').trim().split(/\s+/); return ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase(); }
+export function firstName(name) { return String(name || '').trim().split(/\s+/)[0] || ''; }
+export function plural(n, one, many) { return number(n) + ' ' + (n === 1 ? one : (many || one + 's')); }
+
+export const STATUS = {
+  pending: { label: 'Pendiente', short: 'Pendiente' },
+  confirmed: { label: 'Confirmada', short: 'Confirmada' },
+  completed: { label: 'Atendida', short: 'Atendida' },
+  cancelled: { label: 'Cancelada', short: 'Cancelada' },
+  no_show: { label: 'No asistió', short: 'No asistió' }
+};
+export const statusLabel = (s) => (STATUS[s] || { label: s }).label;
+export const METHOD = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', other: 'Otro' };
+export const SOURCE = { online: 'En línea', manual: 'Manual', walkin: 'Sin cita', import: 'Importada' };
+export const ROLE = { superadmin: 'Superadmin', owner: 'Dueño', barber: 'Barbero', client: 'Cliente' };
+
+// Color estable para avatar a partir del nombre (si no hay color asignado).
+const PALETTE = ['#9E7826', '#2F6F6B', '#7A4B8C', '#4A6B3A', '#8C4B3A', '#3A5A8C', '#8C3A5E', '#5E6B2F'];
+export function colorFor(key) { let h = 0; for (const c of String(key || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; }

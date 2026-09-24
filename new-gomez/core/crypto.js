@@ -7,9 +7,12 @@ const fromHex = (h) => new Uint8Array(h.match(/.{2}/g).map((x) => parseInt(x, 16
 
 export async function sha256Hex(s) { return toHex(await crypto.subtle.digest('SHA-256', enc.encode(s))); }
 
-// Iteraciones moderadas: el plan gratuito de Workers limita CPU por petición. El número queda
-// guardado en cada hash, así que subirlo después no invalida contraseñas existentes.
-export const PBKDF2_ITERATIONS = 40000;
+// Iteraciones moderadas: el plan gratuito de Workers limita el CPU por petición (~10 ms), y PBKDF2
+// cuenta como CPU. El número queda guardado en cada hash, así que subirlo después (plan de pago)
+// no invalida contraseñas existentes. Los PIN usan PIN_ITERATIONS: un PIN de 4 dígitos se protege
+// con el límite de intentos del servidor, no con el costo del hash.
+export const PBKDF2_ITERATIONS = 10000;
+export const PIN_ITERATIONS = 2000;
 
 async function pbkdf2(secret, saltBytes, iterations) {
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), 'PBKDF2', false, ['deriveBits']);
