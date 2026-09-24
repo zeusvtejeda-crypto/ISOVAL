@@ -58,6 +58,8 @@ export function parseStart(v) {
   return Number.isInteger(n) && n >= 0 && n < 1440 ? n : null;
 }
 export function parseDateField(v) { return isDateKey(v) ? v : null; }
+// Fecha de cita razonable para el panel: hasta 1 año atrás y 2 años adelante (evita errores de captura).
+export function inAgendaRange(date, now) { const d = diffDays(now.date, date); return d >= -366 && d <= 731; }
 export function cleanText(v, max) { return v == null ? '' : String(v).replace(/\s+/g, ' ').trim().slice(0, max); }
 // Texto libre con límite estricto (se rechaza, no se recorta en silencio).
 export function textField(errs, field, v, max, label) {
@@ -118,7 +120,7 @@ async function resolveStaff(c, ag, { staff_id, date, start, duration, services, 
   }
   const st = ag.staff[staff_id];
   if (!st || !st.active) throw bad('Ese barbero no está disponible.', { staff_id: 'Barbero no disponible.' });
-  if (pub && (!st.bookable || !offersAll(st.id, services))) throw bad('Ese barbero no ofrece los servicios elegidos. Elige otro.', { staff_id: 'No ofrece esos servicios.' });
+  if (pub && (!st.bookable || !offersAll(st.id, services))) throw bad('Ese barbero no está disponible para esos servicios. Elige otro.', { staff_id: 'Barbero no disponible.' });
   if (!force) { const r = checkFree(ag, { staffId: st.id, date, start, duration, excludeId, now: c.now, mode }); if (r) throw slotError(r); }
   return st.id;
 }
@@ -136,7 +138,9 @@ async function uniqueFolio(sdb) {
 
 // ── Crear ──
 // o: { staff_id:'any'|id, date, start_min, services:[filas], client, client_name, client_phone, client_note,
-//      internal_note, status, source, created_by, mode:'public'|'staff', force, first_visit, manage_token_hash }
+//      internal_note, status, source, created_by, mode:'public'|'staff', force, first_visit, manage_token_hash,
+//      getClient?: async () => ({ client, first_visit }) — se llama solo cuando el horario ya se validó
+//      (así un 409 no deja fichas de cliente huérfanas) }
 export async function createAppointment(c, o) {
   const snap = snapshot(o.services);
   const duration = durationOf(snap);
@@ -148,6 +152,7 @@ export async function createAppointment(c, o) {
   }
   const ag = await loadAgenda(c.sdb, c.shop, { from: o.date, to: o.date });
   const staff_id = await resolveStaff(c, ag, { staff_id: o.staff_id, date: o.date, start: o.start_min, duration, services: o.services, mode: o.mode, force: o.force });
+  if (o.getClient) o = Object.assign({}, o, await o.getClient());
   const at = nowIso();
   const row = await c.sdb.insert('appointments', {
     id: newId('ap'), folio: await uniqueFolio(c.sdb), client_id: o.client ? o.client.id : null, staff_id,
@@ -248,7 +253,8 @@ export async function updateAppointment(c, a, p, { force } = {}) {
     if (!st || (staff_id !== a.staff_id && !st.active)) throw bad('Ese barbero no está disponible.', { staff_id: 'Barbero no disponible.' });
     if (start + duration > 1440) throw bad('La cita debe terminar antes de medianoche.', { start_min: 'Termina después de las 24:00.' });
     if (!force && OCCUPYING.includes(a.status)) {
-      const r = checkFree(ag, { staffId: staff_id, date, start, duration, excludeId: a.id, now: c.now, mode: 'staff' });
+      // Mover exige horario de trabajo; si solo cambia la duración, basta con no chocar.
+      const r = checkFree(ag, { staffId: staff_id, date, start, duration, excludeId: a.id, now: c.now, mode: moved ? 'staff' : 'restore' });
       if (r) throw slotError(r);
     }
     Object.assign(patch, { date, start_min: start, end_min: start + duration, staff_id });

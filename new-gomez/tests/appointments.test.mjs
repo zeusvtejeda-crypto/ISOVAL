@@ -97,7 +97,8 @@ test('crear: validaciones con mensajes por campo', async () => {
   const f = await setup();
   let r = await f.call('POST', '/api/appointments', { as: 'ownerA', ...A, body: {} });
   assert.equal(r.status, 400);
-  for (const k of ['staff_id']) assert.ok(r.error.fields[k], k);
+  for (const k of ['staff_id', 'date', 'start_min', 'services', 'client']) assert.ok(r.error.fields[k], k);
+  assert.equal(r.error.message, 'Revisa los datos marcados.');
   r = await f.call('POST', '/api/appointments', { as: 'ownerA', ...A, body: { staff_id: 'st_barberA', date: '2026-13-40', start_min: 2000, services: [] } });
   assert.equal(r.status, 400);
   for (const k of ['date', 'start_min', 'services', 'client']) assert.ok(r.error.fields[k], k);
@@ -112,6 +113,9 @@ test('crear: validaciones con mensajes por campo', async () => {
   assert.equal(r.status, 400); assert.ok(r.error.fields.internal_note);
   r = await f.newAppt({ start_min: 1420 });
   assert.equal(r.status, 400, 'no cruza medianoche');
+  r = await f.newAppt({ date: addDays(f.day, 1000) });
+  assert.equal(r.status, 400, 'fecha absurda');
+  assert.ok(r.error.fields.date);
   r = await f.newAppt({ start_min: '10:20' });
   assert.equal(r.status, 200, 'acepta HH:MM');
   assert.equal(r.data.start_min, 620);

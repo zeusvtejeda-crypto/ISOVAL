@@ -75,7 +75,7 @@ test('public days/slots: rango, cierre en domingo, duración y barbero', async (
   assert.equal(r.data.duration_min, 60);
   assert.equal(r.data.closed, false);
   assert.equal(r.data.slots[0].start_min, 600);
-  assert.deepEqual(r.data.slots[0].staff_ids, ['st_ownerA', 'st_barberA', 'st_barberA2'].filter((x) => r.data.slots[0].staff_ids.includes(x)));
+  assert.deepEqual(r.data.slots[0].staff_ids, ['st_barberA', 'st_barberA2', 'st_ownerA'], 'orden sort → nombre');
   assert.equal(r.data.slots[r.data.slots.length - 1].start_min, 1140);
   r = await f.call('GET', '/api/public/shops/alfa/slots?date=' + f.day + '&services=sv_corte&staff=st_barberA2');
   assert.ok(r.data.slots.every((s) => s.staff_ids.join() === 'st_barberA2'));

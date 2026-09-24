@@ -8,7 +8,7 @@ import { shopSettings } from '../domain/settings.js';
 import { publicShopView, publicApptView } from '../domain/views.js';
 import { findOrCreateClient } from '../domain/clients.js';
 import { sendBookingEmail } from '../domain/email.js';
-import { loadAgenda, candidates, computeSlots, computeDays } from '../domain/slots.js';
+import { loadAgenda, candidates, offersAll, computeSlots, computeDays } from '../domain/slots.js';
 import {
   ACTIVE, failIf, parseIds, parseStart, parseDateField, parseContact, textField, loadServices, createAppointment,
   changeStatus, reschedule, notifyNew, managePolicy, assertClientCan
@@ -144,6 +144,10 @@ async function book(ctx) {
   if (staffWanted === 'any' && !st.booking.allow_any_staff) errs.staff_id = 'Elige un barbero.';
   failIf(errs);
   const services = await loadServices(c.sdb, ids);
+  if (staffWanted !== 'any') {
+    const stf = await c.sdb.findOne('staff', { id: staffWanted });
+    if (!stf || !stf.active || !stf.bookable || !offersAll(stf.id, services)) throw bad('Ese barbero no está disponible para esos servicios. Elige otro.', { staff_id: 'Barbero no disponible.' });
+  }
 
   // Doble envío / reserva repetida: mismo teléfono, misma fecha y hora, activa.
   if (contact.phone) {
@@ -154,18 +158,21 @@ async function book(ctx) {
   // Sesión: si es un usuario (no personal de esta barbería), la ficha queda vinculada a su cuenta.
   const isTeam = ctx.user && (ctx.user.is_superadmin || ctx.contexts.some((x) => x.shop_id === shop.id && x.role !== 'client'));
   const user_id = ctx.user && !isTeam ? ctx.user.id : null;
-  const { client, created } = await findOrCreateClient(c.sdb, { name: contact.name, phone: contact.phone, email: contact.email, user_id, source: 'online' });
-  let first_visit = true;
-  if (!created) {
-    const prev = await c.sdb.count('appointments', { client_id: client.id, status: 'completed' });
-    first_visit = prev === 0 ? (b.first_visit == null ? true : !!b.first_visit) : false;
-  }
+  const getClient = async () => {
+    const { client, created } = await findOrCreateClient(c.sdb, { name: contact.name, phone: contact.phone, email: contact.email, user_id, source: 'online' });
+    let first_visit = true;
+    if (!created) {
+      const prev = await c.sdb.count('appointments', { client_id: client.id, status: 'completed' });
+      first_visit = prev === 0 ? (b.first_visit == null ? true : !!b.first_visit) : false;
+    }
+    return { client, first_visit };
+  };
 
   const token = newToken();
   const appt = await createAppointment(c, {
-    staff_id: staffWanted, date, start_min: start, services, client, client_name: contact.name, client_phone: contact.phone,
+    staff_id: staffWanted, date, start_min: start, services, getClient, client_name: contact.name, client_phone: contact.phone,
     client_note: note || null, status: st.booking.auto_confirm ? 'confirmed' : 'pending', source: 'online', created_by: 'online',
-    mode: 'public', first_visit, manage_token_hash: await sha256Hex(token)
+    mode: 'public', manage_token_hash: await sha256Hex(token)
   });
   await rateFail(ctx.db, rateKey, BOOK_LIMIT); // cuenta cada reserva hecha desde esta IP
   const staff = await c.sdb.findOne('staff', { id: appt.staff_id });

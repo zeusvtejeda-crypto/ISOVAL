@@ -1,0 +1,46 @@
+{
+  "id": "./",
+  "name": "TuBarbería",
+  "short_name": "TuBarbería",
+  "description": "Agenda, clientes, caja, comisiones y reportes de tu barbería en un solo lugar, desde el celular o la computadora.",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "any",
+  "background_color": "#F5F3EE",
+  "theme_color": "#15130F",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Agenda de hoy",
+      "short_name": "Agenda",
+      "description": "Ver las citas de hoy",
+      "url": "./#/agenda",
+      "icons": [{ "src": "icons/shortcut-agenda.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Nueva cita",
+      "short_name": "Nueva cita",
+      "description": "Agendar una cita",
+      "url": "./#/agenda?nueva=1",
+      "icons": [{ "src": "icons/shortcut-new.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Caja",
+      "short_name": "Caja",
+      "description": "Cobros y corte de caja",
+      "url": "./#/caja",
+      "icons": [{ "src": "icons/shortcut-cash.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import { findOrCreateClient } from '../domain/clients.js';
 import { loadAgenda, candidates, computeSlots } from '../domain/slots.js';
 import {
   STATUSES, failIf, parseIds, parseStart, parseDateField, parseContact, textField, loadServices,
-  createAppointment, updateAppointment, changeStatus, notifyNew, hasStarted
+  createAppointment, updateAppointment, changeStatus, notifyNew, hasStarted, inAgendaRange
 } from '../domain/appointments.js';
 
 const READ = ['appointments.read.all', 'appointments.read.own'];
@@ -30,16 +30,15 @@ async function getOwnAppt(ctx, allPerm) {
   return a;
 }
 
-// Barbero pedido según permisos: el barbero .own solo puede usar el suyo.
-function staffFor(ctx, raw, { allowAny } = {}) {
+// Barbero pedido según permisos: el barbero .own solo puede usar el suyo. errs: junta el error de campo.
+function staffFor(ctx, raw, errs) {
   const own = ownScope(ctx, 'appointments.write.all');
   const v = raw == null || raw === '' ? '' : String(raw);
   if (own) {
     if (v && v !== 'any' && v !== own) throw forbidden('Solo puedes agendar en tu propia agenda.');
     return own;
   }
-  if (!v) throw bad('Elige un barbero.', { staff_id: 'Elige un barbero.' });
-  if (v === 'any' && !allowAny) throw bad('Elige un barbero.', { staff_id: 'Elige un barbero.' });
+  if (!v) { if (errs) errs.staff_id = 'Elige un barbero.'; else throw bad('Elige un barbero.', { staff_id: 'Elige un barbero.' }); }
   return v;
 }
 
@@ -49,7 +48,7 @@ async function slots(ctx) {
   if (!date) throw bad('Elige una fecha válida.', { date: 'Usa el formato AAAA-MM-DD.' });
   const services = await loadServices(ctx.sdb, parseIds(q.services), { allowInactive: true });
   const duration = services.reduce((m, s) => m + (Number(s.duration_min) || 0), 0);
-  const want = staffFor(ctx, q.staff_id || 'any', { allowAny: true });
+  const want = staffFor(ctx, q.staff_id || 'any');
   const ag = await loadAgenda(ctx.sdb, ctx.shop, { from: date, to: date });
   let staffIds;
   if (want === 'any') staffIds = candidates(ag, services, { bookable: true }).map((s) => s.id);
@@ -106,7 +105,7 @@ async function list(ctx) {
 
 async function detail(ctx) {
   const a = await getOwnAppt(ctx, 'appointments.read.all');
-  const order = ['created_at asc', 'id asc'];
+  const order = 'created_at asc'; // empates (mismo ms) conservan el orden de inserción
   const [appointment, client, events, payments, messages] = await Promise.all([
     apptView(ctx.sdb, a),
     a.client_id ? ctx.sdb.findOne('clients', { id: a.client_id }) : null,
@@ -137,9 +136,10 @@ async function resolveClient(ctx, b, errs, source) {
 async function create(ctx) {
   const b = ctx.req.body || {};
   const errs = {};
-  const staff_id = staffFor(ctx, b.staff_id, { allowAny: true });
+  const staff_id = staffFor(ctx, b.staff_id, errs);
   const date = parseDateField(b.date);
   if (!date) errs.date = 'Elige una fecha válida.';
+  else if (!inAgendaRange(date, ctx.now())) errs.date = 'La fecha está fuera de rango (máximo 1 año atrás o 2 años adelante).';
   const start = parseStart(b.start_min);
   if (start == null) errs.start_min = 'Elige una hora válida.';
   const ids = parseIds(b.services);
@@ -157,12 +157,15 @@ async function create(ctx) {
     throw bad('Solo puedes registrar como atendida una cita que ya empezó o empieza en menos de una hora.', { status: 'La cita aún no empieza.' });
   }
   const services = await loadServices(ctx.sdb, ids);
-  let client = who.client;
-  if (!client) client = (await findOrCreateClient(ctx.sdb, { name: who.contact.name, phone: who.contact.phone, email: who.contact.email, source: who.source })).client;
-  const first = (await ctx.sdb.count('appointments', { client_id: client.id, status: 'completed' })) === 0;
+  // La ficha se crea solo si el horario es válido (un 409 no deja clientes huérfanos).
+  const getClient = async () => {
+    const client = who.client || (await findOrCreateClient(ctx.sdb, { name: who.contact.name, phone: who.contact.phone, email: who.contact.email, source: who.source })).client;
+    const first_visit = (await ctx.sdb.count('appointments', { client_id: client.id, status: 'completed' })) === 0;
+    return { client, client_name: client.name, client_phone: client.phone || '', first_visit };
+  };
   const appt = await createAppointment(c, {
-    staff_id, date, start_min: start, services, client, client_name: client.name, client_phone: client.phone || '',
-    client_note: client_note || null, internal_note: internal_note || null, status, source, mode: 'staff', force: b.force === true, first_visit: first
+    staff_id, date, start_min: start, services, getClient,
+    client_note: client_note || null, internal_note: internal_note || null, status, source, mode: 'staff', force: b.force === true
   });
   await notifyNew(c, appt, { online: false });
   return apptView(ctx.sdb, appt);
@@ -180,7 +183,11 @@ async function patch(ctx) {
     if (p.staff_id === 'any') errs.staff_id = 'Elige un barbero.';
     else if (own && p.staff_id !== own) throw forbidden('Solo el dueño puede pasar una cita a otro barbero.');
   }
-  if (b.date !== undefined) { p.date = parseDateField(b.date); if (!p.date) errs.date = 'Elige una fecha válida.'; }
+  if (b.date !== undefined) {
+    p.date = parseDateField(b.date);
+    if (!p.date) errs.date = 'Elige una fecha válida.';
+    else if (p.date !== a.date && !inAgendaRange(p.date, ctx.now())) errs.date = 'La fecha está fuera de rango (máximo 1 año atrás o 2 años adelante).';
+  }
   if (b.start_min !== undefined) { p.start_min = parseStart(b.start_min); if (p.start_min == null) errs.start_min = 'Elige una hora válida.'; }
   if (b.internal_note !== undefined) p.internal_note = textField(errs, 'internal_note', b.internal_note, 1000, 'La nota interna');
   if (b.client_note !== undefined) p.client_note = textField(errs, 'client_note', b.client_note, 500, 'La nota del cliente');

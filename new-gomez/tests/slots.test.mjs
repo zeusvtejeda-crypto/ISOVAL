@@ -330,3 +330,28 @@ test('api descansos: crear, listar, borrar, permisos y aislamiento', async () =>
   r = await f.call('GET', '/api/time-off?from=' + f.day + '&to=' + f.day, { as: 'ownerA', ...A });
   assert.deepEqual(r.data, []);
 });
+
+test('slots: propiedad — lo que se ofrece es exactamente lo que checkFree acepta, sin traslapes (aleatorio)', () => {
+  let seed = 42;
+  const rnd = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+  for (let round = 0; round < 60; round++) {
+    const step = [10, 15, 20, 30][rnd(4)];
+    const buffer = [0, 5, 10][rnd(3)];
+    const appointments = [];
+    for (let i = 0; i < rnd(8); i++) { const s = 600 + rnd(36) * 15; appointments.push(ap('r' + i, ['a', 'b'][rnd(2)], MON, s, s + 15 + rnd(4) * 15, ['confirmed', 'pending', 'cancelled', 'no_show'][rnd(4)])); }
+    const timeOff = rnd(2) ? [{ staff_id: ['a', 'b', null][rnd(3)], date_from: MON, date_to: MON, start_min: 700 + rnd(10) * 10, end_min: 800 + rnd(10) * 10 }] : [];
+    const availability = rnd(2) ? [{ staff_id: 'a', weekday: 1, start_min: 540, end_min: 780 }, { staff_id: 'a', weekday: 1, start_min: 840, end_min: 1140 }] : [];
+    const ag = buildAgenda({ settings: { hours, booking: { step_min: step, buffer_min: buffer, lead_min: rnd(3) * 30 } }, staff, availability, timeOff, appointments });
+    const now = { date: MON, minutes: 540 + rnd(6) * 30 };
+    const dur = 20 + rnd(5) * 10;
+    const r = computeSlots(ag, { date: MON, duration: dur, staffIds: ['a', 'b'], now, mode: 'public' });
+    for (const id of ['a', 'b']) {
+      const offered = new Set(r.slots.filter((x) => x.staff_ids.includes(id)).map((x) => x.start_min));
+      for (let t = 480; t < 1260; t += 5) {
+        const ok = checkFree(ag, { staffId: id, date: MON, start: t, duration: dur, now, mode: 'public' }) === null;
+        assert.equal(ok, offered.has(t), 'ronda ' + round + ' barbero ' + id + ' t=' + t);
+        if (ok) for (const x of appointments) if (x.staff_id === id && ['confirmed', 'pending'].includes(x.status)) assert.ok(t + dur + buffer <= x.start_min || t >= x.end_min + buffer);
+      }
+    }
+  }
+});
