@@ -60,8 +60,9 @@
 (function(){
   var d=document.documentElement;
   if(/^#\/?panel/.test(location.hash)){location.replace('app/');return}
-  // Sitio de demostración (demo.<dominio>): la raíz lleva a la guía para presentar la app.
-  if(/^demo\./i.test(location.hostname)&&!/[?&](b|cita)=/.test(location.search)){location.replace('app/#/guia');return}
+  // Sitio de demostración (demo.<dominio>): la raíz abre la reserva de la barbería de ejemplo (la guía para
+  // presentar vive en /guia → app/#/guia).
+  if(/^demo\./i.test(location.hostname)&&!/[?&](b|cita)=/.test(location.search))history.replaceState(null,'',location.pathname+'?b=demo'+location.hash);
   d.className+=' js';
   var p;try{p=new URLSearchParams(location.search)}catch(e){return}
   var b=(p.get('b')||'').trim().toLowerCase(),hint='';
@@ -874,6 +875,7 @@ const $ = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 const Q = new URLSearchParams(location.search);
 const DEMO_SLUGS = ['demo', 'demo-norte'];
+const DEMO_OWNER = 'app/#/demo?rol=owner'; // panel de la demo como dueño, sin contraseña
 const LSK = { citas: 'tb:pub:citas', me: 'tb:pub:me', app: 'tb:pub:app-slug', host: 'tb:pub:host:' + location.host };
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -1212,7 +1214,7 @@ function paintShop() {
   if (safeUrl(pub.tiktok)) fl.push(html`<a href="${safeUrl(pub.tiktok)}" target="_blank" rel="noopener">TikTok</a>`);
   if (reviewUrl) fl.push(html`<a href="${reviewUrl}" target="_blank" rel="noopener">${/google\.|g\.page/i.test(reviewUrl) ? 'Reseña en Google' : 'Deja tu reseña'}</a>`);
   if (C.isNG) fl.push(html`<a href="${NEGOCIO.fresha}" target="_blank" rel="noopener">Perfil en Fresha</a>`);
-  fl.push(html`<a href="app/">Acceso del equipo</a>`);
+  fl.push(C.demo ? html`<a href="${DEMO_OWNER}">Acceso para la barbería</a>` : html`<a href="app/">Acceso del equipo</a>`);
   $('#fLinks').innerHTML = String(html`${fl}`);
   const addrLong = C.isNG && sh.address === NEGOCIO.direccion ? NEGOCIO.direccion + ', ' + NEGOCIO.cp + ' ' + NEGOCIO.ciudadLarga : address;
   $('#fDireccion').textContent = [addrLong, hoursSummary(sh, true)].filter(Boolean).join(' · ');
@@ -1319,7 +1321,7 @@ function paintManifest(sh) {
 function paintNotice() {
   const n = $('#notice');
   let body = null;
-  if (C.demo) body = html`${raw(icon('sparkles'))}<div><b>Estás en la demo.</b> Esta barbería es ficticia y todo vive solo en este navegador. Reserva como cliente y luego mírala en el <a href="app/#/demo">panel de la demo</a>.</div>`;
+  if (C.demo) body = html`${raw(icon('sparkles'))}<div><b>Barbería de ejemplo.</b> Reserva como si fueras cliente y luego mira cómo le llega: <a href="${DEMO_OWNER}">Acceso para la barbería</a>.</div>`;
   else if (C.mode === 'wa' && C.why === 'offline') body = html`${raw(icon('info'))}<div><b>Reserva por WhatsApp.</b> En este momento no podemos confirmar horarios en línea: arma tu cita aquí y envíanos la solicitud por WhatsApp; te confirmamos en minutos.</div>`;
   else if (C.mode === 'wa') body = html`${raw(icon('info'))}<div><b>${C.shop.name} confirma sus citas por WhatsApp.</b> Arma tu cita aquí y envía la solicitud; te responderán para confirmar el horario.</div>`;
   n.hidden = !body;
@@ -1804,8 +1806,8 @@ function renderDone() {
     </div>
     <div class="actions two">${isIOS ? html`${iBtn}${gBtn}` : html`${gBtn}${iBtn}`}</div>
     ${shopWa(sh) ? html`<div class="actions"><a class="btn btn-ghost" href="${waUrl(shopWa(sh), waMsg)}" target="_blank" rel="noopener">${raw(WA_SVG)}Avisar por WhatsApp a la barbería</a></div>` : ''}
-    <a class="acct" href="${'app/#/registro?b=' + encodeURIComponent(C.slug)}">${raw(icon('user-plus'))}<span class="grow"><b>Crea tu cuenta para ver tus citas</b><span>Consulta, cambia o repite tus citas desde cualquier dispositivo.</span></span>${raw(icon('chevron-right'))}</a>
-    ${C.demo ? html`<a class="acct" href="app/#/demo">${raw(icon('calendar-check'))}<span class="grow"><b>Mírala en el panel de la demo</b><span>Entra como dueño: tu cita ya aparece en la agenda del día.</span></span>${raw(icon('chevron-right'))}</a>` : ''}
+    ${C.demo ? html`<a class="acct" href="${DEMO_OWNER + '&fecha=' + a.date + '&cita=' + encodeURIComponent(a.id)}">${raw(icon('calendar-check'))}<span class="grow"><b>Ver cómo le llega a la barbería</b><span>Tu cita ya está en su agenda. Entra como dueño, sin contraseña.</span></span>${raw(icon('chevron-right'))}</a>`
+      : html`<a class="acct" href="${'app/#/registro?b=' + encodeURIComponent(C.slug)}">${raw(icon('user-plus'))}<span class="grow"><b>Crea tu cuenta para ver tus citas</b><span>Consulta, cambia o repite tus citas desde cualquier dispositivo.</span></span>${raw(icon('chevron-right'))}</a>`}
     ${AGAIN}`);
   box.onclick = async (e) => {
     if (e.target.closest('[data-copy]')) { tap(); toast((await copyText(link)) ? 'Enlace copiado. Guárdalo en tus notas o chats.' : 'No se pudo copiar. Mantén presionado el enlace para copiarlo.', 'ok'); }

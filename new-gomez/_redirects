@@ -4,6 +4,7 @@
 
 # Demo del panel y panel anterior
 /demo          /app/#/demo    302
+/guia          /app/#/guia    302
 /panel         /app/          301
 /panel/        /app/          301
 

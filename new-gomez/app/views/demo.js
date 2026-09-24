@@ -12,7 +12,15 @@ const ROLES = [
 
 export default {
   title: 'Demo',
-  async render(el) {
+  async render(el, { query } = {}) {
+    // Enlace directo (p. ej. «Acceso para la barbería» de la página de reservas): entra con ese rol sin elegir,
+    // y si trae la cita recién reservada, la abre en la agenda.
+    const direct = query && ROLES.some((r) => r.k === query.rol) ? query.rol : '';
+    if (direct) {
+      el.innerHTML = '<div class="auth" style="grid-template-columns:minmax(0,1fr);place-items:center;min-height:60vh"><div class="spinner" role="status" aria-label="Entrando a la demo"></div></div>';
+      const cita = /^[A-Za-z0-9_-]{1,64}$/.test(query.cita || '') && /^\d{4}-\d{2}-\d{2}$/.test(query.fecha || '') ? '/agenda?fecha=' + query.fecha + '&cita=' + query.cita : '';
+      try { await window.TB.demoLogin(direct, cita ? { path: cita } : undefined); return; } catch (err) { console.error(err); toast.error(err); }
+    }
     el.innerHTML = String(html`
       <div class="auth" style="grid-template-columns:minmax(0,1fr)">
         <section class="auth-panel" style="max-width:640px">
