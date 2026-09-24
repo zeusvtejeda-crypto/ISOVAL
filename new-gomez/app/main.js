@@ -126,6 +126,8 @@ async function boot() {
     navigate('/login', { replace: true });
   });
   try {
+    // Entrar directo a #/demo sin sesión de demo: no hace falta consultar al servidor (evita un 404 en hosting estático).
+    if (getMode() !== 'demo' && parseHash().path === '/demo') throw Object.assign(new Error('skip'), { code: 'skip' });
     await loadMe();
   } catch (e) {
     clearSession();
@@ -277,9 +279,7 @@ function renderShell() {
     '</div>';
   shellEl = root.querySelector('.shell');
   document.body.classList.add('has-shell');
-  const mq = window.matchMedia('(min-width:1024px)');
-  const syncTop = () => { const b = $('#newApptTop'); if (b) b.style.display = mq.matches ? '' : 'none'; const mb = $('#menuBtn'); if (mb) mb.style.display = mq.matches ? 'none' : ''; };
-  syncTop(); mq.addEventListener('change', syncTop);
+  syncTopbar();
   wireShell();
   paintUnread(state.ctx ? state.ctx.unread : 0);
 }
@@ -296,10 +296,13 @@ function bottomNavHtml(canCreate) {
     it('/clientes', r === 'barber' ? 'Clientes' : 'Clientes', 'users') +
     '<button type="button" data-more style="position:relative">' + icon('menu') + '<span>Más</span></button>';
 }
+// Los listeners delegados viven en #app (que nunca se reemplaza): se conectan UNA sola vez.
+let shellWired = false;
 function wireShell() {
-  const sb = $('#sidebar');
+  if (shellWired) return;
+  shellWired = true;
   on(root, 'click', '#menuBtn', () => openSidebar());
-  on(root, 'click', '#themeBtn', () => { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); renderShell(); highlightNav(currentNavPath()); setTitle($('#tbTitle') ? document.title.split(' · ')[0] : ''); });
+  on(root, 'click', '#themeBtn', () => { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; const t = document.title.split(' · ')[0]; setTheme(n); renderShell(); highlightNav(currentNavPath()); setTitle(t); });
   on(root, 'click', '#logoutBtn', logout);
   on(root, 'click', '#shopSwitch', () => openShopSwitcher());
   on(root, 'click', '#bellBtn', (e, el) => openBell(el));
@@ -308,8 +311,15 @@ function wireShell() {
   on(root, 'click', '#dmRole', () => openRoleSwitcher());
   on(root, 'click', '#dmGuide', () => navigate('/guia'));
   on(root, 'click', '#dmExit', () => exitDemo());
-  window.onscroll = () => { const t = $('#topbar'); if (t) t.classList.toggle('scrolled', window.scrollY > 4); };
-  sb && sb.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]')) closeSidebar(); });
+  on(root, 'click', '#sidebar a[href^="#"]', () => closeSidebar());
+  window.addEventListener('scroll', () => { const t = $('#topbar'); if (t) t.classList.toggle('scrolled', window.scrollY > 4); }, { passive: true });
+  const mq = window.matchMedia('(min-width:1024px)');
+  mq.addEventListener('change', syncTopbar);
+}
+function syncTopbar() {
+  const wide = window.matchMedia('(min-width:1024px)').matches;
+  const b = $('#newApptTop'); if (b) b.style.display = wide ? '' : 'none';
+  const mb = $('#menuBtn'); if (mb) mb.style.display = wide ? 'none' : '';
 }
 function currentNavPath() { const { path } = parseHash(); const m = match(path); return m ? (m.route.nav || m.route.path) : ''; }
 function highlightNav(p) {
@@ -453,6 +463,8 @@ async function pollUnread() {
   if (document.hidden || !state.ctx || !canAny(['notifications.read'])) return;
   try { const r = await api.get('/notifications', { limit: 1 }); paintUnread(r.unread); } catch (e) { /* silencioso */ }
 }
+// Otra pestaña de la demo (p. ej. la página pública) guardó cambios: las vistas se refrescan.
+window.addEventListener('tb:demo-sync', () => { bus.emit('appointments:changed', { source: 'sync' }); pollUnread(); });
 bus.on('notifications:changed', (n) => { if (typeof n === 'number') paintUnread(n); else pollUnread(); });
 
 // API global mínima para vistas que la necesiten sin importar main.js (evita ciclos).

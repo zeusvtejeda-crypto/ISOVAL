@@ -46,6 +46,12 @@ async function demoInit() {
     demo.seedDemo = seed.seedDemo;
     // Los datos se generan relativos a "hoy": si cambió el día se vuelven a sembrar para que la agenda luzca viva.
     if (!stored) await seedFresh(today);
+    // Panel y página pública abiertos en dos pestañas: cada una recarga lo que guarda la otra
+    // (si no, la última en guardar pisaría a la primera y se perdería, p. ej., una reserva).
+    window.addEventListener('storage', (e) => {
+      if (e.key !== DEMO_KEY || !e.newValue) return;
+      try { demo.db.replace(JSON.parse(e.newValue)); window.dispatchEvent(new CustomEvent('tb:demo-sync')); } catch (err) { /* JSON a medias: se ignora */ }
+    });
   })();
   demo.ready.catch(() => { demo.ready = null; });
   return demo.ready;
@@ -66,7 +72,7 @@ async function demoRequest(method, path, query, body) {
   if (demo.token) headers.authorization = 'Bearer ' + demo.token;
   if (shopId) headers['x-shop-id'] = shopId;
   const res = await demo.handle(
-    { method, path: API_BASE.replace(/^.*\/api$/, '/api') + path, query: query || {}, body: body === undefined ? undefined : JSON.parse(JSON.stringify(body)), headers, ip: 'demo' },
+    { method, path: '/api' + path, query: query || {}, body: body === undefined ? undefined : JSON.parse(JSON.stringify(body)), headers, ip: 'demo' },
     { db: demo.db, env: { MODE: 'demo', DEFAULT_SHOP_SLUG: 'demo', PUBLIC_URL: SITE_BASE.replace(/\/$/, '') } }
   );
   // Latencia mínima para que loaders y transiciones se perciban igual que en producción.

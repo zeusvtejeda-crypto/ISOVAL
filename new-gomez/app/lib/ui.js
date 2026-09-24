@@ -55,7 +55,7 @@ export function modal(opts) {
     '<div class="modal ' + (opts.size || '') + '" role="dialog" aria-modal="true" aria-labelledby="mdl-t">' +
     '<div class="sheet-handle" aria-hidden="true"></div>' +
     '<div class="modal-head"><div class="grow"><h3 id="mdl-t">' + esc(opts.title || '') + '</h3>' +
-    (opts.subtitle ? '<div class="sub">' + esc(opts.subtitle) + '</div>' : '') + '</div>' +
+    '<div class="sub"' + (opts.subtitle ? '' : ' hidden') + '>' + esc(opts.subtitle || '') + '</div></div>' +
     '<button type="button" class="btn btn-ghost btn-icon" data-close aria-label="Cerrar">' + icon('x') + '</button></div>' +
     '<div class="modal-body"></div>' +
     (opts.footer !== false ? '<div class="modal-foot"></div>' : '') + '</div>';
@@ -64,7 +64,7 @@ export function modal(opts) {
   const foot = ov.querySelector('.modal-foot');
   if (opts.body != null) body.innerHTML = String(opts.body);
   if (foot && opts.footerHtml != null) foot.innerHTML = String(opts.footerHtml);
-  if (foot && !opts.footerHtml && !(opts.actions && opts.actions.length)) foot.remove();
+  if (foot && opts.footerHtml == null && !(opts.actions && opts.actions.length)) foot.remove();
   (opts.actions || []).forEach((a) => {
     if (a.spacer) { const s = document.createElement('span'); s.className = 'spacer'; foot.appendChild(s); return; }
     const b = document.createElement('button');
@@ -88,7 +88,7 @@ export function modal(opts) {
   const done = new Promise((r) => { resolveFn = r; });
   const onKey = (e) => {
     if (openStack[openStack.length - 1] !== api) return;
-    if (e.key === 'Escape' && opts.dismissible !== false) { e.preventDefault(); api.close(); }
+    if (e.key === 'Escape' && opts.dismissible !== false) { e.preventDefault(); api.requestClose(); }
     if (e.key === 'Tab') trapFocus(e, box);
   };
   const api = {
@@ -104,11 +104,18 @@ export function modal(opts) {
       if (opts.onClose) opts.onClose(value);
       resolveFn(value);
     },
-    setTitle(t) { box.querySelector('#mdl-t').textContent = t; }
+    setTitle(t) { box.querySelector('#mdl-t').textContent = t; },
+    setSubtitle(t) { const sb = box.querySelector('.modal-head .sub'); sb.textContent = t || ''; sb.hidden = !t; },
+    // Cierre pedido por el usuario (X, Esc, fondo, deslizar): respeta opts.beforeClose (→ false cancela).
+    async requestClose(value) {
+      if (resolved) return;
+      if (opts.beforeClose) { let ok = true; try { ok = await opts.beforeClose(value); } catch (e) { ok = true; } if (ok === false) { box.style.transform = ''; return; } }
+      api.close(value);
+    }
   };
-  ov.addEventListener('mousedown', (e) => { if (e.target === ov && opts.dismissible !== false) api.close(); });
-  ov.querySelector('[data-close]').onclick = () => api.close();
-  enableSwipeDown(box, () => { if (opts.dismissible !== false) api.close(); });
+  ov.addEventListener('mousedown', (e) => { if (e.target === ov && opts.dismissible !== false) api.requestClose(); });
+  ov.querySelector('[data-close]').onclick = () => api.requestClose();
+  enableSwipeDown(box, () => { if (opts.dismissible !== false) api.requestClose(); else box.style.transform = ''; });
   document.addEventListener('keydown', onKey, true);
   lockScroll();
   document.body.appendChild(ov);
@@ -206,7 +213,16 @@ export function menu(anchor, items) {
   const list = items.filter(Boolean);
   const close = () => { el.remove(); document.removeEventListener('mousedown', outside, true); document.removeEventListener('keydown', key, true); window.removeEventListener('scroll', close, true); };
   const outside = (e) => { if (!el.contains(e.target)) close(); };
-  const key = (e) => { if (e.key === 'Escape') { close(); anchor.focus(); } };
+  const key = (e) => {
+    if (e.key === 'Escape') { close(); anchor.focus(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      const f = Array.from(el.querySelectorAll('button,a'));
+      const i = f.indexOf(document.activeElement);
+      const n = e.key === 'Home' ? 0 : e.key === 'End' ? f.length - 1 : (i + (e.key === 'ArrowDown' ? 1 : -1) + f.length) % f.length;
+      if (f[n]) f[n].focus();
+    }
+  };
   el.addEventListener('click', (e) => {
     const b = e.target.closest('[data-i]'); if (!b) return;
     const it = list[+b.dataset.i]; close();
