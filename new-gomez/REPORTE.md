@@ -56,11 +56,12 @@ Se conservó lo que ya funcionaba bien: el diseño y SEO de la página pública 
 
 ## 5. Cómo usar la demo para enseñar en una barbería (paso a paso)
 
+**Demo en línea: https://demo.tubarberia.mx** (abre directo en la guía, datos ficticios en el propio celular).
 La misma guía está dentro de la app en **`/app/#/guia`**, con botones «Probar ahora» que te llevan (y cambian
 de rol) solos, y el progreso marcado. Dura unos 10 minutos.
 
 **Antes de llegar**
-1. En tu celular abre `https://<tu-dominio>/app/#/demo` → **Dueño**.
+1. En tu celular abre `https://demo.tubarberia.mx` (o `https://<tu-dominio>/app/#/demo` → **Dueño**).
 2. Toca **Más → Instalar app** y sigue los pasos (iPhone: Compartir → «Agregar a inicio»; Android: ⋮ → «Instalar app»). Ya la abres como app.
 3. (Opcional) **Tema oscuro** en Más → Tema. Si algo se desacomoda: **Cambiar rol → Reiniciar datos de la demo**.
 
@@ -68,7 +69,7 @@ de rol) solos, y el progreso marcado. Dura unos 10 minutos.
 
 | # | Qué haces | Qué dices |
 |---|---|---|
-| 1 | Abre la **página de reservas** (`/?b=demo`) en otra pestaña del mismo celular y reserva como cliente: servicio → «Cualquier barbero» → hora → nombre y celular inventados | «Así reservan tus clientes desde tu Instagram, WhatsApp o el QR. Sin descargar nada y a cualquier hora.» |
+| 1 | Abre la **página de reservas** (`demo.tubarberia.mx/?b=demo`) en otra pestaña del mismo celular y reserva como cliente: servicio → «Cualquier barbero» → hora → nombre y celular inventados | «Así reservan tus clientes desde tu Instagram, WhatsApp o el QR. Sin descargar nada y a cualquier hora.» |
 | 2 | Regresa al panel: la **campana** muestra la nueva reserva; ábrela y enséñala en la **Agenda** (vista Día, una columna por barbero) | «Te llega el aviso al momento y nadie te encima una cita.» |
 | 3 | En la cita toca **Confirmar** y **WhatsApp → Enviar confirmación** | «Con un toque se abre tu WhatsApp con el mensaje ya escrito, con fecha, hora y enlace para cambiar la cita.» |
 | 4 | **Cambiar rol → Barbero**: «Mi día» | «Cada barbero ve solo lo suyo; en la tablet entran con su PIN.» |
