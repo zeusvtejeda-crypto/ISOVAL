@@ -261,8 +261,13 @@ async function runGo(step, g, btn, opts) {
   if (running) return;
   if (g.act) return runAct(g.act, btn);
   if (g.external) { // se llama dentro del clic para que el navegador no bloquee la pestaña nueva
-    window.open(g.external, '_blank', 'noopener');
+    // Sin 'noopener' para poder saber si se abrió: algunos navegadores (app instalada en iPhone,
+    // visores embebidos) bloquean la pestaña nueva y devuelven null → se abre en esta misma pestaña.
+    let w = null;
+    try { w = window.open(g.external, '_blank'); } catch (e) { w = null; }
     markDone(step.id, { advance: true });
+    if (!w) { location.href = g.external; return; }
+    try { w.opener = null; } catch (e) { /* */ }
     if (mounted && openId) mounted.scrollTo(openId);
     toast.info('Se abrió la página de reservas en otra pestaña. Reserva y regresa aquí.', { duration: 5200 });
     return;
