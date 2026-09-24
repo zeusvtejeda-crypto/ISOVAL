@@ -1,5 +1,10 @@
+# Página pública de reservas (NEW GOMEZ · TuBarbería)
 User-agent: *
 Allow: /
+# API y enlaces privados de "gestionar mi cita" (llevan un token secreto): nunca se rastrean.
 Disallow: /api/
+Disallow: /*?cita=
+Disallow: /*&cita=
+# El panel (app/) se marca noindex en su propio HTML; se deja rastrear para que los buscadores lo lean.
 
 Sitemap: https://gomez.tubarberia.mx/sitemap.xml

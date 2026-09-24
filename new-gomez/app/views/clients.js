@@ -74,6 +74,9 @@ const CSS = `
   .cl-cell.strong{font-weight:600;color:var(--text)}
   .cl-trail,.cl-sub .m-only{display:none}
   .cl-sub .d-only{display:inline}
+  .cl-main{display:flex;flex-wrap:wrap;align-items:center;column-gap:8px;row-gap:3px}
+  .cl-name{flex:1 1 100%}
+  .cl-sub{flex:none}
 }
 .cl-foot{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;border-top:1px solid var(--border)}
 .cl-foot .faint{font-size:12.5px}
@@ -383,6 +386,10 @@ export default {
     function paintList(append) {
       listEl.setAttribute('aria-busy', 'false');
       listEl.classList.remove('loading');
+      // Cartera vacía (sin filtros): solo el estado vacío, sin KPIs ni buscador.
+      const bare = !st.items.length && !st.q && !st.tag;
+      ['.cl-tools', '.cl-head', '#clKpis', '#clExport'].forEach((sel) => { const x = $(sel, el); if (x) x.hidden = bare; });
+      if (bare) $('#clTags', el).hidden = true; else paintTags();
       if (!st.items.length) {
         const filtered = st.q || st.tag;
         listEl.innerHTML = String(filtered

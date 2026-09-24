@@ -9,6 +9,8 @@ import { toast, modal, confirmDialog, menu, busy, emptyState, errorState, showFi
 import { money, duration, plural, firstName } from '../lib/fmt.js';
 
 const NO_CAT = 'Otros servicios';
+// Asa para arrastrar (SVG local para no tocar la librería de íconos compartida).
+const GRIP = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>';
 const QUICK_DUR = [15, 20, 30, 45, 60, 90];
 const STARTER = [
   { name: 'Corte clásico', category: 'Cortes', duration_min: 40, price: 200, popular: true, description: 'Tijera y máquina, lavado y peinado.' },
@@ -48,6 +50,11 @@ const CSS = `
 .sv-ghead .mv{display:none}
 .sv-reorder .sv-row{background:var(--surface-2)}
 .sv-row.moved{animation:svMoved .6s var(--ease)}
+.sv-grip{width:36px;height:44px;display:grid;place-items:center;color:var(--text-3);cursor:grab;touch-action:none;border-radius:10px;flex:none}
+.sv-grip:hover{color:var(--text);background:var(--muted-soft)}
+.sv-grip:active{cursor:grabbing}
+.sv-row.dragging{position:relative;z-index:3;background:var(--surface)!important;box-shadow:var(--shadow-3);border-radius:12px;transition:none}
+.sv-card.drag-on .sv-row:not(.dragging){transition:transform .15s var(--ease)}
 @keyframes svMoved{0%{background:var(--brand-soft)}100%{background:var(--surface-2)}}
 .sv-mprice{display:none;font-weight:700;color:var(--text)}
 .sv-star{display:none;color:var(--brand-strong)}
@@ -275,6 +282,7 @@ export default {
     function rowHtml(s, i, n) {
       return html`<div class="sv-row ${s.active ? '' : 'off'}" data-id="${s.id}">
         <div class="sv-mv">
+          <span class="sv-grip" data-grip title="Arrastra para mover" aria-hidden="true">${raw(GRIP)}</span>
           <button type="button" class="btn btn-ghost btn-icon" data-mv="-1" data-id="${s.id}" aria-label="Subir ${s.name}" ${i === 0 ? raw('disabled') : ''}>${raw(icon('arrow-up'))}</button>
           <button type="button" class="btn btn-ghost btn-icon" data-mv="1" data-id="${s.id}" aria-label="Bajar ${s.name}" ${i === n - 1 ? raw('disabled') : ''}>${raw(icon('arrow-down'))}</button>
         </div>
@@ -303,7 +311,7 @@ export default {
       }
       const gs = groups();
       root.innerHTML = String(html`
-        ${reorder ? html`<div class="banner brand sv-banner">${raw(icon('info'))}<div class="grow">Usa las flechas para acomodar los servicios y las categorías en el orden en que quieres que tus clientes los vean. Se guarda solo.</div></div>` : ''}
+        ${reorder ? html`<div class="banner brand sv-banner">${raw(icon('info'))}<div class="grow">Arrastra o usa las flechas para cambiar el orden en que tus clientes ven los servicios y las categorías. Se guarda solo.</div></div>` : ''}
         <div class="${reorder ? 'sv-reorder' : ''}">
         ${gs.map((g, gi) => html`<section class="sv-group" data-cat="${g.name}">
           <div class="sv-ghead"><h3>${g.name}</h3><span class="n">· ${g.items.length}</span>
@@ -396,6 +404,50 @@ export default {
     offs.push(on(el, 'click', '[data-edit]', (e, b) => { if (!reorder) edit(find(b.dataset.edit)); }));
     offs.push(on(el, 'click', '[data-mv]', (e, b) => moveItem(b.dataset.id, Number(b.dataset.mv))));
     offs.push(on(el, 'click', '[data-gmv]', (e, b) => moveGroup(b.dataset.cat, Number(b.dataset.gmv))));
+    // Arrastrar para reordenar (dentro de la categoría). Funciona con mouse y con el dedo.
+    let drag = null;
+    const onDown = (e) => {
+      const g = e.target.closest('[data-grip]');
+      if (!g || !reorder) return;
+      const row = g.closest('.sv-row');
+      e.preventDefault();
+      try { g.setPointerCapture(e.pointerId); } catch (x) { /* */ }
+      drag = { row, card: row.parentElement, y0: e.clientY, moved: false };
+      row.classList.add('dragging');
+      drag.card.classList.add('drag-on');
+    };
+    const onMove = (e) => {
+      if (!drag) return;
+      const { row, card } = drag;
+      let dy = e.clientY - drag.y0;
+      row.style.transform = 'translateY(' + dy + 'px)';
+      const rows = Array.from(card.children);
+      const i = rows.indexOf(row);
+      const next = rows[i + 1], prev = rows[i - 1];
+      if (next && dy > next.offsetHeight / 2) { card.insertBefore(next, row); drag.y0 += next.offsetHeight; drag.moved = true; }
+      else if (prev && dy < -prev.offsetHeight / 2) { card.insertBefore(row, prev); drag.y0 -= prev.offsetHeight; drag.moved = true; }
+      dy = e.clientY - drag.y0;
+      row.style.transform = 'translateY(' + dy + 'px)';
+    };
+    const onUp = () => {
+      if (!drag) return;
+      const { row, card, moved } = drag;
+      drag = null;
+      row.style.transform = '';
+      row.classList.remove('dragging');
+      card.classList.remove('drag-on');
+      if (!moved) return;
+      const ids = Array.from(card.children).map((r) => r.dataset.id);
+      const cat = card.closest('.sv-group').dataset.cat;
+      list = groups().flatMap((g) => (g.name === cat ? ids.map(find) : g.items));
+      paint(row.dataset.id);
+      queueSave();
+    };
+    root.addEventListener('pointerdown', onDown);
+    root.addEventListener('pointermove', onMove);
+    root.addEventListener('pointerup', onUp);
+    root.addEventListener('pointercancel', onUp);
+    offs.push(() => { root.removeEventListener('pointerdown', onDown); root.removeEventListener('pointermove', onMove); root.removeEventListener('pointerup', onUp); root.removeEventListener('pointercancel', onUp); });
     offs.push(on(el, 'change', '[data-active]', async (e, inp) => {
       const s = find(inp.dataset.active);
       const val = inp.checked;

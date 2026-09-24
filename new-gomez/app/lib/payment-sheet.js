@@ -5,8 +5,9 @@
 //     onDone(payment): se llama en cuanto el cobro queda registrado (antes de cerrar la hoja).
 //     Emite bus 'payments:changed' y 'appointments:changed' (y 'cash:changed' si fue en efectivo).
 //   openCashDialog({ lastSession? }) → Promise<{ session, summary, … }|null>   (POST /api/cash/open)
-//   parseMoney('1,250.50') → 1250.5 | NaN · METHOD_ICON · paymentMethods()
-import { html, raw, esc, $, $$ } from './html.js';
+//   parseMoney('1,250.50') → 1250.5 | NaN · tweenMoney(el, n) · METHOD_ICON · paymentMethods() · injectPayStyle()
+//   (clases compartidas: .money-in[.xl], .pay-form, .pay-methods, .pay-opt)
+import { html, raw, $, $$ } from './html.js';
 import { icon } from './icons.js';
 import { api } from './api.js';
 import { bus, can, shop, today, nowMin, getStaff } from './state.js';

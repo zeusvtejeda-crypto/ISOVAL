@@ -10,8 +10,8 @@ import { api } from '../lib/api.js';
 import { bus, can, today, tz, getStaff } from '../lib/state.js';
 import { setQuery, navigate } from '../lib/router.js';
 import { toast, modal, confirmDialog, busy, menu, emptyState, errorState, skeletonRows, skeletonCards, showFieldErrors, clearFieldErrors, saveFile } from '../lib/ui.js';
-import { money, METHOD, dateLongCap, dateShort, addDays, startOfMonth, endOfMonth, startOfWeek, addMonths, diffDays, number, plural, MONTHS_SHORT, WEEKDAYS, weekday } from '../lib/fmt.js';
-import { openPaymentSheet, openCashDialog, parseMoney, tweenMoney, METHOD_ICON, injectPayStyle, paymentMethods } from '../lib/payment-sheet.js';
+import { money, METHOD, dateLongCap, dateShort, addDays, startOfMonth, endOfMonth, startOfWeek, addMonths, number, plural, MONTHS_SHORT, WEEKDAYS, weekday } from '../lib/fmt.js';
+import { openPaymentSheet, parseMoney, tweenMoney, METHOD_ICON, injectPayStyle, paymentMethods } from '../lib/payment-sheet.js';
 
 const MKEYS = ['cash', 'card', 'transfer', 'other'];
 const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -25,6 +25,9 @@ const CSS = `
 .v-cash .grid-main-side>*{min-width:0}
 @media (min-width:900px){.v-cash .grid-main-side{grid-template-columns:minmax(0,1fr) 340px}}
 .cash-grid{align-items:start}
+@media (min-width:900px){.v-cash .cash-grid>.cash-main{grid-column:1;grid-row:1}.v-cash .cash-grid>.cash-side{grid-column:2;grid-row:1 / span 2}.v-cash .cash-grid>.cash-pays{grid-column:1;grid-row:2}}
+@media (max-width:899px){.v-cash .pay-side{order:-1}.v-cash .cash-grid>.cash-side{order:1}.v-cash .cash-grid>.cash-pays{order:2}}
+@media (min-width:640px) and (max-width:899px){.v-cash .cash-side,.v-cash .pay-side{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.v-cash .cash-side>.banner{grid-column:1/-1}}
 .cash-hero{position:relative;overflow:hidden;background:var(--ink);color:var(--on-ink);border-radius:var(--r-xl);padding:20px 18px 18px;box-shadow:var(--shadow-2);border:1px solid rgba(242,237,227,.07)}
 .cash-hero::before{content:"";position:absolute;right:-120px;top:-150px;width:380px;height:380px;background:radial-gradient(circle,rgba(217,178,90,.24),transparent 62%);pointer-events:none}
 .cash-hero>*{position:relative}
@@ -247,7 +250,7 @@ export default {
       const last = cur.last_session;
       const tt = (pays && pays.totals) || { by_method: {}, tip: 0, total: 0, count: 0 };
       return html`<div class="grid-main-side cash-grid">
-        <div class="stack-lg">
+        <div class="stack-lg cash-main">
           <section class="card cash-closed fade-up" aria-labelledby="ccT">
             <div class="cc-art">${raw(icon('wallet'))}</div>
             <div><h3 id="ccT">La caja está cerrada</h3><p>Ábrela con el efectivo con el que empiezas el día. Al cerrar sabrás si cuadra al peso.</p></div>
@@ -260,9 +263,9 @@ export default {
             </form>` : ''}
             ${last ? html`<div class="cc-last"><span>Último corte: ${dateShort(last.date)} · contado ${money(last.counted_cash)}</span>${diffBadge(last.difference)}</div>` : ''}
           </section>
-          ${todayPaysCard(pays)}
         </div>
-        <aside class="stack-lg">
+        <div class="cash-pays">${todayPaysCard(pays)}</div>
+        <aside class="stack-lg cash-side">
           <section class="card card-pad" aria-labelledby="hSold">
             <div class="eyebrow" id="hSold">Cobrado hoy</div>
             <div class="disp num" style="font-size:40px;font-weight:800;line-height:1.1;margin:4px 0 2px">${money(tt.total)}</div>
@@ -281,7 +284,7 @@ export default {
       const movs = (cur.movements || []).slice().reverse();
       const old = ses.date < today();
       return html`<div class="grid-main-side cash-grid">
-        <div class="stack-lg">
+        <div class="stack-lg cash-main">
           ${old ? html`<div class="banner warn">${raw(icon('alert'))}<div class="grow"><b>Esta caja sigue abierta desde el ${dateLongCap(ses.date).toLowerCase()}.</b> Haz el corte para empezar el día con las cuentas claras.</div></div>` : ''}
           <section class="cash-hero fade-up" aria-labelledby="chL">
             <div class="ch-top"><span class="ch-status"><i></i>Caja abierta</span><span>Desde las ${clock(ses.opened_at)}${old ? ' del ' + dateShort(ses.date) : ''}${ses.opened_by_name ? ' · ' + ses.opened_by_name : ''}</span></div>
@@ -307,9 +310,9 @@ export default {
             <div class="card kpi"><span class="label">${raw(icon('card'))}Tarjeta</span><span class="value">${money(s.card_sales)}</span><span class="foot">${s.card_tips ? '+ ' + money(s.card_tips) + ' propinas' : 'Sin propinas'}</span></div>
             <div class="card kpi"><span class="label">${raw(icon('transfer'))}Transferencia</span><span class="value">${money(s.transfer_sales)}</span><span class="foot">${s.transfer_tips ? '+ ' + money(s.transfer_tips) + ' propinas' : 'Sin propinas'}</span></div>
           </div>
-          ${todayPaysCard(pays)}
         </div>
-        <aside class="stack-lg">
+        <div class="cash-pays">${todayPaysCard(pays)}</div>
+        <aside class="stack-lg cash-side">
           <section class="card" aria-labelledby="hMeth">
             <div class="card-head"><h3 id="hMeth">Ventas por método</h3><span class="sub">Sin propinas</span></div>
             <div class="card-body">${methodBars({ cash: s.cash_sales, card: s.card_sales, transfer: s.transfer_sales, other: s.other_sales }, { empty: 'Aún no hay ventas en este turno.' })}</div>
@@ -566,7 +569,7 @@ export default {
             ${items.length ? html`<div class="list">${rows}</div>${data.total > items.length ? html`<p class="faint" style="font-size:12.5px;padding:10px 16px;border-top:1px solid var(--border)">Mostrando los ${items.length} cobros más recientes de ${number(data.total)}. Exporta el CSV para verlos todos.</p>` : ''}`
               : emptyState({ icon: 'receipt', title: 'Sin cobros en este periodo', text: pq.m || pq.b ? 'Prueba con otro filtro o un rango más amplio.' : 'Cuando cobres una cita o una venta aparecerá aquí.', compact: false, action: pq.m || pq.b ? { label: 'Quitar filtros', id: 'pfClear', icon: 'x' } : null })}
           </section>
-          <aside class="stack-lg">
+          <aside class="stack-lg pay-side">
             <section class="card" aria-labelledby="hPm"><div class="card-head"><h3 id="hPm">Por forma de pago</h3><span class="sub">Sin propinas</span></div>
               <div class="card-body">${methodBars(tt.by_method || {}, { empty: 'Sin ventas en este periodo.' })}</div></section>
             ${tt.refunded_count ? html`<div class="banner warn">${raw(icon('refresh'))}<div class="grow"><b>${plural(tt.refunded_count, 'reembolso')}</b> por ${money(tt.refunded)} en este periodo (no cuentan en los totales).</div></div>` : ''}

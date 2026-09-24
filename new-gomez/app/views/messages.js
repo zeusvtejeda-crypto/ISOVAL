@@ -9,8 +9,8 @@ import { icon } from '../lib/icons.js';
 import { api, SITE_BASE } from '../lib/api.js';
 import { bus, can, shop, today, role } from '../lib/state.js';
 import { setQuery, navigate } from '../lib/router.js';
-import { toast, modal, confirmDialog, busy, emptyState, errorState, skeletonRows, skeletonCards } from '../lib/ui.js';
-import { time, dateLong, dateLongCap, addDays, diffDays, ago, dateTimeIso, phone as fmtPhone, firstName, plural, number } from '../lib/fmt.js';
+import { toast, modal, confirmDialog, busy, emptyState, errorState, skeletonRows } from '../lib/ui.js';
+import { time, dateLong, dateLongCap, addDays, ago, dateTimeIso, phone as fmtPhone, plural, number } from '../lib/fmt.js';
 import { sendWhatsApp, editAndSendWhatsApp, markMessage, bubbleHtml, waMode, waLinkFor, KIND_LABEL, MSG_STATUS, MAX_BODY } from '../lib/whatsapp.js';
 import { DEFAULT_TEMPLATES } from '../../core/domain/settings.js';
 
@@ -83,11 +83,13 @@ const CSS = `
 .msg-row{align-items:flex-start;gap:12px}
 .msg-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:rgba(37,211,102,.12);color:#1FA855}
 .msg-ic .ic{width:18px;height:18px}
-.msg-row .top{display:flex;align-items:baseline;gap:6px;min-width:0}
-.msg-row .kind{font-size:12.5px;color:var(--text-3);white-space:nowrap}
+.msg-row .top{display:flex;align-items:baseline;gap:8px;min-width:0}
+.msg-row .top .title{flex:1;min-width:0}
+.msg-row .top .faint{font-size:12px;white-space:nowrap;flex:none}
+.msg-row .sub2{display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap}
+.msg-row .kind{font-size:12.5px;color:var(--text-2);font-weight:500;white-space:nowrap}
+.msg-row .sub2 .badge{height:20px;font-size:11px}
 .msg-ex{font-size:13px;color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px;overflow-wrap:anywhere}
-.msg-row .trail{display:grid;justify-items:end;gap:6px;align-self:center}
-.msg-row .trail .faint{font-size:12px}
 .msg-det{display:grid;gap:14px}
 .msg-det dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;margin:0}
 .msg-det dt{color:var(--text-3)}
@@ -372,10 +374,10 @@ export default {
         return html`<button type="button" class="list-item msg-row" data-mid="${m.id}">
           <span class="msg-ic" aria-hidden="true">${raw(icon(KIND_ICON[m.kind] || 'message'))}</span>
           <div class="grow" style="min-width:0">
-            <div class="top"><span class="title truncate">${m.client_name || fmtPhone(m.to_phone) || 'Cliente'}</span><span class="kind">· ${KIND_LABEL[m.kind] || m.kind}</span></div>
+            <div class="top"><span class="title truncate">${m.client_name || fmtPhone(m.to_phone) || 'Cliente'}</span><span class="faint">${ago(m.created_at)}</span></div>
+            <div class="sub2"><span class="kind">${KIND_LABEL[m.kind] || m.kind}</span><span class="badge ${st.cls}">${st.label}</span></div>
             <div class="msg-ex">${m.body}</div>
           </div>
-          <div class="trail"><span class="badge ${st.cls}">${st.label}</span><span class="faint">${ago(m.created_at)}</span></div>
         </button>`;
       })}</div></section>
       ${list.length >= histLimit && histLimit < 500 ? html`<div style="display:flex;justify-content:center;margin-top:14px"><button type="button" class="btn btn-secondary" id="hsMore">${raw(icon('chevron-down'))}Ver más mensajes</button></div>` : ''}`);

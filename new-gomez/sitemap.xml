@@ -2,10 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://gomez.tubarberia.mx/</loc>
+    <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image><image:loc>https://gomez.tubarberia.mx/img/foto3.jpg</image:loc><image:title>Corte con acabado degradado en NEW GOMEZ Barbershop, Tepic</image:title></image:image>
     <image:image><image:loc>https://gomez.tubarberia.mx/img/foto4.jpg</image:loc><image:title>Fade rizado en NEW GOMEZ Barbershop</image:title></image:image>
     <image:image><image:loc>https://gomez.tubarberia.mx/img/foto6.jpg</image:loc><image:title>Servicio de lavado en NEW GOMEZ Barbershop</image:title></image:image>
+    <image:image><image:loc>https://gomez.tubarberia.mx/img/foto2.jpg</image:loc><image:title>Corte con diseño lateral en NEW GOMEZ Barbershop</image:title></image:image>
+    <image:image><image:loc>https://gomez.tubarberia.mx/img/foto5.jpg</image:loc><image:title>Corte a rapa cero con acabado limpio en NEW GOMEZ Barbershop</image:title></image:image>
+    <image:image><image:loc>https://gomez.tubarberia.mx/img/logo.jpg</image:loc><image:title>Logotipo de NEW GOMEZ Barbershop</image:title></image:image>
   </url>
 </urlset>

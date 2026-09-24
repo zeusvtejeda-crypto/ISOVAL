@@ -67,6 +67,8 @@
     if(!b&&(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone))b=localStorage.getItem('tb:pub:app-slug')||'';
   }catch(e){}
   var guess=b||hint;
+  // Enlaces privados de gestión y la demo no se indexan.
+  if(p.get('cita')||/^demo(-norte)?$/.test(b)){var m=document.createElement('meta');m.name='robots';m.content='noindex,nofollow';document.head.appendChild(m)}
   if(p.get('cita'))d.className+=' pg-manage pg-hload';
   else if(guess&&guess!=='new-gomez')d.className+=' pg-generic pg-hload';
 })();
@@ -76,7 +78,7 @@
   color-scheme:light;
   --ink:#15130F;--ink-2:#23201A;
   --bone:#F2EDE3;--paper:#FBF8F1;--bone-2:#E6DFCF;
-  --brass:#C49A3C;--brass-deep:#9E7826;--brass-soft:rgba(196,154,60,.14);--on-brass:#15130F;
+  --brass:#C49A3C;--brass-deep:#9E7826;--brass-soft:rgba(196,154,60,.14);--on-brass:#15130F;--hacc:#D9B25A;
   --text:#15130F;--smoke:#6F6859;--ok:#2F7D4F;--err:#B3261E;--warn:#9A5B00;--on-err:#FFFFFF;
   --line:rgba(21,19,15,.12);--shadow:0 10px 30px rgba(21,19,15,.10);
   --bar:#15130F;--bar-text:#F2EDE3;--skel:rgba(21,19,15,.07);--shine:rgba(255,255,255,.55);
@@ -121,14 +123,15 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .head-in{max-width:1100px;margin:0 auto;padding:18px 20px 22px;display:flex;gap:16px;align-items:center}
 .head-in>div{min-width:0;flex:1}
 @media (min-width:600px){.head h1{font-size:44px}}
+@media (max-width:599px){.intro{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}}
 .badge{width:96px;flex:none;border-radius:10px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(242,237,227,.14)}
 .badge.sq{width:76px;height:76px;object-fit:cover;border-radius:18px}
 .badge.mono-badge{width:76px;height:76px;border-radius:18px;display:grid;place-items:center;background:var(--brass);color:var(--on-brass);font-family:var(--disp);font-size:34px;font-weight:800;letter-spacing:.02em}
 .head h1{font-size:34px;font-weight:800;letter-spacing:.01em;color:#F2EDE3}
-.head h1 small{display:block;font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#D9B25A;margin-top:4px}
+.head h1 small{display:block;font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--hacc);margin-top:4px}
 .rating{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;color:#D9D3C6}
 .rating b{color:#F2EDE3;font-weight:600}
-.stars{color:#D9B25A;letter-spacing:1px;font-size:13px}
+.stars{color:var(--hacc);letter-spacing:1px;font-size:13px}
 .meta{margin-top:6px;font-size:13px;color:#C4BDAE;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
 .meta a{color:#F2EDE3;text-decoration:underline;text-decoration-color:rgba(242,237,227,.35);text-underline-offset:3px}
 .meta a:hover{text-decoration-color:#C49A3C}
@@ -136,7 +139,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .open-chip i{width:8px;height:8px;border-radius:50%;background:#6FBF8A;box-shadow:0 0 0 3px rgba(111,191,138,.22)}
 .open-chip.closed{color:#D9D3C6}
 .open-chip.closed i{background:#B9B2A3;box-shadow:0 0 0 3px rgba(185,178,163,.18)}
-.badge-link{flex:none;display:block;border-radius:10px}
+.badge-link{flex:none;display:block;border-radius:10px;text-decoration:none}
 .intro{margin-top:10px;font-size:14px;line-height:1.45;color:#D9D3C6;max-width:640px}
 .head-skel{display:none;gap:16px;align-items:center;flex:1}
 .head-skel .l{display:grid;gap:10px;flex:1}
@@ -145,6 +148,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .head-skel span::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
 .pg-hload .head-in>:not(.head-skel){display:none!important}
 .pg-hload .head-skel{display:flex}
+.pg-hload .foot{visibility:hidden}
 @keyframes shimmer{to{transform:translateX(100%)}}
 
 /* ── Galería de trabajos en la cabecera ── */
@@ -209,7 +213,9 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 @media (hover:hover){.opt:hover{border-color:var(--brass-deep)}}
 .opt:active{transform:scale(.99)}
 .opt input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
-.opt input:focus-visible ~ .name{outline:3px solid var(--brass);outline-offset:14px;border-radius:2px}
+.opt input:focus-visible ~ .name{text-decoration:underline;text-decoration-color:var(--brass);text-underline-offset:4px}
+.opt:has(input:focus-visible){outline:3px solid var(--brass);outline-offset:2px}
+.opt:has(input:focus-visible) .name{text-decoration:none}
 .opt:has(input:checked){border-color:var(--brass);background:var(--brass-soft);box-shadow:inset 0 0 0 1px var(--brass)}
 .opt .name{font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .opt .sub{grid-column:1;font-size:13px;color:var(--smoke)}
@@ -242,7 +248,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 @media (hover:hover){.day:hover:not(:disabled){border-color:var(--brass-deep)}.slot:hover{border-color:var(--brass-deep)}}
 .day:active:not(:disabled){transform:scale(.96)}
 .day[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#F2EDE3}
-.day[aria-pressed="true"] .w,.day[aria-pressed="true"] .m{color:#D9B25A}
+.day[aria-pressed="true"] .w,.day[aria-pressed="true"] .m{color:var(--hacc)}
 .day:disabled{opacity:.5;cursor:not-allowed;background:transparent;border-style:dashed}
 .day:disabled .n{font-size:12px;font-family:var(--sans);font-weight:600;padding:7px 0;color:var(--smoke)}
 .day.skel-day{pointer-events:none;border-color:transparent;background:var(--skel);position:relative;overflow:hidden}
@@ -278,7 +284,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .done h2{color:#F2EDE3;font-size:36px}
 .done h2:focus{outline:none}
 .done p{font-size:15px;color:#E4DED2}
-.done .folio{font-family:var(--mono);font-size:13px;color:#D9B25A;letter-spacing:.06em}
+.done .folio{font-family:var(--mono);font-size:13px;color:var(--hacc);letter-spacing:.06em}
 .done-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
 .empty{padding:22px 16px;text-align:center;color:var(--smoke);font-size:14px;background:var(--paper);border:1.5px dashed var(--line);border-radius:12px}
 .empty b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
@@ -329,14 +335,12 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 20px;border-radius:12px;font-weight:600;font-size:16px;text-decoration:none;border:1.5px solid transparent;transition:transform .12s,background .15s,border-color .15s,opacity .15s;text-align:center;line-height:1.2}
 .btn svg{width:20px;height:20px;flex:none}
 .btn-primary{background:var(--brass);color:var(--on-brass);border-color:var(--brass)}
-.btn-primary:hover{background:var(--brass-deep);border-color:var(--brass-deep)}
 .btn-ghost{background:transparent;border-color:var(--line);color:var(--text)}
-.btn-ghost:hover{border-color:var(--brass-deep)}
 .btn-danger{background:var(--err);border-color:var(--err);color:var(--on-err)}
 .btn-danger-ghost{background:transparent;border-color:var(--line);color:var(--err)}
-.btn-danger-ghost:hover{border-color:var(--err)}
 .btn-wa{background:#25D366;border-color:#25D366;color:#0B2E17}
 .btn-wa:hover{background:#1FBE5B;border-color:#1FBE5B}
+@media (hover:hover){.btn-primary:hover{background:var(--brass-deep);border-color:var(--brass-deep)}.btn-ghost:hover{border-color:var(--brass-deep)}.btn-danger-ghost:hover{border-color:var(--err)}}
 .btn-sm{min-height:44px;padding:0 14px;font-size:14px;border-radius:10px}
 .btn:active{transform:scale(.985)}
 .btn:disabled{opacity:.55;cursor:not-allowed}
@@ -492,6 +496,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .fallback{max-width:520px;margin:0 auto;text-align:center;padding:36px 20px;background:var(--paper);border:1.5px solid var(--line);border-radius:16px}
 .fallback h2{font-family:var(--disp);font-size:30px;margin-bottom:10px}
 .fallback p{color:var(--smoke);margin-bottom:18px}
+.fallback a:not(.btn){color:var(--text);font-weight:600;text-decoration-color:var(--brass);text-underline-offset:3px}
 
 /* ── Movimiento ── */
 .step{animation:stepIn .34s var(--ease)}
@@ -620,7 +625,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
         <fieldset class="field">
           <legend class="eyebrow" id="fLegendPrimera" style="margin-bottom:8px">¿Es tu primera visita a NEW GOMEZ?</legend>
           <div class="seg" id="first">
-            <label class="opt"><input type="radio" name="first" value="si"/><span class="name">Sí</span><span class="sub">Es mi primera visita</span><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span></label>
+            <label class="opt"><input type="radio" name="first" value="si"/><span class="name">Sí</span><span class="sub">Primera vez</span><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span></label>
             <label class="opt"><input type="radio" name="first" value="no"/><span class="name">No</span><span class="sub">Ya he venido</span><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg></span></label>
           </div>
         </fieldset>
@@ -762,7 +767,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 })();
 </script>
 <script nomodule>window.__tbFatal&&window.__tbFatal();</script>
-<script type="module">
+<script type="module" onerror="window.__tbFatal&&window.__tbFatal()">
 import { html, raw } from './app/lib/html.js';
 import { icon } from './app/lib/icons.js';
 
@@ -862,6 +867,8 @@ function normPhone(v) { let d = digits(v); if (d.length === 13 && d.startsWith('
 const phoneFmt = (p) => { const d = normPhone(p); return d.length === 10 ? d.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : d; };
 const waUrl = (phone, text) => { const d = normPhone(phone); return 'https://wa.me/' + (d.length === 10 ? '52' + d : d) + (text ? '?text=' + encodeURIComponent(text) : ''); };
 const initials = (n) => { const w = String(n || '?').trim().split(/\s+/); return ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase(); };
+// Monograma de la barbería: dos palabras significativas ("La Navaja Barber Club" → NB, "Barbería del Norte" → BN).
+const shopMark = (n) => { const w = String(n || '?').trim().split(/\s+/).filter((x) => !/^(la|el|los|las|de|del|y|the|&)$/i.test(x)); return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase(); };
 const firstName = (n) => String(n || '').trim().split(/\s+/)[0] || '';
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '');
 const safeImg = (u) => { u = String(u || '').trim(); return /^(https?:\/\/|\/|img\/|app\/)/i.test(u) && !/^\/\//.test(u) ? u : ''; };
@@ -912,7 +919,6 @@ function toast(msg, kind) {
   el.addEventListener('click', close);
   t = setTimeout(close, kind === 'err' ? 5600 : 3400);
 }
-let sheetOpen = null;
 function sheet(o) {
   const prev = document.activeElement;
   const ov = document.createElement('div');
@@ -943,7 +949,6 @@ function sheet(o) {
       document.removeEventListener('keydown', onKey, true);
       ov.classList.add('closing');
       setTimeout(() => { ov.remove(); document.body.style.overflow = ''; }, 200);
-      sheetOpen = null;
       if (prev && prev.focus && document.contains(prev)) { try { prev.focus({ preventScroll: true }); } catch (e) { /* */ } }
     }
   };
@@ -964,7 +969,6 @@ function sheet(o) {
   $$('#toasts .toast').forEach((t) => t.remove());
   document.body.style.overflow = 'hidden';
   document.body.appendChild(ov);
-  sheetOpen = api;
   requestAnimationFrame(() => { const f = box.querySelector('[autofocus]') || box.querySelector('#sheetT'); f.focus({ preventScroll: true }); });
   return api;
 }
@@ -1058,7 +1062,7 @@ function logoHTML(cls) {
   const url = safeImg(sh.logo_url) || (C.isNG ? NEGOCIO.logo : '');
   if (url && C.isNG && !sh.logo_url) return html`<img class="${cls}" src="${url}" alt="" width="56" height="31"/>`;
   if (url) return html`<img class="${cls} sq" src="${url}" alt="" width="44" height="44"/>`;
-  return html`<span class="mono-badge" aria-hidden="true">${initials(sh.name)}</span>`;
+  return html`<span class="mono-badge" aria-hidden="true">${shopMark(sh.name)}</span>`;
 }
 function staffAvatar(s, size) {
   const url = safeImg(s.avatar_url) || (C.isNG ? NEGOCIO.fotos[String(s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()] || '' : '');
@@ -1091,7 +1095,7 @@ function paintShop() {
   link.setAttribute('aria-label', sh.name + ' · inicio');
   const logo = safeImg(sh.logo_url);
   if (logo) link.innerHTML = String(html`<img class="badge sq" id="hBadge" src="${logo}" width="76" height="76" alt="${'Logotipo de ' + sh.name}"/>`);
-  else if (!C.isNG) link.innerHTML = String(html`<span class="badge mono-badge" id="hBadge" aria-hidden="true">${initials(sh.name)}</span>`);
+  else if (!C.isNG) link.innerHTML = String(html`<span class="badge mono-badge" id="hBadge" aria-hidden="true">${shopMark(sh.name)}</span>`);
   $('#hNombre').innerHTML = String(html`${sh.name} <small>${tagline}</small>`);
   const hr = $('#hRating');
   hr.hidden = !(rating > 0);
@@ -1205,8 +1209,11 @@ function paintBrand() {
   const lightRgb = [1, 3, 5].map((i) => parseInt(light.slice(i, i + 2), 16));
   const onDark = lum(lightRgb) > 0.35 ? '#15130F' : '#FFFFFF';
   const soft = (r, a) => 'rgba(' + r.join(',') + ',' + a + ')';
-  const darkVars = `--brass:${light};--brass-deep:${light};--brass-soft:${soft(lightRgb, 0.16)};--on-brass:${onDark};`;
-  const css = `:root{--brass:${c};--brass-deep:${deep};--brass-soft:${soft(rgb, 0.13)};--on-brass:${on}}
+  // En oscuro, la "tinta" (cabecera, día elegido) toma un matiz del color de marca en vez del café de NEW GOMEZ.
+  const darkVars = `--brass:${light};--brass-deep:${light};--brass-soft:${soft(lightRgb, 0.16)};--on-brass:${onDark};--ink:${mix(rgb, [21, 19, 15], 0.8)};`;
+  // Acento sobre la cabecera oscura: la versión clara del color de marca (siempre legible sobre tinta).
+  const hacc = mix(rgb, [255, 255, 255], L < 0.12 ? 0.55 : L < 0.3 ? 0.4 : 0.15);
+  const css = `:root{--brass:${c};--brass-deep:${deep};--brass-soft:${soft(rgb, 0.13)};--on-brass:${on};--hacc:${hacc}}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){${darkVars}}}:root[data-theme="dark"]{${darkVars}}`;
   document.head.insertAdjacentHTML('beforeend', '<style id="brandStyle">' + css.replace(/</g, '') + '</style>');
 }
@@ -1214,7 +1221,8 @@ function setMeta(sel, attrName, val) { const m = $(sel); if (m) m.setAttribute(a
 function paintSEO() {
   const sh = C.shop;
   const t = $('meta[name="apple-mobile-web-app-title"]'); if (t) t.setAttribute('content', sh.name.slice(0, 30));
-  if (C.isNG) return; // NEW GOMEZ conserva su SEO estático (título, OG y JSON-LD escritos a mano)
+  if (C.isNG) return; // NEW GOMEZ conserva su SEO estático (título, OG, JSON-LD y manifest escritos a mano)
+  paintManifest(sh);
   const place = sh.city ? ' en ' + sh.city : '';
   const url = siteBase() + (Q.get('b') ? '?b=' + encodeURIComponent(sh.slug) : '');
   const desc = (sh.description || ('Reserva tu cita en ' + sh.name + place + ': elige servicio, barbero, fecha y hora, y confirma al instante.')).slice(0, 300);
@@ -1239,6 +1247,23 @@ function paintSEO() {
   const same = [pub.instagram, pub.facebook, pub.tiktok].map(safeUrl).filter(Boolean);
   if (same.length) ld.sameAs = same;
   $('#ldShop').textContent = JSON.stringify(ld);
+}
+// "Agregar a pantalla de inicio" de otra barbería: manifest propio (nombre y enlace directo a ESA barbería).
+function paintManifest(sh) {
+  try {
+    const base = new URL('./', location.href).href;
+    const start = base + '?b=' + encodeURIComponent(sh.slug);
+    const ic = (f, size, purpose) => ({ src: base + 'app/icons/' + f, sizes: size, type: 'image/png', purpose });
+    const m = {
+      id: start, name: 'Reservar en ' + sh.name, short_name: sh.name.length > 14 ? sh.name.split(/\s+/).slice(0, 2).join(' ').slice(0, 14) : sh.name,
+      description: 'Reserva tu cita en ' + sh.name + ' y consulta o cambia tus citas cuando quieras.',
+      start_url: start, scope: base, display: 'standalone', background_color: '#15130F', theme_color: '#15130F', lang: 'es-MX',
+      icons: [ic('icon-192.png', '192x192', 'any'), ic('icon-512.png', '512x512', 'any'), ic('maskable-512.png', '512x512', 'maskable')]
+    };
+    const link = $('link[rel="manifest"]');
+    if (link) link.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/manifest+json' }));
+    const ati = $('link[rel="apple-touch-icon"]'); if (ati) ati.href = 'app/icons/apple-touch-icon.png';
+  } catch (e) { /* el manifest estático sigue funcionando */ }
 }
 function paintNotice() {
   const n = $('#notice');
@@ -1356,7 +1381,7 @@ function dayStripHTML(st, today) {
   const nav = html`<button type="button" class="dnav prev" data-dnav="-1" aria-label="Fechas anteriores">${raw(icon('chevron-left'))}</button><button type="button" class="dnav next" data-dnav="1" aria-label="Más fechas">${raw(icon('chevron-right'))}</button>`;
   if (st.daysErr) return html`<div class="empty" style="margin-bottom:12px"><b>No pudimos cargar las fechas</b>${errText(st.daysErr)}<div class="acts"><button type="button" class="btn btn-ghost btn-sm" data-retry="days">${raw(icon('refresh'))}Reintentar</button></div></div>`;
   if (!st.days) return html`<div class="dates" aria-busy="true">${Array.from({ length: 8 }, () => html`<span class="day skel-day" aria-hidden="true"></span>`)}</div>`;
-  return html`${nav}<div class="dates" role="group" aria-label="Fechas disponibles">${st.days.map((d, i) => {
+  return html`${nav}<div class="dates" role="group" aria-label="Fechas disponibles">${st.days.map((d) => {
     const on = st.date === d.date, dd = parseKey(d.date), rel = diffDays(today, d.date);
     const w = rel === 0 ? 'hoy' : rel === 1 ? 'mañana' : DOW_S[dd.getUTCDay()];
     const lab = !d.open || (rel === 0 && !d.available && closedToday()) ? 'Cerrado' : !d.available ? 'Lleno' : '';
@@ -1502,6 +1527,7 @@ function renderStep4() {
   const req = BK().require_phone !== false && C.mode === 'live';
   $('#phoneOpt').textContent = req ? '(10 dígitos)' : '(opcional, 10 dígitos)';
   $('#phone').required = req;
+  $('#fEmail').hidden = C.mode === 'wa';
   $('#h4p').textContent = C.mode === 'wa' ? 'Te confirmamos por WhatsApp.' : BK().auto_confirm === false ? 'La barbería confirmará tu cita.' : 'Tu cita queda registrada al instante.';
   const btn = $('#confirmBtn');
   btn.className = 'btn ' + (C.mode === 'wa' ? 'btn-wa' : 'btn-primary');
@@ -1736,7 +1762,7 @@ function go(n, initial) {
   $('#stepLabel').textContent = n === 5 ? '¡Listo!' : 'Paso ' + n + ' de 4';
   renderMine();
   if (n === 2) { fixStaff(); renderBarbers(); }
-  if (n === 3) loadDays(false);
+  if (n === 3) { loadDays(false); const bb = $('#step3 [data-back]'); bb.lastChild.textContent = soloStaff() ? 'Servicios' : 'Barbero'; }
   if (n === 4) renderStep4();
   if (n === 5) renderDone();
   update();
@@ -1747,12 +1773,17 @@ function go(n, initial) {
   if (top < 0 || top > 96) window.scrollTo({ top: Math.max(0, top + window.pageYOffset - 8), behavior: 'auto' });
   const h = $('h2', steps[n]); if (h) h.focus({ preventScroll: true });
 }
+// Con un solo barbero posible, el paso "Elige tu barbero" sobra: se asigna solo y se salta.
+const soloStaff = () => { const el = eligibleStaff(); return el.length === 1 ? el[0] : null; };
 $('#nextBtn').addEventListener('click', () => {
   if (S.step === 5) return reset();
   if (S.step === 4) return confirmar();
-  if (canNext()) { tap(); go(S.step + 1); }
+  if (!canNext()) return;
+  tap();
+  const solo = S.step === 1 && soloStaff();
+  if (solo) { S.staff = solo.id; go(3); } else go(S.step + 1);
 });
-$('#flow').addEventListener('click', (e) => { const b = e.target.closest('[data-back]'); if (b) go(+b.dataset.back); });
+$('#flow').addEventListener('click', (e) => { const b = e.target.closest('[data-back]'); if (!b) return; const n = +b.dataset.back; go(n === 2 && soloStaff() ? 1 : n); });
 function reset() {
   S.services = []; S.date = null; S.time = null; S.result = null; S.days = null; S.daysKey = ''; S.slots = null; S.staff = null;
   $$('input[name=svc]').forEach((i) => { i.checked = false; });
@@ -1822,7 +1853,7 @@ function paintManageHeader(sh) {
   link.href = shopHome(sh.slug);
   const logo = safeImg(C.shop.logo_url);
   if (logo) link.innerHTML = String(html`<img class="badge sq" src="${logo}" width="76" height="76" alt="${'Logotipo de ' + sh.name}"/>`);
-  else if (!C.isNG) link.innerHTML = String(html`<span class="badge mono-badge" aria-hidden="true">${initials(sh.name)}</span>`);
+  else if (!C.isNG) link.innerHTML = String(html`<span class="badge mono-badge" aria-hidden="true">${shopMark(sh.name)}</span>`);
   $('#hNombre').innerHTML = String(html`${sh.name} <small>Tu cita</small>`);
   $('#hRating').hidden = true; $('#hIntro').hidden = true; $('#hOpen').hidden = true;
   $('#hHorario').textContent = sh.phone || sh.whatsapp ? phoneFmt(sh.phone || sh.whatsapp) : '';
@@ -1887,12 +1918,12 @@ function renderManage(flash) {
 }
 function renderManageError(err) {
   R.classList.remove('pg-hload');
-  const nf = err && (err.status === 404 || err.code === 'not_found');
+  const nf = !!err && err.code === 'not_found';
   const off = isOffline(err);
   const mine = mineAll().find((x) => x.token === M.token);
   $('#hNombre').innerHTML = String(html`${mine ? mine.shop_name : 'Tu cita'} <small>Gestionar cita</small>`);
   $('#hRating').hidden = true; $('#hIntro').hidden = true; $('#hOpen').hidden = true; $('#hMapa').hidden = true; $('#hHorario').textContent = '';
-  if (!C.isNG || mine) $('#hBadgeLink').innerHTML = String(html`<span class="badge mono-badge" aria-hidden="true">${initials(mine ? mine.shop_name : 'TB')}</span>`);
+  if (!C.isNG || mine) $('#hBadgeLink').innerHTML = String(html`<span class="badge mono-badge" aria-hidden="true">${shopMark(mine ? mine.shop_name : 'TB')}</span>`);
   $('#manageView').innerHTML = String(html`<div class="empty" style="padding:32px 20px;margin-top:10px">
     <b style="font-size:20px;font-family:var(--disp)">${nf ? 'No encontramos esa cita' : off ? 'No pudimos abrir tu cita' : 'Algo salió mal'}</b>
     ${nf ? 'Revisa que el enlace esté completo. Si la reservaste hace poco, búscalo en tu calendario o en tus mensajes.' : off ? 'Parece que no hay conexión con la barbería en este momento. Intenta de nuevo en unos segundos.' : errText(err)}
@@ -2065,11 +2096,11 @@ function applyShop(data, mode, why) {
   // "Reserva de nuevo" desde otra página: ?servicio=<id> preselecciona.
   const pre = Q.get('servicio');
   if (pre && C.services.some((s) => s.id === pre)) { S.services = [pre]; renderServices(); fixStaff(); update(); }
-  if (/^#(equipo|resenas|horario)$/.test(location.hash)) { const t = $(location.hash); if (t) t.scrollIntoView(); }
+  if (/^#(equipo|resenas|horario|bookingMain)$/.test(location.hash)) { const t = $(location.hash); if (t) t.scrollIntoView(); }
 }
 function renderShopError(err, slug) {
   R.classList.remove('pg-hload');
-  const nf = err && (err.status === 404 || err.code === 'not_found');
+  const nf = !!err && err.code === 'not_found';
   $('#hNombre').innerHTML = String(html`${nf ? 'Barbería no encontrada' : 'Reserva tu cita'} <small>${slug || ''}</small>`);
   ['#hRating', '#hIntro', '#hOpen', '#hMapa'].forEach((s) => { $(s).hidden = true; });
   $('#hHorario').textContent = '';

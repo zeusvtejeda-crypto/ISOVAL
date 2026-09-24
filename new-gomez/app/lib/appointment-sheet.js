@@ -59,8 +59,8 @@ async function staffOptions() {
 function ensureStyles() {
   if (document.getElementById('st-appt')) return;
   document.head.insertAdjacentHTML('beforeend', `<style id="st-appt">
-.apf{display:grid;gap:24px;padding-top:4px}
-.apf-sec{display:grid;gap:10px;min-width:0}
+.apf{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;padding-top:4px}
+.apf-sec,.apf .field{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0}
 .apf-label{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;min-width:0}
 .apf-n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--on-ink);font-size:12.5px;font-weight:700;display:grid;place-items:center;flex:none;transition:background .2s}
 .apf-sec.done .apf-n{background:var(--ok);color:#fff}
@@ -86,7 +86,7 @@ function ensureStyles() {
 .apf-check .ic path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .6s .18s var(--ease-out) forwards}
 .apf-done .stack{width:100%;max-width:360px;margin-top:14px}
 /* detalle */
-.ad{display:grid;gap:16px;padding-top:2px}
+.ad{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;padding-top:2px}
 .ad-hero{position:relative;padding:14px 16px 16px 20px;border-radius:var(--r-lg);background:rgba(var(--c-rgb),.09);border:1px solid rgba(var(--c-rgb),.22);overflow:hidden}
 .ad-hero::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
 .ad-hero.st-cancelled{filter:saturate(.3)}
@@ -306,7 +306,17 @@ function eventInfo(ev, names) {
   }
 }
 
-export function openAppointment(id) {
+// Evita abrir dos veces la misma hoja (doble toque o listeners duplicados).
+const openNow = new Map();
+function once(key, fn) {
+  if (openNow.has(key)) return openNow.get(key);
+  const p = Promise.resolve().then(fn).finally(() => { if (openNow.get(key) === p) openNow.delete(key); });
+  openNow.set(key, p);
+  return p;
+}
+
+export function openAppointment(id) { return once('detail:' + id, () => openDetail(id)); }
+function openDetail(id) {
   ensureStyles();
   let data = null, latest = null, tab = 'history', names = {}, closed = false;
   const m = modal({ title: 'Cita', subtitle: ' ', size: 'lg', body: skelDetail(), footerHtml: ' ', onClose: () => { closed = true; offBus(); } });
@@ -350,7 +360,6 @@ export function openAppointment(id) {
     if (w && st === 'pending') g.push(['confirm', 'check-circle', 'Confirmar', 'brand']);
     if (w && (active || st === 'no_show') && started) g.push(['complete', 'check', st === 'no_show' ? 'Sí vino' : 'Atendida', 'ok']);
     if (canPay() && st !== 'cancelled' && a.balance > 0) g.push(['pay', 'cash', 'Cobrar', 'brand']);
-    if (wa) g.push(['wa', 'whatsapp', 'WhatsApp', 'wa']);
     if (w && active) g.push(['reschedule', 'calendar-clock', 'Reagendar', '']);
     if (w && st !== 'cancelled') g.push(['edit', 'edit', 'Editar', '']);
     if (w && active && started) g.push(['noshow', 'user-x', 'No asistió', '']);
@@ -417,11 +426,12 @@ export function openAppointment(id) {
       ${st === 'no_show' ? html`<div class="banner err">${raw(icon('user-x'))}<div class="grow"><b>No asistió.</b> Si llegó tarde y sí lo atendiste, toca «Sí vino».</div></div>` : ''}
       <div class="ad-contact">
         ${avatar(a.client_name)}
-        <div class="grow"><div class="t truncate">${a.client_name || 'Cliente'}</div>
-          <div class="m truncate">${a.client_phone ? fmtPhone(a.client_phone) : 'Sin teléfono'}${cl && cl.email ? ' · ' + cl.email : ''}</div>
+        <div class="grow"><div class="t truncate">${a.client_phone ? fmtPhone(a.client_phone) : 'Sin teléfono registrado'}</div>
+          ${cl && cl.email ? html`<div class="m truncate">${cl.email}</div>` : ''}
           ${tags.length ? html`<div class="ad-tags">${tags.slice(0, 4).map((t) => html`<span class="tag">${t}</span>`)}</div>` : ''}</div>
-        ${a.client_phone ? html`<a class="btn btn-secondary btn-icon" href="tel:${a.client_phone}" aria-label="Llamar a ${a.client_name}">${raw(icon('phone'))}</a>` : ''}
-        ${a.client_id && canClient() ? html`<a class="btn btn-secondary btn-icon" href="#/clientes/${a.client_id}" data-nav aria-label="Ver ficha del cliente">${raw(icon('user'))}</a>` : ''}
+        ${a.client_phone ? html`<a class="btn btn-secondary btn-icon" href="tel:${a.client_phone}" aria-label="Llamar a ${a.client_name}" title="Llamar">${raw(icon('phone'))}</a>` : ''}
+        ${a.client_phone && canMsg() ? html`<button type="button" class="btn btn-wa btn-icon" data-act="wa" aria-label="Enviar WhatsApp a ${a.client_name}" title="WhatsApp">${raw(icon('whatsapp'))}</button>` : ''}
+        ${a.client_id && canClient() ? html`<a class="btn btn-secondary btn-icon" href="#/clientes/${a.client_id}" data-nav aria-label="Ver ficha del cliente" title="Ficha del cliente">${raw(icon('user'))}</a>` : ''}
       </div>
       ${grid.length ? html`<div class="ad-acts">${grid.map(([k, ic, label, tone]) => html`<button type="button" class="ad-act ${tone}" data-act="${k}">${raw(icon(ic))}<span>${label}</span></button>`)}</div>` : ''}
       <div class="ad-card">
@@ -513,8 +523,8 @@ export function openAppointment(id) {
 // ═════════════════════════════════════════════════════════════════════
 // Nueva / editar
 // ═════════════════════════════════════════════════════════════════════
-export function openNewAppointment(prefill) { return openForm({ prefill: prefill || {} }); }
-export function openEditAppointment(appt) { return openForm({ appt }); }
+export function openNewAppointment(prefill) { return once('form:new', () => openForm({ prefill: prefill || {} })); }
+export function openEditAppointment(appt) { return once('form:' + appt.id, () => openForm({ appt })); }
 
 function skelForm() {
   const sec = (h) => '<div class="stack-sm"><div class="skel skel-line" style="width:30%;height:14px"></div><div class="skel" style="height:' + h + 'px;border-radius:12px"></div></div>';
@@ -655,8 +665,9 @@ async function openForm({ prefill, appt }) {
     $$('[data-src]', form).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.src === s)));
   }
   form.addEventListener('click', (e) => { const b = e.target.closest('[data-src]'); if (b) { sourceTouched = true; touch(); setSource(b.dataset.src); } });
-  form.addEventListener('input', (e) => { if (e.target.matches('textarea')) { touch(); clearErr(e.target.id === 'apfIn' ? 'internal_note' : 'client_note'); } });
+  form.addEventListener('input', (e) => { touch(); if (e.target.matches('textarea')) clearErr(e.target.id === 'apfIn' ? 'internal_note' : 'client_note'); });
   m.foot.addEventListener('click', (e) => { if (e.target.closest('[data-apf-cancel]')) askClose(); });
+  m.body.addEventListener('click', (e) => { if (e.target.closest('a[href^="#"]')) m.close(result); });
   summary();
   if (window.matchMedia('(min-width:720px)').matches && !edit && !clientInit) setTimeout(() => client.focus(), 80);
 
@@ -778,7 +789,8 @@ async function openForm({ prefill, appt }) {
         <button type="button" class="btn ${wa ? 'btn-ghost' : 'btn-primary'} grow" data-done="ok">Listo</button></div>
       </div></div>`);
     m.foot.hidden = true;
-    toast.success('Cita agendada · ' + whenText(out));
+    // El aviso sale al cerrar la hoja (en móvil taparía los botones de esta pantalla).
+    m.done.then(() => toast.success('Cita agendada · ' + whenText(out)));
     m.body.addEventListener('click', async (e) => {
       const b = e.target.closest('[data-done]'); if (!b) return;
       if (b.dataset.done === 'wa') { await busy(b, sendAppointmentWhatsApp(out, 'confirmation')); m.close(out); }
@@ -793,7 +805,8 @@ async function openForm({ prefill, appt }) {
 // ═════════════════════════════════════════════════════════════════════
 // Reagendar (fecha + barbero + horarios libres)
 // ═════════════════════════════════════════════════════════════════════
-export async function openReschedule(a) {
+export function openReschedule(a) { return once('move:' + a.id, () => openMove(a)); }
+async function openMove(a) {
   ensureStyles();
   if (!canWrite()) return null;
   let staff = [], avail = {};

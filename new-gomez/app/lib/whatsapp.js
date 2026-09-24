@@ -20,7 +20,7 @@ export const KIND_LABEL = {
   thanks: 'Agradecimiento', no_show: 'No asistió', custom: 'Mensaje libre'
 };
 export const MSG_STATUS = {
-  prepared: { label: 'Preparado', cls: 'plain' }, opened: { label: 'Abierto en WhatsApp', cls: 'info' },
+  prepared: { label: 'Sin abrir', cls: 'plain' }, opened: { label: 'Abierto', cls: 'info' },
   sent: { label: 'Enviado', cls: 'ok' }, queued: { label: 'En cola', cls: 'warn' }, failed: { label: 'Falló', cls: 'err' }
 };
 export const MAX_BODY = 1000;

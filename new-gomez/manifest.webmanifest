@@ -1,15 +1,37 @@
 {
-  "name": "NEW GOMEZ · Reservar",
+  "id": "./",
+  "name": "Reservar en NEW GOMEZ",
   "short_name": "NEW GOMEZ",
-  "description": "Reserva tu corte en NEW GOMEZ Barbershop, Tepic.",
+  "description": "Reserva tu corte en NEW GOMEZ Barbershop, Tepic: elige servicio, barbero, fecha y hora, y consulta o cambia tu cita cuando quieras.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#15130F",
   "theme_color": "#15130F",
-  "lang": "es",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "categories": ["lifestyle", "business"],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Reservar una cita",
+      "short_name": "Reservar",
+      "description": "Elige servicio, barbero, fecha y hora",
+      "url": "./#bookingMain",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Horario y ubicación",
+      "short_name": "Horario",
+      "description": "Horario, dirección y teléfono de la barbería",
+      "url": "./#horario",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
   ]
 }

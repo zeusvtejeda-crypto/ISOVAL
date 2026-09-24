@@ -28,6 +28,7 @@ const CSS = `
 .av-ed .card-head{padding:16px 18px 12px;border-bottom:1px solid var(--border)}
 .av-day{display:grid;gap:8px;padding:12px 12px 12px 16px;border-bottom:1px solid var(--border);transition:background .2s}
 .av-day:last-of-type{border-bottom:0}
+#avDays .av-day:last-child{border-radius:0 0 var(--r-lg) var(--r-lg)}
 .av-day.closed{background:var(--surface-2)}
 .av-day.bad{background:var(--err-soft)}
 .av-dh{display:flex;align-items:center;gap:10px;min-height:44px}
@@ -381,11 +382,12 @@ export default {
         st.origWeek = week;
         st.model = toModel(week);
         st.orig = sig(st.model);
+        sumEl.hidden = false;
         paintEditor();
         paintSummary();
       } catch (e) {
         edEl.innerHTML = String(errorState(e, 'avRetry'));
-        sumEl.innerHTML = '';
+        sumEl.hidden = true;
       } finally { st.loadingWeek = false; }
     }
     async function selectStaff(id, push) {

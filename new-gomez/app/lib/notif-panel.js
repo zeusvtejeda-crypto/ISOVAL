@@ -91,7 +91,9 @@ export function closeNotificationsPanel() { if (current) current.close(); }
 
 export function openNotificationsPanel(anchor) {
   injectNotifStyle();
-  if (current) { const same = current.anchor === anchor; current.close(); if (same) return; }
+  // El mismo clic puede llegar dos veces (listeners duplicados en el shell): se ignora el eco inmediato.
+  if (current && current.anchor === anchor && Date.now() - current.t < 150) return { close: current.close };
+  if (current) { const same = current.anchor === anchor; current.close(); if (same) return null; }
   const el = document.createElement('div');
   el.className = 'notif-pop';
   el.setAttribute('role', 'dialog');
@@ -178,7 +180,7 @@ export function openNotificationsPanel(anchor) {
     setTimeout(() => el.remove(), 150);
     if (prevFocus && el.contains(document.activeElement) && prevFocus.focus) { try { prevFocus.focus({ preventScroll: true }); } catch (e) { /* */ } }
   }
-  current = { el, anchor, close };
+  current = { el, anchor, close, t: Date.now() };
   setTimeout(() => { const f = el.querySelector('#npAll:not([disabled]), .nt-item, #npMore'); if (f) f.focus({ preventScroll: true }); }, 30);
   load();
   return { close };

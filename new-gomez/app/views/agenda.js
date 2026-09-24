@@ -59,9 +59,11 @@ function ensureStyles() {
 .ag-dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px rgba(var(--c-rgb),.22)}
 .ag-cx{flex:none;font-size:13px;color:var(--text-2);min-height:38px;gap:8px}
 .ag-cxchip,.ag-sep{display:none!important}
+.ag-cx-inline{margin-left:auto}
+@media (min-width:720px){.ag-filters.solo{display:none}}
 .ag-sep{width:1px;background:var(--border-strong);margin:6px 2px;flex:none}
 @media (max-width:719px){.ag-cx{display:none}.ag-cxchip{display:inline-flex!important}.ag-sep{display:block!important}}
-.ag-today[aria-pressed="true"]{color:var(--text-3);box-shadow:none}
+.ag-today.is-now{color:var(--text-3);box-shadow:none}
 .ag-cx .track{width:36px;height:21px}.ag-cx .track::after{width:15px;height:15px}.ag-cx input:checked+.track::after{transform:translateX(15px)}
 .ag-stats{display:flex;gap:6px;margin-bottom:12px;min-height:32px;overflow-x:auto;scrollbar-width:none;padding:1px}
 .ag-stats::-webkit-scrollbar{display:none}
@@ -87,7 +89,7 @@ button.ag-stat:hover{border-color:var(--border-strong);background:var(--surface-
 .ag-grid{--gut:60px;min-width:calc(var(--gut) + var(--n) * var(--colmin));position:relative}
 .ag-dayv{--colmin:172px}.ag-dayv .ag-grid.one{--colmin:0px}
 .ag-weekv{--colmin:140px}
-@media (max-width:1180px){.ag-weekv{--colmin:118px}}
+@media (max-width:1180px){.ag-weekv{--colmin:100px}}
 @media (max-width:719px){.ag-grid{--gut:50px}.ag-dayv{--colmin:150px}.ag-weekv{--colmin:112px}}
 .ag-hrow,.ag-brow{display:grid;grid-template-columns:var(--gut) repeat(var(--n),minmax(var(--colmin),1fr))}
 .ag-hrow{position:sticky;top:0;z-index:8;background:var(--surface);box-shadow:0 1px 0 var(--border)}
@@ -162,7 +164,7 @@ button.ag-stat:hover{border-color:var(--border-strong);background:var(--surface-
 .ag-ghost{z-index:30!important;box-shadow:var(--shadow-3)!important;opacity:.96;pointer-events:none;transition:top .06s linear,left .08s var(--ease)!important;animation:none!important}
 .ag-ghost.saving{opacity:.7}
 .ag-ghost-t{position:absolute;right:5px;bottom:4px;background:var(--ink);color:var(--on-ink);font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;max-width:calc(100% - 10px);overflow:hidden;text-overflow:ellipsis}
-.ag-ev.ag-src{opacity:.3}
+.ag-ev.ag-src{opacity:.3;animation:none!important;box-shadow:none}
 body.ag-dragging,body.ag-dragging *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}
 .ag-flash{animation:agFlash 1.8s var(--ease)!important}
 @keyframes agFlash{0%,100%{box-shadow:var(--shadow-1)}20%,60%{box-shadow:0 0 0 4px rgba(var(--c-rgb),.5),var(--shadow-2)}}
@@ -261,7 +263,7 @@ export default {
       appts: [], off: [], staffList: [], avail: {}, total: 0,
       loaded: false, err: null, range: null
     };
-    let gone = false, seq = 0, availP = null, drag = null, suppressClick = false, qTimer = null, scrollKey = '';
+    let gone = false, seq = 0, availP = null, drag = null, pending = null, suppressClick = false, qTimer = null, scrollKey = '';
     const offs = [];
 
     el.innerHTML = String(html`
@@ -360,7 +362,7 @@ export default {
       const tb = $('.ag-today', el);
       const [a, b] = S.range || range();
       const t = today();
-      tb.setAttribute('aria-pressed', String(t >= a && t <= b));
+      tb.classList.toggle('is-now', t >= a && t <= b);
       $('#agListBar', el).hidden = S.view !== 'list';
     }
     function paintFilters() {
@@ -377,9 +379,9 @@ export default {
       }
       const cx = S.view === 'month' ? '' : '<label class="switch ag-cx" title="Mostrar u ocultar citas canceladas"><input type="checkbox" id="agCx" ' + (S.cx ? 'checked' : '') + '/><span class="track"></span><span>Canceladas</span></label>';
       const cxChip = S.view === 'month' ? '' : '<button type="button" class="chip ag-cxchip" data-cx aria-pressed="' + String(S.cx) + '">' + icon(S.cx ? 'eye' : 'eye-off', 'ic-sm') + 'Canceladas</button>';
-      if (chips) chips = chips.replace(/<\/div>$/, (cxChip ? '<span class="ag-sep" aria-hidden="true"></span>' + cxChip : '') + '</div>');
-      else chips = '<div class="ag-chips">' + cxChip + '</div>';
-      f.innerHTML = chips + cx;
+      if (chips) { chips = chips.replace(/<\/div>$/, (cxChip ? '<span class="ag-sep" aria-hidden="true"></span>' + cxChip : '') + '</div>'); f.innerHTML = chips + cx; }
+      else f.innerHTML = cxChip ? '<div class="ag-chips">' + cxChip + '</div>' : ''; // sin chips: el interruptor va en la fila de resumen (escritorio)
+      f.classList.toggle('solo', !chips);
     }
     function paintStats(xs) {
       const st = $('#agStats', el);
@@ -400,6 +402,7 @@ export default {
       if (ns) h += '<button type="button" class="ag-stat err" data-stat="no_show"><b>' + ns + '</b> no ' + (ns === 1 ? 'asistió' : 'asistieron') + '</button>';
       if (canc) h += '<button type="button" class="ag-stat" data-stat="cancelled"><b>' + canc + '</b> ' + (canc === 1 ? 'cancelada' : 'canceladas') + '</button>';
       if (!xs.length) h = '<span class="ag-stat">' + icon('calendar') + 'Sin citas ' + period + '</span>';
+      if ($('#agFilters', el).classList.contains('solo') && S.view !== 'month') h += '<label class="switch ag-cx ag-cx-inline" title="Mostrar u ocultar citas canceladas"><input type="checkbox" id="agCx" ' + (S.cx ? 'checked' : '') + '/><span class="track"></span><span>Canceladas</span></label>';
       st.innerHTML = h;
     }
 
@@ -496,7 +499,9 @@ export default {
           items.map((it) => evHtml(it.a, it, rs, ppm, { showStaff: false })).join('') +
           (isToday ? nowLine(rs, re, ppm, i === 0) : '') + '</div>';
       }).join('');
-      const empty = !list.length && writable ? '<div class="ag-hint" role="note"><span class="art">' + icon('calendar-plus') + '</span><span><b>' + (isToday ? 'Día libre por ahora' : 'Sin citas este día') + '</b>Toca cualquier horario para agendar.</span><button type="button" class="btn btn-primary btn-sm" data-a="new">Agendar</button></div>' : '';
+      const closed = cols.every((c) => !!fullDayOff(c.id, date) || !blocksFor(c.id, date).length);
+      const empty = !list.length && writable ? '<div class="ag-hint" role="note"><span class="art">' + icon(closed ? 'store' : 'calendar-plus') + '</span><span><b>' + (closed ? 'Este día no hay servicio' : isToday ? 'Día libre por ahora' : 'Sin citas este día') + '</b>' +
+        (closed ? 'Si vas a atender a alguien, agéndalo de todas formas.' : 'Toca cualquier horario para agendar.') + '</span><button type="button" class="btn btn-primary btn-sm" data-a="new">Agendar</button></div>' : '';
       return '<div class="card ag-cal ag-dayv' + (writable ? ' w' : '') + '" style="--n:' + cols.length + ';--hour:' + (60 * ppm) + 'px">' +
         '<div class="ag-scroll" id="agScroll" data-rs="' + rs + '" data-re="' + re + '" data-ppm="' + ppm + '" data-kind="day">' +
         '<div class="ag-grid' + (cols.length === 1 ? ' one' : '') + '">' +
@@ -837,7 +842,7 @@ export default {
       drag = { a, ev, sc, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, started: false, pid: e.pointerId, rs: +sc.dataset.rs, re: +sc.dataset.re, ppm: +sc.dataset.ppm, grab: e.clientY - ev.getBoundingClientRect().top };
     };
     const onMove = (e) => {
-      if (!drag || e.pointerId !== drag.pid) return;
+      if (!drag || drag.saving || e.pointerId !== drag.pid) return;
       drag.x = e.clientX; drag.y = e.clientY;
       if (!drag.started) {
         if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
@@ -896,9 +901,10 @@ export default {
       drag.ev.classList.remove('ag-src');
       document.body.classList.remove('ag-dragging');
       drag = null;
+      if (pending) { const f = pending; pending = null; load({ silent: true, keepScroll: true, flash: f.flash }); }
     }
     const onUp = async (e) => {
-      if (!drag || e.pointerId !== drag.pid) return;
+      if (!drag || drag.saving || e.pointerId !== drag.pid) return;
       if (!drag.started) { drag = null; return; }
       suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
       const d = drag;
@@ -906,15 +912,15 @@ export default {
       cancelAnimationFrame(d.raf);
       const a = d.a, to = d.to;
       if (!to || (to.date === a.date && to.start_min === a.start_min && to.staff_id === a.staff_id)) { endDrag(); return; }
+      if (d.col) d.col.classList.remove('drop');
       const st = to.staff_id !== a.staff_id ? staffById(to.staff_id) : null;
       const from = cap(dateShort(a.date)) + ' ' + time(a.start_min) + (st ? ' con ' + firstName(a.staff_name) : '');
       const dest = cap(dateShort(to.date)) + ' ' + time(to.start_min) + (st ? ' con ' + firstName(st.name) : '');
       const ok = await confirmDialog({ title: '¿Mover la cita de ' + firstName(a.client_name || 'Cliente') + '?', message: from + '  →  ' + dest, confirmText: 'Mover cita', cancelText: 'No moverla', icon: 'calendar-clock' });
       if (!ok || gone) { endDrag(); return; }
       if (d.ghost) d.ghost.classList.add('saving');
-      const out = await moveAppointment(a, to);
+      await moveAppointment(a, to);
       endDrag();
-      if (out) { const i = S.appts.findIndex((x) => x.id === out.id); if (i > -1) S.appts[i] = Object.assign({}, S.appts[i], out); }
     };
     const onCancel = (e) => { if (drag && e.pointerId === drag.pid && !drag.saving) endDrag(); };
     body.addEventListener('pointerdown', onDown);
@@ -962,8 +968,8 @@ export default {
     window.addEventListener('resize', onResize);
 
     offs.push(bus.on('appointments:changed', (e) => {
-      if (drag) return;
       const flash = e && ['created', 'moved', 'edited'].includes(e.action) ? e.id : null;
+      if (drag) { pending = { flash }; return; } // se recarga al terminar el arrastre
       load({ silent: true, keepScroll: true, flash });
     }));
     offs.push(bus.on('payments:changed', () => load({ silent: true, keepScroll: true })));

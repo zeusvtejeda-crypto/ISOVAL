@@ -20,7 +20,7 @@ const CSS = `
 .tm-card:hover{box-shadow:var(--shadow-2);border-color:var(--border-strong)}
 .tm-card::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--c)}
 .tm-top{display:flex;gap:12px;align-items:center;padding:18px 12px 12px 18px}
-.tm-top .avatar{--s:52px;box-shadow:0 0 0 3px var(--surface),0 0 0 5px color-mix(in srgb,var(--c) 35%,transparent)}
+.tm-top .avatar{--s:52px;box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--border-strong);box-shadow:0 0 0 3px var(--surface),0 0 0 5px color-mix(in srgb,var(--c) 35%,transparent)}
 .tm-name{font-weight:700;font-size:16.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tm-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
 .tm-bio.faint{color:var(--text-3)}

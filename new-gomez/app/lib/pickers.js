@@ -34,6 +34,8 @@ import { money, time, duration, addDays, weekday, diffDays, WEEKDAYS_SHORT, MONT
 
 let uidN = 0;
 const uid = (p) => p + (++uidN) + Math.random().toString(36).slice(2, 5);
+// Los selectores con scroll horizontal necesitan un contenedor que pueda encogerse (en grid/flex el mínimo es "auto").
+const fit = (host) => { host.style.minWidth = '0'; host.style.maxWidth = '100%'; };
 
 export function hexRgb(hex) {
   let h = String(hex || '').trim().replace('#', '');
@@ -91,7 +93,7 @@ function ensureStyles() {
 .sp-price{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;flex:none}
 .sp-filter{margin-bottom:2px}
 /* barbero */
-.ss{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px;margin:-2px}
+.ss{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px;margin:-2px;min-width:0;max-width:calc(100% + 4px)}
 .ss::-webkit-scrollbar{display:none}
 .ss-opt{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:6px 16px 6px 6px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);font-weight:600;font-size:14px;white-space:nowrap;flex:none;transition:border-color .15s,background .15s,box-shadow .15s,transform .12s var(--ease)}
 .ss-opt:hover{border-color:var(--text-3)}
@@ -100,9 +102,10 @@ function ensureStyles() {
 .ss-opt .avatar{--s:36px}
 .ss-any{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--muted-soft);color:var(--text-2)}
 /* días */
-.ds{display:flex;gap:8px;align-items:stretch;min-width:0}
+.ds{display:flex;gap:8px;align-items:stretch;min-width:0;max-width:100%}
 .ds-track{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;flex:1;min-width:0;padding:3px 2px;scroll-behavior:smooth}
 .ds-track::-webkit-scrollbar{display:none}
+.ds-track{padding-right:18px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
 .ds-day{flex:none;width:58px;min-height:70px;display:grid;justify-items:center;align-content:center;gap:0;border-radius:14px;border:1px solid var(--border);background:var(--surface);scroll-snap-align:center;transition:background .15s,border-color .15s,color .15s,transform .12s var(--ease)}
 .ds-day:hover{border-color:var(--border-strong)}
 .ds-day:active{transform:scale(.95)}
@@ -152,6 +155,7 @@ export function pickClient(host, opts) {
   let mode = value ? (value.new ? 'new' : 'selected') : 'search';
   let q = '', items = [], active = -1, seq = 0, timer = null, recent = null, loading = false, error = null;
   host.classList.add('pc');
+  fit(host);
 
   const emit = () => { if (opts.onChange) opts.onChange(get()); };
   const get = () => {
@@ -429,6 +433,7 @@ export function staffSelect(host, opts) {
   ensureStyles();
   let value = opts.value || '';
   const staff = opts.staff || [];
+  fit(host);
   function render() {
     host.innerHTML = '<div class="ss" role="radiogroup" aria-label="' + esc(opts.label || 'Barbero') + '">' +
       (opts.allowAny ? '<button type="button" class="ss-opt" role="radio" data-ss="any" aria-checked="' + String(value === 'any') + '"><span class="ss-any">' + icon('users', 'ic-sm') + '</span>' + esc(opts.anyLabel || 'Cualquiera') + '</button>' : '') +
@@ -453,7 +458,7 @@ export function staffSelect(host, opts) {
   host.addEventListener('keydown', onKey);
   render();
   const sel = () => host.querySelector('[aria-checked="true"]');
-  requestAnimationFrame(() => { const s = sel(); if (s && s.scrollIntoView && s.parentElement.scrollWidth > s.parentElement.clientWidth) s.parentElement.scrollLeft = s.offsetLeft - 8; });
+  requestAnimationFrame(() => { const s = sel(); if (s && s.scrollIntoView && s.parentElement.scrollWidth > s.parentElement.clientWidth) s.parentElement.scrollLeft = s.offsetLeft - s.parentElement.offsetLeft - 8; });
   return {
     get: () => value,
     set(id) { value = id || ''; render(); },
@@ -472,6 +477,7 @@ export function dayStrip(host, opts) {
   let start;
   const days = Math.max(7, opts.days || 30);
   const id = uid('ds');
+  fit(host);
   function frame() {
     const base = value < t0 ? value : t0;
     start = base;
@@ -500,7 +506,7 @@ export function dayStrip(host, opts) {
       const tr = host.querySelector('.ds-track');
       const el = host.querySelector('.ds-day[aria-selected="true"]');
       if (!tr || !el) return;
-      const left = el.offsetLeft - tr.clientWidth / 2 + el.offsetWidth / 2;
+      const left = el.offsetLeft - tr.offsetLeft - tr.clientWidth / 2 + el.offsetWidth / 2;
       if (smooth === false) { const b = tr.style.scrollBehavior; tr.style.scrollBehavior = 'auto'; tr.scrollLeft = left; tr.style.scrollBehavior = b; }
       else tr.scrollTo({ left, behavior: 'smooth' });
     });
@@ -556,6 +562,7 @@ export function slotChips(host, opts) {
   let custom = false, showPast = false;
   let res = null, loading = false, err = null, seq = 0;
   const original = opts.original || null;
+  fit(host);
 
   const freeSet = () => new Set(((res && res.slots) || []).map((s) => s.start_min));
   const isFree = (m) => freeSet().has(m);
@@ -581,7 +588,7 @@ export function slotChips(host, opts) {
   }
   function render() {
     let body = '';
-    if (!p.services || !p.services.length) body = '<div class="sc-msg">' + icon('scissors') + '<div>Elige al menos un servicio para ver los horarios libres.</div></div>';
+    if (!p.services || !p.services.length) body = '<div class="sc-msg">' + icon('scissors') + '<div>' + (value != null ? 'Elegiste las <b>' + time(value) + '</b>. Elige al menos un servicio para confirmar que esa hora está libre.' : 'Elige al menos un servicio para ver los horarios libres.') + '</div></div>';
     else if (!p.staffId) body = '<div class="sc-msg">' + icon('user') + '<div>Elige un barbero para ver sus horarios libres.</div></div>';
     else if (loading && !res) body = '<div class="sc-chips" aria-busy="true" aria-label="Cargando horarios">' + '<div class="skel sc-skel"></div>'.repeat(8) + '</div>';
     else if (err) body = '<div class="sc-msg">' + icon('alert') + '<div class="grow">' + esc(err) + '</div><button type="button" class="btn btn-secondary btn-sm" data-sc-retry>' + icon('refresh', 'ic-sm') + 'Reintentar</button></div>';
@@ -615,8 +622,9 @@ export function slotChips(host, opts) {
       res = r;
     } catch (e) { if (my !== seq) return; err = e.message || 'No se pudieron cargar los horarios.'; }
     loading = false;
-    // Si el chip elegido ya no está libre (cambió el día o el barbero) se quita la selección.
-    if (value != null && !custom && !isFree(value)) value = null;
+    // Hora libre → se marca su chip. Un chip que dejó de estar libre (cambió el día o el barbero) se quita;
+    // una hora escrita a mano ("Otra hora") se conserva.
+    if (value != null) { if (isFree(value)) custom = false; else if (!custom) value = null; }
     render();
     emit();
   }
@@ -655,7 +663,7 @@ export function slotChips(host, opts) {
   host.addEventListener('input', onInput);
   host.addEventListener('change', onInput);
   if (value != null) custom = true; // se ajusta al cargar: si es libre se marca su chip
-  load().then(() => { if (value != null && custom && isFree(value) && !isOriginal(value)) { custom = false; render(); emit(); } else if (value != null && isOriginal(value) && isFree(value)) { custom = false; render(); } });
+  load();
   return {
     get, isFree, load,
     set(m) { value = m; custom = m != null && !isFree(m); render(); emit(); },

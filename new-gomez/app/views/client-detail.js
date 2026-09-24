@@ -28,12 +28,13 @@ const CSS = `
 .cd-actions{display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;position:relative}
 .cd-actions .btn{min-width:0}
 @media (min-width:720px){
-  .cd-hero{grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:22px 24px}
+  .cd-hero{padding:22px 24px}
   .cd-hero::before{height:100%;background:linear-gradient(100deg,var(--brand-soft),transparent 55%)}
   .cd-id .avatar{--s:76px}
   .cd-name{font-size:36px}
-  .cd-actions{display:flex}
+  .cd-actions{display:flex;flex-wrap:wrap}
 }
+@media (min-width:1180px){.cd-hero{grid-template-columns:minmax(0,1fr) auto;align-items:center}}
 .cd-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-top:12px}
 .cd-fact{background:var(--surface);padding:12px 14px;display:grid;gap:2px;min-width:0}
 .cd-fact .k{font-size:12px;color:var(--text-3);font-weight:500;display:flex;align-items:center;gap:5px}
