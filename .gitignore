@@ -1,2 +1,5 @@
 imgs/*.png
 .wrangler/
+node_modules/
+.dev.vars
+test-results/

@@ -1,0 +1,16 @@
+{
+  "name": "tubarberia",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "TuBarbería — SaaS de reservas y gestión para barberías (Cloudflare Pages + D1).",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "migration": "node scripts/gen-migration.mjs",
+    "db:local": "wrangler d1 migrations apply tubarberia --local",
+    "dev": "wrangler pages dev . --d1 DB=tubarberia --port 8788 --compatibility-date 2025-09-01"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
