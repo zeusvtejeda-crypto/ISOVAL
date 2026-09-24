@@ -37,7 +37,7 @@ La matriz exacta está en `core/permissions.js` y el servidor la valida en cada 
 Abre `/app/#/demo` (o «Entrar a la demo» en el acceso) y elige un rol. Todo corre en tu navegador con datos
 ficticios. Credenciales: `dueno@demo.mx`, `barbero@demo.mx`, `cliente@demo.mx`, `admin@demo.mx` — contraseña
 `demo1234`; PIN del equipo con código de barbería `demo`: 1111–4444. Página pública de la demo: `/?b=demo`.
-Guion para presentarla en una barbería: `/app/#/guia` (y `REPORTE.md`).
+Demo guiada de 5 pasos para presentarla en una barbería: `/app/#/guia` (en línea: https://demo.tubarberia.mx; ver `REPORTE.md`).
 
 ## Documentación técnica
 

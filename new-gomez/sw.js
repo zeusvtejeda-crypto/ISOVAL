@@ -10,7 +10,7 @@
  * Para publicar cambios del shell sube VERSION: se vuelve a precachear y se borran las cachés viejas.
  * La versión nueva espera hasta que la página mande {type:'SKIP_WAITING'} (o se cierren las pestañas).
  */
-const VERSION = '2026.09.24-demo';
+const VERSION = '2026.09.24-guia5';
 const SHELL_CACHE = 'tb-shell-' + VERSION; // al activar se borra cualquier otra caché (también la vieja 'tb-fonts-v1')
 const BASE = new URL('./', self.location).pathname; // '/' (o '/sub/' si el sitio vive en una subcarpeta)
 const APP = BASE + 'app/';

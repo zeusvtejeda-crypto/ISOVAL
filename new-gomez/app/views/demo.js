@@ -20,6 +20,8 @@ export default {
           <div class="row"><span class="logo-mark">${raw(icon('logo'))}</span><span class="brandname">Tu<b>Barbería</b></span><span class="badge brand plain" style="margin-left:4px">DEMO</span></div>
           <h1>Explora la demo</h1>
           <p class="lead">"La Navaja Barber Club" es una barbería ficticia con 4 barberos, 140 clientes y 3 meses de historial. Elige cómo quieres entrar; puedes cambiar de rol cuando quieras desde la barra superior.</p>
+          <a class="btn btn-primary btn-lg btn-block" href="#/guia" style="margin:4px 0 18px">${raw(icon('play'))}Demo guiada · 5 minutos</a>
+          <p class="eyebrow" style="margin-bottom:10px">O entra con un rol</p>
           <div class="stack stagger" id="roles">
             ${ROLES.map((r) => html`
               <button type="button" class="card interactive card-pad" data-role="${r.k}" style="text-align:left;display:flex;gap:14px;align-items:flex-start;width:100%">
@@ -30,7 +32,6 @@ export default {
               </button>`)}
           </div>
           <div class="banner info" style="margin-top:18px">${raw(icon('info'))}<div class="grow">Los datos viven solo en este navegador: puedes crear, cobrar y cancelar sin miedo. Nada llega a clientes reales y los mensajes de WhatsApp se abren como borrador.</div></div>
-          <p class="muted" style="font-size:13.5px;margin-top:16px;text-align:center"><a class="link-btn" href="#/guia">${raw(icon('book', 'ic-sm'))}Ver la guía para presentar la demo en una barbería</a></p>
         </section>
       </div>`);
     return on(el, 'click', '[data-role]', async (e, b) => {

@@ -57,31 +57,22 @@ Se conservó lo que ya funcionaba bien: el diseño y SEO de la página pública 
 ## 5. Cómo usar la demo para enseñar en una barbería (paso a paso)
 
 **Demo en línea: https://demo.tubarberia.mx** (abre directo en la guía, datos ficticios en el propio celular).
-La misma guía está dentro de la app en **`/app/#/guia`**, con botones «Probar ahora» que te llevan (y cambian
-de rol) solos, y el progreso marcado. Dura unos 10 minutos.
+La misma guía está dentro de la app en **`/app/#/guia`**: **5 pasos, uno a la vez (≈5 minutos)**. Cada paso trae
+una frase para decir y un solo botón que te lleva a la pantalla (cambia de rol solo). Un apuntador abajo te deja
+pasar al **Siguiente** desde cualquier pantalla.
 
-**Antes de llegar**
-1. En tu celular abre `https://demo.tubarberia.mx` (o `https://<tu-dominio>/app/#/demo` → **Dueño**).
-2. Toca **Más → Instalar app** y sigue los pasos (iPhone: Compartir → «Agregar a inicio»; Android: ⋮ → «Instalar app»). Ya la abres como app.
-3. (Opcional) **Tema oscuro** en Más → Tema. Si algo se desacomoda: **Cambiar rol → Reiniciar datos de la demo**.
+**Antes de llegar**: abre `https://demo.tubarberia.mx` en tu celular y toca **Empezar**. (Opcional: **Más → Instalar app**.)
 
-**Durante la visita**
-
-| # | Qué haces | Qué dices |
+| # | Paso | Qué dices |
 |---|---|---|
-| 1 | Abre la **página de reservas** (`demo.tubarberia.mx/?b=demo`) en otra pestaña del mismo celular y reserva como cliente: servicio → «Cualquier barbero» → hora → nombre y celular inventados | «Así reservan tus clientes desde tu Instagram, WhatsApp o el QR. Sin descargar nada y a cualquier hora.» |
-| 2 | Regresa al panel: la **campana** muestra la nueva reserva; ábrela y enséñala en la **Agenda** (vista Día, una columna por barbero) | «Te llega el aviso al momento y nadie te encima una cita.» |
-| 3 | En la cita toca **Confirmar** y **WhatsApp → Enviar confirmación** | «Con un toque se abre tu WhatsApp con el mensaje ya escrito, con fecha, hora y enlace para cambiar la cita.» |
-| 4 | **Cambiar rol → Barbero**: «Mi día» | «Cada barbero ve solo lo suyo; en la tablet entran con su PIN.» |
-| 5 | Abre una cita de hoy → **Cobrar** (método + propina) | «Al terminar se cobra desde la cita y queda como atendida.» |
-| 6 | Vuelve a **Dueño → Caja y pagos** | «Sabes cuánto entró en efectivo, tarjeta y transferencia; el corte te dice si sobra o falta.» |
-| 7 | **Inicio**: cambia el periodo (Hoy / 7 días / 30 días / Este mes) y señala **Barbero más activo** | «Cómo va tu negocio de un vistazo, comparado con el periodo anterior.» |
-| 8 | **Clientes** → abre un cliente frecuente, agrega una nota o etiqueta VIP | «Cualquier barbero lo atiende como si lo conociera de años.» |
-| 9 | **WhatsApp → Recordatorios** de mañana → Enviar uno | «Menos olvidos, menos sillas vacías.» |
-| 10 | **Comisiones** → Quincena pasada → Registrar pago | «Comisiones claras, sin pleitos.» |
-| 11 | **Enlace y QR** → Mostrar / Imprimir cartel | «Lo pones en tu bio y lo pegas en el espejo.» |
-| 12 | **Cambiar rol → Superadmin** → Plataforma | «Si tienes varias sucursales, cada una va por separado y tú las ves todas.» |
-| 13 | Cierre: **Crear su barbería** desde la guía | «¿Te la dejo lista hoy con tus servicios y tu equipo?» |
+| 1 | **Tu cliente reserva** → «Abrir página de reservas»: reserva con datos inventados | «Reservan desde tu enlace, sin descargar nada y a cualquier hora.» |
+| 2 | **Te llega y la confirmas** → «Ver la cita»: Confirmar → Enviar confirmación | «Llega sola a tu agenda y la confirmas por tu WhatsApp con un toque.» |
+| 3 | **Cobras al terminar** → «Cobrar una cita» | «Efectivo, tarjeta o transferencia, con propina; se suma solo a tu caja.» |
+| 4 | **Ves cómo va tu negocio** → cambia Hoy / 7 días / 30 días | «Cuánto vendiste y tu barbero más activo, sin libreta.» |
+| 5 | **¿Te la dejo lista hoy?** → «Crear su barbería» | «La dejamos lista hoy; mañana ya compartes tu enlace.» |
+
+**Si te pide ver más** (botones debajo del paso): vista del barbero, ficha de cliente, recordatorios, caja,
+comisiones, enlace y QR, varias sucursales.
 
 **Respuestas a objeciones comunes** (también en la guía): «mis clientes no usan apps» → no descargan nada,
 es un enlace; «no tengo tiempo» → se llena sola y te ahorra contestar mensajes; «¿y si no hay internet?» →
