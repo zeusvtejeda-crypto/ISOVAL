@@ -348,7 +348,7 @@ const CSS = `
 .db-top-who{display:flex;align-items:center;gap:14px;min-width:0}
 .db-top-who .avatar{box-shadow:0 0 0 3px #15130F,0 0 0 5px rgba(217,178,90,.55)}
 .db-top-who b{display:block;font-family:var(--disp);font-size:30px;font-weight:800;line-height:1.02;color:#F7F2E8;letter-spacing:.01em}
-.db-top-who span{font-size:13px;color:#BDB5A5}
+.db-top-who .grow>span{font-size:13px;color:#BDB5A5}
 .db-top-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-top:16px;border-top:1px solid rgba(242,237,227,.1)}
 .db-top-stats span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9E968A}
 .db-top-stats b{display:block;font-size:21px;font-weight:700;color:#F2EDE3;font-variant-numeric:tabular-nums;margin-top:3px;white-space:nowrap}

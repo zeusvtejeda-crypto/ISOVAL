@@ -327,6 +327,7 @@ export default {
         destroyCharts(charts);
         D = null;
         body.innerHTML = String(html`<div class="card" style="margin-top:14px">${errorState(err, 'rpRetry')}</div>`);
+        syncNav();
         return;
       }
       if (my !== seq || gone) return;

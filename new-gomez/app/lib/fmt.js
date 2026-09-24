@@ -19,7 +19,7 @@ export function compactMoney(n) {
   return money(n);
 }
 export const number = (n) => nf0.format(Number(n) || 0);
-export const pct = (n, d) => (Number.isFinite(n) ? (Math.round(n * 10) / 10).toString().replace('.', ',') : '0') + '%';
+export const pct = (n) => (Number.isFinite(n) ? (Math.round(n * 10) / 10).toString() : '0') + '%';
 
 export function time(min) { if (min == null) return ''; return pad2(Math.floor(min / 60)) + ':' + pad2(min % 60); }
 export function timeRange(a, b) { return time(a) + '–' + time(b); }

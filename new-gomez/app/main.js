@@ -97,7 +97,8 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       if (reg.waiting) offer(reg.waiting);
       reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed') offer(w); }); });
       let reloaded = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded) return; reloaded = true; location.reload(); });
+      const hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || !hadController) return; reloaded = true; location.reload(); });
       setInterval(() => reg.update().catch(() => {}), 30 * 60000);
     } catch (e) { /* sin SW: la app funciona igual */ }
   });
@@ -139,18 +140,7 @@ async function boot() {
   bus.on('context', () => { renderShell(); route(); });
   // Refresco de la misma barbería (p. ej. tras guardar Ajustes): se reconstruye el shell conservando la vista,
   // su estado y el scroll.
-  bus.on('context:refresh', () => {
-    const page = $('#page');
-    const view = page && page.firstElementChild;
-    const y = window.scrollY;
-    const title = $('#tbTitle') ? $('#tbTitle').textContent : '';
-    renderShell();
-    const np = $('#page');
-    if (np && view) { np.innerHTML = ''; np.appendChild(view); }
-    const t = $('#tbTitle'); if (t) t.textContent = title;
-    highlightNav(currentNavPath());
-    window.scrollTo(0, y);
-  });
+  bus.on('context:refresh', repaintShell);
   setInterval(pollUnread, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pollUnread(); });
 }
@@ -200,19 +190,24 @@ async function loadView(r) {
 }
 function runCleanup() { if (typeof current.cleanup === 'function') { try { current.cleanup(); } catch (e) { /* */ } } current.cleanup = null; }
 
+let renderSeq = 0; // cada render nuevo invalida a los anteriores que sigan cargando
 async function renderBare(r, params, query) {
+  const seq = ++renderSeq;
   runCleanup();
   shellEl = null;
   document.body.classList.remove('has-shell');
   root.innerHTML = '<div id="bare">' + String(spinner()) + '</div>';
   const view = await loadView(r);
   const el = $('#bare');
-  if (!el) return;
+  if (!el || seq !== renderSeq) return;
   document.title = (view.title || r.title || '') + ' · TuBarbería';
-  current.cleanup = await view.render(el, { params, query, navigate, bare: true });
+  const cleanup = await view.render(el, { params, query, navigate, bare: true });
+  if (seq !== renderSeq) { if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { /* */ } } return; }
+  current.cleanup = cleanup;
 }
 
 async function renderPage(r, opts) {
+  const seq = ++renderSeq;
   if (!shellEl || !document.body.contains(shellEl)) renderShell();
   runCleanup();
   const page = $('#page');
@@ -231,19 +226,36 @@ async function renderPage(r, opts) {
   }
   page.innerHTML = '<div class="page">' + String(spinner()) + '</div>';
   const view = await loadView(r);
-  if (current.key !== location.hash.split('?')[0]) return; // el usuario ya navegó a otra parte
+  if (seq !== renderSeq) return; // el usuario ya navegó a otra parte
   const title = typeof view.title === 'function' ? view.title() : (view.title || r.title);
   setTitle(title);
   const el = document.createElement('div');
   el.className = 'page';
   page.innerHTML = '';
   page.appendChild(el);
-  try { current.cleanup = await view.render(el, { params: opts.params || {}, query: opts.query || {}, navigate }); }
-  catch (e) { console.error(e); el.innerHTML = String(errorState(e)); }
+  try {
+    const cleanup = await view.render(el, { params: opts.params || {}, query: opts.query || {}, navigate });
+    if (seq !== renderSeq) { if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { /* */ } } return; }
+    current.cleanup = cleanup;
+  } catch (e) { console.error(e); if (seq === renderSeq) el.innerHTML = String(errorState(e)); }
 }
 function setTitle(t) {
   document.title = t + ' · ' + (shop() ? shop().name : 'TuBarbería');
   const h = $('#tbTitle'); if (h) h.textContent = t;
+}
+
+// Reconstruye el shell conservando la vista actual (su DOM, estado y scroll).
+function repaintShell() {
+  const page = $('#page');
+  const view = page && page.firstElementChild;
+  const y = window.scrollY;
+  const title = $('#tbTitle') ? $('#tbTitle').textContent : '';
+  renderShell();
+  const np = $('#page');
+  if (np && view) { np.innerHTML = ''; np.appendChild(view); }
+  const t = $('#tbTitle'); if (t) t.textContent = title;
+  highlightNav(currentNavPath());
+  window.scrollTo(0, y);
 }
 
 // ── Shell ──
@@ -316,7 +328,7 @@ function wireShell() {
   if (shellWired) return;
   shellWired = true;
   on(root, 'click', '#menuBtn', () => openSidebar());
-  on(root, 'click', '#themeBtn', () => { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; const t = document.title.split(' · ')[0]; setTheme(n); renderShell(); highlightNav(currentNavPath()); setTitle(t); });
+  on(root, 'click', '#themeBtn', () => { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); repaintShell(); toast.info('Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[n])); });
   on(root, 'click', '#logoutBtn', logout);
   on(root, 'click', '#shopSwitch', () => openShopSwitcher());
   on(root, 'click', '#bellBtn', (e, el) => openBell(el));
@@ -378,7 +390,7 @@ function openMoreSheet() {
     if (e.target.closest('a')) m.close();
     if (e.target.closest('[data-switch]')) { m.close(); openShopSwitcher(); }
     if (e.target.closest('[data-logout]')) { m.close(); logout(); }
-    if (e.target.closest('[data-theme-t]')) { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); m.close(); renderShell(); route(); }
+    if (e.target.closest('[data-theme-t]')) { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); m.close(); repaintShell(); toast.info('Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[n])); }
   });
 }
 
@@ -417,7 +429,7 @@ async function logout() {
 }
 
 // ── Demo: cambio de rol en un toque, reinicio y salida ──
-export async function demoLogin(roleKey) {
+export async function demoLogin(roleKey, opts) {
   const creds = await demoCredentials();
   const c = creds[roleKey];
   if (!c) throw new Error('Rol de demo desconocido');
@@ -429,7 +441,7 @@ export async function demoLogin(roleKey) {
   await loadMe();
   await ensureShop();
   shellEl = null;
-  navigate(homePath(), { replace: true, force: true });
+  navigate((opts && opts.path) || homePath(), { replace: true, force: true });
 }
 function openRoleSwitcher() {
   const roles = [
@@ -482,6 +494,6 @@ window.addEventListener('tb:demo-sync', () => { bus.emit('appointments:changed',
 bus.on('notifications:changed', (n) => { if (typeof n === 'number') paintUnread(n); else pollUnread(); });
 
 // API global mínima para vistas que la necesiten sin importar main.js (evita ciclos).
-window.TB = { navigate, newAppointment, enterShop, demoLogin, setTheme, getTheme, pwa, refreshContext, renderShell, homePath };
+window.TB = { navigate, newAppointment, enterShop, demoLogin, setTheme, getTheme, pwa, refreshContext, renderShell: repaintShell, repaintShell, homePath };
 
 boot();

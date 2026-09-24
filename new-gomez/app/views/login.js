@@ -47,7 +47,7 @@ export default {
           <div id="fPin" ${tab === 'pin' ? '' : 'hidden'}>
             <div class="field" style="margin-bottom:10px"><label for="pinShop">Código de la barbería</label>
               <input class="input" id="pinShop" autocomplete="off" autocapitalize="none" placeholder="p. ej. new-gomez" value=""/>
-              <p class="hint">Es el final de tu enlace de reservas. Se recuerda en este dispositivo.</p></div>
+              <p class="hint">Es el final de tu enlace de reservas. Se recuerda en este dispositivo. En la demo: <b>demo</b> y PIN 1111–4444.</p></div>
             <div class="pin-dots" id="pinDots" aria-hidden="true"></div>
             <div class="pin-pad" id="pinPad"></div>
             <p class="err-t" id="pinMsg" role="alert" style="min-height:22px;text-align:center;font-size:13.5px;margin-top:10px"></p>
@@ -124,6 +124,8 @@ export default {
       if (!slug) { $('#pinMsg', el).textContent = 'Escribe el código de tu barbería.'; shopIn.focus(); pin = ''; dots(); return; }
       try {
         $('#pinPad', el).style.opacity = '.5';
+        // Los códigos de la demo corren en el navegador (demo: PIN 1111–4444).
+        if (slug === 'demo' || slug === 'demo-norte') { setMode('demo'); state.mode = 'demo'; } else if (getMode() === 'demo') { setMode('server'); state.mode = 'server'; }
         await api.post('/auth/pin', { shop_slug: slug, pin });
         LS.set('tb:pinShop', slug);
         await afterLogin();
