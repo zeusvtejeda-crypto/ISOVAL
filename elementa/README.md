@@ -54,6 +54,7 @@ npm start            # sirve la compilación (por defecto en el puerto 3000)
 npm test             # pruebas unitarias (Vitest)
 npm run lint         # ESLint
 npm run typecheck    # TypeScript sin emitir (tsc --noEmit)
+npm run build:standalone  # versión de un solo archivo (ver abajo)
 npm run icons        # regenera favicon, apple-icon e iconos PWA desde scripts/icon-art.mjs
 ```
 
@@ -121,6 +122,15 @@ Para usar un backend:
 
 Para seguir funcionando sin conexión, el repositorio puede combinar ambos: leer y escribir en
 `LocalStorageRepository` y sincronizar con el servidor en segundo plano.
+
+## Versión de un solo archivo
+
+`npm run build:standalone` genera `dist-standalone/elementa.html`: la app completa en un único HTML
+(~1 MB) que se abre con doble clic, sin servidor ni instalación. Usa las mismas páginas, estado y
+estilos, compilados con Vite (`standalone/`), con un enrutador por hash (`#/tabla?e=8`) en lugar del de
+Next.js (`standalone/shims/`). El progreso se guarda en el `localStorage` de ese archivo. No incluye el
+service worker. También genera `elementa.fragment.html`, el mismo contenido sin `<html>/<head>/<body>`,
+para hosts que ponen su propio esqueleto (como los artefactos de claude.ai).
 
 ## PWA y modo sin conexión
 

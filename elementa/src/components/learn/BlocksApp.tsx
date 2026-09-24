@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Blocks, FlaskConical } from 'lucide-react';
 import { PageHeader } from '@/components/layout';
 import { ProgressBar, SegmentedControl } from '@/components/ui';
@@ -34,6 +34,7 @@ function parseView(raw: string | null): View {
  */
 export function BlocksApp() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const view = parseView(searchParams.get('vista'));
   const { state, ready } = useProgress();
   const mastery = useMasteryMap();
@@ -62,13 +63,16 @@ export function BlocksApp() {
 
   const suggestion = useMemo(() => suggestNextBlock(STUDY_BLOCKS, blockProgress), [blockProgress]);
 
-  const changeView = useCallback((next: View) => {
-    const params = new URLSearchParams(window.location.search);
-    if (next === 'familias') params.set('vista', 'familias');
-    else params.delete('vista');
-    const query = params.toString();
-    window.history.replaceState(null, '', query ? `?${query}` : window.location.pathname);
-  }, []);
+  const changeView = useCallback(
+    (next: View) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (next === 'familias') params.set('vista', 'familias');
+      else params.delete('vista');
+      const query = params.toString();
+      window.history.replaceState(null, '', query ? `?${query}` : pathname);
+    },
+    [searchParams, pathname],
+  );
 
   if (!ready) return <BlocksSkeleton />;
 

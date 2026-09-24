@@ -81,12 +81,15 @@ export function DataSettings() {
   const [shownImport, setShownImport] = useState<PendingImport | null>(null);
   if (pending && pending !== shownImport) setShownImport(pending);
 
-  const exportProgress = () => {
+  /** Devuelve si el archivo se entregó. */
+  const exportProgress = async (): Promise<boolean> => {
     try {
-      downloadTextFile(`elementa-progreso-${todayKey()}.json`, exportData());
+      await downloadTextFile(`elementa-progreso-${todayKey()}.json`, exportData());
       setStatus({ tone: 'success', text: 'Descargamos tu progreso. Guarda el archivo para restaurarlo cuando quieras.' });
+      return true;
     } catch {
-      setStatus({ tone: 'danger', text: 'No pudimos descargar el archivo. Inténtalo de nuevo.' });
+      setStatus({ tone: 'danger', text: 'No se descargó el archivo. Inténtalo de nuevo.' });
+      return false;
     }
   };
 
@@ -264,9 +267,8 @@ export function DataSettings() {
             variant="secondary"
             size="sm"
             leftIcon={backupDone ? <CircleCheck aria-hidden className="text-success" /> : <Download aria-hidden />}
-            onClick={() => {
-              exportProgress();
-              setBackupDone(true);
+            onClick={async () => {
+              if (await exportProgress()) setBackupDone(true);
             }}
           >
             {backupDone ? 'Copia descargada' : 'Exportar copia'}

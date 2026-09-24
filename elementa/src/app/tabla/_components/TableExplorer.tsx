@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Gamepad2, Target } from 'lucide-react';
 import { PageHeader } from '@/components/layout';
 import {
@@ -31,6 +32,7 @@ export function TableExplorer() {
   const [hits, setHits] = useState<number[]>([]);
   /** La ficha se abrió desde esta página (hay una entrada del historial que deshacer al cerrar). */
   const pushedEntry = useRef(false);
+  const pathname = usePathname();
 
   const openElement = useCallback((z: number) => {
     window.history.pushState(null, '', `?e=${z}`);
@@ -46,9 +48,9 @@ export function TableExplorer() {
       pushedEntry.current = false;
       window.history.back();
     } else {
-      window.history.replaceState(null, '', window.location.pathname);
+      window.history.replaceState(null, '', pathname);
     }
-  }, []);
+  }, [pathname]);
 
   const toggleFamily = useCallback((category: ElementCategory) => {
     setFamily((current) => (current === category ? null : category));
