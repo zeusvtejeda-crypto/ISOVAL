@@ -5,9 +5,9 @@
 import { html, raw, esc, $, on } from '../lib/html.js';
 import { icon } from '../lib/icons.js';
 import { api, SITE_BASE, LS, getMode } from '../lib/api.js';
-import { shop, can } from '../lib/state.js';
+import { state, shop, can } from '../lib/state.js';
 import { toast, modal, confirmDialog, busy, copyText, saveFile, avatar } from '../lib/ui.js';
-import { time as fmtTime } from '../lib/fmt.js';
+import { time as fmtTime, shopMark } from '../lib/fmt.js';
 import { qrSVG, qrPNG } from '../lib/qr.js';
 
 const RESERVED = ['demo', 'app', 'api', 'admin', 'b', 'www', 'panel'];
@@ -19,8 +19,6 @@ const STOP = new Set(['la', 'el', 'los', 'las', 'de', 'del', 'y', 'e', 'the', 'b
 export const bookingUrl = (slug) => SITE_BASE + '?b=' + encodeURIComponent(slug);
 export const shortUrl = (slug) => SITE_BASE + 'b/' + encodeURIComponent(slug);
 const bare = (u) => String(u).replace(/^https?:\/\//, '').replace(/\/$/, '');
-// Tras cambiar el enlace, refreshContext() vuelve a pintar la vista: se lleva al usuario al QR nuevo.
-let showNewQr = false;
 
 // Iniciales para el centro del QR: palabras con significado ("La Navaja Barber Club" → "N", "New Gómez" → "NG").
 export function qrInitials(name) {
@@ -112,16 +110,18 @@ async function pngWithLogo(text, opts, logoSrc, fallbackOpts) {
 const CSS = `
 .bl-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "qr" "texts" "slug"}
 @media (min-width:1000px){.bl-grid{grid-template-columns:minmax(0,1fr) 380px;grid-template-areas:"hero qr" "texts qr" "slug qr";align-items:start}.bl-qr{position:sticky;top:calc(var(--topbar-h) + 12px)}}
-.bl-hero{grid-area:hero;position:relative;overflow:hidden}
+.bl-hero{grid-area:hero;position:relative;overflow:hidden;container-type:inline-size}
 .bl-hero::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--brand),transparent 80%)}
 .bl-shop{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .bl-shop .avatar{--s:44px;border-radius:13px;font-size:15px}
-.bl-url{display:flex;align-items:center;gap:10px;padding:14px 14px 14px 16px;border-radius:var(--r-lg);background:var(--surface-2);border:1px solid var(--border-strong);font-family:var(--mono);font-size:15px;font-weight:500;min-width:0}
-.bl-url .u{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.35}
-.bl-url .u b{color:var(--brand-strong);font-weight:600}
+.bl-url{padding:15px 16px;border-radius:var(--r-lg);background:var(--surface-2);border:1px solid var(--border-strong);font-family:var(--mono);font-size:15px;font-weight:500;min-width:0;overflow-wrap:anywhere;line-height:1.35;-webkit-user-select:all;user-select:all}
+.bl-url b{color:var(--brand-strong);font-weight:600}
+/* Copiar (primario) + Compartir + Abrir. En una tarjeta angosta (teléfono, o escritorio de 1000–1200 px con la
+   columna del QR al lado) Copiar ocupa su propia fila y los otros dos quedan lado a lado, con aire. */
 .bl-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
-.bl-acts .btn{min-height:48px;padding:0 10px}
-@media (max-width:420px){.bl-acts .btn span.lg{display:none}}
+.bl-acts .btn{min-height:48px;padding:0 14px}
+@media (max-width:560px){.bl-acts{grid-template-columns:repeat(2,minmax(0,1fr))}.bl-acts .btn-primary{grid-column:1/-1}}
+@container (max-width:520px){.bl-acts{grid-template-columns:repeat(2,minmax(0,1fr))}.bl-acts .btn-primary{grid-column:1/-1}}
 .bl-short{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border-strong);font-size:13.5px;color:var(--text-2)}
 .bl-short>.ic{color:var(--text-3)}
 .bl-short .lbl{display:grid;min-width:0}
@@ -246,12 +246,22 @@ function posterHtml(sh, url, qr) {
     '</body></html>';
 }
 
-export default {
+const view = {
   title: 'Enlace y QR',
   async render(el) {
     injectCss();
+    // refreshContext() solo reconstruye el shell (la vista se conserva): tras cambiar el enlace, la vista se vuelve a
+    // pintar aquí con la barbería actualizada para que el enlace, el QR, los textos y las descargas sean los nuevos.
+    let unmount = null;
+    const paint = (opts) => { if (unmount) unmount(); unmount = view.mount(el, Object.assign({ repaint: paint }, opts)); };
+    paint({});
+    return () => { if (unmount) unmount(); unmount = null; };
+  },
+  // Pinta la vista con la barbería activa y conecta sus eventos; devuelve la limpieza.
+  // o.newQr: se acaba de cambiar el enlace → se lleva al usuario al QR nuevo.
+  mount(el, o) {
     const sh = shop();
-    if (!sh) return;
+    if (!sh) return null;
     const url = bookingUrl(sh.slug);
     const short = shortUrl(sh.slug);
     const booking = (sh.settings && sh.settings.booking) || {};
@@ -264,22 +274,26 @@ export default {
       : sh.logo_url ? Object.assign({ size }, base, { logoText: 'X', logoBg: '#FFFFFF' }) : initialsOpts(size));
     const qrMarkup = (size) => (withLogo && sh.logo_url ? svgWithImage(qrSVG(url, qrOpts(size)), sh.logo_url) : qrSVG(url, qrOpts(size)));
     const snips = snippets(sh, url);
-    const demoOrLocal = getMode() === 'demo' || /^(localhost|127\.|\[::1\])/.test(location.hostname);
+    // La demo corre en el navegador y puede estar en un hosting estático sin la redirección /b/… (_redirects).
+    // Tampoco se deja cambiar su enlace: la página pública de prueba solo existe en ?b=demo (y ?b=demo-norte).
+    const isDemo = getMode() === 'demo';
+    const fx = o.newQr ? '' : ' fade-up'; // al repintar tras cambiar el enlace, sin volver a animar la entrada
+    const shopAvatar = sh.logo_url ? avatar(sh.name, { src: sh.logo_url, color: brand })
+      : raw('<span class="avatar" style="--c:' + esc(brand) + '" aria-hidden="true">' + esc(shopMark(sh.name)) + '</span>');
 
     el.innerHTML = String(html`
       <div class="page-head">
         <div><h2>Enlace y QR</h2><p>Comparte tu página de reservas: tus clientes eligen barbero, día y hora en segundos.</p></div>
       </div>
       <div class="bl-grid">
-        <section class="card card-pad bl-hero fade-up" aria-labelledby="blH">
-          <div class="bl-shop">${avatar(sh.name, { src: sh.logo_url || '', color: brand })}
+        <section class="card card-pad bl-hero${fx}" aria-labelledby="blH">
+          <div class="bl-shop">${shopAvatar}
             <div class="grow"><div class="eyebrow">Tu enlace de reservas</div><h3 id="blH" style="font-size:17px;font-weight:700" class="truncate">${sh.name}</h3></div></div>
-          <div class="bl-url"><span class="u">${bare(SITE_BASE)}/?b=<b>${sh.slug}</b></span>
-            <button type="button" class="btn btn-ghost btn-icon btn-sm" data-act="copy" aria-label="Copiar enlace" title="Copiar">${raw(icon('copy', 'ic-sm'))}</button></div>
+          <div class="bl-url" translate="no">${bare(SITE_BASE)}/?b=<b>${sh.slug}</b></div>
           <div class="bl-acts">
-            <button type="button" class="btn btn-primary" data-act="copy">${raw(icon('copy'))}<span>Copiar<span class="lg"> enlace</span></span></button>
-            <button type="button" class="btn btn-secondary" data-act="share">${raw(icon('share'))}<span>Compartir</span></button>
-            <a class="btn btn-secondary" href="${url}" target="_blank" rel="noopener">${raw(icon('external'))}<span>Abrir</span></a>
+            <button type="button" class="btn btn-primary" data-act="copy">${raw(icon('copy'))}Copiar enlace</button>
+            <button type="button" class="btn btn-secondary" data-act="share">${raw(icon('share'))}Compartir</button>
+            <a class="btn btn-secondary" href="${url}" target="_blank" rel="noopener">${raw(icon('external'))}Abrir</a>
           </div>
           <div class="bl-status">
             ${booking.online_enabled === false
@@ -287,11 +301,11 @@ export default {
               : html`<span class="badge ok">Recibiendo reservas en línea</span><span class="faint" style="font-size:12.5px">${booking.auto_confirm === false ? 'Las citas llegan pendientes de confirmar.' : 'Las citas se confirman solas.'}</span>`}
           </div>
           <div class="bl-short">${raw(icon('link', 'ic-sm'))}<span class="lbl"><small>Enlace corto</small><code>${bare(short)}</code></span>
-            <button type="button" class="btn btn-ghost btn-sm" data-act="copy-short" aria-label="Copiar enlace corto">${raw(icon('copy', 'ic-sm'))}Copiar</button>
-            <span class="note">${demoOrLocal ? 'En la demo solo funciona el enlace principal; en tu página publicada funcionan los dos.' : 'Más fácil de dictar por teléfono o escribir a mano. Lleva a la misma página.'}</span></div>
+            <button type="button" class="btn btn-ghost btn-icon btn-sm" data-act="copy-short" aria-label="Copiar enlace corto" title="Copiar enlace corto">${raw(icon('copy', 'ic-sm'))}</button>
+            <span class="note">${isDemo ? 'En la demo solo funciona el enlace principal; en tu página publicada funcionan los dos.' : 'Más fácil de dictar por teléfono o escribir a mano. Lleva a la misma página.'}</span></div>
         </section>
 
-        <section class="card card-pad bl-qr fade-up" aria-labelledby="blQ" style="animation-delay:.06s">
+        <section class="card card-pad bl-qr${fx}" aria-labelledby="blQ" style="animation-delay:.06s">
           <div class="bl-qrhead"><div><h3 id="blQ" style="font-size:15px;font-weight:600">Código QR</h3><div class="faint" style="font-size:12.5px">Tus clientes lo escanean con la cámara.</div></div>
             <button type="button" class="btn btn-ghost btn-sm" data-act="full" aria-label="Mostrar el QR en pantalla completa">${raw(icon('maximize', 'ic-sm'))}Mostrar</button></div>
           <div class="bl-qrbox" id="blQrBox" role="img" aria-label="${'Código QR de ' + bare(url)}" data-act="full">${raw(qrMarkup(300))}</div>
@@ -307,7 +321,7 @@ export default {
           <p class="faint" style="font-size:12.5px;text-align:center;margin-top:12px">PNG de 1024 px para redes; SVG para imprenta (no pierde calidad). Pruébalo con la cámara de tu celular.</p>
         </section>
 
-        <section class="card bl-texts fade-up" aria-labelledby="blT" style="animation-delay:.1s">
+        <section class="card bl-texts${fx}" aria-labelledby="blT" style="animation-delay:.1s">
           <div class="card-head"><div><h3 id="blT">Textos listos para compartir</h3><div class="sub">Cópialos tal cual o ajústalos a tu estilo.</div></div></div>
           <div class="card-body">
             ${snips.map((s) => html`<article class="bl-snip" data-snip="${s.k}">
@@ -320,7 +334,7 @@ export default {
           </div>
         </section>
 
-        ${can('shop.update') ? html`<section class="card bl-slug fade-up" aria-labelledby="blS" style="animation-delay:.14s">
+        ${can('shop.update') ? html`<section class="card bl-slug${fx}" aria-labelledby="blS" style="animation-delay:.14s">
           <div class="card-head"><div><h3 id="blS">Personalizar el enlace</h3><div class="sub">Elige algo corto y fácil de dictar por teléfono.</div></div></div>
           <form class="card-body stack" id="blSlugForm" novalidate autocomplete="off">
             <div class="field"><label for="blSlug">Final de tu enlace</label>
@@ -328,7 +342,9 @@ export default {
                 <input class="input" id="blSlug" name="slug" value="${sh.slug}" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="url" aria-describedby="blSlugPrev"/></div>
               <p class="error" id="blSlugErr">Revisa el enlace.</p>
               <p class="bl-prev" id="blSlugPrev" aria-live="polite">Solo minúsculas, números y guiones. Ejemplo: <b>barberia-gomez</b></p></div>
-            <div class="banner warn">${raw(icon('alert'))}<div class="grow">Si lo cambias, <b>el enlace y el QR anteriores dejarán de funcionar</b>. Tendrás que reemplazar carteles impresos y enlaces que ya compartiste.</div></div>
+            ${isDemo
+              ? html`<div class="banner info">${raw(icon('info'))}<div class="grow">Es la demo: puedes escribir uno para ver cómo quedaría, pero el enlace se queda en <b>?b=${sh.slug}</b> para que la página de reservas de prueba siga funcionando.</div></div>`
+              : html`<div class="banner warn">${raw(icon('alert'))}<div class="grow">Si lo cambias, <b>el enlace y el QR anteriores dejarán de funcionar</b>: tendrás que reemplazar carteles impresos y enlaces que ya compartiste. También cambia el <b>código de la barbería</b> con el que tu equipo entra con PIN.</div></div>`}
             <div class="row end"><button type="submit" class="btn btn-primary" id="blSlugSave" disabled>${raw(icon('check'))}Guardar enlace</button></div>
           </form>
         </section>` : ''}
@@ -401,7 +417,7 @@ export default {
       const check = (showErr) => {
         const v = inp.value;
         const p = slugProblem(v, sh.slug);
-        save.disabled = !!p || v === sh.slug;
+        save.disabled = isDemo || !!p || v === sh.slug;
         if (p && showErr) { field.classList.add('invalid'); err.textContent = p; } else field.classList.remove('invalid');
         prev.innerHTML = v && !p && v !== sh.slug
           ? String(html`Tu nuevo enlace será <b>${bare(SITE_BASE)}/?b=${v}</b>`)
@@ -420,28 +436,33 @@ export default {
         const v = inp.value;
         const p = check(true);
         if (p) { inp.focus(); return; }
-        if (v === sh.slug) return;
+        if (v === sh.slug || isDemo) return;
         const ok = await confirmDialog({
           title: '¿Cambiar tu enlace de reservas?', icon: 'alert', danger: true, confirmText: 'Sí, cambiar enlace',
-          message: 'El enlace ' + bare(url) + ' y el QR que ya imprimiste o compartiste dejarán de funcionar. Tu nuevo enlace será ' + bare(bookingUrl(v)) + '.'
+          message: 'El enlace ' + bare(url) + ' y el QR que ya imprimiste o compartiste dejarán de funcionar. Tu nuevo enlace será ' + bare(bookingUrl(v)) + '. ' +
+            'El código de la barbería para entrar con PIN también cambia a «' + v + '»: avísale a tu equipo.'
         });
         if (!ok) return;
+        let res;
         try {
-          await busy(save, api.patch('/shop', { slug: v }));
-          toast.success('Listo: tu nuevo enlace es ' + bare(bookingUrl(v)) + '. Descarga el QR nuevo.');
-          showNewQr = true;
-          await window.TB.refreshContext();
+          res = await busy(save, api.patch('/shop', { slug: v }));
         } catch (er) {
           field.classList.add('invalid');
           err.textContent = (er.fields && er.fields.slug) || er.message;
           if (!(er.fields && er.fields.slug)) toast.error(er);
           inp.focus();
           field.classList.remove('shake'); void field.offsetWidth; field.classList.add('shake');
+          return;
         }
+        // Este dispositivo recordaba el código viejo para entrar con PIN: se cambia por el nuevo.
+        if (LS.get('tb:pinShop') === sh.slug) LS.set('tb:pinShop', v);
+        toast.success('Listo: tu nuevo enlace es ' + bare(bookingUrl(v)) + '. Descarga el QR nuevo.');
+        // El enlace ya cambió: si no se pudo releer el contexto, se usa la barbería que devolvió el guardado.
+        try { await window.TB.refreshContext(); } catch (er) { if (state.ctx && res && res.shop) state.ctx.shop = res.shop; }
+        if (el.isConnected) o.repaint({ newQr: true });
       });
     }
-    if (showNewQr) {
-      showNewQr = false;
+    if (o.newQr) {
       requestAnimationFrame(() => {
         const q = $('.bl-qr', el), box = $('#blQrBox', el);
         if (q) q.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -451,3 +472,4 @@ export default {
     return () => offs.forEach((f) => f());
   }
 };
+export default view;

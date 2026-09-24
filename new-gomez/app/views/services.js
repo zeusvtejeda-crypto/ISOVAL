@@ -290,7 +290,7 @@ export default {
           <span class="sv-dur" aria-hidden="true"><b>${s.duration_min}</b><small>min</small></span>
           <span class="sv-main">
             <span class="sv-name"><span>${s.name}</span>${s.popular ? html`<span class="sv-star" title="Popular">${raw(icon('star'))}<span class="sr">Popular</span></span><span class="badge brand plain">${raw(icon('star', 'ic-sm'))}Popular</span>` : ''}${s.active ? '' : html`<span class="badge plain">Oculto</span>`}</span>
-            <span class="sv-meta"><span class="sv-mprice">${money(s.price)}&nbsp;·&nbsp;</span>${duration(s.duration_min)} · ${staffLabel(s, staff)}</span>
+            <span class="sv-meta"><span class="sv-mprice">${money(s.price)}&nbsp;·&nbsp;</span>${staffLabel(s, staff)}</span>
             ${s.description ? html`<span class="sv-desc">${s.description}</span>` : ''}
           </span>
         </button>

@@ -144,12 +144,12 @@ async function prepare(ctx) {
   if (!phone) throw bad(NO_PHONE, { phone: 'Agrega su teléfono en la ficha del cliente.' });
   if (!validPhone(phone)) throw bad('El teléfono de este cliente no es válido. Corrígelo en su ficha.', { phone: 'Teléfono no válido.' });
 
-  // Vista previa (opcional): arma el texto sin registrar el mensaje y SIN rotar el token de gestión (el enlace
-  // que el cliente ya tiene sigue sirviendo): el enlace de gestión queda como el marcador {enlace}.
-  // Al enviar (sin preview), un {enlace} en el texto se reemplaza por el enlace real (fillLink).
+  // Vista previa (opcional): arma el texto sin registrar el mensaje; el enlace de gestión queda como el
+  // marcador {enlace}. Al enviar (sin preview), un {enlace} en el texto se reemplaza por el enlace real
+  // (fillLink). Ese enlace no invalida el que el cliente recibió al reservar (domain/messages.js → linkToken).
   const preview = b.preview === true;
   const base = publicBase(ctx.env, ctx.req.headers);
-  const c = { sdb: ctx.sdb, shop: ctx.shop };
+  const c = { sdb: ctx.sdb, shop: ctx.shop, demo: ctx.env.MODE === 'demo' };
   let text2 = text;
   if (!text2) text2 = await composeMessage(c, { kind, appt, client, base, withToken: !preview, preview });
   else if (!preview) text2 = await fillLink(c, text2, { kind, appt, base });
@@ -186,8 +186,8 @@ async function mark(ctx) {
 
 // ── GET /api/reminders ──
 // Citas pendientes/confirmadas de la fecha (por defecto mañana en la zona de la barbería) con el texto del
-// recordatorio listo. El {enlace} aquí es el link de reservas: el de gestión (token nuevo) se genera al
-// preparar el mensaje con POST /api/messages/prepare { appointment_id, kind:'reminder' }.
+// recordatorio listo. El {enlace} aquí es el link de reservas: el de gestión se pone al preparar el mensaje
+// con POST /api/messages/prepare { appointment_id, kind:'reminder' }.
 async function reminders(ctx) {
   const q = ctx.req.query;
   let date;

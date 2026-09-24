@@ -1,5 +1,6 @@
-// Agenda: Día (columnas por barbero), Semana (7 días con carriles), Mes (cuadrícula) y Lista (agrupada).
-// URL: #/agenda?fecha=AAAA-MM-DD&vista=day|week|month|list&barbero=<id>&cita=<id>&nueva=1&q=&estado=
+// Agenda: Día (columnas por barbero), Semana (una fila por barbero con «Todos»; cuadrícula de horas con un
+// solo barbero), Mes (cuadrícula) y Lista (agrupada).
+// URL: #/agenda?fecha=AAAA-MM-DD&vista=day|week|month|list (o dia|semana|mes|lista)&barbero=<id>&cita=<id>&nueva=1&q=&estado=
 // Tocar un espacio vacío → nueva cita en esa hora/barbero. Tocar una cita → detalle. En escritorio se
 // arrastra una cita para reagendarla (mismo día, otro barbero u otro día en la semana).
 import { html, raw, esc, $, $$, on } from '../lib/html.js';
@@ -13,6 +14,7 @@ import { openAppointment, openNewAppointment, setAppointmentStatus, cancelAppoin
 import { hexRgb } from '../lib/pickers.js';
 
 const VIEWS = [['day', 'Día'], ['week', 'Semana'], ['month', 'Mes'], ['list', 'Lista']];
+const VIEW_ALIAS = { dia: 'day', 'día': 'day', semana: 'week', mes: 'month', lista: 'list' };
 const LSK = { view: 'tb:agenda:view', cx: 'tb:agenda:cancelled' };
 const OCC = ['pending', 'confirmed', 'completed'];
 const ACTIVE = ['pending', 'confirmed'];
@@ -28,13 +30,14 @@ function ensureStyles() {
   document.head.insertAdjacentHTML('beforeend', `<style id="st-agenda">
 .page.ag-page{max-width:1600px;padding-bottom:calc(var(--bottomnav-h) + var(--safe-b) + 12px)}
 @media (min-width:1024px){.page.ag-page{padding-bottom:20px}}
-.ag-page{--hh:rgba(21,19,15,.045);--off:rgba(21,19,15,.035);--off-line:rgba(21,19,15,.05)}
-:root[data-theme="dark"] .ag-page{--hh:rgba(242,237,227,.035);--off:rgba(0,0,0,.28);--off-line:rgba(242,237,227,.035)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ag-page{--hh:rgba(242,237,227,.035);--off:rgba(0,0,0,.28);--off-line:rgba(242,237,227,.035)}}
+.ag-page{--hh:rgba(21,19,15,.045);--off:rgba(21,19,15,.035);--off-line:rgba(21,19,15,.05);--ev-a:.15;--ev-b:.34}
+:root[data-theme="dark"] .ag-page{--hh:rgba(242,237,227,.035);--off:rgba(0,0,0,.28);--off-line:rgba(242,237,227,.035);--ev-a:.22;--ev-b:.4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ag-page{--hh:rgba(242,237,227,.035);--off:rgba(0,0,0,.28);--off-line:rgba(242,237,227,.035);--ev-a:.22;--ev-b:.4}}
 .ag-bar.page-head{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin:6px 0 14px}
 .ag-long{display:none}
 .ag-nav{display:flex;align-items:center;gap:6px;min-width:0}
 .ag-nav .btn-icon{--h:40px}
+.ag-mid{display:flex;align-items:center;gap:8px;min-width:0}
 .ag-date{position:relative;min-width:0;border-radius:10px}
 .ag-date-btn{display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 10px;border-radius:10px;font-family:var(--disp);font-weight:800;font-size:23px;letter-spacing:.01em;white-space:nowrap;transition:background .15s}
 .ag-date-btn .ic{color:var(--text-3)}
@@ -43,12 +46,18 @@ function ensureStyles() {
 .ag-date:hover .ag-date-btn{background:var(--muted-soft)}
 .ag-date:focus-within{outline:2.5px solid var(--brand);outline-offset:2px}
 .ag-views button{min-width:66px}
+.ag-tools{display:flex;align-items:center;gap:8px;min-width:0}
+.ag-filt{--h:40px;position:relative;flex:none;padding:0 14px;font-size:13.5px}
+.ag-filt .ic{width:17px;height:17px}
+.ag-filt-dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 2px var(--surface)}
 @media (max-width:719px){
   .ag-bar{gap:8px;margin-top:0}
   .ag-nav{width:100%}
-  .ag-nav [data-nav="-1"]{order:1}.ag-nav .ag-date{order:2;flex:1;text-align:center}.ag-nav [data-nav="1"]{order:3}.ag-nav .ag-today{order:4}
-  .ag-date-btn{font-size:21px;justify-content:center;width:100%;padding:0 4px}
-  .ag-views{width:100%}.ag-views button{flex:1;min-width:0}
+  .ag-nav [data-nav="-1"]{order:1}.ag-nav .ag-mid{order:2;flex:1;justify-content:center}.ag-nav [data-nav="1"]{order:3}
+  .ag-date-btn{font-size:21px;justify-content:center;padding:0 4px}
+  .ag-tools{width:100%}
+  .ag-views{flex:1;min-width:0}.ag-views button{flex:1;min-width:0}
+  .ag-filt{order:2;width:40px;padding:0}.ag-filt .lbl{display:none}
 }
 .ag-filters{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
 .ag-filters:empty{display:none}
@@ -57,16 +66,12 @@ function ensureStyles() {
 .ag-chips .chip{flex:none;min-height:38px;padding:0 13px}
 .ag-chips .chip .n{font-size:11.5px;opacity:.65;font-variant-numeric:tabular-nums;font-weight:600}
 .ag-dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px rgba(var(--c-rgb),.22)}
-.ag-cx{flex:none;font-size:13px;color:var(--text-2);min-height:38px;gap:8px}
-.ag-cxchip,.ag-sep{display:none!important}
-.ag-cx-inline{margin-left:auto}
-@media (min-width:720px){.ag-filters.solo{display:none}}
-.ag-sep{width:1px;background:var(--border-strong);margin:6px 2px;flex:none}
-@media (max-width:719px){.ag-cx{display:none}.ag-cxchip{display:inline-flex!important}.ag-sep{display:block!important}}
-.ag-today.is-now{color:var(--text-3);box-shadow:none}
-.ag-cx .track{width:36px;height:21px}.ag-cx .track::after{width:15px;height:15px}.ag-cx input:checked+.track::after{transform:translateX(15px)}
 .ag-stats{display:flex;gap:6px;margin-bottom:12px;min-height:32px;overflow-x:auto;scrollbar-width:none;padding:1px}
 .ag-stats::-webkit-scrollbar{display:none}
+/* carruseles: sangran hasta el borde de la página (como .rp-nav) para que no se corten en seco en el margen;
+   --ag-bleed = padding lateral real de .page (lo fija render()) */
+.ag-chips{margin:-2px calc(-1 * var(--ag-bleed,16px));padding:2px var(--ag-bleed,16px);scroll-padding:0 var(--ag-bleed,16px)}
+.ag-stats{margin-left:calc(-1 * var(--ag-bleed,16px));margin-right:calc(-1 * var(--ag-bleed,16px));padding:1px var(--ag-bleed,16px);scroll-padding:0 var(--ag-bleed,16px)}
 .ag-stat{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:999px;background:var(--surface);border:1px solid var(--border);font-size:13px;color:var(--text-2);white-space:nowrap;flex:none;animation:fadeUp .3s var(--ease-out) both}
 .ag-stat b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
 .ag-stat .ic{width:15px;height:15px;color:var(--text-3)}
@@ -120,10 +125,9 @@ button.ag-stat:hover{border-color:var(--border-strong);background:var(--surface-
 .ag-to{position:absolute;left:3px;right:3px;border-radius:9px;background:repeating-linear-gradient(-45deg,var(--surface-3) 0 7px,var(--surface-2) 7px 14px);border:1px dashed var(--border-strong);pointer-events:none;padding:5px 8px;font-size:11.5px;color:var(--text-2);font-weight:600;overflow:hidden;z-index:1;display:flex;gap:5px;align-items:flex-start}
 .ag-to .ic{width:13px;height:13px;flex:none;margin-top:1px}
 .ag-to span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ag-ev{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:stretch;gap:1px;padding:5px 7px 5px 9px;border-radius:9px;background:rgba(var(--c-rgb),.15);border:1px solid rgba(var(--c-rgb),.34);border-left:4px solid var(--c);color:var(--text);text-align:left;overflow:hidden;cursor:pointer;box-shadow:var(--shadow-1);transition:box-shadow .15s,transform .15s var(--ease),opacity .15s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-size:12.5px;line-height:1.25;min-width:0;animation:agIn .32s var(--ease-out) both}
+/* fondo opaco (tinte del barbero sobre --surface): las líneas de la cuadrícula no cruzan la tarjeta */
+.ag-ev{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:stretch;gap:1px;padding:5px 7px 5px 9px;border-radius:9px;background:linear-gradient(rgba(var(--c-rgb),var(--ev-a)),rgba(var(--c-rgb),var(--ev-a))),var(--surface);border:1px solid rgba(var(--c-rgb),var(--ev-b));border-left:4px solid var(--c);color:var(--text);text-align:left;overflow:hidden;cursor:pointer;box-shadow:var(--shadow-1);transition:box-shadow .15s,transform .15s var(--ease),opacity .15s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-size:12.5px;line-height:1.25;min-width:0;animation:agIn .32s var(--ease-out) both}
 @keyframes agIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
-:root[data-theme="dark"] .ag-ev{background:rgba(var(--c-rgb),.22);border-color:rgba(var(--c-rgb),.4)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ag-ev{background:rgba(var(--c-rgb),.22);border-color:rgba(var(--c-rgb),.4)}}
 .ag-ev:hover{box-shadow:var(--shadow-2);z-index:4;transform:translateY(-1px)}
 .ag-ev:focus-visible{outline:2.5px solid var(--brand);outline-offset:1px;z-index:5}
 .ag-ev-h{display:flex;align-items:center;gap:4px;min-width:0}
@@ -137,13 +141,13 @@ button.ag-stat:hover{border-color:var(--border-strong);background:var(--surface-
 .ag-ev.xs .ag-ev-t,.ag-ev.xs .ag-ev-s,.ag-ev.sm .ag-ev-s,.ag-ev.xs .ag-ev-due{display:none}
 .ag-ev-due{align-self:flex-start;margin-top:auto;font-size:10.5px;font-weight:700;color:var(--warn);background:var(--warn-soft);padding:1px 6px;border-radius:6px;white-space:nowrap}
 .ag-ev.sm .ag-ev-due{display:none}
-.ag-ev.st-pending{background:rgba(var(--c-rgb),.07);border:1.5px dashed rgba(var(--c-rgb),.8);border-left:4px dashed var(--c)}
+.ag-ev.st-pending{background:linear-gradient(rgba(var(--c-rgb),.07),rgba(var(--c-rgb),.07)),var(--surface);border:1.5px dashed rgba(var(--c-rgb),.8);border-left:4px dashed var(--c)}
 .ag-ev.st-pending .ag-ev-i{color:var(--st-pending)}
 .ag-ev.st-completed .ag-ev-i{color:var(--st-completed)}
-.ag-ev.st-cancelled{background:var(--surface-2);border-color:var(--border-strong);border-left-color:var(--st-cancelled);opacity:.6;box-shadow:none}
+.ag-ev.st-cancelled{background:var(--surface-2);border-color:var(--border);border-left-color:var(--st-cancelled);box-shadow:none}
 .ag-ev.st-cancelled .ag-ev-n,.ag-ev.st-cancelled .ag-ev-t{text-decoration:line-through;color:var(--text-3)}
-.ag-ev.st-cancelled .ag-ev-i{color:var(--text-3)}
-.ag-ev.st-no_show{background:var(--err-soft);border-color:rgba(179,38,30,.35);border-left-color:var(--st-no_show)}
+.ag-ev.st-cancelled .ag-ev-s,.ag-ev.st-cancelled .ag-ev-i{color:var(--text-3)}
+.ag-ev.st-no_show{background:linear-gradient(var(--err-soft),var(--err-soft)),var(--surface);border-color:rgba(179,38,30,.35);border-left-color:var(--st-no_show)}
 .ag-ev.st-no_show .ag-ev-n,.ag-ev.st-no_show .ag-ev-i{color:var(--st-no_show)}
 .ag-weekv .ag-ev{padding:4px 5px 4px 7px;border-left-width:3px}
 .ag-weekv .ag-ev-n{font-size:12px}
@@ -153,6 +157,51 @@ button.ag-stat:hover{border-color:var(--border-strong);background:var(--surface-
 .ag-ev.narrow .ag-ev-t{font-size:10.5px;text-overflow:clip}
 .ag-ev.narrow.xs .ag-ev-tt{display:none}
 .ag-weekv .ag-off-l{top:96px}
+.ag-grid.nohead .ag-off-l{top:10px}
+.ag-grid.nohead .ag-brow{padding-top:16px}
+/* semana por barbero (dueño con «Todos»): filas = barberos, columnas = días */
+.ag-rosterv{--gut:156px;--colmin:118px}
+@media (max-width:1180px){.ag-rosterv{--gut:136px;--colmin:104px}}
+@media (max-width:719px){.ag-rosterv{--gut:66px;--colmin:112px}}
+.ag-rgrid{min-width:calc(var(--gut) + 7 * var(--colmin));position:relative}
+.ag-rrow{display:grid;grid-template-columns:var(--gut) repeat(7,minmax(var(--colmin),1fr));border-top:1px solid var(--border)}
+.ag-hrow+.ag-rrow{border-top:0}
+.ag-rh{position:sticky;left:0;z-index:6;display:flex;align-items:flex-start;gap:9px;padding:10px 10px;background:var(--surface);border-right:1px solid var(--border);text-align:left;min-width:0;transition:background .15s}
+button.ag-rh:hover{background:var(--surface-2)}
+.ag-rh .avatar{--s:32px;flex:none;box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--c)}
+.ag-rh-t{display:grid;min-width:0;padding-top:1px}
+.ag-rh-n{font-weight:600;font-size:14px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-rh-m{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-rc{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;min-height:74px;padding:6px 5px 8px;border-left:1px solid var(--border);transition:background-color .15s}
+.ag-rh+.ag-rc{border-left:0}
+.ag-rc.today{background-color:var(--brand-softer)}
+.ag-rc.off{background-color:var(--off);background-image:repeating-linear-gradient(-45deg,transparent 0 8px,var(--off-line) 8px 9px)}
+.ag-rosterv.w .ag-rc{cursor:pointer}
+.ag-rosterv.w .ag-rc:hover{background-color:var(--brand-softer)}
+.ag-rc-l{margin:auto;max-width:100%;font-size:11.5px;font-weight:600;color:var(--text-3);background:var(--surface);border:1px solid var(--border);padding:3px 9px;border-radius:999px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-ri{display:flex;align-items:center;gap:5px;width:100%;min-width:0;min-height:28px;padding:3px 6px 3px 7px;border-radius:7px;background:linear-gradient(rgba(var(--c-rgb),var(--ev-a)),rgba(var(--c-rgb),var(--ev-a))),var(--surface);border:1px solid rgba(var(--c-rgb),var(--ev-b));border-left:3px solid var(--c);font-size:12.5px;line-height:1.2;color:var(--text);text-align:left;cursor:pointer;transition:box-shadow .15s,transform .15s var(--ease)}
+.ag-ri:hover{box-shadow:var(--shadow-2);transform:translateY(-1px)}
+.ag-ri:focus-visible{outline:2.5px solid var(--brand);outline-offset:1px}
+.ag-ri-t{flex:none;font-weight:700;font-variant-numeric:tabular-nums}
+.ag-ri-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-ri-i{width:13px;height:13px;flex:none;stroke-width:2.2}
+.ag-ri.st-pending{background:var(--surface);border:1.5px dashed rgba(var(--c-rgb),.8);border-left:3px dashed var(--c)}
+.ag-ri.st-pending .ag-ri-i{color:var(--st-pending)}
+.ag-ri.st-completed .ag-ri-i{color:var(--st-completed)}
+.ag-ri.st-cancelled{background:var(--surface-2);border-color:var(--border);border-left-color:var(--st-cancelled)}
+.ag-ri.st-cancelled .ag-ri-t,.ag-ri.st-cancelled .ag-ri-n{text-decoration:line-through;color:var(--text-3)}
+.ag-ri.st-cancelled .ag-ri-i{color:var(--text-3)}
+.ag-ri.st-no_show{background:linear-gradient(var(--err-soft),var(--err-soft)),var(--surface);border-color:rgba(179,38,30,.35);border-left-color:var(--st-no_show)}
+.ag-ri.st-no_show .ag-ri-n,.ag-ri.st-no_show .ag-ri-i{color:var(--st-no_show)}
+.ag-ri.to{background:repeating-linear-gradient(-45deg,var(--surface-3) 0 7px,var(--surface-2) 7px 14px);border:1px dashed var(--border-strong);color:var(--text-2);cursor:default;font-weight:600;font-size:11.5px}
+.ag-ri.to:hover{box-shadow:none;transform:none}
+@media (max-width:719px){
+  .ag-rh{flex-direction:column;align-items:center;gap:5px;padding:10px 4px;text-align:center}
+  .ag-rh .avatar{--s:30px}
+  .ag-rh-n{font-size:11.5px}.ag-rh-m{font-size:10.5px}
+  .ag-ri{min-height:32px;font-size:12px;gap:4px;padding:3px 5px 3px 6px}
+  .ag-ri-i{display:none}
+}
 .ag-now{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--err);z-index:7;pointer-events:none}
 .ag-now.first::before{content:"";position:absolute;left:-6px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--err);animation:agPulse 2.2s infinite}
 @keyframes agPulse{0%{box-shadow:0 0 0 0 rgba(179,38,30,.45)}70%{box-shadow:0 0 0 9px rgba(179,38,30,0)}100%{box-shadow:0 0 0 0 rgba(179,38,30,0)}}
@@ -189,18 +238,27 @@ body.ag-dragging,body.ag-dragging *{cursor:grabbing!important;user-select:none!i
 .ag-mc.out>*{opacity:.55}
 .ag-mc-d{font-weight:700;font-size:13.5px;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;margin:-4px 0 2px -6px;font-variant-numeric:tabular-nums}
 .ag-mc.today .ag-mc-d{background:var(--brand);color:var(--brand-ink)}
-.ag-mc.sel{box-shadow:inset 0 0 0 2px var(--text)}
+.ag-mc.sel{box-shadow:inset 0 0 0 2px var(--border-strong)}
 .ag-mc-n{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;line-height:1.2}
 .ag-mc-n small{font-weight:500;color:var(--text-2);font-size:12px;margin-left:3px}
 .ag-mc-r{font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums;font-weight:500}
-.ag-mc-dots{display:flex;gap:3px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
-.ag-mc-dots i{width:7px;height:7px;border-radius:50%;background:var(--st)}
-.ag-mc-dots em{font-style:normal;font-size:10px;color:var(--text-3);line-height:7px;font-weight:600}
+.ag-mc-f{display:flex;flex-direction:column;gap:1px;margin-top:auto;padding-top:3px;min-width:0;max-width:100%}
+.ag-mc-f span{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--st);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-mc-f span::before,.ag-mc-flag{content:"";width:7px;height:7px;border-radius:50%;background:var(--st);flex:none}
+.ag-mc-flag{display:none;position:absolute;top:7px;right:7px}
 .ag-mc-off{font-size:11px;color:var(--text-3)}
-@media (max-width:719px){.ag-mc{min-height:70px;padding:6px 3px 7px;align-items:center;gap:1px}.ag-mc-r,.ag-mc-n small,.ag-mc-off{display:none}.ag-mc-d{margin:0;font-size:13px;width:26px;height:26px}.ag-mc-n{font-size:13px}.ag-mc-dots{justify-content:center;gap:2px}.ag-mc-dots i{width:6px;height:6px}}
+@media (max-width:719px){
+  .ag-mc{min-height:66px;padding:6px 2px 7px;align-items:center;gap:3px}
+  .ag-mc-r,.ag-mc-n small,.ag-mc-off,.ag-mc-f{display:none}
+  .ag-mc-d{margin:0;font-size:13px;width:26px;height:26px}
+  .ag-mc-n{font-size:11px;font-weight:600;color:var(--text-2);background:var(--muted-soft);border-radius:999px;min-width:22px;padding:1px 6px;text-align:center;line-height:1.35}
+  .ag-mc-flag{display:block;top:5px;right:5px;width:6px;height:6px}
+  .ag-legend .ag-lg-ns{display:none}
+}
 .ag-legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--text-2);background:var(--surface-2)}
 .ag-legend span{display:inline-flex;align-items:center;gap:6px}
 .ag-legend i{width:8px;height:8px;border-radius:50%;background:var(--st)}
+.ag-legend i.heat{width:30px;height:10px;border-radius:3px;background:linear-gradient(90deg,rgba(196,154,60,.04),rgba(196,154,60,.2));box-shadow:inset 0 0 0 1px var(--border)}
 /* lista */
 .ag-list{display:grid;gap:20px}
 .ag-lg-h{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px;flex-wrap:wrap}
@@ -248,17 +306,20 @@ export default {
   async render(el, { query }) {
     ensureStyles();
     el.classList.add('ag-page');
+    const syncBleed = () => el.style.setProperty('--ag-bleed', getComputedStyle(el).paddingLeft);
+    syncBleed();
     const own = !can('appointments.read.all');
     const writable = canAny(['appointments.write.all', 'appointments.write.own']);
     const payable = can('payments.write');
     const msgable = can('messages.send');
     const t0 = today();
     const savedView = LS.get(LSK.view);
+    const qView = VIEW_ALIAS[String(query.vista || '').toLowerCase()] || query.vista;
     const S = {
-      view: VIEWS.some((v) => v[0] === query.vista) ? query.vista : (VIEWS.some((v) => v[0] === savedView) ? savedView : 'day'),
+      view: VIEWS.some((v) => v[0] === qView) ? qView : (VIEWS.some((v) => v[0] === savedView) ? savedView : 'day'),
       date: /^\d{4}-\d{2}-\d{2}$/.test(query.fecha || '') ? query.fecha : t0,
       staff: own ? '' : (query.barbero || ''),
-      cx: LS.get(LSK.cx) !== '0',
+      cx: LS.get(LSK.cx) === '1', // canceladas ocultas salvo que el usuario las pida
       q: query.q || '', status: query.estado || '',
       appts: [], off: [], staffList: [], avail: {}, total: 0,
       loaded: false, err: null, range: null
@@ -270,15 +331,20 @@ export default {
       <div class="ag-bar page-head">
         <h2 class="sr">Agenda</h2>
         <div class="ag-nav">
-          <button type="button" class="btn btn-secondary btn-sm ag-today" data-nav="0" title="Ir a hoy (T)">Hoy</button>
           <button type="button" class="btn btn-ghost btn-icon" data-nav="-1" aria-label="Anterior" title="Anterior (←)">${raw(icon('chevron-left'))}</button>
           <button type="button" class="btn btn-ghost btn-icon" data-nav="1" aria-label="Siguiente" title="Siguiente (→)">${raw(icon('chevron-right'))}</button>
-          <div class="ag-date"><span class="ag-date-btn" id="agLabel" aria-hidden="true"></span>
-            <input type="date" id="agDateIn" class="ag-date-in" aria-label="Ir a una fecha" title="Elegir fecha"/></div>
+          <div class="ag-mid">
+            <div class="ag-date"><span class="ag-date-btn" id="agLabel" aria-hidden="true"></span>
+              <input type="date" id="agDateIn" class="ag-date-in" aria-label="Ir a una fecha" title="Elegir fecha"/></div>
+            <button type="button" class="btn btn-secondary btn-sm ag-today" data-nav="0" title="Ir a hoy (T)" hidden>Hoy</button>
+          </div>
           <p class="ag-long" id="agLong"></p>
         </div>
-        <div class="seg ag-views" role="group" aria-label="Vista de la agenda">
-          ${VIEWS.map(([k, l]) => html`<button type="button" data-view="${k}" aria-pressed="${String(S.view === k)}" title="${l} (${k === 'week' ? 'S' : l.charAt(0)})">${l}</button>`)}
+        <div class="ag-tools">
+          <button type="button" class="btn btn-secondary ag-filt" id="agFilt" aria-haspopup="menu" aria-label="Filtros" title="Filtros">${raw(icon('filter'))}<span class="lbl">Filtros</span><span class="ag-filt-dot" hidden></span></button>
+          <div class="seg ag-views" role="group" aria-label="Vista de la agenda">
+            ${VIEWS.map(([k, l]) => html`<button type="button" data-view="${k}" aria-pressed="${String(S.view === k)}" title="${l} (${k === 'week' ? 'S' : l.charAt(0)})">${l}</button>`)}
+          </div>
         </div>
       </div>
       <div class="ag-filters" id="agFilters"></div>
@@ -296,7 +362,8 @@ export default {
 
     // ── Utilidades de datos ──
     const byId = (id) => S.appts.find((a) => a.id === id);
-    const shown = (list) => list.filter((a) => (S.cx || a.status !== 'cancelled') && (!S.staff || a.staff_id === S.staff));
+    const showCx = () => S.cx || (S.view === 'list' && S.status === 'cancelled');
+    const shown = (list) => list.filter((a) => (a.status !== 'cancelled' || showCx()) && (!S.staff || a.staff_id === S.staff));
     const staffById = (id) => S.staffList.find((s) => s.id === id);
     const colorOf = (a) => a.staff_color || (staffById(a.staff_id) || {}).color || '#8C8577';
     function blocksFor(staffId, date) {
@@ -359,10 +426,14 @@ export default {
       $('#agLong', el).textContent = longText();
       $('#agDateIn', el).value = S.date;
       $$('[data-view]', el).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === S.view)));
-      const tb = $('.ag-today', el);
+      // «Hoy» solo cuando sirve: si el periodo ya incluye hoy (o el título dice Mañana/Ayer) sobraría.
       const [a, b] = S.range || range();
       const t = today();
-      tb.classList.toggle('is-now', t >= a && t <= b);
+      $('.ag-today', el).hidden = (t >= a && t <= b) || (S.view === 'day' && Math.abs(diffDays(t, S.date)) <= 1);
+      const fb = $('#agFilt', el);
+      fb.hidden = S.view === 'month'; // en Mes no se dibujan citas sueltas: el filtro no cambiaría nada
+      $('.ag-filt-dot', fb).hidden = !S.cx;
+      fb.setAttribute('aria-label', S.cx ? 'Filtros (mostrando canceladas)' : 'Filtros');
       $('#agListBar', el).hidden = S.view !== 'list';
     }
     function paintFilters() {
@@ -377,11 +448,7 @@ export default {
           '<button type="button" class="chip" data-staff="" aria-pressed="' + String(!S.staff) + '">' + icon('users', 'ic-sm') + 'Todos <span class="n">' + cnt('') + '</span></button>' +
           S.staffList.filter((s) => s.bookable !== false || act.some((x) => x.staff_id === s.id)).map((s) => '<button type="button" class="chip" data-staff="' + esc(s.id) + '" aria-pressed="' + String(S.staff === s.id) + '" style="--c:' + esc(s.color || '#8C8577') + ';--c-rgb:' + hexRgb(s.color) + '"><span class="ag-dot"></span>' + esc(firstName(s.name)) + ' <span class="n">' + cnt(s.id) + '</span></button>').join('') + '</div>';
       }
-      const cx = S.view === 'month' ? '' : '<label class="switch ag-cx" title="Mostrar u ocultar citas canceladas"><input type="checkbox" id="agCx" ' + (S.cx ? 'checked' : '') + '/><span class="track"></span><span>Canceladas</span></label>';
-      const cxChip = S.view === 'month' ? '' : '<button type="button" class="chip ag-cxchip" data-cx aria-pressed="' + String(S.cx) + '">' + icon(S.cx ? 'eye' : 'eye-off', 'ic-sm') + 'Canceladas</button>';
-      if (chips) { chips = chips.replace(/<\/div>$/, (cxChip ? '<span class="ag-sep" aria-hidden="true"></span>' + cxChip : '') + '</div>'); f.innerHTML = chips + cx; }
-      else f.innerHTML = cxChip ? '<div class="ag-chips">' + cxChip + '</div>' : ''; // sin chips: el interruptor va en la fila de resumen (escritorio)
-      f.classList.toggle('solo', !chips);
+      f.innerHTML = chips; // «Canceladas» vive en el menú de filtros (#agFilt), igual en móvil y escritorio
     }
     function paintStats(xs) {
       const st = $('#agStats', el);
@@ -402,7 +469,6 @@ export default {
       if (ns) h += '<button type="button" class="ag-stat err" data-stat="no_show"><b>' + ns + '</b> no ' + (ns === 1 ? 'asistió' : 'asistieron') + '</button>';
       if (canc) h += '<button type="button" class="ag-stat" data-stat="cancelled"><b>' + canc + '</b> ' + (canc === 1 ? 'cancelada' : 'canceladas') + '</button>';
       if (!xs.length) h = '<span class="ag-stat">' + icon('calendar') + 'Sin citas ' + period + '</span>';
-      if ($('#agFilters', el).classList.contains('solo') && S.view !== 'month') h += '<label class="switch ag-cx ag-cx-inline" title="Mostrar u ocultar citas canceladas"><input type="checkbox" id="agCx" ' + (S.cx ? 'checked' : '') + '/><span class="track"></span><span>Canceladas</span></label>';
       st.innerHTML = h;
     }
 
@@ -502,30 +568,36 @@ export default {
       const closed = cols.every((c) => !!fullDayOff(c.id, date) || !blocksFor(c.id, date).length);
       const empty = !list.length && writable ? '<div class="ag-hint" role="note"><span class="art">' + icon(closed ? 'store' : 'calendar-plus') + '</span><span><b>' + (closed ? 'Este día no hay servicio' : isToday ? 'Día libre por ahora' : 'Sin citas este día') + '</b>' +
         (closed ? 'Si vas a atender a alguien, agéndalo de todas formas.' : 'Toca cualquier horario para agendar.') + '</span><button type="button" class="btn btn-primary btn-sm" data-a="new">Agendar</button></div>' : '';
+      // Con una sola columna (barbero o filtro por barbero) la cabecera repetiría el resumen de arriba.
+      const one = cols.length === 1;
       return '<div class="card ag-cal ag-dayv' + (writable ? ' w' : '') + '" style="--n:' + cols.length + ';--hour:' + (60 * ppm) + 'px">' +
         '<div class="ag-scroll" id="agScroll" data-rs="' + rs + '" data-re="' + re + '" data-ppm="' + ppm + '" data-kind="day">' +
-        '<div class="ag-grid' + (cols.length === 1 ? ' one' : '') + '">' +
-        '<div class="ag-hrow"><div class="ag-corner"></div>' + heads + '</div>' +
+        '<div class="ag-grid' + (one ? ' one nohead' : '') + '">' +
+        (one ? '' : '<div class="ag-hrow"><div class="ag-corner"></div>' + heads + '</div>') +
         '<div class="ag-brow" style="height:' + ((re - rs) * ppm + 26) + 'px">' + gutterHtml(rs, re, ppm, isToday) + bodies + '</div>' +
         '</div></div>' + empty + '</div>';
     }
 
     // ── Vista Semana ──
+    const weekHeads = (days, list, t) => days.map((d) => {
+      const xs = list.filter((a) => a.date === d && OCC.includes(a.status));
+      return '<button type="button" class="ag-ch ag-wh' + (d === t ? ' today' : '') + '" data-go="' + d + '" aria-label="' + esc('Ver ' + dateLongCap(d)) + '"><span class="dow">' + esc(WEEKDAYS_SHORT[weekday(d)]) + '</span><span class="dn">' + dayNum(d) + '</span><span class="cnt">' + (xs.length ? esc(plural(xs.length, 'cita')) : '—') + '</span></button>';
+    }).join('');
     function weekHtml() {
       const [from] = S.range;
       const days = Array.from({ length: 7 }, (_, i) => addDays(from, i));
       const all = S.appts.filter((a) => a.date >= from && a.date <= days[6]);
       const list = shown(all);
+      // Dueño con «Todos»: una fila por barbero. Mezclar a todo el equipo en una sola cuadrícula de horas
+      // deja tiras de 25–40 px ilegibles; la cuadrícula de horas queda para una sola persona.
+      if (!own && !S.staff) { const rows = columns(list); if (rows.length > 1) return rosterHtml(days, list, rows); }
       const staffCols = own ? (S.staffList.length ? S.staffList : (me() ? [me()] : [])) : (S.staff ? S.staffList.filter((s) => s.id === S.staff) : S.staffList.filter((s) => s.bookable !== false));
       const ppm = isMobile() ? 1.1 : 1.15;
       const pairs = [];
       for (const d of days) for (const s of staffCols) if (!fullDayOff(s.id, d)) pairs.push(...blocksFor(s.id, d));
       const [rs, re] = hoursRange(pairs, list);
       const t = today();
-      const heads = days.map((d) => {
-        const xs = list.filter((a) => a.date === d && OCC.includes(a.status));
-        return '<button type="button" class="ag-ch ag-wh' + (d === t ? ' today' : '') + '" data-go="' + d + '" aria-label="' + esc('Ver ' + dateLongCap(d)) + '"><span class="dow">' + esc(WEEKDAYS_SHORT[weekday(d)]) + '</span><span class="dn">' + dayNum(d) + '</span><span class="cnt">' + (xs.length ? esc(plural(xs.length, 'cita')) : '—') + '</span></button>';
-      }).join('');
+      const heads = weekHeads(days, list, t);
       const bodies = days.map((d, i) => {
         const union = [];
         for (const s of staffCols) if (!fullDayOff(s.id, d)) union.push(...blocksFor(s.id, d));
@@ -542,6 +614,45 @@ export default {
         '<div class="ag-scroll" id="agScroll" data-rs="' + rs + '" data-re="' + re + '" data-ppm="' + ppm + '" data-kind="week">' +
         '<div class="ag-grid"><div class="ag-hrow"><div class="ag-corner"></div>' + heads + '</div>' +
         '<div class="ag-brow" style="height:' + ((re - rs) * ppm + 26) + 'px">' + gutterHtml(rs, re, ppm, days.includes(t)) + bodies + '</div></div></div></div>';
+    }
+
+    // Semana por barbero: filas = barberos (con su color), columnas = días; cada celda lista sus citas
+    // («10:20 Víctor»). Tocar el nombre filtra a ese barbero (cuadrícula de horas); tocar un hueco agenda.
+    function riHtml(a) {
+      const c = colorOf(a);
+      const svc = (a.services || []).map((s) => s.name).join(', ');
+      const stIc = { no_show: 'user-x', pending: 'clock', cancelled: 'x-circle' }[a.status]; // atendida: sin icono (ruido)
+      const full = time(a.start_min) + '–' + time(a.end_min) + ' · ' + (a.client_name || 'Cliente') + (svc ? ' · ' + svc : '') + ' · ' + statusLabel(a.status);
+      return '<button type="button" class="ag-ri st-' + esc(a.status) + '" data-id="' + esc(a.id) + '" data-open="' + esc(a.id) + '" style="--c:' + esc(c) + ';--c-rgb:' + hexRgb(c) + '" title="' + esc(full) + '" aria-label="' + esc(cap(dateShort(a.date)) + ', ' + full + ', con ' + (a.staff_name || '')) + '">' +
+        '<span class="ag-ri-t">' + time(a.start_min) + '</span><span class="ag-ri-n">' + esc(firstName(a.client_name || 'Cliente')) + '</span>' + (stIc ? icon(stIc, 'ag-ri-i') : '') + '</button>';
+    }
+    function rosterHtml(days, list, rows) {
+      const t = today();
+      const works = (s, d) => !s.ghost && blocksFor(s.id, d).length > 0 && !fullDayOff(s.id, d);
+      const closed = days.map((d) => rows.every((s) => !works(s, d)));
+      const body = rows.map((s, ri) => {
+        const mine = list.filter((a) => a.staff_id === s.id);
+        const n = mine.filter((a) => OCC.includes(a.status)).length;
+        const color = s.color || '#8C8577';
+        const hd = String(avatar(s.name, { size: 'sm', color, src: s.avatar_url || '' })) + '<span class="ag-rh-t"><span class="ag-rh-n">' + esc(firstName(s.name)) + '</span><span class="ag-rh-m">' + esc(plural(n, 'cita')) + '</span></span>';
+        const head = s.ghost ? '<div class="ag-rh" style="--c:' + esc(color) + '">' + hd + '</div>'
+          : '<button type="button" class="ag-rh" data-staff="' + esc(s.id) + '" style="--c:' + esc(color) + '" title="' + esc('Ver solo la semana de ' + s.name) + '" aria-label="' + esc(s.name + ': ' + plural(n, 'cita') + '. Ver solo su semana') + '">' + hd + '</button>';
+        const cells = days.map((d, di) => {
+          const on = s.ghost || works(s, d);
+          const fo = on ? null : fullDayOff(s.id, d);
+          const items = mine.filter((a) => a.date === d).map((a) => [a.start_min, riHtml(a)]);
+          const tos = s.ghost ? [] : offFor(s.id, d).filter((x) => x.start_min != null && x.end_min != null)
+            .map((x) => [x.start_min, '<span class="ag-ri to" title="' + esc('Descanso ' + time(x.start_min) + '–' + time(x.end_min) + (x.reason ? ' · ' + x.reason : '')) + '"><span class="ag-ri-n">' + esc('Descanso ' + time(x.start_min)) + '</span></span>']);
+          const inner = items.concat(tos).sort((x, y) => x[0] - y[0]).map((x) => x[1]).join('');
+          // Día cerrado para todos: la etiqueta va solo en la primera fila para no repetirla.
+          const label = on || items.length ? '' : fo ? 'Descanso' + (fo.reason ? ' · ' + fo.reason : '') : closed[di] ? (ri === 0 ? 'Cerrado' : '') : 'No trabaja';
+          return '<div class="ag-rc' + (d === t ? ' today' : '') + (on ? '' : ' off') + '" data-date="' + d + '"' + (s.ghost ? '' : ' data-sid="' + esc(s.id) + '"') + '>' + inner + (label ? '<span class="ag-rc-l">' + esc(label) + '</span>' : '') + '</div>';
+        }).join('');
+        return '<div class="ag-rrow">' + head + cells + '</div>';
+      }).join('');
+      return '<div class="card ag-cal ag-rosterv' + (writable ? ' w' : '') + '" style="--n:7">' +
+        '<div class="ag-scroll" id="agScroll" data-kind="roster">' +
+        '<div class="ag-rgrid"><div class="ag-hrow"><div class="ag-corner"></div>' + weekHeads(days, list, t) + '</div>' + body + '</div></div></div>';
     }
 
     // ── Vista Mes ──
@@ -562,17 +673,21 @@ export default {
         const rev = sumTotal(act);
         const out = d.slice(0, 7) !== month;
         const closed = staffCols.length && staffCols.every((s) => !blocksFor(s.id, d).length || fullDayOff(s.id, d));
-        const heat = act.length ? (0.025 + 0.11 * (act.length / max)).toFixed(3) : 0;
-        const dots = xs.slice().sort((x, y) => ST_ORDER.indexOf(x.status) - ST_ORDER.indexOf(y.status));
-        const nd = isMobile() ? 5 : 10;
-        cells += '<button type="button" class="ag-mc' + (out ? ' out' : '') + (d === t ? ' today' : '') + (d === S.date && S.date !== startOfMonth(S.date) ? ' sel' : '') + '" data-go="' + d + '"' +
-          (heat ? ' style="background-color:rgba(196,154,60,' + heat + ')"' : '') + ' aria-label="' + esc(dateLongCap(d) + ': ' + (act.length ? plural(act.length, 'cita') + ', ' + money(rev) : 'sin citas')) + '">' +
+        // Días de otro mes: solo el número (sus citas se ven al cambiar de mes).
+        const heat = act.length && !out ? (0.025 + 0.11 * (act.length / max)).toFixed(3) : 0;
+        // En lugar de un punto por cita (casi todos del mismo color) solo se marca lo que pide atención.
+        const pend = out ? 0 : xs.filter((a) => a.status === 'pending').length;
+        const ns = out ? 0 : xs.filter((a) => a.status === 'no_show').length;
+        const flags = (pend ? '<span class="st-c-pending">' + pend + ' por confirmar</span>' : '') + (ns ? '<span class="st-c-no_show">' + ns + ' no ' + (ns === 1 ? 'asistió' : 'asistieron') + '</span>' : '');
+        const sr = act.length ? plural(act.length, 'cita') + ', ' + money(rev) + (pend ? ', ' + pend + ' por confirmar' : '') + (ns ? ', ' + ns + ' no ' + (ns === 1 ? 'asistió' : 'asistieron') : '') : 'sin citas';
+        cells += '<button type="button" class="ag-mc' + (out ? ' out' : '') + (d === t ? ' today' : '') + (d === S.date && d !== t && S.date !== startOfMonth(S.date) ? ' sel' : '') + '" data-go="' + d + '"' +
+          (heat ? ' style="background-color:rgba(196,154,60,' + heat + ')"' : '') + ' aria-label="' + esc(dateLongCap(d) + (out ? '' : ': ' + sr)) + '">' +
           '<span class="ag-mc-d">' + dayNum(d) + '</span>' +
-          (act.length ? '<span class="ag-mc-n">' + act.length + '<small>' + (act.length === 1 ? 'cita' : 'citas') + '</small></span><span class="ag-mc-r">' + esc(compactMoney(rev)) + '</span>' : (closed && !out ? '<span class="ag-mc-off">Cerrado</span>' : '')) +
-          (dots.length ? '<span class="ag-mc-dots" aria-hidden="true">' + dots.slice(0, nd).map((a) => '<i class="st-c-' + esc(a.status) + '"></i>').join('') + (dots.length > nd ? '<em>+' + (dots.length - nd) + '</em>' : '') + '</span>' : '') +
+          (out ? '' : act.length ? '<span class="ag-mc-n">' + act.length + '<small>' + (act.length === 1 ? 'cita' : 'citas') + '</small></span><span class="ag-mc-r">' + esc(compactMoney(rev)) + '</span>' : (closed ? '<span class="ag-mc-off">Cerrado</span>' : '')) +
+          (flags ? '<span class="ag-mc-f" aria-hidden="true">' + flags + '</span>' : '') + (pend ? '<i class="ag-mc-flag st-c-pending" aria-hidden="true"></i>' : '') +
           '</button>';
       }
-      const legend = ST_ORDER.filter((s) => S.cx || s !== 'cancelled').map((s) => '<span class="st-c-' + s + '"><i></i>' + esc(statusLabel(s)) + '</span>').join('');
+      const legend = '<span><i class="heat"></i>Tono más intenso = más citas</span><span class="st-c-pending"><i></i>Por confirmar</span><span class="st-c-no_show ag-lg-ns"><i></i>No asistió</span>';
       return '<div class="card ag-month"><div class="ag-mh">' + [1, 2, 3, 4, 5, 6, 0].map((d) => '<span>' + WEEKDAYS_SHORT[d] + '</span>').join('') + '</div>' +
         '<div class="ag-mg stagger-off">' + cells + '</div><div class="ag-legend">' + legend + '</div></div>';
     }
@@ -627,13 +742,12 @@ export default {
     }
 
     // ── Pintar ──
+    // El resumen cuenta también las canceladas (aunque estén ocultas) para ofrecer el acceso «N canceladas».
     function statsSource() {
       const [a, b] = S.range;
-      let xs = shown(S.appts).filter((x) => x.date >= a && x.date <= b);
-      if (S.view === 'month') xs = xs.filter((x) => x.date.slice(0, 7) === S.date.slice(0, 7));
-      if (S.view === 'list' && S.status) xs = xs.filter((x) => x.status === S.status);
-      if (!S.cx) xs = xs.concat(S.appts.filter((x) => x.status === 'cancelled' && (!S.staff || x.staff_id === S.staff) && x.date >= a && x.date <= b && (S.view !== 'month' || x.date.slice(0, 7) === S.date.slice(0, 7))));
-      return xs;
+      return S.appts.filter((x) => (!S.staff || x.staff_id === S.staff) && x.date >= a && x.date <= b &&
+        (S.view !== 'month' || x.date.slice(0, 7) === S.date.slice(0, 7)) &&
+        (S.view !== 'list' || !S.status || x.status === S.status));
     }
     function paint(o) {
       o = o || {};
@@ -658,7 +772,17 @@ export default {
       scrollKey = key;
       if (o.flash) {
         const f = body.querySelector('[data-id="' + CSS.escape(o.flash) + '"]');
-        if (f) { f.classList.add('ag-flash'); if (!keep && f.classList.contains('ag-ev') && sc) { const top = f.offsetTop - sc.clientHeight / 3; sc.scrollTo({ top, behavior: 'smooth' }); } }
+        if (f) {
+          f.classList.add('ag-flash');
+          if (!keep && f.classList.contains('ag-ev') && sc) { const top = f.offsetTop - sc.clientHeight / 3; sc.scrollTo({ top, behavior: 'smooth' }); }
+          else if (!keep && f.classList.contains('ag-ri') && sc) {
+            const fr = f.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+            const gut = ($('.ag-corner', sc) || {}).offsetWidth || 0;
+            const top = fr.top < sr.top + 70 || fr.bottom > sr.bottom ? sc.scrollTop + fr.top - sr.top - sc.clientHeight / 3 : sc.scrollTop;
+            const left = fr.left < sr.left + gut || fr.right > sr.right ? sc.scrollLeft + fr.left - sr.left - gut - 8 : sc.scrollLeft;
+            sc.scrollTo({ top, left, behavior: 'smooth' });
+          }
+        }
       }
       $$('.ag-ev', body).forEach((e, i) => { if (i > 24 || o.keepScroll) e.style.animation = 'none'; });
     }
@@ -672,6 +796,13 @@ export default {
       sc.style.maxHeight = h + 'px';
     }
     function autoScroll(sc) {
+      if (sc.dataset.kind === 'roster') {
+        // Semana por barbero: si hoy queda fuera de la vista (móvil), se lleva su columna junto a los nombres.
+        const td = $('.ag-wh.today', sc), gut = $('.ag-corner', sc);
+        sc.scrollTop = 0;
+        sc.scrollLeft = td && gut && td.offsetLeft + td.offsetWidth > sc.clientWidth ? td.offsetLeft - gut.offsetWidth : 0;
+        return;
+      }
       const rs = +sc.dataset.rs, ppm = +sc.dataset.ppm;
       const [a, b] = S.range;
       const t = today();
@@ -744,12 +875,12 @@ export default {
     dateIn.addEventListener('change', () => { if (/^\d{4}-\d{2}-\d{2}$/.test(dateIn.value)) go({ date: dateIn.value }); });
     offs.push(on(el, 'click', '[data-staff]', (e, b) => { if (b.closest('.ag-col')) return; S.staff = b.dataset.staff; syncUrl(); paint({ keepScroll: S.view !== 'day' }); }));
     const setCx = (v) => { S.cx = v; LS.set(LSK.cx, S.cx ? '1' : '0'); paint({ keepScroll: true }); toast.info(S.cx ? 'Mostrando citas canceladas' : 'Citas canceladas ocultas'); };
-    offs.push(on(el, 'change', '#agCx', (e, i) => setCx(i.checked)));
-    offs.push(on(el, 'click', '[data-cx]', () => setCx(!S.cx)));
+    offs.push(on(el, 'click', '#agFilt', (e, b) => menu(b, [
+      { label: S.cx ? 'Ocultar citas canceladas' : 'Mostrar citas canceladas', icon: S.cx ? 'eye-off' : 'eye', onClick: () => setCx(!S.cx) }
+    ])));
     offs.push(on(el, 'click', '[data-stat]', (e, b) => {
       const k = b.dataset.stat;
-      if (k === 'cancelled') { S.cx = true; LS.set(LSK.cx, '1'); }
-      go({ view: 'list', status: k === 'due' ? 'completed' : k, q: '' });
+      go({ view: 'list', status: k === 'due' ? 'completed' : k, q: '' }); // la lista muestra canceladas si ese es el filtro
       const sel = $('#agSt', el); if (sel) sel.value = S.status;
       const qi = $('#agQ', el); if (qi) qi.value = '';
     }));
@@ -770,7 +901,8 @@ export default {
       if (k === 'complete') return setAppointmentStatus(a, 'completed', { btn: b });
       if (k === 'pay') return chargeAppointment(a);
       if (k === 'more') {
-        const started = a.date < today() || (a.date === today() && a.start_min <= nowMin() + 60);
+        // «No asistió» solo cuando ya llegó la hora de la cita (antes el cliente todavía puede llegar).
+        const started = a.date < today() || (a.date === today() && a.start_min <= nowMin());
         const act = ACTIVE.includes(a.status);
         menu(b, [
           { label: 'Ver detalle', icon: 'eye', onClick: () => openAppointment(a.id) },
@@ -807,6 +939,11 @@ export default {
       tap.innerHTML = icon('plus') + time(m);
       tap.classList.remove('tap'); void tap.offsetWidth; tap.classList.add('tap');
       openNewAppointment({ date: col.dataset.date, start_min: m, staff_id: col.dataset.staff || S.staff || (own && me() ? me().id : undefined) });
+    }));
+    // Semana por barbero: tocar el hueco de una celda agenda con ese barbero ese día.
+    offs.push(on(el, 'click', '.ag-rc', (e, c) => {
+      if (!writable || !c.dataset.sid || e.target.closest('.ag-ri')) return;
+      openNewAppointment({ date: c.dataset.date, staff_id: c.dataset.sid });
     }));
     // Sombra "+ 10:15" al pasar el mouse (solo puntero fino).
     let hoverRaf = 0;
@@ -952,7 +1089,7 @@ export default {
     const iv = setInterval(() => {
       tick++;
       const sc = $('#agScroll', body);
-      if (sc && !drag) {
+      if (sc && !drag && sc.dataset.rs) {
         const rs = +sc.dataset.rs, re = +sc.dataset.re, ppm = +sc.dataset.ppm;
         const nm = nowMin();
         const inR = nm >= rs && nm <= re;
@@ -964,7 +1101,7 @@ export default {
     const onVis = () => { if (!document.hidden && S.loaded && !drag) load({ silent: true, keepScroll: true }); };
     document.addEventListener('visibilitychange', onVis);
     let rzT = 0, lastMobile = isMobile();
-    const onResize = () => { clearTimeout(rzT); rzT = setTimeout(() => { if (isMobile() !== lastMobile) { lastMobile = isMobile(); paint({ keepScroll: false }); } else fitHeight(); }, 120); };
+    const onResize = () => { clearTimeout(rzT); rzT = setTimeout(() => { syncBleed(); if (isMobile() !== lastMobile) { lastMobile = isMobile(); paint({ keepScroll: false }); } else fitHeight(); }, 120); };
     window.addEventListener('resize', onResize);
 
     offs.push(bus.on('appointments:changed', (e) => {
@@ -976,8 +1113,19 @@ export default {
     offs.push(bus.on('staff:changed', () => { availP = null; load({ silent: true, keepScroll: true }); }));
     offs.push(bus.on('availability:changed', () => { availP = null; load({ silent: true, keepScroll: true }); }));
 
+    // Enlace a una cita sin fecha (#/agenda?cita=<id>, p. ej. desde una notificación): la agenda se abre en
+    // el día de esa cita y la resalta, para que al cerrar el detalle quede a la vista.
+    let focus = null;
+    if (query.cita && !query.fecha) {
+      S.range = range(); paint();
+      const a = await api.get('/appointments/' + encodeURIComponent(query.cita)).then((r) => r && r.appointment).catch(() => null);
+      if (a && /^\d{4}-\d{2}-\d{2}$/.test(a.date || '')) {
+        S.date = a.date; focus = a.id;
+        if (a.status === 'cancelled') S.cx = true; // solo en esta visita; no cambia la preferencia guardada
+      }
+    }
     syncUrl();
-    await load();
+    await load({ flash: focus });
 
     // Enlaces directos: ?cita=<id> abre el detalle; ?nueva=1 abre el formulario.
     if (query.cita) openAppointment(query.cita);

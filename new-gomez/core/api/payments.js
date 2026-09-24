@@ -68,9 +68,12 @@ export function moneyField(errs, field, v, { label = 'el monto', required = true
   return money(n);
 }
 
+// '$20', '$1,250', '$2,709.50': centavos solo si los hay, igual que money() del panel (app/lib/fmt.js), para que
+// una notificación diga lo mismo que el aviso y el historial de cortes.
 export function fmtMoney(n, currency) {
   const v = money(n);
-  try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: currency || 'MXN' }).format(v); } catch (e) { return '$' + v.toFixed(2); }
+  const d = Number.isInteger(v) ? 0 : 2;
+  try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: currency || 'MXN', minimumFractionDigits: d, maximumFractionDigits: d }).format(v); } catch (e) { return '$' + v.toFixed(d); }
 }
 
 // find con lista IN: hasta IN_CHUNK*IN_MAX_CHUNKS ids en trozos exactos; más, en una sola consulta.

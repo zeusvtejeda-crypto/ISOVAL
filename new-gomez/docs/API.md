@@ -26,10 +26,12 @@ Transiciones permitidas:
 | cancelled | ✔² | ✔² | – | – | – |
 | no_show   | – | ✔ (deshacer) | ✔¹ | – | – |
 
-¹ solo si la cita ya empezó o empieza en ≤ 60 min (minutos hasta el inicio ≤ 60, contando a través de la medianoche:
-a las 23:30 una cita de las 00:15 del día siguiente ya cuenta). No se marca "atendida"/"no asistió" una cita futura,
-tampoco al crearla (`status:'completed'`) ni al moverla: `PATCH` que cambia fecha u hora de una cita `completed` o
-`no_show` exige que el nuevo horario cumpla esta regla (400; `force` no la salta).
+¹ `completed`: solo si la cita ya empezó o empieza en ≤ 60 min (el cliente puede llegar antes; minutos hasta el inicio
+≤ 60, contando a través de la medianoche: a las 23:30 una cita de las 00:15 del día siguiente ya cuenta). `no_show`:
+solo cuando ya llegó la hora de inicio (minutos hasta el inicio ≤ 0; antes, el cliente todavía puede llegar y el 400
+dice desde qué hora se puede marcar). No se marca "atendida"/"no asistió" una cita futura, tampoco al crearla
+(`status:'completed'`) ni al moverla: `PATCH` que cambia fecha u hora de una cita `completed` o `no_show` exige que el
+nuevo horario cumpla la regla de su estado (400; `force` no la salta).
 ² restaurar una cancelada / no asistida exige que el horario siga libre (409 `slot_taken` si no), también tras escribir
 (ver "Concurrencia"): si otra cita tomó el horario al mismo tiempo, la restauración se revierte a su estado anterior.
 Citas `cancelled` y `no_show` no ocupan agenda; `no_show` no cuenta como ingreso.
@@ -79,8 +81,8 @@ las filas de sus compañeros los datos privados vienen vacíos: `email: ''`, `ph
 | GET | /api/health | – | `{ ok, version, backend, mode }` |
 | GET | /api/public/home | `?host=` (opcional) | igual que `/shops/:slug` para la barbería del dominio, o la predeterminada (`env.DEFAULT_SHOP_SLUG`, 'new-gomez') |
 | GET | /api/public/shops/:slug | – | `{ shop: PublicShop, services: [...activos], staff: [...reservables] }` |
-| GET | /api/public/shops/:slug/days | `from, days(≤60), services=a,b, staff=any\|id` | `{ days: [{ date, open, available, reason? }] }` |
-| GET | /api/public/shops/:slug/slots | `date, services=a,b, staff=any\|id` | `{ date, duration_min, closed, slots: [{ start_min, staff_ids }] }` |
+| GET | /api/public/shops/:slug/days | `from, days(≤60), services=a,b, staff=any\|id, token?\|exclude?` | `{ days: [{ date, open, available, reason? }] }` |
+| GET | /api/public/shops/:slug/slots | `date, services=a,b, staff=any\|id, token?\|exclude?` | `{ date, duration_min, closed, slots: [{ start_min, staff_ids }] }` |
 | POST | /api/public/shops/:slug/appointments | `{ services:[ids], staff_id:'any'\|id, date, start_min, name, phone, email?, note?, first_visit? }` | `{ appointment: PublicAppointment, manage_token }` |
 | GET | /api/public/appointments/:token | – | `{ appointment: PublicAppointment, can_cancel, can_reschedule, deadline_text }` |
 | POST | /api/public/appointments/:token/cancel | `{ reason? }` | `{ appointment: PublicAppointment, can_cancel, can_reschedule, deadline_text }` |
@@ -102,6 +104,10 @@ las peticiones comparten la IP `demo`).
 `reason` dice por qué: `closed` (sin servicio: barbería/barbero no trabaja o descanso de día completo; `open:false`),
 `full` (abierto pero sin lugar; `open:true`), `out_of_window` (más allá de `window_days`; `open:false`), `past` u
 `offline` (reservas en línea apagadas; `open:false`). `/slots` devuelve `reason`/`message` con los mismos valores.
+Al **reagendar** (enlace de gestión o «Mis citas»), `/days` y `/slots` no cuentan la cita que se mueve, así se ofrecen
+horarios que solo chocan con ella (p. ej. correrla 20 min). Solo con prueba de que es de quien pregunta: `token` = token
+del enlace de gestión (el de la reserva o el de un mensaje), o `exclude` = id de una cita de SU ficha en esa barbería
+(sesión de cliente). Sin prueba válida el parámetro se ignora (respuesta normal, sin error).
 
 Enlace de gestión (`/api/public/appointments/:token`): ver, cancelar y reagendar responden lo mismo, `{ appointment,
 can_cancel, can_reschedule, deadline_text }` (política ya actualizada tras el cambio). Política: cancelar/reagendar
@@ -115,13 +121,19 @@ Si el cliente tiene sesión (rol cliente o usuario), la cita se vincula a SU fic
 
 Qué ficha del CRM recibe una cita nueva (reserva en línea y `POST /api/appointments` con `client:{…}`):
 - **Con sesión** (reserva en línea de un usuario que no es del equipo): solo la ficha de ESE usuario (`user_id`).
-  Nunca se le asigna una ficha encontrada por el teléfono o el correo escritos en el formulario (cualquiera puede
-  escribir los datos de otra persona). Si aún no tiene ficha, reclama una ficha sin cuenta cuyo correo sea el de su
-  cuenta (`user_email`, tomado de la sesión, no del formulario; hoy solo lo usa el registro vía `linkClientAccount`) o
-  se le crea una ficha propia; el teléfono/correo escritos se guardan en ella solo si ninguna otra ficha los usa.
+  Nunca se le asigna una ficha encontrada por el teléfono o el correo escritos en el formulario, ni por el correo de
+  su cuenta (no está verificado): cualquiera que conozca esos datos se quedaría con el historial, las citas y el
+  teléfono de otra persona. Si aún no tiene ficha se le crea una propia; el teléfono/correo escritos se guardan en ella
+  solo si ninguna otra ficha los usa.
 - **Sin sesión / panel**: se reutiliza la ficha por teléfono y, si no, por correo. Desde la reserva en línea (datos sin
   verificar) no se agregan teléfono ni correo a la ficha existente (un correo agregado así permitiría reclamarla
-  al registrarse con él); desde el panel sí se completan.
+  después) y nunca se usa una ficha que ya tiene cuenta (su dueño vería en «Mis citas» las reservas de quien escriba
+  su teléfono o su correo); desde el panel sí se completan y sí se usa.
+- **Registro de cliente** (`POST /api/auth/register` con `shop_slug`, `auth.js` → `linkClientAccount`): el correo de la
+  cuenta no se verifica, así que nunca basta para reclamar una ficha existente (tampoco el teléfono). Se vincula una
+  ficha sin cuenta solo si `claim` trae los enlaces de gestión de TODAS sus citas (tokens de `/?cita=…`; la página
+  pública los guarda en el dispositivo al reservar; `domain/clients.js` → `provenClient`, máx. 20); si no, ficha nueva,
+  con teléfono/correo solo si ninguna otra ficha los usa.
 - **Cliente sin registro** (panel, `client:{ name }` sin teléfono ni correo): todas esas citas usan UNA ficha genérica
   por barbería — `name:'Cliente de paso'`, `source:'walkin'`, `tags:['Sin registro']`, `marketing_ok:false` — y la
   cita guarda en `client_name` el nombre escrito. Esa ficha acumula a todos los clientes de paso (cuenta como un solo
@@ -133,10 +145,11 @@ Qué ficha del CRM recibe una cita nueva (reserva en línea y `POST /api/appoint
 |---|---|---|---|---|
 | POST | /api/auth/login | public | `{ email, password }` | `{ user, contexts, token? }` + cookie |
 | POST | /api/auth/pin | public | `{ shop_slug, pin }` | `{ user:null, staff, contexts, token? }` + cookie |
-| POST | /api/auth/register | public | `{ name, email, password, phone?, shop_slug? }` | `{ user, contexts, token? }` (cuenta de cliente) |
+| POST | /api/auth/register | public | `{ name, email, password, phone?, shop_slug?, claim?:[tokens] }` | `{ user, contexts, token? }` (cuenta de cliente; `claim`: ver "Fichas de cliente") |
 | POST | /api/auth/signup | public | `{ shop_name, owner_name, email, password, phone?, city? }` | `{ user, contexts, shop, token? }` (nueva barbería + dueño) |
 | POST | /api/auth/logout | public | – | `null` (borra cookie) |
 | GET | /api/auth/me | user | – | `{ user, staff?, contexts, session_kind }` |
+| GET | /api/auth/session | public | – | igual que `/auth/me`, pero sin sesión responde 200 con `{ user: null, staff: null, contexts: [] }` (el panel la usa al arrancar) |
 | PATCH | /api/auth/profile | user | `{ name?, phone? }` | `{ user }` |
 | POST | /api/auth/password | user | `{ current, next }` | `null` |
 
@@ -217,7 +230,7 @@ fichas de staff). `GET /api/auth/me` con una sesión PIN inválida → 401.
 | PATCH | /api/messages/:id | messages.send | `{ status: opened\|sent\|failed }` | `Message` |
 | GET | /api/reminders | messages.send | `date` (por defecto mañana) | `{ date, items:[{ appointment, body, wa_link, reminded }] }` |
 | POST | /api/import/legacy | import.legacy | `{ citas:[...], staff:[...] }` (formato localStorage anterior) | `{ imported, skipped, staff_created, clients_created, errors }`⁴ |
-| GET | /api/my/appointments | my.appointments | – | `{ upcoming:[PublicAppointment + can_cancel, can_reschedule, deadline_text], past:[PublicAppointment] }` |
+| GET | /api/my/appointments | my.appointments | – | `{ upcoming:[PublicAppointment + can_cancel, can_reschedule, deadline_text], past:[PublicAppointment], elsewhere:[{ shop_id, shop_slug, shop_name, shop_logo, count, next: PublicAppointment }] }` (`elsewhere`: otras barberías activas donde la misma cuenta es cliente y tiene citas próximas; `next` es la más cercana) |
 | POST | /api/my/appointments/:id/cancel | my.appointments | `{ reason? }` | `{ appointment: PublicAppointment + can_cancel, can_reschedule, deadline_text }` |
 | POST | /api/my/appointments/:id/reschedule | my.appointments | `{ date, start_min, staff_id? }` | `{ appointment: PublicAppointment + can_cancel, can_reschedule, deadline_text }` |
 | PATCH | /api/my/profile | my.appointments | `{ name?, phone?, marketing_ok? }` | `{ client }` |
@@ -339,9 +352,13 @@ consume `/api/automation/outbox`. Variables de plantilla: `{cliente} {barberia} 
 {barbero} {total} {folio} {enlace} {direccion} {resena}`.
 
 `{enlace}`: en `confirmation`, `reminder`, `reschedule` y `no_show` de una cita es el enlace de gestión
-(`/?cita=<token>`); como el token solo se guarda hasheado, cada mensaje registrado genera un token nuevo y el anterior
-deja de servir. En los demás tipos (o sin cita) es el link de reservas (`/?b=<slug>`).
-Vista previa (`preview:true`): arma el texto sin registrar nada y **sin rotar el token** (el enlace que el cliente ya
-tiene sigue sirviendo); el enlace de gestión queda como el marcador literal `{enlace}`. Al enviar (sin `preview`) con
-`body`, cada `{enlace}` del texto se reemplaza por el enlace real (token nuevo si el tipo lleva enlace de gestión y hay
-cita; si no, el link de reservas). Así el panel puede mostrar la vista previa, dejar editar el texto y enviarlo tal cual.
+(`/?cita=<token>`; en la demo `/?b=<slug>&cita=<token>`). Como el token de la reserva solo se guarda hasheado, los
+mensajes usan un token **derivado** de ese hash (`<id de la cita sin ap_><firma>`, `linkToken` en
+`core/domain/messages.js`): es el mismo en todos los mensajes de la cita y **no invalida** el que el cliente recibió al
+reservar (ni el de Google Calendar/.ics); ambos sirven mientras la cita exista. `GET /api/public/appointments/:token`
+acepta los dos. Si la cita no tenía hash (la agendó el equipo), se le asigna uno la primera vez. En los demás tipos (o
+sin cita) es el link de reservas (`/?b=<slug>`).
+Vista previa (`preview:true`): arma el texto sin registrar nada; el enlace de gestión queda como el marcador literal
+`{enlace}`. Al enviar (sin `preview`) con `body`, cada `{enlace}` del texto se reemplaza por el enlace real (el de
+gestión si el tipo lo lleva y hay cita; si no, el link de reservas). Así el panel puede mostrar la vista previa, dejar
+editar el texto y enviarlo tal cual.

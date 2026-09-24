@@ -13,7 +13,7 @@ import { icon } from './icons.js';
 import { api } from './api.js';
 import { bus, shop } from './state.js';
 import { toast, modal, busy, copyText, confirmDialog } from './ui.js';
-import { firstName, phone as fmtPhone } from './fmt.js';
+import { firstName, phone as fmtPhone, clock } from './fmt.js';
 
 export const KIND_LABEL = {
   confirmation: 'Confirmación', reminder: 'Recordatorio', reschedule: 'Cambio de horario', cancellation: 'Cancelación',
@@ -74,7 +74,7 @@ const CHECKS = '<svg viewBox="0 0 16 11" aria-hidden="true"><path fill="currentC
 export function bubbleHtml(text, opts) {
   opts = opts || {};
   injectStyle();
-  const t = opts.time || new Date().toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
+  const t = opts.time || clock(new Date().toISOString()); // 24 h, como el resto del panel
   return '<div class="wa-chat"><div class="wa-bubble"' + (opts.id ? ' id="' + esc(opts.id) + '"' : '') + '><div class="wa-text">' +
     (text && String(text).trim() ? formatWa(text) : '<span class="wa-empty">Escribe tu mensaje…</span>') +
     '</div><div class="wa-meta"><span>' + esc(t) + '</span>' + CHECKS + '</div></div></div>';

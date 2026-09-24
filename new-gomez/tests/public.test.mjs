@@ -4,6 +4,7 @@ import { makeFixture } from './helpers.mjs';
 import { createSession } from '../core/session.js';
 import { sha256Hex } from '../core/crypto.js';
 import { addDays, nowInTz, nowIso } from '../core/util.js';
+import { fmtDateEs } from '../core/domain/appointments.js';
 
 async function setup() {
   const f = await makeFixture();
@@ -271,6 +272,8 @@ test('enlace de gestión: ver, reagendar, cancelar y notificaciones', async () =
   assert.equal(row.reschedule_count, 1);
   const rn = await f.db.find('notifications', { shop_id: 'shop_a', type: 'booking_rescheduled' });
   assert.deepEqual(rn.map((n) => n.staff_id).sort(), ['st_barberA', 'st_barberA2', 'st_ownerA'], 'dueño + barbero nuevo + anterior');
+  // El aviso dice qué horario se liberó (mismo día → solo la hora; cambió de barbero → con quién era).
+  assert.ok(rn.every((n) => n.body.endsWith(', 1:20 p.m. con Barbero A2 · Antes: 10:00 a.m. con Barbero A')), rn[0].body);
   // El horario anterior quedó libre.
   r = await f.book({ phone: '5522222222', start_min: 600 });
   assert.equal(r.status, 200);
@@ -292,6 +295,57 @@ test('enlace de gestión: ver, reagendar, cancelar y notificaciones', async () =
   const ev = await f.db.find('appointment_events', { appointment_id: b.data.appointment.id });
   assert.deepEqual(ev.map((e) => e.type), ['created', 'rescheduled', 'status']);
   assert.equal(ev[2].actor_name, 'Laura Gómez');
+});
+
+test('reagendar a otro día: el aviso al equipo incluye el día y la hora anteriores', async () => {
+  const f = await setup();
+  const b = await f.book({ start_min: 660 });
+  let to = addDays(f.day, 2);
+  while (new Date(to + 'T12:00:00Z').getUTCDay() === 0) to = addDays(to, 1);
+  const r = await f.call('POST', '/api/public/appointments/' + b.data.manage_token + '/reschedule', { body: { date: to, start_min: 680 } });
+  assert.equal(r.status, 200, r.body);
+  const [n] = await f.db.find('notifications', { shop_id: 'shop_a', type: 'booking_rescheduled', staff_id: 'st_ownerA' });
+  const d = new Date(f.day + 'T12:00:00Z'), t = new Date(to + 'T12:00:00Z');
+  const day = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'][d.getUTCDay()] + ' ' + d.getUTCDate();
+  const antes = d.getUTCMonth() === t.getUTCMonth() ? day : fmtDateEs(f.day);
+  assert.equal(n.title, 'Cita reagendada por el cliente');
+  assert.equal(n.body, 'Laura Gómez · Corte · ' + fmtDateEs(to) + ', 11:20 a.m. con Barbero A · Antes: ' + antes + ', 11:00 a.m.');
+});
+
+test('reagendar: /slots y /days no cuentan la propia cita si se prueba que es suya (token del enlace o sesión)', async () => {
+  const f = await setup();
+  const b = await f.book({ start_min: 700 }, { as: 'clientA' }); // 11:40–12:20, ficha de Cliente A
+  const tk = b.data.manage_token;
+  const id = b.data.appointment.id;
+  await f.book({ phone: '5511111111', start_min: 740 }); // otra cita 12:20–13:00
+  const q = '/api/public/shops/alfa/slots?date=' + f.day + '&services=sv_corte&staff=st_barberA';
+  const starts = async (extra, opts) => {
+    const r = await f.call('GET', q + extra, opts);
+    assert.equal(r.status, 200, r.body);
+    return r.data.slots.map((s) => s.start_min);
+  };
+  const plain = await starts('');
+  assert.ok(!plain.includes(680) && !plain.includes(700), 'sin prueba, la propia cita ocupa');
+  const moved = await starts('&token=' + tk);
+  assert.ok(moved.includes(680) && moved.includes(700), 'se puede correr 20 minutos (o dejarla igual)');
+  assert.ok(!moved.includes(720), 'la otra cita sigue ocupando');
+  assert.deepEqual(await starts('&exclude=' + id, { as: 'clientA' }), moved, 'sesión del cliente dueño');
+  // Sin prueba válida se ignora: token inválido, id sin sesión, sesión de otra persona, id de otra barbería.
+  assert.deepEqual(await starts('&token=' + 'A'.repeat(40)), plain);
+  assert.deepEqual(await starts('&token=nada'), plain);
+  assert.deepEqual(await starts('&exclude=' + id), plain);
+  assert.deepEqual(await starts('&exclude=' + id, { as: 'ownerB' }), plain);
+  // Y la reagenda acepta ese horario.
+  const r = await f.call('POST', '/api/public/appointments/' + tk + '/reschedule', { body: { date: f.day, start_min: 680 } });
+  assert.equal(r.status, 200, r.body);
+
+  // /days: un día cuyo único hueco es el de la propia cita sale disponible solo con la prueba.
+  await f.db.insert('time_off', { id: 'to_x', shop_id: 'shop_a', staff_id: 'st_barberA', date_from: f.day, date_to: f.day, start_min: 720, end_min: 1200, reason: 'Curso' });
+  await f.db.insert('time_off', { id: 'to_y', shop_id: 'shop_a', staff_id: 'st_barberA', date_from: f.day, date_to: f.day, start_min: 600, end_min: 680, reason: 'Trámite' });
+  const day = async (extra, opts) => (await f.call('GET', '/api/public/shops/alfa/days?from=' + f.day + '&days=1&services=sv_corte&staff=st_barberA' + extra, opts)).data.days[0];
+  assert.equal((await day('')).available, false);
+  assert.equal((await day('&token=' + tk)).available, true);
+  assert.equal((await day('&exclude=' + id, { as: 'clientA' })).available, true);
 });
 
 test('enlace de gestión: política cancel_hours y barbería suspendida', async () => {

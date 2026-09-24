@@ -26,7 +26,7 @@ export default {
           <p style="font-size:13px;color:#8E8676">© TuBarbería</p>
         </section>
         <section class="auth-panel">
-          <div class="row"><span class="logo-mark">${raw(icon('logo'))}</span><span class="brandname">Tu<b>Barbería</b></span></div>
+          <div class="row auth-brand"><span class="logo-mark">${raw(icon('logo'))}</span><span class="brandname">Tu<b>Barbería</b></span></div>
           <h1>Bienvenido de vuelta</h1>
           <p class="lead">Entra para ver tu agenda de hoy.</p>
           <div id="downBanner"></div>
@@ -48,8 +48,10 @@ export default {
             <div class="field" style="margin-bottom:10px"><label for="pinShop">Código de la barbería</label>
               <input class="input" id="pinShop" autocomplete="off" autocapitalize="none" placeholder="p. ej. new-gomez" value=""/>
               <p class="hint">Es el final de tu enlace de reservas. Se recuerda en este dispositivo. En la demo: <b>demo</b> y PIN 1111–4444.</p></div>
+            <p class="faint" style="text-align:center;font-size:12.5px;margin-top:6px">Tu PIN de 4 a 6 números</p>
             <div class="pin-dots" id="pinDots" aria-hidden="true"></div>
             <div class="pin-pad" id="pinPad"></div>
+            <button type="button" class="btn btn-primary btn-lg btn-block" id="pinGo" style="margin-top:12px" disabled>Entrar</button>
             <p class="err-t" id="pinMsg" role="alert" style="min-height:22px;text-align:center;font-size:13.5px;margin-top:10px"></p>
           </div>
           <div class="divider">o</div>
@@ -85,8 +87,9 @@ export default {
 
     const afterLogin = async () => {
       await loadMe();
-      const id = preferredShopId();
-      if (id) await selectShop(id);
+      // El shell elige la barbería y, si está suspendida, lo explica en su propia pantalla (no es un error de acceso).
+      if (window.TB && window.TB.ensureShop) await window.TB.ensureShop();
+      else { const id = preferredShopId(); if (id) await selectShop(id); }
       const next = query.next && query.next.startsWith('/') && !query.next.startsWith('/login') ? query.next : null;
       toast.success('¡Hola, ' + ((state.user && state.user.name) || (state.staff && state.staff.name) || '').split(' ')[0] + '!');
       navigate(next || window.TB.homePath(), { replace: true, force: true });
@@ -111,18 +114,26 @@ export default {
       }
     });
 
-    // ── PIN ──
-    let pin = '';
+    // ── PIN: de 4 a 6 dígitos (como se crean en Equipo y en Mi perfil). Se envía con «Entrar» o solo al llegar a 6. ──
+    const PIN_MIN = 4, PIN_MAX = 6;
+    let pin = '', sending = false;
     const shopIn = $('#pinShop', el);
     shopIn.value = LS.get('tb:pinShop') || '';
     if (!shopIn.value) api.get('/public/home', { host: location.host }).then((r) => { if (r && r.shop && !shopIn.value) shopIn.value = r.shop.slug; }).catch(() => {});
-    const dots = () => { $('#pinDots', el).innerHTML = [0, 1, 2, 3].map((i) => '<span class="' + (i < pin.length ? 'f' : '') + '"></span>').join(''); };
+    const dots = () => {
+      $('#pinDots', el).innerHTML = Array.from({ length: Math.max(PIN_MIN, pin.length) }, (_, i) => '<span class="' + (i < pin.length ? 'f' : '') + '"></span>').join('');
+      $('#pinGo', el).disabled = sending || pin.length < PIN_MIN;
+    };
     $('#pinPad', el).innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map((k) => k === '' ? '<span></span>' : '<button type="button" data-k="' + k + '" aria-label="' + (k === '⌫' ? 'Borrar' : k) + '">' + k + '</button>').join('');
     dots();
     const submitPin = async () => {
+      if (sending || pin.length < PIN_MIN) return;
       const slug = shopIn.value.trim().toLowerCase();
       if (!slug) { $('#pinMsg', el).textContent = 'Escribe el código de tu barbería.'; shopIn.focus(); pin = ''; dots(); return; }
+      sending = true;
+      const go = $('#pinGo', el);
       try {
+        go.setAttribute('aria-busy', 'true');
         $('#pinPad', el).style.opacity = '.5';
         // Los códigos de la demo corren en el navegador (demo: PIN 1111–4444).
         if (slug === 'demo' || slug === 'demo-norte') { setMode('demo'); state.mode = 'demo'; } else if (getMode() === 'demo') { setMode('server'); state.mode = 'server'; }
@@ -133,20 +144,26 @@ export default {
         $('#pinMsg', el).textContent = err.message;
         const d = $('#pinDots', el); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake');
         pin = ''; setTimeout(dots, 150);
-      } finally { const p = $('#pinPad', el); if (p) p.style.opacity = ''; }
+      } finally {
+        sending = false;
+        const p = $('#pinPad', el); if (p) p.style.opacity = '';
+        if (go.isConnected) { go.removeAttribute('aria-busy'); go.disabled = pin.length < PIN_MIN; }
+      }
     };
-    offs.push(on(el, 'click', '#pinPad [data-k]', (e, b) => {
-      const k = b.dataset.k;
+    const typeDigit = (k) => {
+      if (sending || pin.length >= PIN_MAX) return;
       $('#pinMsg', el).textContent = '';
-      if (k === '⌫') { pin = pin.slice(0, -1); dots(); return; }
-      if (pin.length >= 4) return;
       pin += k; dots();
-      if (pin.length === 4) submitPin();
-    }));
+      if (pin.length === PIN_MAX) submitPin();
+    };
+    const erase = () => { if (sending) return; pin = pin.slice(0, -1); dots(); };
+    offs.push(on(el, 'click', '#pinPad [data-k]', (e, b) => { if (b.dataset.k === '⌫') erase(); else typeDigit(b.dataset.k); }));
+    offs.push(on(el, 'click', '#pinGo', () => submitPin()));
     const onKey = (e) => {
       if ($('#fPin', el).hidden || e.target === shopIn) return;
-      if (/^\d$/.test(e.key) && pin.length < 4) { pin += e.key; dots(); if (pin.length === 4) submitPin(); }
-      else if (e.key === 'Backspace') { pin = pin.slice(0, -1); dots(); }
+      if (/^\d$/.test(e.key)) typeDigit(e.key);
+      else if (e.key === 'Backspace') erase();
+      else if (e.key === 'Enter' && !(e.target && e.target.closest && e.target.closest('button,a'))) { e.preventDefault(); submitPin(); }
     };
     document.addEventListener('keydown', onKey);
     return () => { offs.forEach((f) => f()); document.removeEventListener('keydown', onKey); };

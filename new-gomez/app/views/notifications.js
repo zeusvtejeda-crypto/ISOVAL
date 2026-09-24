@@ -5,7 +5,7 @@ import { icon } from '../lib/icons.js';
 import { api } from '../lib/api.js';
 import { bus, tz, today, role } from '../lib/state.js';
 import { toast, busy, emptyState, errorState } from '../lib/ui.js';
-import { dateLongCap, diffDays, ago } from '../lib/fmt.js';
+import { dateLongCap, diffDays, ago, clock as clockIn } from '../lib/fmt.js';
 import { injectNotifStyle, notifItemHtml, markNotificationsRead, openNotificationLink } from '../lib/notif-panel.js';
 
 const PAGE = 40;
@@ -30,7 +30,7 @@ const dayKey = (iso) => {
   try { return new Intl.DateTimeFormat('en-CA', { timeZone: tz(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso)); }
   catch (e) { return String(iso || '').slice(0, 10); }
 };
-const clock = (iso) => { try { return new Date(iso).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', timeZone: tz() }); } catch (e) { return ''; } };
+const clock = (iso) => clockIn(iso, tz()); // 24 h, como la agenda: '22:06'
 function dayLabel(k, t) {
   const d = diffDays(t, k);
   if (d === 0) return 'Hoy';

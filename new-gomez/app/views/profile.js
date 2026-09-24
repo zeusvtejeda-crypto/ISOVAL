@@ -46,6 +46,8 @@ const CSS = `
 .pf-hero .avatar{--s:72px;font-size:26px;box-shadow:0 0 0 3px var(--surface),0 0 0 5.5px var(--ring,var(--brand));transition:box-shadow .3s var(--ease)}
 .pf-hero h3{font-family:var(--disp);font-size:28px;font-weight:800;line-height:1.05;letter-spacing:.01em;overflow-wrap:anywhere}
 .pf-hero .who{font-size:13.5px;color:var(--text-2);margin-top:4px;overflow-wrap:anywhere}
+/* Teléfono: avatar arriba y todo centrado; las insignias usan el ancho completo en vez de apretarse a un lado. */
+@media (max-width:559px){.pf-hero{flex-direction:column;text-align:center;gap:12px;padding:24px 18px 20px}.pf-hero>.grow{width:100%}.pf-hero .pf-badges{justify-content:center}}
 .pf-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .pf-badges .badge .ic{width:12px;height:12px}
 .pf-card .card-head{padding:18px 18px 0;align-items:flex-start}
@@ -58,12 +60,13 @@ const CSS = `
 .pf-ro .ic{width:16px;height:16px;color:var(--text-3);flex:none}
 .pf-ro span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pf-actions{display:flex;justify-content:flex-end;gap:10px;align-items:center;flex-wrap:wrap}
+.pf-actions>span:empty{display:none}
 .pf-actions .saved{font-size:12.5px;color:var(--ok);display:inline-flex;align-items:center;gap:4px;animation:fadeUp .3s var(--ease)}
 .pf-actions .saved .ic{width:14px;height:14px;stroke-width:2.6}
 @media (max-width:719px){.pf-actions .btn{flex:1}}
 .pf-sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:10px;max-width:440px}
 .pf-sw button,.pf-sw label{position:relative;aspect-ratio:1;min-height:44px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);transition:transform .15s var(--ease),box-shadow .2s var(--ease);cursor:pointer}
-.pf-sw button:hover,.pf-sw label:hover{transform:scale(1.07)}
+@media (hover:hover) and (pointer:fine){.pf-sw button:hover,.pf-sw label:hover{transform:scale(1.07)}}
 .pf-sw button .ic{width:20px;height:20px;stroke-width:2.8;opacity:0;transform:scale(.4);transition:opacity .2s,transform .25s var(--ease-out)}
 .pf-sw button[aria-checked="true"]{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--c)}
 .pf-sw button[aria-checked="true"] .ic{opacity:1;transform:none}
@@ -86,22 +89,26 @@ const CSS = `
 .pf-dots i{width:7px;height:7px;border-radius:50%;background:currentColor}
 .pf-note{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text-2);line-height:1.5}
 .pf-note .ic{width:18px;height:18px;flex:none;margin-top:1px;color:var(--text-3)}
-.pf-theme{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.pf-theme button{display:grid;justify-items:center;gap:8px;padding:12px 6px 10px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-2);transition:border-color .15s,background .15s,color .15s;min-height:44px}
-.pf-theme button:hover{border-color:var(--border-strong);color:var(--text)}
+.pf-theme{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;container-type:inline-size}
+.pf-theme button{display:grid;justify-items:center;gap:8px;padding:12px 6px 10px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-2);transition:border-color .15s,background .15s,color .15s;min-height:44px;min-width:0}
+@media (hover:hover) and (pointer:fine){.pf-theme button:hover{border-color:var(--border-strong);color:var(--text)}}
 .pf-theme button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-softer);color:var(--text)}
 .pf-theme .pv{width:100%;max-width:74px;height:46px;border-radius:9px;border:1px solid var(--border-strong);overflow:hidden;display:grid;grid-template-columns:1fr 1fr}
 .pf-theme .pv i{display:block}
 .pf-theme .pv .l{background:#F5F3EE}.pf-theme .pv .d{background:#15130F}
 .pf-theme .pv.l1{grid-template-columns:1fr}.pf-theme .pv.l1 .l{background:linear-gradient(#FFFFFF 38%,#F0ECE4 38%)}
 .pf-theme .pv.d1{grid-template-columns:1fr}.pf-theme .pv.d1 .d{background:linear-gradient(#26221C 38%,#0F0E0B 38%)}
-.pf-theme .lbl{display:flex;align-items:center;gap:5px}.pf-theme .lbl .ic{width:14px;height:14px}
+.pf-theme .lbl{display:flex;align-items:center;justify-content:center;gap:5px;max-width:100%;min-width:0}.pf-theme .lbl .ic{width:14px;height:14px}
+.pf-theme .lbl span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Columna angosta (lateral de 330px en escritorio, teléfono): sin ícono para que «Automático» quepa en su tarjeta. */
+@container (max-width:340px){.pf-theme .lbl .ic{display:none}}
 .pf-list .list-item{padding:12px 18px;min-height:56px}
 .pf-list .list-item>.ic{color:var(--text-3)}
 .pf-list .trail{color:var(--text-3);font-size:13px}
-.pf-ver{font-family:var(--mono);font-size:12.5px;color:var(--text-2)}
+.pf-list .pf-ver{display:block;font-family:var(--mono);font-size:12px;color:var(--text-3);margin-top:2px;overflow-wrap:anywhere}
 .pf-logout{color:var(--err)!important}
-.pf-logout:hover{background:var(--err-soft)!important;border-color:transparent!important}
+@media (hover:hover) and (pointer:fine){.pf-logout:hover{background:var(--err-soft)!important;border-color:transparent!important}}
+.pf-logout:active{background:var(--err-soft)!important}
 `;
 
 export default {
@@ -236,7 +243,7 @@ export default {
           <div class="pf-theme" role="group" aria-label="Tema">
             ${THEMES.map(([k, l, ic]) => html`<button type="button" data-theme-k="${k}" aria-pressed="${String(window.TB.getTheme() === k)}">
               <span class="pv ${k === 'light' ? 'l1' : k === 'dark' ? 'd1' : ''}">${k === 'auto' ? raw('<i class="l"></i><i class="d"></i>') : raw(k === 'light' ? '<i class="l"></i>' : '<i class="d"></i>')}</span>
-              <span class="lbl">${raw(icon(ic))}${l}</span></button>`)}
+              <span class="lbl">${raw(icon(ic))}<span>${l}</span></span></button>`)}
           </div>
         </div>
       </section>`;
@@ -247,13 +254,15 @@ export default {
           ${pwa.installed ? html`<div class="list-item">${raw(icon('check-circle', 'ok-t'))}<span class="grow"><span class="title">App instalada</span><span class="meta" style="display:block">Ábrela desde tu pantalla de inicio.</span></span></div>`
             : html`<a class="list-item" href="#/instalar">${raw(icon('download'))}<span class="grow"><span class="title">Instalar la app</span><span class="meta" style="display:block">En tu celular o computadora, sin tienda de apps.</span></span>${raw(icon('chevron-right', 'ic-sm'))}</a>`}
           ${demo ? html`<a class="list-item" href="#/guia">${raw(icon('book'))}<span class="grow"><span class="title">Guía de la demo</span><span class="meta" style="display:block">Guion para presentarla en una barbería.</span></span>${raw(icon('chevron-right', 'ic-sm'))}</a>` : ''}
-          <div class="list-item">${raw(icon('info'))}<span class="grow"><span class="title">Versión</span><span class="meta" style="display:block">${demo ? 'Demo con datos ficticios' : 'Conectada al servidor'}</span></span><span class="trail pf-ver" id="pfVer">…</span></div>
+          <div class="list-item">${raw(icon('info'))}<span class="grow"><span class="title">Versión</span><span class="meta" style="display:block">${demo ? 'Demo con datos ficticios' : 'Conectada al servidor'}</span><span class="pf-ver" id="pfVer">…</span></span></div>
         </div>
       </section>`;
     const sessionCard = () => html`
       <section class="card pf-card">
         ${cardHead('door', 'Sesión', pinSession ? 'Entraste con PIN. La sesión se cierra sola en 12 horas.' : 'Entraste con tu correo en este dispositivo.')}
-        <div class="card-body"><button type="button" class="btn btn-secondary btn-block pf-logout" data-act="logout">${raw(icon('logout'))}Cerrar sesión</button></div>
+        <div class="card-body stack-sm">
+          ${(state.contexts || []).length > 1 ? html`<button type="button" class="btn btn-secondary btn-block" data-act="switch">${raw(icon('store'))}Cambiar de barbería</button>` : ''}
+          <button type="button" class="btn btn-secondary btn-block pf-logout" data-act="logout">${raw(icon('logout'))}Cerrar sesión</button></div>
       </section>`;
 
     el.innerHTML = String(html`
@@ -372,6 +381,7 @@ export default {
       const ap = $('#pfAppt', el); if (ap) ap.style.setProperty('--c', c);
       const hero = $('#pfHero', el); if (hero) hero.style.setProperty('--ring', c);
       const av = $('#pfHero .avatar', el); if (av) av.style.setProperty('--c', c);
+      $$('.sb-user .avatar').forEach((a) => a.style.setProperty('--c', c));
     };
     let colorSeq = 0;
     const saveColor = async (c) => {
@@ -485,6 +495,7 @@ export default {
     offs.push(on(el, 'click', '[data-act]', async (e, b) => {
       const act = b.dataset.act;
       if (act === 'pin') return openPin();
+      if (act === 'switch') { if (window.TB && window.TB.openShopSwitcher) window.TB.openShopSwitcher(); return; }
       if (act === 'pin-off') {
         const ok = await confirmDialog({ title: '¿Quitar tu PIN?', message: 'Ya no podrás entrar con PIN en la tablet de la barbería; solo con tu correo y contraseña.', confirmText: 'Quitar PIN', danger: true, icon: 'key' });
         if (!ok) return;

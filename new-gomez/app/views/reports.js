@@ -4,14 +4,15 @@
 //   barbero — en la URL (?r=&desde=&hasta=&barbero=) y recordados en este dispositivo (mismos controles
 //   que #/inicio, importados de dashboard.js).
 //   Datos: GET /api/reports/dashboard del periodo y del periodo anterior (para las variaciones).
-//   Secciones (con navegación fija que sigue el scroll):
+//   Secciones (las cuatro primeras, con navegación fija que sigue el scroll):
 //     · Resumen   — KPIs con variación: ingresos, citas, ticket, propinas, clientes nuevos, ocupación.
 //     · Ingresos  — serie (día/semana/mes) contra el periodo anterior + tabla; por forma de pago, por
 //                   barbero y por servicio, cada uno con tabla y totales.
 //     · Citas     — citas y atendidas por día, por estado, tasas de cancelación y no-show, por día de
 //                   la semana y por hora.
 //     · Clientes  — nuevos vs. recurrentes.
-//     · Exportar  — CSV de citas, cobros, clientes y comisiones (GET /api/reports/export, reports.export).
+//     · Exportar  — CSV de citas, cobros, clientes y comisiones (GET /api/reports/export, reports.export);
+//                   también en el menú del botón «Exportar» del encabezado (por eso no tiene pestaña).
 //   Imprimir: window.print() con estilos @media print propios (tema claro, sin menús ni controles).
 //   Se refresca con 'appointments:changed' / 'payments:changed' y al volver a la pestaña.
 import { html, raw, $, $$, on } from '../lib/html.js';
@@ -29,7 +30,9 @@ import {
 } from './dashboard.js';
 
 const RP_PRESETS = ['hoy', '7d', '30d', 'mes', 'mes_ant', '90d', 'anio', 'otro'];
-const SECTIONS = [['resumen', 'Resumen'], ['ingresos', 'Ingresos'], ['citas', 'Citas'], ['clientes', 'Clientes'], ['exportar', 'Exportar']];
+// Solo secciones de datos: «Exportar» es una acción y ya está como botón en el encabezado (su sección, con
+// una tarjeta por archivo, sigue al final de la página).
+const SECTIONS = [['resumen', 'Resumen'], ['ingresos', 'Ingresos'], ['citas', 'Citas'], ['clientes', 'Clientes']];
 const WD_ORDER = [1, 2, 3, 4, 5, 6, 0]; // lunes primero
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const m0 = (n) => money(Math.round(Number(n) || 0));
@@ -274,7 +277,7 @@ export default {
         </div>
         <header class="rp-phead" aria-hidden="true"><div><h1>Reporte · ${sh.name || 'TuBarbería'}</h1><p data-ph-range></p></div><div class="r"><p data-ph-date></p></div></header>
         <div id="rpFilters" class="rp-noprint-controls">${filtersHtml(RP_PRESETS, S, can('staff.read') ? [] : null)}</div>
-        <nav class="rp-nav" aria-label="Secciones del reporte">${SECTIONS.filter(([k]) => k !== 'exportar' || canExport).map(([k, l], i) => html`<button type="button" data-go="${k}" aria-current="${String(i === 0)}">${l}</button>`)}</nav>
+        <nav class="rp-nav" aria-label="Secciones del reporte">${SECTIONS.map(([k, l], i) => html`<button type="button" data-go="${k}" aria-current="${String(i === 0)}">${l}</button>`)}</nav>
         <div id="rpBody" class="db-a">${raw(skeleton())}</div>
         ${canExport ? html`<section class="rp-sec rp-noprint" id="rp-exportar" aria-labelledby="rpH-exportar">
           ${sec('exportar', 'Exportar', 'Descarga tus datos en CSV para abrirlos en Excel o Google Sheets.')}

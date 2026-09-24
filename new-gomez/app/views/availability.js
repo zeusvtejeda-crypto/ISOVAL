@@ -8,6 +8,7 @@ import { bus, can, getStaff, me, role, today, shop } from '../lib/state.js';
 import { setQuery } from '../lib/router.js';
 import { toast, modal, confirmDialog, menu, busy, emptyState, errorState, avatar, showFieldErrors, clearFieldErrors } from '../lib/ui.js';
 import { time as fmtTime, dateShort, relDay, diffDays, plural, firstName, WEEKDAYS } from '../lib/fmt.js';
+import { timeSelect } from '../lib/timefield.js';
 
 const ORDER = [1, 2, 3, 4, 5, 6, 0]; // lunes primero
 const DAY = (d) => WEEKDAYS[d].charAt(0).toUpperCase() + WEEKDAYS[d].slice(1);
@@ -88,7 +89,8 @@ const CSS = `
 `;
 function injectCss() { if (!document.getElementById('st-availability')) document.head.insertAdjacentHTML('beforeend', '<style id="st-availability">' + CSS + '</style>'); }
 
-// 'HH:MM' ⇄ minutos. El fin de día (1440) se muestra como 23:59 porque <input type=time> no admite 24:00.
+// 'HH:MM' ⇄ minutos. El fin de día (1440) se muestra como 23:59 (así lo guardaba <input type=time>, que no admite
+// 24:00). Las horas se eligen con timeSelect (24 h, como el resto del panel), no con el <input type=time> nativo.
 const toHHMM = (m) => (m >= 1440 ? '23:59' : fmtTime(m));
 function toMin(v, isEnd) {
   const m = /^(\d{1,2}):(\d{2})/.exec(String(v || ''));
@@ -153,8 +155,8 @@ function openTimeOffForm({ staff, staffId, isOwner }) {
       <div class="field"><label class="switch tf-sw" for="tfAll"><span class="lbl">Todo el día<small>Apágalo para bloquear solo unas horas (p. ej. una cita médica).</small></span>
         <input type="checkbox" id="tfAll" name="all_day" checked/><span class="track"></span></label></div>
       <div class="tf-times" id="tfTimes" hidden>
-        <div class="field"><label for="tfS">De</label><input class="input" type="time" step="900" id="tfS" name="start_min" value="12:00"/><p class="error">Hora no válida.</p></div>
-        <div class="field"><label for="tfE">A</label><input class="input" type="time" step="900" id="tfE" name="end_min" value="14:00"/><p class="error">Revisa la hora final.</p></div>
+        <div class="field"><label for="tfS">De</label>${raw(timeSelect('12:00', { id: 'tfS', name: 'start_min' }))}<p class="error">Hora no válida.</p></div>
+        <div class="field"><label for="tfE">A</label>${raw(timeSelect('14:00', { id: 'tfE', name: 'end_min' }, { end: true }))}<p class="error">Revisa la hora final.</p></div>
       </div>
       <div class="field"><label for="tfReason">Motivo <span class="opt">(opcional)</span></label>
         <input class="input" id="tfReason" name="reason" maxlength="120" placeholder="p. ej. Vacaciones"/>
@@ -262,9 +264,9 @@ export default {
         </div>
         ${day.open ? html`<div class="av-ranges">
             ${day.ranges.map((r, i) => html`<div class="av-range" data-r="${i}">
-              <input class="input ${chk.bad.has(i) ? 'err' : ''}" type="time" step="900" value="${r.s}" data-t="s" data-d="${d}" data-i="${i}" aria-label="${DAY(d)}: entrada del horario ${i + 1}"/>
+              ${raw(timeSelect(r.s, { 'data-t': 's', 'data-d': d, 'data-i': i, 'aria-label': DAY(d) + ': entrada del horario ' + (i + 1) }, { cls: chk.bad.has(i) ? 'err' : '' }))}
               <span class="to">a</span>
-              <input class="input ${chk.bad.has(i) ? 'err' : ''}" type="time" step="900" value="${r.e}" data-t="e" data-d="${d}" data-i="${i}" aria-label="${DAY(d)}: salida del horario ${i + 1}"/>
+              ${raw(timeSelect(r.e, { 'data-t': 'e', 'data-d': d, 'data-i': i, 'aria-label': DAY(d) + ': salida del horario ' + (i + 1) }, { end: true, cls: chk.bad.has(i) ? 'err' : '' }))}
               <button type="button" class="btn btn-ghost btn-icon" data-del="${d}:${i}" aria-label="Quitar el horario ${r.s} a ${r.e} del ${WEEKDAYS[d]}" title="Quitar">${raw(icon('x'))}</button>
             </div>`)}
             ${day.ranges.length < MAX_BLOCKS ? html`<button type="button" class="btn btn-ghost btn-sm av-add" data-add="${d}">${raw(icon('plus'))}${day.ranges.length ? 'Agregar otro horario' : 'Agregar horario'}</button>` : ''}

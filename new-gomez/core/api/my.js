@@ -1,6 +1,8 @@
 // Portal del cliente (rol client): sus citas en ESTA barbería, cancelar/reagendar con la política
 // cancel_hours y su perfil. La ficha sale de la sesión (ctx.client), nunca del cuerpo de la petición.
-import { notFound, conflict, nowIso, normPhone, isPhone, isDateKey } from '../util.js';
+// La lista trae además un resumen de las próximas citas en sus OTRAS barberías (misma cuenta), para avisarle.
+import { notFound, conflict, nowIso, normPhone, isPhone, isDateKey, nowInTz, addDays } from '../util.js';
+import { scopedDb } from '../db.js';
 import { publicApptView } from '../domain/views.js';
 import { shopSettings } from '../domain/settings.js';
 import {
@@ -31,24 +33,46 @@ async function view(ctx, a, withPolicy) {
   return withPolicy ? Object.assign(v, managePolicy(a, ctx.shop, ctx.now(), await movesOf(ctx, a))) : v;
 }
 
+// Próximas: activas que aún no terminan (hora local de su barbería).
+const isUpcoming = (a, now) => ACTIVE.includes(a.status) && minutesUntil(a, now) + (a.end_min - a.start_min) > 0;
+
 async function list(ctx) {
   const cl = me(ctx);
   const now = ctx.now();
-  const [rows, staff] = await Promise.all([
+  const [rows, staff, elsewhere] = await Promise.all([
     ctx.sdb.find('appointments', { client_id: cl.id }, { order: ['date asc', 'start_min asc'] }),
-    ctx.sdb.find('staff', {})
+    ctx.sdb.find('staff', {}),
+    upcomingElsewhere(ctx)
   ]);
   const names = Object.fromEntries(staff.map((s) => [s.id, s.name]));
-  // Próximas: activas que aún no terminan.
-  const isUpcoming = (a) => ACTIVE.includes(a.status) && minutesUntil(a, now) + (a.end_min - a.start_min) > 0;
-  const moves = await clientReschedules(ctx.sdb, rows.filter(isUpcoming).map((a) => a.id));
+  const moves = await clientReschedules(ctx.sdb, rows.filter((a) => isUpcoming(a, now)).map((a) => a.id));
   const upcoming = [], past = [];
   for (const a of rows) {
     const v = publicApptView(a, ctx.shop, names[a.staff_id] || '');
-    if (isUpcoming(a)) upcoming.push(Object.assign(v, managePolicy(a, ctx.shop, now, moves[a.id])));
+    if (isUpcoming(a, now)) upcoming.push(Object.assign(v, managePolicy(a, ctx.shop, now, moves[a.id])));
     else past.push(v);
   }
-  return { upcoming, past: past.reverse().slice(0, PAST_LIMIT) };
+  return { upcoming, past: past.reverse().slice(0, PAST_LIMIT), elsewhere };
+}
+
+// Otras barberías donde esta cuenta también es cliente y tiene citas próximas:
+// [{ shop_id, shop_slug, shop_name, shop_logo, count, next }] (next = su cita más cercana, vista pública).
+// Cada barbería se lee con SU scopedDb y la ficha de cliente de SU contexto; las suspendidas no se muestran.
+async function upcomingElsewhere(ctx) {
+  const out = [];
+  for (const c of ctx.contexts || []) {
+    if (c.role !== 'client' || !c.client_id || c.shop_id === ctx.shop.id || c.shop_status === 'suspended') continue;
+    const shop = await ctx.db.findOne('shops', { id: c.shop_id });
+    if (!shop || shop.status === 'suspended') continue;
+    const sdb = scopedDb(ctx.db, shop.id);
+    const now = nowInTz(shop.timezone);
+    const rows = await sdb.find('appointments', { client_id: c.client_id, status: { in: ACTIVE }, date: { gte: addDays(now.date, -1) } }, { order: ['date asc', 'start_min asc'] });
+    const up = rows.filter((a) => isUpcoming(a, now));
+    if (!up.length) continue;
+    const st = await sdb.findOne('staff', { id: up[0].staff_id });
+    out.push({ shop_id: shop.id, shop_slug: shop.slug, shop_name: shop.name, shop_logo: shop.logo_url || '', count: up.length, next: publicApptView(up[0], shop, st ? st.name : '') });
+  }
+  return out.sort((a, b) => (a.next.date + String(a.next.start_min).padStart(4, '0')).localeCompare(b.next.date + String(b.next.start_min).padStart(4, '0')));
 }
 
 async function cancel(ctx) {

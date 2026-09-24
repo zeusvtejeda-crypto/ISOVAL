@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeFixture } from './helpers.mjs';
 import { createSession } from '../core/session.js';
-import { sha256Hex } from '../core/crypto.js';
 import { newId, nowIso, nowInTz, addDays } from '../core/util.js';
 import { MAX_REMINDERS_PER_RUN } from '../core/api/automation.js';
 
@@ -117,6 +116,7 @@ test('outbox: reporte del proveedor (enviado / fallido) y reglas', async () => {
 
 test('recordatorios automáticos: encola los de mañana en modo auto, una sola vez', async () => {
   const f = await setup();
+  f.env.MODE = 'server'; // el cron corre en el servidor: enlace sin ?b= (ese solo va en la demo)
   await f.setWa('shop_a', { mode: 'auto' });
   const t = f.tomorrowIn();
   const ok1 = await mkAppt(f, { date: t, start_min: 600 });
@@ -140,10 +140,10 @@ test('recordatorios automáticos: encola los de mañana en modo auto, una sola v
   assert.equal(m1.to_phone, '3111234567');
   assert.equal(m1.created_by, 'automation');
   assert.ok(m1.body.startsWith('Hola Juan, te recordamos tu cita en Barbería Alfa:'), m1.body);
-  // El enlace del recordatorio es de gestión (token nuevo) y funciona.
+  // El enlace del recordatorio es de gestión y funciona (la cita no tenía hash: se le asignó uno).
   const token = /\/\?cita=([A-Za-z0-9]+)/.exec(m1.body)[1];
   assert.ok(m1.body.includes('https://app.tubarberia.mx/?cita=' + token));
-  assert.equal((await f.db.findOne('appointments', { id: ok1.id })).manage_token_hash, await sha256Hex(token));
+  assert.ok((await f.db.findOne('appointments', { id: ok1.id })).manage_token_hash);
   const pub = await f.call('GET', '/api/public/appointments/' + token);
   assert.equal(pub.status, 200);
   assert.equal(pub.data.appointment.id, ok1.id);

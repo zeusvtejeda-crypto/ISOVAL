@@ -6,6 +6,7 @@ import { COOKIE, SESSION_TTL, publicUser, createSession, destroySession, context
 import { scopedDb } from '../db.js';
 import { DEFAULT_HOURS } from '../domain/settings.js';
 import { notify } from '../domain/notify.js';
+import { provenClient, usedBy, MAX_CLAIM_TOKENS } from '../domain/clients.js';
 
 // ── Límites de intentos (tabla login_attempts; ver session.js → rateHit) ──
 // Cada intento se cuenta ANTES de verificar (atómico ante peticiones simultáneas); los que salen bien se
@@ -289,20 +290,26 @@ async function pinLogin(ctx) {
   return { user: null, staff: { id: st.id, name: st.name, role: st.role, shop_id: shop.id }, contexts: s.contexts, token: s.token };
 }
 
-// Ficha de cliente para una cuenta nueva. Solo se reclama una ficha existente si su correo coincide y no
-// tiene cuenta; nunca por teléfono (evita que alguien se adueñe del historial de otra persona).
-export async function linkClientAccount(db, shop, user, { name, email, phone }) {
+// Ficha de cliente para una cuenta nueva. El correo de la cuenta NO se verifica, así que nunca basta para
+// reclamar una ficha existente (quien conociera el correo de un cliente se quedaría con su historial, sus citas y
+// su teléfono), y el teléfono tampoco. Solo se vincula una ficha sin cuenta si quien se registra PRUEBA que todas
+// sus citas son suyas con sus enlaces de gestión (`claim`: tokens de /?cita=…; domain/clients.js → provenClient).
+// Si no, ficha nueva; su teléfono/correo se guardan solo si ninguna otra ficha los usa (sin duplicados en el CRM
+// y sin que las reservas de otra persona con ese teléfono caigan en esta cuenta).
+export async function linkClientAccount(db, shop, user, { name, email, phone, claim }) {
   const sdb = scopedDb(db, shop.id);
   const now = nowIso();
-  let c = email ? await sdb.findOne('clients', { email, user_id: null, deleted_at: null }) : null;
+  let c = await provenClient(db, sdb, claim);
   if (c) {
     const patch = { user_id: user.id, updated_at: now };
-    if (!c.phone && phone) patch.phone = phone;
+    if (!c.phone && phone && !(await usedBy(sdb, 'phone', phone, c.id))) patch.phone = phone;
     // user_id: null en el where: si otra petición la reclamó al mismo tiempo, no se pisa.
     if (await sdb.update('clients', { id: c.id, user_id: null }, patch)) return { client: Object.assign(c, patch), created: false };
   }
+  const phoneFree = phone && !(await usedBy(sdb, 'phone', phone));
+  const emailFree = email && !(await usedBy(sdb, 'email', email));
   c = await sdb.insert('clients', {
-    id: newId('cl'), user_id: user.id, name, phone: phone || null, email: email || null, tags: [], source: 'online',
+    id: newId('cl'), user_id: user.id, name, phone: phoneFree ? phone : null, email: emailFree ? email : null, tags: [], source: 'online',
     marketing_ok: true, created_at: now, updated_at: now
   });
   await notify(sdb, 'owners', {
@@ -319,6 +326,8 @@ async function register(ctx) {
   const password = secret(b.password);
   const phone = optionalPhone(b.phone);
   const slug = txt(b.shop_slug).toLowerCase().slice(0, 60);
+  // Enlaces de gestión de las citas que reservó sin cuenta (prueba para vincular su ficha; ver linkClientAccount).
+  const claim = Array.isArray(b.claim) ? b.claim.filter((t) => typeof t === 'string').slice(0, MAX_CLAIM_TOKENS) : [];
   const fields = {};
   const ne = nameError(name, { max: 120, empty: 'Escribe tu nombre.' });
   if (ne) fields.name = ne;
@@ -345,7 +354,7 @@ async function register(ctx) {
     id: newId('us'), email, name, phone: phone || null, password_hash: await hashSecret(password),
     is_superadmin: false, status: 'active', created_at: now, last_login_at: now
   });
-  if (shop) await linkClientAccount(db, shop, user, { name, email, phone });
+  if (shop) await linkClientAccount(db, shop, user, { name, email, phone, claim });
   await dropCookieSession(ctx);
   const s = await openSession(ctx, { kind: 'password', user });
   return { user: publicUser(user), contexts: s.contexts, token: s.token };
@@ -411,6 +420,14 @@ async function me(ctx) {
   return { user: publicUser(ctx.user), staff, contexts: ctx.contexts, session_kind: s.kind };
 }
 
+// Comprobación de sesión al abrir el panel: como /auth/me, pero responde 200 también sin sesión (o con una sesión
+// PIN que ya no vale) con { user: null }. Así una carga anónima no deja un 401 en la consola del navegador.
+const NO_SESSION = () => ({ user: null, staff: null, contexts: [], session_kind: null });
+async function session(ctx) {
+  if (!ctx.session) return NO_SESSION();
+  try { return await me(ctx); } catch (e) { if (e instanceof HttpError && e.status === 401) return NO_SESSION(); throw e; }
+}
+
 async function profile(ctx) {
   const u = requireUser(ctx);
   const b = body(ctx);
@@ -464,6 +481,7 @@ export const routes = [
   { method: 'POST', path: '/api/auth/signup', auth: 'public', handler: signup },
   { method: 'POST', path: '/api/auth/logout', auth: 'public', handler: logout },
   { method: 'GET', path: '/api/auth/me', auth: 'user', handler: me },
+  { method: 'GET', path: '/api/auth/session', auth: 'public', handler: session },
   { method: 'PATCH', path: '/api/auth/profile', auth: 'user', handler: profile },
   { method: 'POST', path: '/api/auth/password', auth: 'user', handler: changePassword }
 ];

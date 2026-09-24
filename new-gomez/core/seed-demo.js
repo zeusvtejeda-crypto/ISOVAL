@@ -91,9 +91,16 @@ const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', '
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const fmtDateEs = (k) => { const d = parseDateKey(k); return DIAS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' de ' + MESES[d.getUTCMonth()]; };
 const fmtTimeEs = (m) => { const h = Math.floor(m / 60) % 24; return (h % 12 || 12) + ':' + pad2(m % 60) + (h < 12 ? ' a.m.' : ' p.m.'); };
-function fmtMoney(n) { const v = money(n); try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v); } catch (e) { return '$' + v.toFixed(2); } }
+// Mismo formato que core/api/payments.js → fmtMoney: centavos solo si los hay ('$20', '$2,709.50').
+function fmtMoney(n) { const v = money(n), d = Number.isInteger(v) ? 0 : 2; try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: d, maximumFractionDigits: d }).format(v); } catch (e) { return '$' + v.toFixed(d); } }
 const firstName = (s) => String(s || '').trim().split(/\s+/)[0] || '';
 const summary = (a, staffName) => (a.client_name || 'Cliente') + ' · ' + a.services.map((s) => s.name).join(', ') + ' · ' + fmtDateEs(a.date) + ', ' + fmtTimeEs(a.start_min) + (staffName ? ' con ' + staffName : '');
+// Horario anterior de una cita reagendada, como domain/appointments.js → notifyChange (" · Antes: viernes 25, 11:00 a.m.").
+const beforeText = (prev, a) => {
+  const d = parseDateKey(prev.date), n = parseDateKey(a.date);
+  const day = prev.date === a.date ? '' : (d.getUTCMonth() === n.getUTCMonth() && d.getUTCFullYear() === n.getUTCFullYear() ? DIAS[d.getUTCDay()] + ' ' + d.getUTCDate() : fmtDateEs(prev.date)) + ', ';
+  return ' · Antes: ' + day + fmtTimeEs(prev.start_min);
+};
 const render = (tpl, vars) => tpl.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
 
 // ── Nombres ficticios (combinaciones comunes; se evitan las de personas conocidas) ──
@@ -779,7 +786,7 @@ function buildShop(cfg, R, clock, hashes, base) {
     const canc = slots.filter((s) => s.recent && s.status === 'cancelled').sort((a, b) => b.cancelMs - a.cancelMs);
     canc.forEach((s, i) => { const n0 = notes.length; apptNote(s, 'booking_cancelled', 'Cita cancelada por el cliente', s.cancelMs, ' · Motivo: ' + s.cancel_reason); if (i === 0) unreadOwner.add(notes[n0]); });
     const res = slots.filter((s) => s.recent && s.resMs).sort((a, b) => b.resMs - a.resMs);
-    res.forEach((s, i) => { const n0 = notes.length; apptNote(s, 'booking_rescheduled', 'Cita reagendada por el cliente', s.resMs); if (i === 0) unreadOwner.add(notes[n0]); });
+    res.forEach((s, i) => { const n0 = notes.length; apptNote(s, 'booking_rescheduled', 'Cita reagendada por el cliente', s.resMs, beforeText(s.resFrom, s.row)); if (i === 0) unreadOwner.add(notes[n0]); });
     const lc = out.lastClosed;
     if (lc) {
       const d = lc.difference, kind = d < 0 ? 'faltante' : 'sobrante';

@@ -6,7 +6,8 @@ import { api } from '../lib/api.js';
 import { bus, can, today, role } from '../lib/state.js';
 import { setQuery } from '../lib/router.js';
 import { toast, modal, busy, avatar, emptyState, errorState, skeletonCards, skeletonRows, showFieldErrors, clearFieldErrors, saveFile } from '../lib/ui.js';
-import { money, number, plural, startOfMonth, endOfMonth, addMonths, MONTHS_SHORT, ago, firstName } from '../lib/fmt.js';
+import { money, moneyIn, number, pct, plural, startOfMonth, endOfMonth, addMonths, MONTHS_SHORT, ago, firstName } from '../lib/fmt.js';
+import { periodHtml, wirePeriod } from '../lib/period.js';
 import { parseMoney, tweenMoney, injectPayStyle } from '../lib/payment-sheet.js';
 
 const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -38,7 +39,7 @@ function rangeLabel(r) {
   if (y1 === y2 && m1 === m2) return d1 + '–' + d2 + ' ' + MONTHS_SHORT[m1 - 1] + ' ' + y1;
   return d1 + ' ' + MONTHS_SHORT[m1 - 1] + (y1 !== y2 ? ' ' + y1 : '') + ' – ' + d2 + ' ' + MONTHS_SHORT[m2 - 1] + ' ' + y2;
 }
-const pctTxt = (p) => (Math.round((Number(p) || 0) * 10) / 10).toString().replace('.', ',') + '%';
+const pctTxt = (p) => pct(Number(p) || 0); // '38.3%', como el resto del panel (fmt.pct)
 
 const CSS = `
 .v-comm .stack,.v-comm .stack-lg,.v-comm .list,.cm-range{grid-template-columns:minmax(0,1fr)}
@@ -110,7 +111,7 @@ export default {
         <div class="actions">${owner && can('reports.export') ? html`<button type="button" class="btn btn-secondary" data-act="export">${raw(icon('download'))}Exportar CSV</button>` : ''}</div>
       </div>
       <div class="cm-range">
-        <div class="seg" role="group" aria-label="Periodo">${RANGES.map(([k, l]) => html`<button type="button" data-range="${k}" aria-pressed="${String(k === q.r)}">${l}</button>`)}</div>
+        ${periodHtml(RANGES, q.r)}
         <div class="row wrap">
           <span class="lbl" id="cmLabel">${raw(icon('calendar', 'ic-sm'))}<span></span></span>
           <span class="row wrap" id="cmCustom" ${q.r === 'otro' ? '' : 'hidden'}>
@@ -172,16 +173,20 @@ export default {
       const items = d.items || [];
       if (!items.length) return emptyState({ icon: 'users', title: 'Aún no hay barberos', text: 'Agrega a tu equipo con su porcentaje de comisión y aquí verás lo que le toca a cada uno.', action: can('staff.manage') ? { label: 'Ir a Equipo', href: '#/equipo', icon: 'scissors' } : null });
       const sorted = items.slice().sort((a, b) => (b.balance - a.balance) || (b.revenue - a.revenue));
+      // Centavos en todas las cifras del grupo o en ninguna ('$4,170.00' junto a '$2,709.50').
+      const mk = moneyIn([t.revenue, t.commission, t.tips, t.balance]);
+      const mc = moneyIn(items.flatMap((it) => [it.balance, it.revenue, it.commission, it.tips, it.payouts]));
       return html`
         <div class="kpis stagger" style="margin-bottom:18px">
-          <div class="card kpi"><span class="label">${raw(icon('chart'))}Ingresos generados</span><span class="value">${money(t.revenue)}</span><span class="foot">${plural(t.services_count || 0, 'servicio')}</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('percent'))}Comisiones</span><span class="value">${money(t.commission)}</span><span class="foot">${t.revenue ? pctTxt((t.commission / t.revenue) * 100) + ' de los ingresos' : 'Sin ingresos'}</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${money(t.tips)}</span><span class="foot">100% para cada barbero</span></div>
-          <div class="card kpi hl" style="background:linear-gradient(180deg,var(--brand-soft),var(--surface))"><span class="label">${raw(icon('wallet'))}Por pagar</span><span class="value ${t.balance > 0 ? 'brand-t' : ''}">${money(t.balance)}</span><span class="foot">${t.payouts ? 'Ya pagaste ' + money(t.payouts) : 'Aún no registras pagos'}</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('chart'))}Ingresos generados</span><span class="value">${mk(t.revenue)}</span><span class="foot">${plural(t.services_count || 0, 'servicio')}</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('percent'))}Comisiones</span><span class="value">${mk(t.commission)}</span><span class="foot">${t.revenue ? pctTxt((t.commission / t.revenue) * 100) + ' de los ingresos' : 'Sin ingresos'}</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${mk(t.tips)}</span><span class="foot">100% para cada barbero</span></div>
+          <div class="card kpi hl" style="background:linear-gradient(180deg,var(--brand-soft),var(--surface))"><span class="label">${raw(icon('wallet'))}Por pagar</span><span class="value ${t.balance > 0 ? 'brand-t' : ''}">${mk(t.balance)}</span><span class="foot">${t.payouts ? 'Ya pagaste ' + money(t.payouts) : 'Aún no registras pagos'}</span></div>
         </div>
-        <div class="cm-grid stagger">${sorted.map((it) => cardHtml(it))}</div>`;
+        <div class="cm-grid stagger">${sorted.map((it) => cardHtml(it, mc))}</div>`;
     }
-    function cardHtml(it) {
+    function cardHtml(it, m) {
+      m = m || money;
       const owed = r2(it.commission + it.tips);
       const paidPct = owed > 0 ? Math.min(100, Math.round((it.payouts / owed) * 100)) : (it.payouts ? 100 : 0);
       const cls = it.balance > 0.004 ? '' : it.balance < -0.004 ? 'neg' : 'zero';
@@ -191,17 +196,17 @@ export default {
           <span class="cm-pct" title="Porcentaje de comisión">${pctTxt(it.commission_pct)}</span></div>
         <div class="cm-due ${cls}">
           <span class="eyebrow">${cls === 'zero' ? 'Al corriente' : cls === 'neg' ? 'Pagado de más' : 'Saldo por pagar'}</span>
-          <b>${money(Math.abs(it.balance))}</b>
+          <b>${m(Math.abs(it.balance))}</b>
           ${it.payouts ? html`<div class="progress-bar" role="progressbar" aria-label="Pagado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${String(paidPct)}"><span style="width:${String(paidPct)}%"></span></div>` : ''}
-          <small>${it.payouts ? 'Ya le pagaste ' + money(it.payouts) + ' de ' + money(owed) : owed ? 'Aún sin pagos en este periodo' : 'Sin movimientos en este periodo'}</small>
+          <small>${it.payouts ? 'Ya le pagaste ' + m(it.payouts) + ' de ' + m(owed) : owed ? 'Aún sin pagos en este periodo' : 'Sin movimientos en este periodo'}</small>
         </div>
         <div class="cm-stats">
           <div><span>Servicios</span><b>${number(it.services_count)}</b></div>
-          <div><span>Ingresos generados</span><b>${money(it.revenue)}</b></div>
-          <div><span>Comisión (${pctTxt(it.commission_pct)})</span><b>${money(it.commission)}</b></div>
-          <div><span>Propinas</span><b>${money(it.tips)}</b></div>
+          <div><span>Ingresos generados</span><b>${m(it.revenue)}</b></div>
+          <div><span>Comisión (${pctTxt(it.commission_pct)})</span><b>${m(it.commission)}</b></div>
+          <div><span>Propinas</span><b>${m(it.tips)}</b></div>
         </div>
-        ${can('commissions.payout') ? html`<div class="cm-foot"><button type="button" class="btn ${it.balance > 0.004 ? 'btn-primary' : 'btn-secondary'}" data-payout="${it.staff_id}">${raw(icon('wallet'))}Registrar pago${it.balance > 0.004 ? ' · ' + money(it.balance) : ''}</button></div>` : html`<div style="height:16px"></div>`}
+        ${can('commissions.payout') ? html`<div class="cm-foot"><button type="button" class="btn ${it.balance > 0.004 ? 'btn-primary' : 'btn-secondary'}" data-payout="${it.staff_id}">${raw(icon('wallet'))}Registrar pago${it.balance > 0.004 ? ' · ' + m(it.balance) : ''}</button></div>` : html`<div style="height:16px"></div>`}
       </article>`;
     }
 
@@ -210,18 +215,19 @@ export default {
       const it = (d.items || [])[0];
       if (!it) return emptyState({ icon: 'percent', title: 'Sin datos de comisión', text: 'Pide al dueño que configure tu porcentaje de comisión.' });
       const owed = r2(it.commission + it.tips);
+      const m = moneyIn([it.balance, it.commission, it.tips, it.payouts, it.revenue, owed]);
       return html`
         <section class="cm-hero fade-up" aria-labelledby="cmHl">
           <div class="who">${avatar(it.staff_name, { color: it.color || undefined, size: 'lg' })}<div><b>${firstName(it.staff_name)}</b>${rangeLabel(r)} · comisión ${pctTxt(it.commission_pct)}</div></div>
           <div class="lab" id="cmHl">${it.balance < -0.004 ? 'Te pagaron de más' : 'Te falta por cobrar'}</div>
-          <div class="big" id="cmBig" aria-live="polite">${money(it.balance)}</div>
-          <div class="eq"><span>Comisión <b>${money(it.commission)}</b></span><span>+ Propinas <b>${money(it.tips)}</b></span><span>− Ya te pagaron <b>${money(it.payouts)}</b></span></div>
+          <div class="big" id="cmBig" aria-live="polite">${m(it.balance)}</div>
+          <div class="eq"><span>Comisión <b>${m(it.commission)}</b></span><span>+ Propinas <b>${m(it.tips)}</b></span><span>− Ya te pagaron <b>${m(it.payouts)}</b></span></div>
         </section>
         <div class="kpis stagger" style="margin-top:16px">
           <div class="card kpi"><span class="label">${raw(icon('scissors'))}Servicios realizados</span><span class="value">${number(it.services_count)}</span><span class="foot">Citas atendidas</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('chart'))}Ingresos generados</span><span class="value">${money(it.revenue)}</span><span class="foot">Cobrado a tus clientes</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('percent'))}Tu comisión</span><span class="value">${money(it.commission)}</span><span class="foot">${pctTxt(it.commission_pct)} de tus ingresos</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${money(it.tips)}</span><span class="foot">${owed ? 'Total ganado ' + money(owed) : 'Todas son para ti'}</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('chart'))}Ingresos generados</span><span class="value">${m(it.revenue)}</span><span class="foot">Cobrado a tus clientes</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('percent'))}Tu comisión</span><span class="value">${m(it.commission)}</span><span class="foot">${pctTxt(it.commission_pct)} de tus ingresos</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${m(it.tips)}</span><span class="foot">${owed ? 'Total ganado ' + m(owed) : 'Todas son para ti'}</span></div>
         </div>
         <section class="card card-pad" style="margin-top:16px">
           <div class="section-title" style="margin-bottom:8px">¿Cómo se calcula?</div>
@@ -244,12 +250,13 @@ export default {
         poBody.innerHTML = '<div class="card">' + String(emptyState({ icon: 'receipt', compact: true, title: owner ? 'Aún no registras pagos de comisión' : 'Aún no tienes pagos registrados', text: owner ? 'Cuando le pagues a un barbero, regístralo desde su tarjeta y su saldo se actualiza.' : 'Cuando el dueño te pague, lo verás aquí con su periodo.' })) + '</div>';
         return;
       }
+      const m = moneyIn(rows.map((p) => p.amount));
       poBody.innerHTML = String(html`<div class="card"><div class="list">${rows.map((p) => html`<div class="list-item po-row">
         ${owner ? avatar(p.staff_name, { size: 'sm' }) : raw('<span class="avatar sm" style="--c:var(--ok)">' + icon('check', 'ic-sm') + '</span>')}
         <div class="grow"><div class="title truncate">${owner ? p.staff_name : 'Pago recibido'}</div>
           <div class="meta">Periodo ${rangeLabel({ from: p.period_from, to: p.period_to })} · ${ago(p.created_at)}</div>
           ${p.note ? html`<div class="note truncate">${p.note}</div>` : ''}</div>
-        <div class="trail"><span class="amt">${money(p.amount)}</span></div>
+        <div class="trail"><span class="amt">${m(p.amount)}</span></div>
       </div>`)}</div></div>`);
     }
 
@@ -261,14 +268,15 @@ export default {
       const t = today();
       const pFrom = r.from > t ? t : r.from;
       let cashOpen = null;
+      const ms = moneyIn([it.commission, it.tips, it.payouts, it.balance]);
       const m = modal({
         title: 'Registrar pago', subtitle: 'A ' + it.staff_name + ' · ' + rangeLabel(r),
         body: String(html`<form id="poF" class="pay-form" novalidate>
           <div class="po-sum">
-            <div><span>Comisión</span><b>${money(it.commission)}</b></div>
-            <div><span>Propinas</span><b>${money(it.tips)}</b></div>
-            <div><span>Pagado</span><b>${money(it.payouts)}</b></div>
-            <div class="due"><span>Saldo</span><b>${money(it.balance)}</b></div>
+            <div><span>Comisión</span><b>${ms(it.commission)}</b></div>
+            <div><span>Propinas</span><b>${ms(it.tips)}</b></div>
+            <div><span>Pagado</span><b>${ms(it.payouts)}</b></div>
+            <div class="due"><span>Saldo</span><b>${ms(it.balance)}</b></div>
           </div>
           <div class="field"><label for="poAmt">Monto a pagar</label>
             <div class="money-in xl"><span>$</span><input class="input" id="poAmt" name="amount" inputmode="decimal" autocomplete="off" placeholder="0" value="${it.balance > 0 ? String(r2(it.balance)) : ''}"/></div>
@@ -333,6 +341,7 @@ export default {
     }
 
     const offs = [];
+    offs.push(wirePeriod(el, { describe: (k) => (k === 'otro' ? (q.r === 'otro' ? rangeLabel(range()) : 'Elige desde y hasta qué día') : rangeLabel(rangeOf(k, q))) }));
     offs.push(on(el, 'click', '[data-range]', (e, b) => {
       if (q.r === b.dataset.range && q.r !== 'otro') return;
       q.r = b.dataset.range;

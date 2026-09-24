@@ -32,34 +32,111 @@ export const getShop = () => shopId;
 // ── Motor de la demo ─────────────────────────────────────────────────────
 const DEMO_KEY = 'tb:demo:data:v1';
 const DEMO_TZ = 'America/Mazatlan';
-const demo = { ready: null, db: null, handle: null, seedDemo: null, token: LS.get('tb:demo:token') };
+const demo = { ready: null, db: null, mem: null, handle: null, seedDemo: null, token: LS.get('tb:demo:token') };
 
 function readDemoData() { try { return JSON.parse(LS.get(DEMO_KEY) || 'null'); } catch (e) { return null; } }
+
+// ── Varias pestañas de la demo (p. ej. panel + página pública en el mismo navegador) ──
+// Cada pestaña guarda SOLO lo que ella cambió: relee la copia de localStorage (que puede traer lo que guardó otra
+// pestaña), le aplica sus altas, cambios y bajas por tabla e id, y la vuelve a escribir bajo un candado entre
+// pestañas. Al llegar la copia de otra pestaña (evento 'storage'), esa copia es la base y encima se vuelven a
+// aplicar los cambios locales que aún no se guardan. Así ninguna pestaña pisa la base completa con una foto vieja:
+// una reserva o una nota que ya se confirmó no desaparece.
+const pending = new Map(); // tabla → Map(id → 'put' | 'del'), cambios de esta pestaña aún sin guardar
+let seeding = false;       // sembrando: no se guarda nada a medias
+let overwrite = false;     // siembra/reinicio: se escribe la base completa (no se combina)
+
+function markPending(table, ids, op) {
+  let m = pending.get(table);
+  if (!m) pending.set(table, (m = new Map()));
+  for (const id of ids) if (id != null) m.set(id, op);
+}
+// La misma interfaz que memoryDb, anotando qué filas cambió esta pestaña.
+function trackedDb(mem) {
+  const idsOf = async (table, where) => (await mem.find(table, where)).map((r) => r.id);
+  return Object.assign({}, mem, {
+    async insert(table, row) { const r = await mem.insert(table, row); markPending(table, [r.id], 'put'); return r; },
+    async insertMany(table, rows) { const n = await mem.insertMany(table, rows); markPending(table, rows.map((r) => r.id), 'put'); return n; },
+    async update(table, where, patch) { const ids = await idsOf(table, where); const n = await mem.update(table, where, patch); if (n) markPending(table, ids, 'put'); return n; },
+    async delete(table, where) { const ids = await idsOf(table, where); const n = await mem.delete(table, where); if (n) markPending(table, ids, 'del'); return n; }
+  });
+}
+// base (lo guardado por cualquier pestaña) + cambios pendientes de esta pestaña (tomados de `local`).
+function withPending(base, local) {
+  if (!base || typeof base !== 'object') return local; // sin copia válida: se escribe lo de esta pestaña completo
+  const out = {};
+  for (const t of Object.keys(local)) out[t] = Array.isArray(base[t]) ? base[t].slice() : [];
+  for (const [t, ops] of pending) {
+    const rows = out[t] || (out[t] = []);
+    const pos = new Map();
+    rows.forEach((r, i) => { if (r) pos.set(r.id, i); });
+    const mine = new Map((local[t] || []).map((r) => [r.id, r]));
+    for (const [id, op] of ops) {
+      const i = pos.get(id);
+      const r = op === 'put' ? mine.get(id) : null;
+      if (r) { if (i === undefined) { pos.set(id, rows.length); rows.push(r); } else rows[i] = r; }
+      else if (i !== undefined) { rows[i] = null; pos.delete(id); }
+    }
+    out[t] = rows.filter(Boolean);
+  }
+  return out;
+}
+// Reemplaza los datos en memoria sin reprogramar el guardado (dump() es el objeto interno de memoryDb).
+function adopt(next) {
+  const d = demo.mem.dump();
+  for (const t of Object.keys(d)) d[t] = Array.isArray(next[t]) ? next[t] : [];
+}
+function writeDemo() {
+  if (!pending.size) return;
+  const merged = withPending(readDemoData(), demo.mem.dump());
+  pending.clear();
+  try { localStorage.setItem(DEMO_KEY, JSON.stringify(merged)); } catch (e) { return; /* cuota llena o modo privado */ }
+  adopt(merged); // esta pestaña también ve lo que guardaron las otras
+}
+function saveDemo(data) {
+  if (seeding) return;
+  if (overwrite) { overwrite = false; pending.clear(); LS.set(DEMO_KEY, JSON.stringify(data)); return; }
+  if (!pending.size) return;
+  const locks = typeof navigator !== 'undefined' && navigator.locks;
+  if (locks && typeof locks.request === 'function') locks.request('tb:demo:data', () => writeDemo()).catch(() => writeDemo());
+  else writeDemo();
+}
+
 async function demoInit() {
   if (demo.ready) return demo.ready;
   demo.ready = (async () => {
     const [dbm, router, seed] = await Promise.all([import('../../core/db.js'), import('../../core/router.js'), import('../../core/seed-demo.js')]);
     const today = nowInTz(DEMO_TZ).date;
     const stored = LS.get('tb:demo:seeded') === today ? readDemoData() : null;
-    demo.db = dbm.memoryDb({ load: () => stored, save: (data) => LS.set(DEMO_KEY, JSON.stringify(data)), debounce: 250 });
+    demo.mem = dbm.memoryDb({ load: () => stored, save: saveDemo, debounce: 250 });
+    demo.db = trackedDb(demo.mem);
     demo.handle = router.handle;
     demo.seedDemo = seed.seedDemo;
     // Los datos se generan relativos a "hoy": si cambió el día se vuelven a sembrar para que la agenda luzca viva.
     if (!stored) await seedFresh(today);
-    // Panel y página pública abiertos en dos pestañas: cada una recarga lo que guarda la otra
-    // (si no, la última en guardar pisaría a la primera y se perdería, p. ej., una reserva).
     window.addEventListener('storage', (e) => {
       if (e.key !== DEMO_KEY || !e.newValue) return;
-      try { demo.db.replace(JSON.parse(e.newValue)); window.dispatchEvent(new CustomEvent('tb:demo-sync')); } catch (err) { /* JSON a medias: se ignora */ }
+      let incoming;
+      try { incoming = JSON.parse(e.newValue); } catch (err) { return; /* JSON a medias: se ignora */ }
+      if (!incoming || typeof incoming !== 'object') return;
+      adopt(pending.size ? withPending(incoming, demo.mem.dump()) : incoming);
+      window.dispatchEvent(new CustomEvent('tb:demo-sync'));
     });
+    // Al cerrar o recargar la pestaña, lo pendiente se guarda ya (sin esperar el debounce).
+    window.addEventListener('pagehide', () => { if (!seeding) writeDemo(); });
   })();
   demo.ready.catch(() => { demo.ready = null; });
   return demo.ready;
 }
 async function seedFresh(today) {
-  demo.db.replace(null);
-  await demo.seedDemo(demo.db, { today: today || nowInTz(DEMO_TZ).date });
-  demo.db.flush();
+  seeding = true;
+  try {
+    demo.mem.replace(null);
+    await demo.seedDemo(demo.mem, { today: today || nowInTz(DEMO_TZ).date });
+  } finally { seeding = false; }
+  pending.clear();
+  overwrite = true;
+  demo.mem.flush();
   LS.set('tb:demo:seeded', today || nowInTz(DEMO_TZ).date);
   demo.token = null; LS.del('tb:demo:token');
 }

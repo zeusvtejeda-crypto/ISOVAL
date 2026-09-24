@@ -12,6 +12,7 @@ import { state, shop, bus, can } from '../lib/state.js';
 import { navigate, setQuery } from '../lib/router.js';
 import { toast, confirmDialog, menu, busy, emptyState, avatar, showFieldErrors, clearFieldErrors, copyText } from '../lib/ui.js';
 import { time as fmtTime, money, number, plural, dateNum, WEEKDAYS, MONTHS_SHORT, ROLE } from '../lib/fmt.js';
+import { timeSelect } from '../lib/timefield.js';
 
 // ── Catálogos ─────────────────────────────────────────────────────────────
 const ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -359,7 +360,7 @@ const SECTIONS = [
   { id: 'horario', group: 'Tu barbería', icon: 'clock', title: 'Horario de apertura', desc: 'Los días y horas en que abre tu barbería. Aparece en tu página y lo usan los barberos que no tienen horario propio.',
     sum: (s) => { const l = hoursLines(s.settings.hours)[0]; return l ? l.days + ' ' + l.text : ''; } },
   { id: 'publica', group: 'Tu barbería', icon: 'globe', title: 'Página pública', desc: 'Calificación, reseñas, redes sociales y políticas que se muestran en tu página de reservas.',
-    sum: (s) => { const p = s.settings.public || {}; return [p.rating ? '★ ' + String(p.rating).replace('.', ',') : '', p.instagram ? 'Instagram' : '', p.facebook ? 'Facebook' : '', p.tiktok ? 'TikTok' : ''].filter(Boolean).join(' · ') || 'Reseñas y redes sociales'; } },
+    sum: (s) => { const p = s.settings.public || {}; return [p.rating ? '★ ' + (Number(p.rating) || 0).toFixed(1) : '', p.instagram ? 'Instagram' : '', p.facebook ? 'Facebook' : '', p.tiktok ? 'TikTok' : ''].filter(Boolean).join(' · ') || 'Reseñas y redes sociales'; } },
   { id: 'reservas', group: 'Reservas y cobros', icon: 'calendar-check', title: 'Reservas en línea', desc: 'Cómo y cuándo pueden reservar tus clientes desde tu enlace o QR.',
     sum: (s) => { const b = s.settings.booking; return b.online_enabled === false ? 'Apagadas' : 'Activas · ' + optLabel('step_min', b.step_min).toLowerCase(); } },
   { id: 'pagos', group: 'Reservas y cobros', icon: 'wallet', title: 'Pagos', desc: 'Los métodos que aceptas en caja y si recibes propinas.',
@@ -666,7 +667,7 @@ export default {
         const r = f.elements['settings.public.rating'].value, n = f.elements['settings.public.reviews_count'].value;
         const rv = Number(r);
         $('#stRatingPrev', f).innerHTML = r !== '' && rv >= 0 && rv <= 5
-          ? String(html`<div class="st-rating"><span class="big">${rv.toFixed(1).replace('.', ',')}</span><span class="grow"><span class="stars">${[1, 2, 3, 4, 5].map((i) => raw(icon('star', i <= Math.round(rv) ? '' : 'off')))}</span><small>${n ? number(n) + ' reseñas en Google' : 'Así se verá en tu página'}</small></span></div>`)
+          ? String(html`<div class="st-rating"><span class="big">${rv.toFixed(1)}</span><span class="grow"><span class="stars">${[1, 2, 3, 4, 5].map((i) => raw(icon('star', i <= Math.round(rv) ? '' : 'off')))}</span><small>${n ? number(n) + ' reseñas en Google' : 'Así se verá en tu página'}</small></span></div>`)
           : '';
       }
     }
@@ -687,8 +688,8 @@ export default {
           <span class="st-dsum" data-dsum="${d}">${day.open ? (mins && !chk.error ? hoursText(mins) : '') : 'Cerrado'}</span>
           ${day.open ? html`<button type="button" class="btn btn-ghost btn-icon btn-sm" data-copy="${d}" aria-label="${'Copiar el horario del ' + WEEKDAYS[d] + ' a otros días'}" title="Copiar a otros días">${raw(icon('copy', 'ic-sm'))}</button>` : html`<span style="width:34px"></span>`}</div>
         ${day.open ? html`<div class="st-ranges">${day.ranges.map((r, i) => html`<div class="st-range">
-            <input class="input ${chk.bad.has(i) ? 'err' : ''}" type="time" step="900" value="${r.s}" data-t="s" data-d="${d}" data-i="${i}" aria-label="${DAY(d) + ': abre, horario ' + (i + 1)}"/><span class="to">a</span>
-            <input class="input ${chk.bad.has(i) ? 'err' : ''}" type="time" step="900" value="${r.e}" data-t="e" data-d="${d}" data-i="${i}" aria-label="${DAY(d) + ': cierra, horario ' + (i + 1)}"/>
+            ${raw(timeSelect(r.s, { 'data-t': 's', 'data-d': d, 'data-i': i, 'aria-label': DAY(d) + ': abre, horario ' + (i + 1) }, { cls: chk.bad.has(i) ? 'err' : '' }))}<span class="to">a</span>
+            ${raw(timeSelect(r.e, { 'data-t': 'e', 'data-d': d, 'data-i': i, 'aria-label': DAY(d) + ': cierra, horario ' + (i + 1) }, { end: true, cls: chk.bad.has(i) ? 'err' : '' }))}
             <button type="button" class="btn btn-ghost btn-icon" data-del="${d + ':' + i}" aria-label="${'Quitar el horario ' + r.s + ' a ' + r.e + ' del ' + WEEKDAYS[d]}" title="Quitar">${raw(icon('x'))}</button></div>`)}
           ${day.ranges.length < MAX_BLOCKS ? html`<button type="button" class="btn btn-ghost btn-sm st-add" data-add="${d}">${raw(icon('plus'))}${day.ranges.length ? 'Agregar otro horario' : 'Agregar horario'}</button>` : ''}</div>
           ${chk.error ? html`<p class="st-derr" role="alert">${raw(icon('alert'))}${chk.error}</p>` : ''}` : html`<p class="st-closed">Ese día no se pueden reservar citas.</p>`}

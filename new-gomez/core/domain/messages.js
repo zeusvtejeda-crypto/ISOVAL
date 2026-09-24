@@ -5,10 +5,12 @@
 // Variables: {cliente} {barberia} {fecha} {hora} {servicios} {barbero} {total} {folio} {enlace} {direccion} {resena}
 // (se aceptan también con acentos o mayúsculas: {Barbería}, {dirección}, {reseña}).
 //
-// Enlace de gestión: el token de la cita solo se guarda hasheado (appointments.manage_token_hash), así que
-// para poner un enlace "gestiona tu cita" en un mensaje se genera un token NUEVO (el anterior deja de servir).
-// Por eso la VISTA PREVIA no genera token: deja el marcador literal {enlace} (LINK_MARKER) y el token se rota
-// solo al registrar el mensaje de verdad (fillLink reemplaza el marcador en el texto que manda el panel).
+// Enlace de gestión: el token que el cliente recibe al reservar solo se guarda hasheado
+// (appointments.manage_token_hash), así que no se puede volver a escribir en un mensaje. Los mensajes llevan
+// un token DERIVADO de ese hash (linkToken): es el mismo en la confirmación, el recordatorio y el cambio de
+// horario, y NO reemplaza al de la reserva, así que el enlace «Guarda el enlace de tu cita», el de Google
+// Calendar/.ics y «Tus próximas citas» siguen sirviendo mientras la cita exista (findByLinkToken lo valida).
+// La VISTA PREVIA deja el marcador literal {enlace} (LINK_MARKER); fillLink lo reemplaza al registrar el mensaje.
 import { newId, nowIso, fmtMin, normPhone, waNumber } from '../util.js';
 import { sha256Hex, newToken } from '../crypto.js';
 import { shopSettings, DEFAULT_TEMPLATES } from './settings.js';
@@ -20,7 +22,7 @@ export const KIND_LABEL = {
   confirmation: 'Confirmación', reminder: 'Recordatorio', reschedule: 'Cambio de horario', cancellation: 'Cancelación',
   thanks: 'Agradecimiento', no_show: 'No asistió', custom: 'Mensaje libre'
 };
-// Tipos cuyo {enlace} lleva al cliente a gestionar SU cita (token nuevo). Los demás usan el link de reservas.
+// Tipos cuyo {enlace} lleva al cliente a gestionar SU cita. Los demás usan el link de reservas.
 export const TOKEN_KINDS = ['confirmation', 'reminder', 'reschedule', 'no_show'];
 // Tipos que, sin texto propio, necesitan una cita (su plantilla habla de fecha, hora, servicios…).
 export const APPT_KINDS = ['confirmation', 'reminder', 'reschedule', 'cancellation', 'no_show'];
@@ -89,7 +91,9 @@ export function publicBase(env, headers) {
   return '';
 }
 export const bookingUrl = (base, shop) => (base || '') + '/?b=' + encodeURIComponent((shop && shop.slug) || '');
-export const manageUrl = (base, token) => (base || '') + '/?cita=' + token;
+// slug: solo en la demo (MODE 'demo'). Sin ?b=<slug> la página pública no entra en modo demo y busca la cita
+// en el servidor, donde no existe (vive en el navegador). Es lo mismo que hace manageUrl() de index.html.
+export const manageUrl = (base, token, slug) => (base || '') + '/?' + (slug ? 'b=' + encodeURIComponent(slug) + '&' : '') + 'cita=' + token;
 // https://wa.me/52XXXXXXXXXX?text=… (10 dígitos → lada del país; sin teléfono → elegir contacto en WhatsApp).
 export function waLink(phone, text, countryCode) {
   const n = phone ? waNumber(phone, countryCode || '52') : '';
@@ -133,23 +137,65 @@ export function buildVars(shop, appt, opts) {
   };
 }
 
-// Token nuevo para el enlace de gestión de la cita (invalida el anterior). Devuelve el token en claro.
-export async function rotateManageToken(sdb, appointmentId) {
-  const token = newToken();
-  await sdb.update('appointments', { id: appointmentId }, { manage_token_hash: await sha256Hex(token) });
-  return token;
+// ── Token de gestión para los mensajes ──
+// <id de la cita sin 'ap_'><firma de 32 hex>, firma = sha256('cita:' + id + ':' + manage_token_hash). Cumple el
+// formato de los tokens (/^[A-Za-z0-9]{20,80}$/ en public.js e index.html) y solo lo fabrica quien conoce el hash.
+// Mandar mensajes no cambia el hash, así que el token es estable y el de la reserva sigue sirviendo. Si la cita
+// no tiene hash (la agendó el equipo), se le asigna uno al azar la primera vez (nadie conoce su token en claro).
+const LINK_ID = /^ap_([a-z0-9]{1,40})$/;
+const LINK_SIG = 32;
+const linkSig = async (id, hash) => (await sha256Hex('cita:' + id + ':' + hash)).slice(0, LINK_SIG);
+function sameText(a, b) {
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+// Token en claro para el enlace de gestión de `appt` (fila de appointments), o null si su id no tiene el formato.
+export async function linkToken(sdb, appt) {
+  const m = LINK_ID.exec(String((appt && appt.id) || ''));
+  if (!m) return null;
+  let hash = appt.manage_token_hash;
+  if (!hash) {
+    // Solo si sigue vacío (dos mensajes a la vez, o `appt` sin el hash): gana el primero y ambos usan el mismo.
+    await sdb.update('appointments', { id: appt.id, manage_token_hash: null }, { manage_token_hash: await sha256Hex(newToken()) });
+    const row = await sdb.findOne('appointments', { id: appt.id });
+    hash = row && row.manage_token_hash;
+    if (!hash) return null;
+  }
+  return m[1] + await linkSig(appt.id, hash);
+}
+// La cita de un token de linkToken (búsqueda global, como el token de la reserva), o null.
+export async function findByLinkToken(db, token) {
+  const t = String(token || '');
+  if (!/^[a-z0-9]{33,72}$/.test(t)) return null;
+  const a = await db.findOne('appointments', { id: 'ap_' + t.slice(0, -LINK_SIG) });
+  if (!a || !a.manage_token_hash) return null;
+  return sameText(await linkSig(a.id, a.manage_token_hash), t.slice(-LINK_SIG)) ? a : null;
+}
+// La cita de CUALQUIER enlace de gestión: token de la reserva (en la base solo su sha256) o de un mensaje
+// (linkToken). Búsqueda global: el llamador comprueba la barbería. null si el token no es válido.
+export async function findByManageToken(db, token) {
+  const t = typeof token === 'string' ? token : '';
+  if (!/^[A-Za-z0-9]{20,80}$/.test(t)) return null;
+  return (await db.findOne('appointments', { manage_token_hash: await sha256Hex(t) })) || findByLinkToken(db, t);
+}
+// Enlace «Gestiona tu cita» (el de reservas si la cita no admite token). c = { sdb, shop, demo? }.
+async function manageLink(c, appt, base) {
+  const token = await linkToken(c.sdb, appt);
+  return token ? manageUrl(base, token, c.demo ? c.shop && c.shop.slug : '') : bookingUrl(base, c.shop);
 }
 
-// Texto del mensaje desde la plantilla de la barbería. c = { sdb, shop }.
-// o: { kind, appt?, client?, base, withToken (rota el token si la plantilla usa {enlace}), preview, staffName? }
-// preview: el enlace de gestión queda como el marcador {enlace} (no se rota el token).
+// Texto del mensaje desde la plantilla de la barbería. c = { sdb, shop, demo? (MODE 'demo') }.
+// o: { kind, appt?, client?, base, withToken (pone el enlace de gestión si la plantilla usa {enlace}), preview, staffName? }
+// preview: el enlace de gestión queda como el marcador {enlace}.
 export async function composeMessage(c, o) {
   const tpl = templateFor(c.shop, o.kind);
   if (!tpl) return '';
   let link = '';
   if (o.appt && TOKEN_KINDS.includes(o.kind) && usesVar(tpl, 'enlace')) {
     if (o.preview) link = LINK_MARKER;
-    else if (o.withToken) link = manageUrl(o.base, await rotateManageToken(c.sdb, o.appt.id));
+    else if (o.withToken) link = await manageLink(c, o.appt, o.base);
   }
   let staffName = o.staffName;
   if (staffName == null && o.appt && o.appt.staff_id) {
@@ -160,10 +206,10 @@ export async function composeMessage(c, o) {
 }
 
 // Texto ya armado (p. ej. el de la vista previa, editado en el panel) con {enlace}: al registrarlo se reemplaza
-// por el enlace de gestión (token nuevo) si el tipo lo lleva y hay cita; si no, por el link de reservas.
+// por el enlace de gestión si el tipo lo lleva y hay cita; si no, por el link de reservas.
 export async function fillLink(c, text, { kind, appt, base }) {
   if (!usesVar(text, 'enlace')) return text;
-  const link = appt && TOKEN_KINDS.includes(kind) ? manageUrl(base, await rotateManageToken(c.sdb, appt.id)) : bookingUrl(base, c.shop);
+  const link = appt && TOKEN_KINDS.includes(kind) ? await manageLink(c, appt, base) : bookingUrl(base, c.shop);
   return String(text).replace(VAR_RE, (m, k) => (fold(k) === 'enlace' ? link : m));
 }
 

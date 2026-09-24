@@ -49,9 +49,10 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
 <meta name="apple-mobile-web-app-title" content="NEW GOMEZ"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
+<!-- Tipografías del propio sitio (fonts/fonts.css): las de la cabecera se precargan junto con el HTML. -->
+<link rel="preload" href="fonts/big-shoulders-display-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="stylesheet" href="fonts/fonts.css"/>
 <script>
 /* Arranque temprano (antes del primer pintado): el panel viejo (#/panel) ahora vive en app/, y se
    marcan las variantes de la página para que no "parpadee" el contenido de NEW GOMEZ en otra barbería
@@ -83,7 +84,7 @@
   --line:rgba(21,19,15,.12);--shadow:0 10px 30px rgba(21,19,15,.10);
   --bar:#15130F;--bar-text:#F2EDE3;--skel:rgba(21,19,15,.07);--shine:rgba(255,255,255,.55);
   --ease:cubic-bezier(.2,.8,.2,1);
-  --disp:'Big Shoulders Display','Oswald','Arial Narrow',Impact,sans-serif;
+  --disp:'Big Shoulders Display','TB Display Fallback','Arial Narrow',sans-serif;
   --sans:'IBM Plex Sans','Helvetica Neue',Arial,sans-serif;
   --mono:'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace;
 }
@@ -127,6 +128,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .badge{width:96px;flex:none;border-radius:10px;overflow:hidden;background:#000;box-shadow:0 0 0 1px rgba(242,237,227,.14)}
 .badge.sq{width:76px;height:76px;object-fit:cover;border-radius:18px}
 .badge.mono-badge{width:76px;height:76px;border-radius:18px;display:grid;place-items:center;background:var(--brass);color:var(--on-brass);font-family:var(--disp);font-size:34px;font-weight:800;letter-spacing:.02em}
+.badge.mono-badge .ic{width:42%;height:42%}
 .head h1{font-size:34px;font-weight:800;letter-spacing:.01em;color:#F2EDE3}
 .head h1 small{display:block;font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--hacc);margin-top:4px}
 .rating{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;color:#D9D3C6}
@@ -146,6 +148,17 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .head-skel span{display:block;border-radius:8px;background:rgba(242,237,227,.09);position:relative;overflow:hidden}
 .head-skel span::after,.skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,var(--shine),transparent);animation:shimmer 1.4s infinite}
 .head-skel span::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
+.head-skel .b{width:76px;height:76px;border-radius:18px;flex:none}
+/* Móvil: el logo (48 px) va arriba, a la altura del nombre, y el lema en tipo oración (1–2 renglones) en lugar
+   de versalitas espaciadas; así el texto gana ancho y el primer servicio aparece antes. */
+@media (max-width:599px){
+  .head-in,.head-skel{align-items:flex-start;gap:12px}
+  .head-in{padding-top:16px}
+  .badge{width:64px;margin-top:2px}
+  .badge.sq,.badge.mono-badge,.head-skel .b{width:48px;height:48px;border-radius:12px}
+  .badge.mono-badge{font-size:22px}
+  .head h1 small{font-size:14px;font-weight:500;line-height:1.35;letter-spacing:0;text-transform:none;margin-top:6px}
+}
 .pg-hload .head-in>:not(.head-skel){display:none!important}
 .pg-hload .head-skel{display:flex}
 .pg-hload .foot{visibility:hidden}
@@ -239,7 +252,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
 /* ── Fechas y horas ── */
 .dates-wrap{position:relative}
-.dates{position:relative;display:flex;gap:8px;overflow-x:auto;padding:4px 20px 12px;margin:0 -20px;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.dates{position:relative;display:flex;gap:8px;overflow-x:auto;padding:4px 20px 12px;margin:0 -20px;scroll-padding-inline:20px;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .dates::-webkit-scrollbar{display:none}
 .day{flex:none;width:68px;scroll-snap-align:start;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center;line-height:1.1;min-height:78px;display:flex;flex-direction:column;justify-content:center;gap:3px;transition:transform .12s,border-color .15s,background .15s}
 .day .w{font-size:12px;color:var(--smoke);text-transform:lowercase}
@@ -260,7 +273,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .dnav.prev{left:0}.dnav.next{right:0}
 @media (hover:hover) and (min-width:720px){
   .dnav.show{display:grid}
-  .dates,.rs .dates{margin:0;padding:4px 0 12px}
+  .dates,.rs .dates{margin:0;padding:4px 0 12px;scroll-padding-inline:0}
   .dates-wrap.fl .dates{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 64px);mask-image:linear-gradient(to right,transparent 0,#000 64px)}
   .dates-wrap.fr .dates{-webkit-mask-image:linear-gradient(to left,transparent 0,#000 64px);mask-image:linear-gradient(to left,transparent 0,#000 64px)}
   .dates-wrap.fl.fr .dates{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 64px,#000 calc(100% - 64px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 64px,#000 calc(100% - 64px),transparent 100%)}
@@ -277,6 +290,9 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .slot[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:var(--on-brass)}
 .slot.skel{min-height:48px;border-color:transparent;animation:none}
 .hint{font-size:13px;color:var(--smoke);margin-top:10px}
+.off-note{margin:-4px 0 12px}
+.off-note .link{display:inline;min-height:0;padding:0;line-height:inherit;vertical-align:baseline;position:relative;color:var(--text)}
+.off-note .link::after{content:"";position:absolute;inset:-12px -6px}
 .done{background:var(--ink);color:#F2EDE3;border-radius:16px;padding:24px 20px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-bottom:16px;box-shadow:var(--shadow);animation:fadeUp .45s var(--ease)}
 .done .ok-ic{width:52px;height:52px;border-radius:50%;background:var(--brass);color:var(--on-brass);display:grid;place-items:center;margin-bottom:4px;animation:pop .5s .1s var(--ease) both}
 .done .ok-ic svg{width:28px;height:28px}
@@ -347,7 +363,6 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .btn[aria-busy="true"]{pointer-events:none;opacity:.85}
 .spin{width:18px;height:18px;border:2.2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex:none}
 .link{background:none;border:0;color:var(--text);font-weight:600;text-decoration:underline;text-decoration-color:var(--brass);text-underline-offset:3px;min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 2px}
-.policy{font-size:13px;color:var(--smoke);margin-top:14px;display:grid;gap:4px}
 .alert{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;font-size:14px;line-height:1.45;border:1.5px solid;margin:12px 0;animation:fadeUp .25s var(--ease)}
 .alert .ic{width:18px;height:18px;margin-top:1px}
 .alert.warn{background:rgba(178,107,0,.08);border-color:rgba(178,107,0,.35)}
@@ -374,7 +389,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .acct{display:flex;align-items:center;gap:12px;margin-top:14px;padding:14px 16px;border-radius:14px;border:1.5px dashed var(--line);text-decoration:none;color:var(--text);transition:border-color .15s,background .15s}
 .acct:hover{border-color:var(--brass);background:var(--brass-soft)}
 .acct .ic{color:var(--brass-deep)}
-.acct b{display:block;font-size:15px}
+.acct b{display:block;font-size:15px;color:var(--text)}
 .acct span{font-size:13px;color:var(--smoke)}
 .acct .grow{flex:1;min-width:0}
 
@@ -393,7 +408,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
 /* ── Barra inferior ── */
 .bar-fixed{position:fixed;left:0;right:0;bottom:0;background:var(--bar);color:var(--bar-text);padding:12px 20px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.18);z-index:10}
-.bar-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.bar-in{max-width:1060px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .bar-in .sum{min-width:0}
 .bar-in .sum .amt{font-family:var(--disp);font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
 .bar-in .sum .amt small{font-family:var(--mono);font-size:12px;color:#B9B2A3;margin-left:4px}
@@ -401,6 +416,19 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .bar-in .btn{min-width:150px;white-space:nowrap}
 .bar-in .btn:disabled{background:#3A3630;border-color:#3A3630;color:#9A9385;opacity:1}
 .bump{animation:bump .3s var(--ease)}
+/* Sin barra: en la confirmación (paso 5) y en escritorio, donde el botón vive bajo el ticket lateral. */
+.no-bar .bar-fixed{display:none}
+.no-bar body{padding-bottom:env(safe-area-inset-bottom)}
+.no-bar .toasts{bottom:calc(20px + env(safe-area-inset-bottom))}
+.side-cta{display:grid;gap:8px;margin-top:14px}
+.side-cta .btn{width:100%}
+.side-hint{font-size:13px;color:var(--smoke);text-align:center}
+.side-hint:empty{display:none}
+@media (min-width:960px){
+  .bar-fixed{display:none}
+  body{padding-bottom:0}
+}
+.again{text-align:center;margin-top:10px}
 
 /* ── Pie ── */
 .foot{max-width:1100px;margin:36px auto 0;padding:20px 20px 30px;border-top:1px solid var(--line);font-size:13px;color:var(--smoke);display:grid;gap:10px}
@@ -459,7 +487,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .rs-head h3{font-size:26px;font-weight:800;scroll-margin-top:16px}
 .rs{scroll-margin-top:12px}
 .rs p.sub{font-size:14px;color:var(--smoke);margin:4px 0 12px}
-.rs .dates{margin:0 -18px;padding:4px 18px 12px}
+.rs .dates{margin:0 -18px;padding:4px 18px 12px;scroll-padding-inline:18px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .chip{min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);font-size:14px;font-weight:600;transition:.15s}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#F2EDE3}
@@ -470,6 +498,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 /* ── Toasts y hojas ── */
 .toasts{position:fixed;left:0;right:0;bottom:calc(96px + env(safe-area-inset-bottom));z-index:70;display:grid;justify-items:center;gap:8px;pointer-events:none;padding:0 16px}
 .pg-manage .toasts{bottom:calc(20px + env(safe-area-inset-bottom))}
+@media (min-width:960px){.toasts{bottom:24px}}
 .toast{pointer-events:auto;display:flex;gap:10px;align-items:center;max-width:min(480px,100%);min-height:48px;padding:12px 16px;border-radius:14px;background:#15130F;color:#F2EDE3;box-shadow:0 14px 36px rgba(0,0,0,.3);font-size:14px;font-weight:500;animation:toastIn .3s var(--ease);cursor:pointer}
 .toast .ic{width:18px;height:18px}
 .toast.ok .ic{color:#6FBF8A}.toast.err .ic{color:#F28B82}.toast.info .ic{color:#D9B25A}
@@ -536,7 +565,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
       <p class="intro" id="hIntro">Barbería en Tepic, Nayarit: cortes de cabello, barba, tinte y limpieza facial con Angel y Alexis. Reserva tu cita en línea en menos de un minuto: elige servicio, barbero, fecha y hora, y queda registrada al instante.</p>
     </div>
     <div class="head-skel" aria-hidden="true">
-      <span style="width:76px;height:76px;border-radius:18px;flex:none"></span>
+      <span class="b"></span>
       <div class="l"><span style="width:62%;height:30px"></span><span style="width:38%;height:12px"></span><span style="width:74%;height:12px"></span></div>
     </div>
   </div>
@@ -593,6 +622,7 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
       <div class="step-head"><div><h2 id="h3s" tabindex="-1">Fecha y hora</h2><p id="durHint">Tu cita dura 40 min.</p></div></div>
       <p class="eyebrow">Selecciona una fecha</p>
       <div class="dates-wrap" id="datesWrap"></div>
+      <div id="datesNote"></div>
       <div id="timesAlert"></div>
       <p class="eyebrow" id="timesLabel">Escoge una hora</p>
       <div id="times" role="group" aria-labelledby="timesLabel"></div>
@@ -636,23 +666,23 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
         </div>
       </form>
 
+      <!-- Pago, cambios y políticas van una sola vez, en el pie del ticket; "Confirmar cita" es el botón de la
+           barra inferior (móvil) o el de abajo del ticket lateral (escritorio). -->
       <div id="ticketMobile"></div>
       <div id="formAlert" aria-live="polite"></div>
-
-      <div class="actions">
-        <button class="btn btn-primary" id="confirmBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Confirmar cita</button>
-      </div>
-      <div class="policy" id="policy">
-        <span><b>Pago en tienda</b> · efectivo, tarjeta de crédito o débito.</span>
-        <span><b>Cancelación</b> · cancela con al menos 2 horas de antelación.</span>
-      </div>
     </section>
 
     <!-- Paso 5: Cita registrada -->
     <section class="step" id="step5" aria-labelledby="h5s" hidden><div id="doneBox"></div></section>
   </div>
 
-  <aside class="ticket-side" aria-label="Resumen de tu reserva"><div id="ticketSide"></div></aside>
+  <aside class="ticket-side" aria-label="Resumen de tu reserva">
+    <div id="ticketSide"></div>
+    <div class="side-cta">
+      <button class="btn btn-primary" id="sideBtn" type="button" disabled>Continuar</button>
+      <p class="side-hint" id="sideHint"></p>
+    </div>
+  </aside>
 </main>
 
 <div class="bar-fixed booking-only" id="bar">
@@ -746,20 +776,26 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 
 <script>
 /* Último recurso: si el módulo principal no arranca (navegador muy viejo o archivo que no cargó), la
-   página no se queda congelada: ofrece reservar por WhatsApp con los datos de NEW GOMEZ. */
+   página no se queda congelada: en la de NEW GOMEZ ofrece reservar por WhatsApp; en otra barbería, recargar. */
 (function(){
   var done=false;
   function fatal(){
     if(done||document.documentElement.dataset.booted)return;done=true;
     try{console.warn('[reservas] modo WhatsApp de emergencia')}catch(e){}
     var tel='523111585540',msg=encodeURIComponent('Hola, quiero reservar una cita');
-    var flow=document.getElementById('flow'),bar=document.getElementById('bar'),prog=document.getElementById('progressNav');
-    if(bar)bar.hidden=true;if(prog)prog.hidden=true;
-    var box='<div class="fallback"><h2>Reserva por WhatsApp</h2>'+
+    var flow=document.getElementById('flow'),bar=document.getElementById('bar'),prog=document.getElementById('progressNav'),main=document.getElementById('bookingMain');
+    if(bar)bar.hidden=true;if(prog)prog.hidden=true;if(main)main.className+=' solo';
+    // Otra barbería o "gestionar mi cita": nunca el WhatsApp de NEW GOMEZ (la cabecera y el pie siguen ocultos).
+    var r=document.documentElement.className;
+    var box=/pg-(generic|manage)/.test(r)?'<div class="fallback"><h2>No pudimos cargar la página</h2>'+
+      '<p>Actualiza la página o ábrela en un navegador reciente (Chrome o Safari).</p>'+
+      '<a class="btn btn-primary" href="">Actualizar</a></div>':
+      '<div class="fallback"><h2>Reserva por WhatsApp</h2>'+
       '<p>Para reservar o confirmar tu cita ahora mismo, escríbenos directo por WhatsApp o por teléfono.</p>'+
       '<a class="btn btn-wa" href="https://wa.me/'+tel+'?text='+msg+'" target="_blank" rel="noopener">Escribir por WhatsApp</a>'+
       '<p style="margin:16px 0 0"><a href="tel:+'+tel+'">311 158 5540</a></p></div>';
-    if(flow)flow.innerHTML=box;else document.body.insertAdjacentHTML('afterbegin',box);
+    var mv=document.getElementById('manageView');
+    if(/pg-manage/.test(r)&&mv)mv.innerHTML=box;else if(flow)flow.innerHTML=box;else document.body.insertAdjacentHTML('afterbegin',box);
   }
   window.__tbFatal=fatal;
   window.addEventListener('error',function(){if(!document.documentElement.dataset.booted)fatal()});
@@ -770,6 +806,8 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 <script type="module" onerror="window.__tbFatal&&window.__tbFatal()">
 import { html, raw } from './app/lib/html.js';
 import { icon } from './app/lib/icons.js';
+// Iniciales de personas y monograma de la barbería: la misma regla que el panel (app/lib/fmt.js).
+import { initials, shopMark } from './app/lib/fmt.js';
 
 const R = document.documentElement;
 R.dataset.booted = '1';
@@ -866,9 +904,6 @@ const digits = (s) => String(s || '').replace(/\D/g, '');
 function normPhone(v) { let d = digits(v); if (d.length === 13 && d.startsWith('521')) d = d.slice(3); if (d.length === 12 && d.startsWith('52')) d = d.slice(2); return d; }
 const phoneFmt = (p) => { const d = normPhone(p); return d.length === 10 ? d.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : d; };
 const waUrl = (phone, text) => { const d = normPhone(phone); return 'https://wa.me/' + (d.length === 10 ? '52' + d : d) + (text ? '?text=' + encodeURIComponent(text) : ''); };
-const initials = (n) => { const w = String(n || '?').trim().split(/\s+/); return ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase(); };
-// Monograma de la barbería: dos palabras significativas ("La Navaja Barber Club" → NB, "Barbería del Norte" → BN).
-const shopMark = (n) => { const w = String(n || '?').trim().split(/\s+/).filter((x) => !/^(la|el|los|las|de|del|y|the|&)$/i.test(x)); return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase(); };
 const firstName = (n) => String(n || '').trim().split(/\s+/)[0] || '';
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '');
 const safeImg = (u) => { u = String(u || '').trim(); return /^(https?:\/\/|\/|img\/|app\/)/i.test(u) && !/^\/\//.test(u) ? u : ''; };
@@ -990,6 +1025,7 @@ function busyBtn(btn, on, label) {
   else { btn.removeAttribute('aria-busy'); if (btn.dataset.label) btn.innerHTML = btn.dataset.label; }
 }
 const WA_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.8-1.4.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z"/></svg>';
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
 const CHECK = '<span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span>';
 const ANY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h4l8 10h4M4 17h4l2-2.5M16 7h4M18 5l2 2-2 2M18 15l2 2-2 2"/></svg>';
 const OFFLINE_CODES = ['backend_unavailable', 'network', 'backend_not_configured'];
@@ -1056,7 +1092,7 @@ function openStatus(sh) {
   return null;
 }
 function stars(r) { const n = Math.max(0, Math.min(5, Math.round(Number(r) || 0))); return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
-const ratingTxt = (r) => (Number(r) || 0).toFixed(1).replace('.', ',');
+const ratingTxt = (r) => (Number(r) || 0).toFixed(1); // '4.9': punto decimal, como el panel (es-MX)
 function logoHTML(cls) {
   const sh = C.shop || {};
   const url = safeImg(sh.logo_url) || (C.isNG ? NEGOCIO.logo : '');
@@ -1068,6 +1104,15 @@ function staffAvatar(s, size) {
   const url = safeImg(s.avatar_url) || (C.isNG ? NEGOCIO.fotos[String(s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()] || '' : '');
   if (url) return html`<img class="avatar" src="${url}" alt="" width="${size || 52}" height="${size || 52}" loading="lazy" decoding="async"/>`;
   return html`<span class="avatar ini" style="--c:${safeColor(s.color) || colorFor(s.name)}" aria-hidden="true">${initials(s.name)}</span>`;
+}
+const plain = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+// Dirección completa para mostrar y buscar en Maps: la ciudad se agrega solo si no viene ya dentro de la
+// dirección ("Av. México 245 Nte., Centro, 63000 Tepic, Nay." + "Tepic" → sin ", Tepic" al final).
+function fullAddress(sh) {
+  const a = String((sh && sh.address) || '').trim(), c = String((sh && sh.city) || '').trim();
+  if (!a || !c) return a || c;
+  const city = plain(c).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(^|[^a-z0-9])' + city + '([^a-z0-9]|$)').test(plain(a)) ? a : a + ', ' + c;
 }
 function methodsText(sh) {
   const M = { cash: 'efectivo', card: 'tarjeta', transfer: 'transferencia', other: 'otros medios' };
@@ -1084,7 +1129,7 @@ function paintShop() {
   const rating = pub.rating != null && pub.rating !== '' ? Number(pub.rating) : (C.isNG ? NEGOCIO.rating : null);
   const count = pub.reviews_count != null && pub.reviews_count !== '' ? Number(pub.reviews_count) : (C.isNG ? NEGOCIO.resenas : null);
   const reviewUrl = safeUrl(pub.review_url) || (C.isNG ? NEGOCIO.resenaGoogleUrl : '');
-  const address = [sh.address, sh.city].filter(Boolean).join(', ');
+  const address = fullAddress(sh);
   const mapsUrl = safeUrl(sh.maps_url) || (address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(sh.name + ' ' + address) : '');
   const tagline = sh.tagline || (C.isNG ? NEGOCIO.lema : (sh.city ? 'Barbería en ' + sh.city : 'Reserva tu cita en línea'));
   const wa = shopWa(sh);
@@ -1173,7 +1218,6 @@ function paintShop() {
   // Textos del flujo
   $('#fLegendPrimera').textContent = '¿Es tu primera visita a ' + sh.name + '?';
   $('#h2p').textContent = C.isNG && C.mode !== 'wa' ? 'Todos con 5,0 estrellas.' : 'Elige con quién te quieres atender.';
-  paintPolicy();
   paintBrand();
   paintSEO();
 }
@@ -1182,17 +1226,22 @@ function paintTeam() {
   el.innerHTML = String(C.staff.length ? html`${C.staff.map((s) => html`<div class="opt bar">${staffAvatar(s)}<span class="name">${s.name}</span><span class="sub">${s.bio || 'Barbero'}${C.isNG ? html` · <span class="star"><b>★ 5,0</b></span>` : ''}</span></div>`)}` : html`<div class="empty">Pronto conocerás al equipo.</div>`);
   $('#equipo').hidden = !C.staff.length;
 }
-function paintPolicy() {
-  const sh = C.shop, b = BK();
-  const mt = methodsText(sh);
-  const pol = ((sh.public && sh.public.policies) || '').trim();
-  const def = /^Pago en tienda\. Cancela con al menos 2 horas de antelaci/.test(pol);
-  const lines = [];
-  lines.push(html`<span><b>Pago en la barbería</b>${mt ? ' · ' + mt + '.' : '.'}</span>`);
-  if (C.mode === 'live') lines.push(html`<span><b>Cambios</b> · puedes cancelar o reagendar en línea ${b.cancel_hours > 0 ? 'hasta ' + plural(b.cancel_hours, 'hora') + ' antes' : 'antes de tu cita'}.</span>`);
-  else lines.push(html`<span><b>Cancelación</b> · cancela con al menos 2 horas de antelación.</span>`);
-  if (pol && !def) lines.push(html`<span><b>Políticas</b> · ${pol}</span>`);
-  $('#policy').innerHTML = String(html`${lines}`);
+// Políticas escritas por la barbería, sin lo que el pie del ticket ya dice (pago en la barbería y plazo para
+// cancelar o reagendar): "Pago en tienda: efectivo… Cancela o reagenda con al menos 2 horas… Tolerancia de 10
+// minutos." → "Tolerancia de 10 minutos.". Se conserva toda frase que agregue algo: cobros, anticipos, penalización
+// o un plazo distinto al configurado.
+function policyExtra(sh) {
+  const pol = String((sh && sh.public && sh.public.policies) || '').replace(/\s+/g, ' ').trim();
+  if (!pol) return '';
+  const hours = C.mode === 'live' ? Number(BK().cancel_hours) || 0 : 2;
+  const known = (x) => {
+    const t = plain(x);
+    if (/cobr|cargo|cost|penaliz|anticipo|deposito|reembols|multa|no asist|inasist|no se presenta|%|\$/.test(t)) return false;
+    if (/^(el )?pago\b|^pagas?\b|^se paga/.test(t)) return true;
+    if (/cancel|reagend/.test(t)) { const n = /(\d+)\s*(h\b|hrs?\b|horas?)/.exec(t); return n ? +n[1] === hours : !/\d/.test(t); }
+    return false;
+  };
+  return (pol.match(/[^.!?]+[.!?]*/g) || []).map((x) => x.trim()).filter((x) => x && !known(x)).join(' ');
 }
 // Color de marca de la barbería como acento (con texto legible encima en claro y oscuro).
 function paintBrand() {
@@ -1377,15 +1426,32 @@ $('#barbers').addEventListener('click', (e) => {
 });
 
 // ── Paso 3: fecha y hora (componentes reutilizados al reagendar) ──
-function dayStripHTML(st, today) {
+// Día sin horarios porque el barbero elegido no trabaja (descanso, vacaciones) aunque la barbería sí abre:
+// no se marca "Cerrado", que se leería como el local cerrado. who = nombre del barbero elegido ('' = cualquiera).
+const staffOff = (d, who) => !!who && !d.open && (!d.reason || d.reason === 'closed') && !!C.shop && hoursOf(C.shop)[weekday(d.date)].length > 0;
+// Aviso bajo la tira: "Andrea descansa el mar 29 y el mié 30 sep; con cualquier barbero puede haber lugar."
+// (con fechas, porque esos días pueden quedar fuera de la parte visible de la tira).
+function offNote(st, who, act) {
+  const off = who && st.days ? st.days.filter((d) => staffOff(d, who)) : [];
+  if (!off.length) return '';
+  const mon = (k) => MON_S[parseKey(k).getUTCMonth()];
+  const same = off.every((d) => mon(d.date) === mon(off[0].date));
+  const day = (k) => DOW_S[weekday(k)] + ' ' + parseKey(k).getUTCDate() + (same ? '' : ' ' + mon(k));
+  const list = off.map((d) => 'el ' + day(d.date));
+  const when = off.length > 3 ? 'los días marcados' : (list.length > 1 ? list.slice(0, -1).join(', ') + ' y ' + list[list.length - 1] : list[0]) + (same ? ' ' + mon(off[0].date) : '');
+  // act: atributo del botón para cambiar a "cualquier barbero" ('' si nadie más hace el servicio: no se sugiere).
+  return html`<p class="hint off-note">${firstName(who)} descansa ${when}${act ? html`; con <button type="button" class="link" ${raw(act)}>cualquier barbero</button> puede haber lugar.` : '.'}</p>`;
+}
+function dayStripHTML(st, today, who) {
   const nav = html`<button type="button" class="dnav prev" data-dnav="-1" aria-label="Fechas anteriores">${raw(icon('chevron-left'))}</button><button type="button" class="dnav next" data-dnav="1" aria-label="Más fechas">${raw(icon('chevron-right'))}</button>`;
   if (st.daysErr) return html`<div class="empty" style="margin-bottom:12px"><b>No pudimos cargar las fechas</b>${errText(st.daysErr)}<div class="acts"><button type="button" class="btn btn-ghost btn-sm" data-retry="days">${raw(icon('refresh'))}Reintentar</button></div></div>`;
   if (!st.days) return html`<div class="dates" aria-busy="true">${Array.from({ length: 8 }, () => html`<span class="day skel-day" aria-hidden="true"></span>`)}</div>`;
   return html`${nav}<div class="dates" role="group" aria-label="Fechas disponibles">${st.days.map((d) => {
     const on = st.date === d.date, dd = parseKey(d.date), rel = diffDays(today, d.date);
     const w = rel === 0 ? 'hoy' : rel === 1 ? 'mañana' : DOW_S[dd.getUTCDay()];
-    const lab = !d.open || (rel === 0 && !d.available && closedToday()) ? 'Cerrado' : !d.available ? 'Lleno' : '';
-    const aria = (rel === 0 ? 'Hoy, ' : rel === 1 ? 'Mañana, ' : '') + dateLong(d.date) + (!d.open ? ', cerrado' : !d.available ? ', sin horarios disponibles' : '');
+    const off = staffOff(d, who);
+    const lab = off ? 'Descansa' : !d.open || (rel === 0 && !d.available && closedToday()) ? 'Cerrado' : !d.available ? 'Lleno' : '';
+    const aria = (rel === 0 ? 'Hoy, ' : rel === 1 ? 'Mañana, ' : '') + dateLong(d.date) + (off ? ', ' + who + ' no atiende ese día' : !d.open ? ', cerrado' : !d.available ? ', sin horarios disponibles' : '');
     return html`<button type="button" class="day" data-date="${d.date}" aria-pressed="${String(on)}" aria-label="${aria}"${attr(!d.available, 'disabled')}><span class="w">${w}</span><span class="n">${lab || dd.getUTCDate()}</span><span class="m">${MON_S[dd.getUTCMonth()]}</span></button>`;
   })}</div>`;
 }
@@ -1411,7 +1477,8 @@ function centerDay(wrap, smooth) {
   const left = b.offsetLeft - strip.clientWidth / 2 + b.offsetWidth / 2;
   try { strip.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' }); } catch (e) { strip.scrollLeft = left; }
 }
-const PARTS = [['Mañana', 0, 720], ['Tarde', 720, 1140], ['Noche', 1140, 1440]];
+// "Por la mañana" y no "Mañana": junto a la tira de fechas (hoy, mañana…) se leería como el día siguiente.
+const PARTS = [['Por la mañana', 0, 720], ['Por la tarde', 720, 1140], ['Por la noche', 1140, 1440]];
 function slotsHTML(st, o) {
   if (!st.date) return html``;
   if (st.slotsErr) return html`<div class="empty"><b>No pudimos cargar los horarios</b>${errText(st.slotsErr)}<div class="acts"><button type="button" class="btn btn-ghost btn-sm" data-retry="slots">${raw(icon('refresh'))}Reintentar</button></div></div>`;
@@ -1433,7 +1500,9 @@ function slotsHTML(st, o) {
 let daysReq = 0, slotsReq = 0;
 function renderDates() {
   const wrap = $('#datesWrap');
-  wrap.innerHTML = String(dayStripHTML(S, todayKey()));
+  const who = S.staff && S.staff !== 'any' ? staffName(S.staff) : '';
+  wrap.innerHTML = String(dayStripHTML(S, todayKey(), who));
+  $('#datesNote').innerHTML = String(offNote(S, who, allowAny() && eligibleStaff().length > 1 ? 'data-any' : ''));
   syncDnav(wrap);
   centerDay(wrap, false);
 }
@@ -1529,9 +1598,6 @@ function renderStep4() {
   $('#phone').required = req;
   $('#fEmail').hidden = C.mode === 'wa';
   $('#h4p').textContent = C.mode === 'wa' ? 'Te confirmamos por WhatsApp.' : BK().auto_confirm === false ? 'La barbería confirmará tu cita.' : 'Tu cita queda registrada al instante.';
-  const btn = $('#confirmBtn');
-  btn.className = 'btn ' + (C.mode === 'wa' ? 'btn-wa' : 'btn-primary');
-  btn.innerHTML = C.mode === 'wa' ? WA_SVG + 'Enviar solicitud por WhatsApp' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Confirmar cita';
 }
 function person() {
   return { name: $('#name').value.trim().replace(/\s+/g, ' '), phone: normPhone($('#phone').value), rawPhone: $('#phone').value.trim(), email: $('#email').value.trim(), first: ($('input[name=first]:checked') || {}).value || '', note: $('#note').value.trim() };
@@ -1557,7 +1623,6 @@ $('#form').addEventListener('input', (e) => {
 });
 $('#form').addEventListener('change', (e) => { if (e.target.name === 'first') tap(); });
 $('#form').addEventListener('submit', (e) => { e.preventDefault(); confirmar(); });
-$('#confirmBtn').addEventListener('click', () => confirmar());
 
 function waRequestText() {
   const p = person(), d = dur(), lines = ['Hola ' + C.shop.name + ', quiero reservar una cita:'];
@@ -1596,7 +1661,7 @@ async function confirmar() {
     return;
   }
   booking = true;
-  const btns = [$('#confirmBtn'), $('#nextBtn')];
+  const btns = [$('#nextBtn'), $('#sideBtn')];
   btns.forEach((b) => busyBtn(b, true, 'Confirmando…'));
   try {
     const body = { services: S.services, staff_id: S.staff || 'any', date: S.date, start_min: S.time, name: p.name, phone: p.phone, email: p.email || undefined, note: p.note || undefined };
@@ -1650,7 +1715,7 @@ function calLinks(a, sh, token) {
   const tz = sh.timezone || tzOf();
   const start = zonedToUtc(a.date, a.start_min, tz), end = zonedToUtc(a.date, a.end_min, tz);
   const names = (a.services || []).map((x) => x.name).join(', ');
-  const where = [sh.name, sh.address, sh.city].filter(Boolean).join(', ');
+  const where = [sh.name, fullAddress(sh)].filter(Boolean).join(', ');
   const link = token ? manageUrl(token, sh.slug) : '';
   const details = [names + (a.staff_name ? ' con ' + a.staff_name : ''), 'Folio: ' + (a.folio || ''), link ? 'Ver, cambiar o cancelar tu cita: ' + link : ''].filter(Boolean).join('\n');
   const title = 'Cita en ' + sh.name + (names ? ' · ' + names : '');
@@ -1676,6 +1741,8 @@ function apptTicket(a, sh) {
   const items = (a.services || []).map((x) => ({ name: x.name, dur: x.duration_min, price: x.price }));
   return ticketHTML({ date: a.date, start: a.start_min, dur: a.end_min - a.start_min, staff: a.staff_name || 'Por asignar', items, total: a.total, sh });
 }
+const AGAIN = html`<p class="again"><button type="button" class="link" data-new>${raw(icon('plus'))}Hacer otra reserva</button></p>`;
+$('#doneBox').addEventListener('click', (e) => { if (e.target.closest('[data-new]')) reset(); });
 function renderDone() {
   const box = $('#doneBox');
   const r = S.result;
@@ -1688,7 +1755,8 @@ function renderDone() {
         <p>Se abrió WhatsApp con tu solicitud para ${S.date ? dateLong(S.date) : ''}${S.time != null ? ' a las ' + fmtTime(S.time) : ''}. Envía el mensaje y ${C.shop.name} te confirmará el horario.</p>
       </div>
       ${ticketHTML({ date: S.date, start: S.time, dur: dur(), staff: S.staff === 'any' ? 'Cualquier barbero' : staffName(S.staff), items: selSvcs().map((x) => ({ name: x.name, dur: x.duration_min, price: x.price })), total: total(), sh: C.shop })}
-      <div class="actions"><a class="btn btn-wa" href="${waUrl(shopWa(), S.waText)}" target="_blank" rel="noopener">${raw(WA_SVG)}Abrir WhatsApp de nuevo</a></div>`);
+      <div class="actions"><a class="btn btn-wa" href="${waUrl(shopWa(), S.waText)}" target="_blank" rel="noopener">${raw(WA_SVG)}Abrir WhatsApp de nuevo</a></div>
+      ${AGAIN}`);
     return;
   }
   const a = r.appt, sh = Object.assign({}, C.shop, a.shop || {});
@@ -1714,7 +1782,8 @@ function renderDone() {
     <div class="actions two">${isIOS ? html`${iBtn}${gBtn}` : html`${gBtn}${iBtn}`}</div>
     ${shopWa(sh) ? html`<div class="actions"><a class="btn btn-ghost" href="${waUrl(shopWa(sh), waMsg)}" target="_blank" rel="noopener">${raw(WA_SVG)}Avisar por WhatsApp a la barbería</a></div>` : ''}
     <a class="acct" href="${'app/#/registro?b=' + encodeURIComponent(C.slug)}">${raw(icon('user-plus'))}<span class="grow"><b>Crea tu cuenta para ver tus citas</b><span>Consulta, cambia o repite tus citas desde cualquier dispositivo.</span></span>${raw(icon('chevron-right'))}</a>
-    ${C.demo ? html`<a class="acct" href="app/#/demo">${raw(icon('calendar-check'))}<span class="grow"><b>Mírala en el panel de la demo</b><span>Entra como dueño: tu cita ya aparece en la agenda del día.</span></span>${raw(icon('chevron-right'))}</a>` : ''}`);
+    ${C.demo ? html`<a class="acct" href="app/#/demo">${raw(icon('calendar-check'))}<span class="grow"><b>Mírala en el panel de la demo</b><span>Entra como dueño: tu cita ya aparece en la agenda del día.</span></span>${raw(icon('chevron-right'))}</a>` : ''}
+    ${AGAIN}`);
   box.onclick = async (e) => {
     if (e.target.closest('[data-copy]')) { tap(); toast((await copyText(link)) ? 'Enlace copiado. Guárdalo en tus notas o chats.' : 'No se pudo copiar. Mantén presionado el enlace para copiarlo.', 'ok'); }
     else if (e.target.closest('[data-share]')) { try { await navigator.share({ title: 'Mi cita en ' + sh.name, text: 'Mi cita en ' + sh.name + ' · ' + dateLong(a.date) + ' ' + fmtTime(a.start_min), url: link }); } catch (err) { /* cancelado */ } }
@@ -1727,16 +1796,17 @@ function ticketHTML(m) {
   const sh = m.sh || C.shop;
   const pend = html`<span class="pending">Por elegir</span>`;
   const rating = sh.public && sh.public.rating > 0 ? Number(sh.public.rating) : (C.isNG ? NEGOCIO.rating : 0);
-  const sub = [sh.address, rating ? '★ ' + ratingTxt(rating) : ''].filter(Boolean).join(' · ');
+  const sub = [rating ? '★ ' + ratingTxt(rating) : '', sh.address].filter(Boolean).join(' · '); // si la dirección parte, no deja un "· ★" suelto
   const rows = m.items.length ? m.items.map((x) => html`<div class="row svc"><span class="k">${x.name}<small>${fmtDur(x.dur)}${m.staff && m.staff !== 'Cualquier barbero' && m.staff !== 'Por asignar' ? ' con ' + m.staff : ''}</small></span><span class="v">${money(x.price)}</span></div>`) : html`<div class="row"><span class="k">Servicio</span><span class="v">${pend}</span></div>`;
   const when = m.date
     ? html`<div class="row"><span class="k">Fecha</span><span class="v">${cap(dateLong(m.date))}</span></div><div class="row"><span class="k">Hora</span><span class="v mono">${m.start != null ? html`${fmtTime(m.start)}–${fmtTime(m.start + m.dur)} <span style="color:var(--smoke)">(${fmtDur(m.dur)})</span>` : pend}</span></div>`
     : html`<div class="row"><span class="k">Fecha y hora</span><span class="v">${pend}</span></div>`;
-  const mt = methodsText(sh);
+  const mt = methodsText(sh), b = BK(), extra = policyExtra(sh);
+  const change = C.mode !== 'live' ? 'Cancela con al menos 2 horas de antelación' : b.cancel_hours > 0 ? 'Cancela o reagenda en línea hasta ' + plural(b.cancel_hours, 'hora') + ' antes' : 'Cancela o reagenda en línea antes de tu cita';
   return html`<div class="ticket"><div class="ticket-top">${logoHTML('')}<div><h3>${sh.name}</h3>${sub ? html`<p>${sub}</p>` : ''}</div></div>
     <div class="ticket-body">${when}<div class="row"><span class="k">Barbero</span><span class="v">${m.staff || pend}</span></div>${rows}
     <div class="row tot"><span class="k">Total</span><span class="v">${money(m.total)}<small>${sh.currency || 'MXN'}</small></span></div></div>
-    <div class="ticket-foot"><span>Pago en la barbería${mt ? ' · ' + mt : ''}</span><span>${C.mode === 'live' && BK().cancel_hours > 0 ? 'Cancela o reagenda en línea hasta ' + plural(BK().cancel_hours, 'hora') + ' antes' : 'Cancela con al menos 2 horas de antelación'}</span></div></div>`;
+    <div class="ticket-foot"><span>Pago en la barbería${mt ? ' · ' + mt : ''}</span><span>${change}</span>${extra ? html`<span>Políticas · ${extra}</span>` : ''}</div></div>`;
 }
 function renderTicket() {
   if (!C.shop || S.step === 5) { if (S.step === 5) { $('#ticketSide').innerHTML = ''; $('#ticketMobile').innerHTML = ''; } return; }
@@ -1775,14 +1845,16 @@ function go(n, initial) {
 }
 // Con un solo barbero posible, el paso "Elige tu barbero" sobra: se asigna solo y se salta.
 const soloStaff = () => { const el = eligibleStaff(); return el.length === 1 ? el[0] : null; };
-$('#nextBtn').addEventListener('click', () => {
-  if (S.step === 5) return reset();
+// Botón principal: el de la barra inferior (móvil y tableta) o el de abajo del ticket lateral (escritorio).
+function next() {
   if (S.step === 4) return confirmar();
   if (!canNext()) return;
   tap();
   const solo = S.step === 1 && soloStaff();
   if (solo) { S.staff = solo.id; go(3); } else go(S.step + 1);
-});
+}
+$('#nextBtn').addEventListener('click', next);
+$('#sideBtn').addEventListener('click', next);
 $('#flow').addEventListener('click', (e) => { const b = e.target.closest('[data-back]'); if (!b) return; const n = +b.dataset.back; go(n === 2 && soloStaff() ? 1 : n); });
 function reset() {
   S.services = []; S.date = null; S.time = null; S.result = null; S.days = null; S.daysKey = ''; S.slots = null; S.staff = null;
@@ -1797,14 +1869,19 @@ function update() {
   let det = !C.shop ? 'Cargando servicios…' : n ? plural(n, 'servicio') + ' · ' + fmtDur(d) : 'Elige al menos un servicio';
   if (S.step >= 3 && S.date && S.time != null) det = dateShort(S.date) + ' · ' + fmtTime(S.time) + ' · ' + fmtDur(d);
   else if (S.step === 2 && S.staff) det += ' · ' + staffName(S.staff);
-  const nb = $('#nextBtn');
-  if (nb.getAttribute('aria-busy') !== 'true') {
-    nb.disabled = !canNext();
-    nb.className = 'btn ' + (S.step === 4 && C.mode === 'wa' ? 'btn-wa' : 'btn-primary');
-    nb.textContent = S.step === 5 ? 'Nueva reserva' : S.step === 4 ? (C.mode === 'wa' ? 'Enviar por WhatsApp' : 'Confirmar cita') : S.step === 3 && S.time == null ? 'Elige una hora' : 'Continuar';
+  // En la confirmación no hay barra: lo que sigue es agregar la cita al calendario o guardar el enlace
+  // ("Hacer otra reserva" queda como enlace secundario al final).
+  R.classList.toggle('no-bar', S.step === 5);
+  const wa = C.mode === 'wa';
+  const label = S.step === 4 ? (wa ? WA_SVG + 'Enviar por WhatsApp' : CHECK_SVG + 'Confirmar cita') : S.step === 3 && S.time == null ? 'Elige una hora' : 'Continuar';
+  for (const b of [$('#nextBtn'), $('#sideBtn')]) {
+    if (b.getAttribute('aria-busy') === 'true') continue;
+    b.disabled = !canNext();
+    b.className = 'btn ' + (S.step === 4 && wa ? 'btn-wa' : 'btn-primary');
+    b.innerHTML = label;
   }
-  if (S.step === 5) { nb.disabled = false; det = S.result && S.result.appt ? 'Folio ' + S.result.appt.folio : 'Solicitud enviada'; if (S.result && S.result.appt) $('#barTotal').textContent = money(S.result.appt.total); }
   $('#barDet').textContent = det;
+  $('#sideHint').textContent = !C.shop ? 'Cargando servicios…' : canNext() ? '' : S.step === 1 ? 'Elige al menos un servicio para continuar.' : S.step === 2 ? 'Elige con quién te quieres atender.' : '';
   renderTicket();
 }
 
@@ -1917,17 +1994,16 @@ function renderManage(flash) {
   if (M.rs) renderRs();
 }
 function renderManageError(err) {
-  R.classList.remove('pg-hload');
   const nf = !!err && err.code === 'not_found';
+  const gone = unavailable(err);
   const off = isOffline(err);
   const mine = mineAll().find((x) => x.token === M.token);
-  $('#hNombre').innerHTML = String(html`${mine ? mine.shop_name : 'Tu cita'} <small>Gestionar cita</small>`);
-  $('#hRating').hidden = true; $('#hIntro').hidden = true; $('#hOpen').hidden = true; $('#hMapa').hidden = true; $('#hHorario').textContent = '';
-  if (!C.isNG || mine) $('#hBadgeLink').innerHTML = String(html`<span class="badge mono-badge" aria-hidden="true">${shopMark(mine ? mine.shop_name : 'TB')}</span>`);
+  const home = mine && !gone ? shopHome(mine.slug) : C.demo && !mine ? './?b=demo' : '';
+  paintNeutral({ name: mine ? mine.shop_name : 'TuBarbería', mark: mine ? shopMark(mine.shop_name) : '', sub: 'Tu cita', home, title: 'Tu cita · ' + (mine ? mine.shop_name : 'TuBarbería') });
   $('#manageView').innerHTML = String(html`<div class="empty" style="padding:32px 20px;margin-top:10px">
-    <b style="font-size:20px;font-family:var(--disp)">${nf ? 'No encontramos esa cita' : off ? 'No pudimos abrir tu cita' : 'Algo salió mal'}</b>
-    ${nf ? 'Revisa que el enlace esté completo. Si la reservaste hace poco, búscalo en tu calendario o en tus mensajes.' : off ? 'Parece que no hay conexión con la barbería en este momento. Intenta de nuevo en unos segundos.' : errText(err)}
-    <div class="acts">${!nf ? html`<button type="button" class="btn btn-primary btn-sm" data-m="retry">${raw(icon('refresh'))}Reintentar</button>` : ''}<a class="btn btn-ghost btn-sm" href="${mine ? shopHome(mine.slug) : './'}">Reservar una cita</a></div></div>`);
+    <b style="font-size:20px;font-family:var(--disp)">${gone ? 'Esta barbería no está disponible por ahora' : nf ? 'No encontramos esa cita' : off ? 'No pudimos abrir tu cita' : 'Algo salió mal'}</b>
+    ${gone ? 'Por el momento no podemos mostrar ni cambiar sus citas en línea. Si necesitas cancelar o cambiar tu cita, comunícate directamente con la barbería.' : nf ? 'Revisa que el enlace esté completo. Si la reservaste hace poco, búscalo en tu calendario o en tus mensajes.' : off ? 'Parece que no hay conexión con la barbería en este momento. Intenta de nuevo en unos segundos.' : errText(err)}
+    <div class="acts">${!nf ? html`<button type="button" class="btn btn-primary btn-sm" data-m="retry">${raw(icon('refresh'))}Reintentar</button>` : ''}${home ? html`<a class="btn btn-ghost btn-sm" href="${home}">Reservar una cita</a>` : MY_APPTS}</div></div>`);
 }
 async function loadManage(flash) {
   try {
@@ -1956,7 +2032,8 @@ function renderRs() {
     <div class="rs-head"><h3 id="rsT" tabindex="-1">Elige tu nuevo horario</h3><button type="button" class="icon-btn" data-m="rs-close" aria-label="Cerrar">${raw(icon('x'))}</button></div>
     <p class="sub">${(a.services || []).map((x) => x.name).join(', ')} · ${fmtDur(d)}. Tu horario actual: ${dateShort(a.date)} a las ${fmtTime(a.start_min)}.</p>
     ${allow && a.staff_id ? html`<div class="chips" role="group" aria-label="Barbero"><button type="button" class="chip" data-rs-staff="${a.staff_id}" aria-pressed="${String(st.staff !== 'any')}">Con ${a.staff_name || 'mi barbero'}</button><button type="button" class="chip" data-rs-staff="any" aria-pressed="${String(st.staff === 'any')}">Cualquier barbero</button></div>` : ''}
-    <div class="dates-wrap" id="rsDates">${dayStripHTML(st, tzNow(a.shop.timezone || NEGOCIO.ctz).date)}</div>
+    <div class="dates-wrap" id="rsDates">${dayStripHTML(st, tzNow(a.shop.timezone || NEGOCIO.ctz).date, st.staff !== 'any' ? a.staff_name || '' : '')}</div>
+    ${offNote(st, st.staff !== 'any' ? a.staff_name || '' : '', allow && a.staff_id ? 'data-rs-staff="any"' : '')}
     <div id="rsTimes">${slotsHTML(st, { dur: d, otherHint: 'Prueba con otra fecha' + (allow && st.staff !== 'any' ? ' o con cualquier barbero.' : '.') })}</div>
     <div id="rsAlert" aria-live="polite">${st.alert ? alertHTML(st.alert[0], st.alert[1]) : ''}</div>
     <div class="actions"><button type="button" class="btn btn-primary" data-m="rs-go"${attr(st.time == null, 'disabled')}>${st.time == null ? 'Elige un horario' : 'Cambiar a ' + dateShort(st.date) + ' · ' + fmtTime(st.time)}</button></div>
@@ -1967,11 +2044,13 @@ function renderRs() {
 async function rsLoad(which) {
   const st = M.rs, a = M.data.appointment, slug = a.shop.slug, svc = (a.services || []).map((x) => x.id);
   const staff = st.staff === 'any' ? 'any' : a.staff_id;
+  // token: la cita que se mueve no ocupa su propio horario (así se puede correr unos minutos).
+  const q = { services: svc, staff, token: M.token };
   if (which !== 'slots') {
     const my = ++st.dreq; st.days = null; st.daysErr = null; renderRs();
     try {
       const n = M.shopInfo && M.shopInfo.booking ? Math.min(60, (Number(M.shopInfo.booking.window_days) || 21) + 1) : 22;
-      const r = await C.api.get(pathShop(slug, '/days'), { services: svc, staff, days: n });
+      const r = await C.api.get(pathShop(slug, '/days'), Object.assign({ days: n }, q));
       if (my !== st.dreq || M.rs !== st) return;
       st.days = r.days;
       if (!st.date || !st.days.some((x) => x.date === st.date && x.available)) { const f = st.days.find((x) => x.available); st.date = f ? f.date : null; st.time = null; }
@@ -1980,8 +2059,10 @@ async function rsLoad(which) {
   if (!st.date || st.daysErr) { st.slots = st.days ? { slots: [], message: 'No hay horarios disponibles en los próximos días.' } : null; renderRs(); return; }
   const my = ++st.sreq; st.slots = null; st.slotsErr = null; renderRs();
   try {
-    const r = await C.api.get(pathShop(slug, '/slots'), { date: st.date, services: svc, staff });
+    const r = await C.api.get(pathShop(slug, '/slots'), Object.assign({ date: st.date }, q));
     if (my !== st.sreq || M.rs !== st) return;
+    // Su horario actual (con su mismo barbero) no es una opción nueva.
+    if (st.date === a.date && staff !== 'any') r.slots = (r.slots || []).filter((s) => s.start_min !== a.start_min);
     st.slots = r;
     if (st.time != null && !(r.slots || []).some((s) => s.start_min === st.time)) st.time = null;
   } catch (e) { if (my !== st.sreq || M.rs !== st) return; st.slotsErr = e; }
@@ -2098,20 +2179,53 @@ function applyShop(data, mode, why) {
   if (pre && C.services.some((s) => s.id === pre)) { S.services = [pre]; renderServices(); fixStaff(); update(); }
   if (/^#(equipo|resenas|horario|bookingMain)$/.test(location.hash)) { const t = $(location.hash); if (t) t.scrollIntoView(); }
 }
-function renderShopError(err, slug) {
+// Barbería suspendida: la API responde 404 como a un enlace que no existe, pero con su propio mensaje
+// ("Esta barbería no está disponible."). El enlace es correcto: no se le pide al cliente que lo revise.
+const unavailable = (err) => !!err && err.code === 'not_found' && /no est[aá] disponible/i.test(err.message || '');
+const MY_APPTS = html`<a class="btn btn-ghost btn-sm" href="app/#/mis-citas">${raw(icon('user'))}Entrar a Mis citas</a>`;
+// Cabecera y pie neutros (TuBarbería, o la barbería de una cita guardada en este dispositivo) cuando no hay una
+// barbería que mostrar: enlace roto o viejo, barbería suspendida o cita que no abre. Reemplaza lo que trae el
+// HTML estático de NEW GOMEZ: logo, teléfono, WhatsApp, redes, dirección, horario, título y datos para buscadores.
+function paintNeutral(o) {
   R.classList.remove('pg-hload');
-  const nf = !!err && err.code === 'not_found';
-  $('#hNombre').innerHTML = String(html`${nf ? 'Barbería no encontrada' : 'Reserva tu cita'} <small>${slug || ''}</small>`);
-  ['#hRating', '#hIntro', '#hOpen', '#hMapa'].forEach((s) => { $(s).hidden = true; });
+  R.classList.add('pg-generic', 'no-bar');
+  const link = $('#hBadgeLink');
+  if (o.home) { link.href = o.home; link.setAttribute('aria-label', o.name + ' · inicio'); }
+  else { link.removeAttribute('href'); link.removeAttribute('aria-label'); }
+  link.innerHTML = String(html`<span class="badge mono-badge" aria-hidden="true">${o.mark || raw(icon('scissors'))}</span>`);
+  $('#hNombre').innerHTML = String(html`${o.name} <small>${o.sub}</small>`);
+  ['#hRating', '#hIntro', '#hOpen', '#hMapa', '#genGallery'].forEach((s) => { $(s).hidden = true; });
   $('#hHorario').textContent = '';
-  $('#hBadgeLink').innerHTML = String(html`<span class="badge mono-badge" aria-hidden="true">${raw(icon('scissors'))}</span>`);
-  $$('.info-section,.info-nav,#progressNav,#bar').forEach((el) => { el.hidden = true; });
+  $('#fLinks').innerHTML = String(html`<a href="app/">Acceso del equipo</a>`);
+  $('#fDireccion').textContent = '';
+  $('#fDireccion').hidden = true;
+  document.title = o.title;
+  setMeta('meta[name="description"]', 'content', 'Reserva tu cita en línea en tu barbería con TuBarbería.');
+  setMeta('meta[name="apple-mobile-web-app-title"]', 'content', 'TuBarbería');
+  $$('link[rel="canonical"],meta[property^="og:"],#ldShop').forEach((el) => el.remove());
+  if (!$('meta[name="robots"]')) document.head.insertAdjacentHTML('beforeend', '<meta name="robots" content="noindex"/>');
+}
+function renderShopError(err, slug) {
+  const nf = !!err && err.code === 'not_found';
+  const gone = unavailable(err);
+  paintNeutral({ name: 'TuBarbería', sub: 'Reservas en línea', title: (gone ? 'Barbería no disponible' : nf ? 'Barbería no encontrada' : 'Reserva tu cita') + ' · TuBarbería' });
+  $$('.info-section,.info-nav,#progressNav').forEach((el) => { el.hidden = true; });
+  $('#bookingMain').classList.add('solo');
+  // Enlace viejo (la barbería cambió su dirección): las citas guardadas en este dispositivo siguen abriendo.
+  const t = tzNow(NEGOCIO.ctz);
+  const saved = nf && !gone ? mineAll().filter((x) => x.slug === slug && ['pending', 'confirmed'].includes(x.status) && x.date >= t.date).slice(0, 2) : [];
+  const acts = [];
+  if (!nf) acts.push(html`<button type="button" class="btn btn-primary btn-sm" id="retryShop">${raw(icon('refresh'))}Reintentar</button>`);
+  for (const x of saved) acts.push(html`<a class="btn btn-primary btn-sm" href="${manageUrl(x.token, x.slug).replace(siteBase(), './')}">${raw(icon('calendar-check'))}Ver mi cita del ${dateShort(x.date)}, ${fmtTime(x.start_min)}</a>`);
+  if (C.demo) acts.push(html`<a class="btn btn-ghost btn-sm" href="./?b=demo">Ir a la barbería de la demo</a>`);
+  else if (nf) acts.push(MY_APPTS);
   $('#flow').innerHTML = String(html`<div class="empty" style="padding:32px 20px;margin-top:10px">
-    <b style="font-size:22px;font-family:var(--disp)">${nf ? 'No encontramos esa barbería' : C.demo ? 'La demo no está disponible por ahora' : 'No pudimos cargar la página de reservas'}</b>
-    ${nf ? errText(err) + ' Revisa el enlace que te compartieron.' : C.demo ? 'Estamos preparando los datos de ejemplo. Intenta de nuevo en un momento.' : 'Revisa tu conexión e intenta de nuevo.'}
-    <div class="acts">${!nf ? html`<button type="button" class="btn btn-primary btn-sm" id="retryShop">${raw(icon('refresh'))}Reintentar</button>` : ''}<a class="btn btn-ghost btn-sm" href="./">Ir al inicio</a></div></div>`);
+    <b style="font-size:22px;font-family:var(--disp)">${gone ? 'Esta barbería no está disponible por ahora' : nf ? 'No encontramos esa barbería' : C.demo ? 'La demo no está disponible por ahora' : 'No pudimos cargar la página de reservas'}</b>
+    ${gone ? 'Por el momento no recibe reservas en línea. Si ya tienes una cita, ábrela con el enlace que recibiste al reservar o comunícate directamente con la barbería.'
+      : nf ? 'Puede que el enlace esté incompleto o que la barbería lo haya cambiado. Pídele su enlace de reservas actualizado.'
+      : C.demo ? 'Estamos preparando los datos de ejemplo. Intenta de nuevo en un momento.' : 'Revisa tu conexión e intenta de nuevo.'}
+    ${acts.length ? html`<div class="acts">${acts}</div>` : ''}</div>`);
   const b = $('#retryShop'); if (b) b.onclick = () => location.reload();
-  document.body.style.paddingBottom = '0';
 }
 async function boot() {
   const token = (Q.get('cita') || '').trim();

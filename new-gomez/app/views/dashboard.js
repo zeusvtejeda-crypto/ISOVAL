@@ -1,8 +1,9 @@
 // #/inicio — Inicio del panel.
 //
 //   Dueño / superadmin (reports.read): tablero del negocio con GET /api/reports/dashboard.
-//     · Bloque "Hoy" (todo el equipo): próximas citas con acciones rápidas, cobrado / esperado, atajos
-//       (recordatorios de mañana → #/mensajes, caja → #/caja) y botón de nueva cita.
+//     · Bloque "Hoy" (todo el equipo): próximas citas con acciones rápidas, cobrado / esperado y atajos
+//       (recordatorios de mañana → #/mensajes, caja → #/caja, enlace → #/enlace). «Nueva cita» vive en el
+//       shell (barra superior o «+» de la barra inferior), no se repite aquí.
 //     · "Tu negocio": filtros de periodo (Hoy, 7 días, 30 días, Este mes, Mes pasado, Personalizado) y
 //       barbero — en la URL (?r=&desde=&hasta=&barbero=) y recordados en este dispositivo —, KPIs con
 //       variación contra el periodo anterior, ingresos/citas por día, barbero más activo, ranking del
@@ -16,7 +17,7 @@
 // Exporta utilidades que reutiliza #/reportes (reports.js):
 //   PRESETS, MAX_DAYS, rangeOf(key, q), prevRange(from, to), rangeText(from, to), shortDay(key),
 //   readPrefs(k), writePrefs(k, v), initialFilters(query, presets, def, storeKey),
-//   filtersHtml(presets, S, staff|null), paintFilters(el, presets, S, staff), wireFilters(el, { presets, S, storeKey, staff, onChange }),
+//   filtersHtml(presets, S, staff|null), paintFilters(el, presets, S, staff), fitFilters(el), wireFilters(el, { presets, S, storeKey, staff, onChange }),
 //   deltaInfo(cur, prev, { invert, pts }), deltaHtml(d, prevText), kpiTile(def, k, prevK|null|false, series, prevText),
 //   animateKpis(root, defs, first), bucketSeries(series, days), mountChart(store, key, host, factory, opts), destroyCharts(store),
 //   METHOD_ORDER, METHOD_ICON, methodSegments(by_method), hourLabel(h), peakOf(by_hour), statusBars(by_status),
@@ -86,14 +87,27 @@ export function initialFilters(query, presets, def, storeKey) {
   return { r: src.r, desde: src.r === 'otro' ? (src.desde || '') : '', hasta: src.r === 'otro' ? (src.hasta || '') : '', barbero: query.r ? (query.barbero || '') : (saved.barbero || '') };
 }
 
-// ── Filtros: periodo (segmentado en tablet/escritorio, hoja inferior en móvil) + barbero ──
+// ── Filtros: periodo + barbero ──
+// Con espacio: periodo segmentado y, a la derecha, el barbero. Cuando no caben en una fila (teléfono, iPad,
+// Reportes con 8 periodos en pantallas medianas) pasan a «compacto» (fitFilters): dos piezas del mismo aspecto,
+// periodo → hoja inferior y barbero → selector nativo (transparente, encima de la pieza).
 export function filtersHtml(presets, S, staff) {
-  return html`<div class="db-filters" role="group" aria-label="Filtros del periodo">
+  const narrow = typeof matchMedia === 'function' && matchMedia('(max-width:719px)').matches;
+  return html`<div class="db-filters ${narrow ? 'compact' : ''}" role="group" aria-label="Filtros del periodo">
     <div class="seg db-seg" role="group" aria-label="Periodo">${presets.map((k) => html`<button type="button" data-range="${k}" aria-pressed="${String(k === S.r)}">${PRESETS[k]}</button>`)}</div>
-    <button type="button" class="btn btn-secondary db-range-btn" data-act="range-sheet" aria-haspopup="dialog">${raw(icon('calendar', 'ic-sm'))}<span class="grow truncate" data-range-label>${PRESETS[S.r]}</span>${raw(icon('chevron-down', 'ic-sm'))}</button>
-    ${staff ? html`<label class="db-staff"><span class="sr">Barbero</span><select class="select" data-staff aria-label="Filtrar por barbero">${staffOptions(staff, S.barbero)}</select></label>` : ''}
+    <button type="button" class="btn btn-secondary db-pick db-range-btn" data-act="range-sheet" aria-haspopup="dialog">${raw(icon('calendar', 'ic-sm'))}<span class="grow truncate" data-range-label>${PRESETS[S.r]}</span>${raw(icon('chevron-down', 'ic-sm'))}</button>
+    ${staff ? html`<label class="btn btn-secondary db-pick db-staff">${raw(icon('users', 'ic-sm'))}<span class="grow truncate" data-staff-label aria-hidden="true">Todo el equipo</span>${raw(icon('chevron-down', 'ic-sm'))}<select data-staff aria-label="Filtrar por barbero">${staffOptions(staff, S.barbero)}</select></label>` : ''}
   </div>
   <p class="db-cap" data-cap aria-live="polite"></p>`;
+}
+// Compacto si el segmentado y el barbero no caben juntos en el ancho disponible.
+export function fitFilters(el) {
+  const box = el && $('.db-filters', el), seg = box && $('.db-seg', box);
+  if (!seg || !box.clientWidth) return;
+  box.classList.remove('compact');
+  const st = $('.db-staff', box);
+  const need = seg.scrollWidth + (st ? st.offsetWidth + (parseFloat(getComputedStyle(box).columnGap) || 0) : 0);
+  box.classList.toggle('compact', need > box.clientWidth);
 }
 function staffOptions(list, sel) {
   return html`<option value="">Todo el equipo</option>${(list || []).map((s) => html`<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${s.name}${s.active === false ? ' (inactivo)' : ''}</option>`)}`;
@@ -105,11 +119,13 @@ export function paintFilters(el, presets, S, staff) {
   if (lbl) lbl.textContent = S.r === 'otro' ? rangeText(R.from, R.to) : PRESETS[S.r];
   const sel = $('[data-staff]', el);
   if (sel && staff) { sel.innerHTML = String(staffOptions(staff, S.barbero)); sel.value = S.barbero || ''; }
+  const who = S.barbero && staff ? (staff.find((s) => s.id === S.barbero) || {}).name : '';
+  const slbl = $('[data-staff-label]', el);
+  if (slbl) slbl.textContent = (sel && sel.selectedIndex > 0 && sel.options[sel.selectedIndex].text) || who || 'Todo el equipo';
   const cap = $('[data-cap]', el);
-  if (cap) {
-    const who = S.barbero && staff ? (staff.find((s) => s.id === S.barbero) || {}).name : '';
-    cap.innerHTML = String(html`${raw(icon('calendar'))}<b>${rangeText(R.from, R.to)}</b><span>· comparado con ${rangeText(P.from, P.to)}</span>${who ? html`<span>· solo ${who}</span>` : ''}`);
-  }
+  // Separadores «·» por CSS (.db-cap-l): el que queda al inicio de un renglón se oculta.
+  if (cap) cap.innerHTML = String(html`${raw(icon('calendar'))}<span class="db-cap-t"><span class="db-cap-l"><b>${rangeText(R.from, R.to)}</b><span>comparado con ${rangeText(P.from, P.to)}</span>${who ? html`<span>solo ${who}</span>` : ''}</span></span>`);
+  fitFilters(el);
 }
 // opts: { presets, S, storeKey, onChange(), staff: () => list }
 export function wireFilters(el, opts) {
@@ -130,7 +146,12 @@ export function wireFilters(el, opts) {
     on(el, 'click', '[data-act="range-sheet"]', async () => { const p = await openRangeSheet({ presets, S }); if (p) apply(p); }),
     on(el, 'change', '[data-staff]', (e, s) => apply({ barbero: s.value }))
   ];
-  return () => offs.forEach((f) => f());
+  // Vuelve a decidir si van compactos al cambiar el ancho (rotar, barra lateral) y cuando cargan las fuentes.
+  let lastW = el.clientWidth, off = false;
+  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { const w = el.clientWidth; if (w !== lastW) { lastW = w; fitFilters(el); } }) : null;
+  if (ro) ro.observe(el);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!off) fitFilters(el); });
+  return () => { off = true; if (ro) ro.disconnect(); offs.forEach((f) => f()); };
 }
 
 // Hoja de periodo: presets como renglones (móvil) + rango personalizado con dos fechas.
@@ -279,6 +300,9 @@ export function peakOf(byHour) {
 // ═════════════════════════════════════════════════════════════════════
 // Estilos
 // ═════════════════════════════════════════════════════════════════════
+// Estado habitual en poco ancho (renglones de citas en teléfono o en una columna angosta): solo el punto.
+const DOT = '.db-appt .db-dot{width:20px;padding:0;gap:0;justify-content:center;background:none}.db-appt .db-dot::before{width:8px;height:8px;opacity:1}' +
+  '.db-appt .db-dot>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}';
 const CSS = `
 .db .stack,.db .list,.db .stack-sm{grid-template-columns:minmax(0,1fr)}
 .db-head{align-items:flex-end}
@@ -286,19 +310,24 @@ const CSS = `
 .db-head h2{font-size:32px}
 @media (min-width:1024px){.db-head h2{font-size:38px}}
 .db-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.db-pick{--h:40px;justify-content:flex-start;padding:0 12px;min-width:0}
+.db-pick .grow{text-align:left}
+.db-pick>.ic:last-of-type{color:var(--text-3)}
 .db-range-btn{display:none}
-.db-staff{margin-left:auto;min-width:0;display:block}
-.db-staff .select{min-width:210px;min-height:40px;font-weight:500}
-.db-cap{display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;margin:10px 0 16px;font-size:12.5px;color:var(--text-3);min-height:19px}
+.db-staff{margin-left:auto;flex:none;min-width:210px;max-width:300px}
+.db-staff select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0;-webkit-appearance:none;appearance:none}
+.db-staff:focus-within{border-color:var(--brand);box-shadow:0 0 0 3.5px var(--brand-soft)}
+.db-filters.compact{flex-wrap:nowrap}
+.db-filters.compact .db-seg{display:none}
+.db-filters.compact .db-pick{--h:44px;display:inline-flex;flex:1 1 0;min-width:0;max-width:none;margin-left:0}
+@media (max-width:519px){.db-filters.compact .db-pick{flex:1 1 auto}}
+@media (max-width:359px){.db-filters.compact .db-pick>.ic:first-child{display:none}}
+.db-cap{display:flex;align-items:flex-start;gap:6px;margin:10px 0 16px;font-size:12.5px;line-height:19px;color:var(--text-3);min-height:19px}
 .db-cap b{color:var(--text-2);font-weight:600}
-.db-cap .ic{width:14px;height:14px}
-@media (max-width:719px){
-  .db-filters .db-seg{display:none}
-  .db-range-btn{display:inline-flex;flex:1 1 0;min-width:0;justify-content:flex-start;padding:0 12px;min-height:44px}
-  .db-range-btn .grow{text-align:left}
-  .db-staff{flex:1 1 0;margin-left:0}
-  .db-staff .select{min-width:0;width:100%;min-height:44px}
-}
+.db-cap .ic{width:14px;height:14px;flex:none;margin-top:2.5px}
+.db-cap-t{min-width:0;overflow:hidden}
+.db-cap-l{display:flex;flex-wrap:wrap;margin-left:-14px}
+.db-cap-l>*::before{content:"·";display:inline-block;width:14px;text-align:center;font-weight:400;color:var(--text-3)}
 .db-plist{margin:0 -20px}
 .db-plist .list-item{min-height:56px}
 .db-plist .meta{display:block}
@@ -400,7 +429,14 @@ const CSS = `
 .db-appt .acts .btn-sm{--h:36px}
 .db-appt.done .db-appt-main{opacity:.6}
 @media (max-width:519px){.db-appt.has-act .badge{display:none}.db-appt-time{width:60px}.db-appt-main{gap:10px;padding-left:16px}}
-.db-today .card-head .db-to-agenda{flex:none;margin:-4px -8px 0 0}
+.db-alist{container-type:inline-size}
+@container (max-width:519px){${DOT}}
+@media (max-width:519px){${DOT}}
+/* Título de tarjeta con su enlace (Agenda, Recordar) en la misma línea base; el botón no agranda la cabecera. */
+.db-ttl{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.db-ttl h3{min-width:0}
+.db-ttl>.btn{flex:none;margin:-12px -8px -12px 0}
+.db-ttl.mid{align-items:center} /* botón que empieza con ícono: su línea base sería el borde del ícono */
 .db-tmore{display:flex;justify-content:center;border-top:1px solid var(--border)}
 .db-tmore button{min-height:46px;font-size:13.5px;font-weight:600;color:var(--brand-strong);width:100%}
 .db-tmore button:hover{background:var(--surface-2)}
@@ -409,8 +445,7 @@ const CSS = `
 .db-tempty b{display:block;font-size:14.5px}
 .db-tempty span{font-size:13px;color:var(--text-2)}
 .db-shorts{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
-@media (min-width:600px) and (max-width:1023px){.db-shorts .db-short-link{display:none}}
-@media (min-width:600px) and (max-width:1023px){.db-shorts{grid-template-columns:repeat(2,minmax(0,1fr))}.db-shorts>.btn{grid-column:1/-1}}
+@media (min-width:600px) and (max-width:1023px){.db-shorts{grid-template-columns:repeat(2,minmax(0,1fr))}.db-shorts .db-short-link{display:none}}
 .db-short{display:flex;align-items:center;gap:12px;padding:14px 14px 14px 16px;text-decoration:none;color:inherit;min-height:74px}
 .db-short .ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-strong);flex:none}
 .db-short .ico.wa{background:rgba(37,211,102,.14);color:#1A9E4B}
@@ -483,7 +518,7 @@ const CSS = `
 .db-tl-row .bd>button{flex:1;min-width:0;text-align:left;display:grid;gap:2px;padding:4px 6px;margin-left:-6px;border-radius:10px;min-height:44px;align-content:center}
 .db-tl-row .bd>button:hover{background:var(--surface-2)}
 .db-tl-row .bd b{font-size:14.5px;font-weight:600}
-.db-tl-row .bd span{font-size:12.5px;color:var(--text-2)}
+.db-tl-row .bd>button>span{font-size:12.5px;color:var(--text-2)}
 .db-tl-row .act{display:flex;gap:6px;align-items:center;flex:none}
 .db-tl-row.past .t,.db-tl-row.past .bd>button{opacity:.6}
 .db-tl-row .db-stt{display:none;font-style:normal;font-weight:600;color:var(--st)}
@@ -704,8 +739,8 @@ async function renderOwner(el, { query }) {
     const rem = side.rem && side.rem.items ? side.rem.items : null;
     const pct = all.length ? Math.round((done / all.length) * 100) : 0;
     host.innerHTML = String(html`
-      <div class="card-head"><div><span class="eyebrow">Hoy</span><h3>${all.length ? plural(all.length, 'cita') + ' en la agenda' : 'Sin citas en la agenda'}</h3></div>
-        <a class="btn btn-ghost btn-sm db-to-agenda" href="#/agenda" aria-label="Ver la agenda de hoy">Agenda${raw(icon('chevron-right', 'ic-sm'))}</a></div>
+      <div class="card-head"><div class="grow"><span class="eyebrow">Hoy</span>
+        <div class="db-ttl"><h3>${all.length ? plural(all.length, 'cita') + ' en la agenda' : 'Sin citas en la agenda'}</h3><a class="btn btn-ghost btn-sm" href="#/agenda" aria-label="Ver la agenda de hoy">Agenda${raw(icon('chevron-right', 'ic-sm'))}</a></div></div></div>
       <div class="db-tstats">
         <div><span>Citas</span><b class="num">${number(all.length)}</b></div>
         <div><span>Atendidas</span><b class="num">${number(done)}</b></div>
@@ -990,8 +1025,18 @@ function apptRow(a, now) {
       <span class="stripe" style="--c:${staffColor(a)}"></span>
       <span class="who"><b class="truncate">${a.client_name || 'Cliente sin nombre'}</b><span class="truncate">${svcText(a)}${owner && a.staff_name ? ' · ' + firstName(a.staff_name) : ''}</span></span>
     </button>
-    <span class="acts">${statusBadge(a.status)}${q ? html`<button type="button" class="btn btn-sm ${q.cls}" data-quick="${q.act}" data-id="${a.id}">${raw(icon(q.icon, 'ic-sm'))}${q.label}</button>` : ''}</span>
+    <span class="acts">${rowBadge(a.status)}${q ? html`<button type="button" class="btn btn-sm ${q.cls}" data-quick="${q.act}" data-id="${a.id}">${raw(icon(q.icon, 'ic-sm'))}${q.label}</button>` : ''}</span>
   </div>`;
+}
+
+// Estado del renglón. Lo habitual (confirmada, atendida) lleva db-dot: en poco ancho queda en un punto de
+// color y el texto solo para lectores de pantalla; las excepciones (pendiente, cancelada, no llegó) conservan
+// la pastilla. En teléfono, si hay acción rápida (Confirmar, Atendida, Cobrar), la pastilla se oculta.
+const QUIET = ['confirmed', 'completed'];
+function rowBadge(st) {
+  if (!QUIET.includes(st)) return statusBadge(st);
+  const l = statusLabel(st);
+  return html`<span class="badge ${st} db-dot" title="${l}"><span>${l}</span></span>`;
 }
 
 function shortcutsHtml(rem, cash) {
@@ -1011,7 +1056,7 @@ function shortcutsHtml(rem, cash) {
     items.push(html`<a class="card interactive db-short" href="#/caja"><span class="ico ${cls}">${raw(icon('wallet'))}</span><span class="txt"><b>Caja</b><span>${sub}</span></span>${raw(icon('chevron-right', 'chev'))}</a>`);
   }
   if (can('shop.update')) items.push(html`<a class="card interactive db-short db-short-link" href="#/enlace"><span class="ico">${raw(icon('qr'))}</span><span class="txt"><b>Tu enlace de reservas</b><span>Compártelo por WhatsApp o con tu QR</span></span>${raw(icon('chevron-right', 'chev'))}</a>`);
-  if (canWrite()) items.push(html`<button type="button" class="btn btn-primary btn-lg btn-block" data-act="new">${raw(icon('calendar-plus'))}Nueva cita</button>`);
+  // «Nueva cita» no va aquí: ya está en la barra superior (barra lateral o riel) o en el «+» de la barra inferior.
   return html`${items}`;
 }
 
@@ -1115,19 +1160,19 @@ async function renderBarber(el) {
       </div>
       <div class="db-bgrid">
         <section class="card db-card" aria-labelledby="dbTlT">
-          <div class="card-head"><div><h3 id="dbTlT">Tu día</h3><span class="sub">${all.length ? plural(all.length, 'cita') + ' · ' + plural(done.length, 'atendida') : dateLongCap(t)}</span></div><a class="btn btn-ghost btn-sm" href="#/agenda">Agenda${raw(icon('chevron-right', 'ic-sm'))}</a></div>
+          <div class="card-head"><div class="grow"><div class="db-ttl"><h3 id="dbTlT">Tu día</h3><a class="btn btn-ghost btn-sm" href="#/agenda">Agenda${raw(icon('chevron-right', 'ic-sm'))}</a></div><span class="sub">${all.length ? plural(all.length, 'cita') + ' · ' + plural(done.length, 'atendida') : dateLongCap(t)}</span></div></div>
           <div class="card-body" style="padding-top:6px">${all.length ? timeline(all, now) : html`${emptyState({ icon: 'calendar', title: 'Hoy no tienes citas', text: tom.length ? 'Mañana tienes ' + plural(tom.length, 'cita') + '. Aprovecha para compartir tu enlace de reservas.' : 'Cuando te agenden una cita aparecerá aquí, en orden.', compact: true })}`}</div>
         </section>
         <div class="stack" style="gap:16px">
         <section class="card db-card" aria-labelledby="dbWkT">
           <div class="card-head"><div><h3 id="dbWkT">Tu semana</h3><span class="sub">${rangeText(W.range.from, W.range.to)}</span></div></div>
           <div class="card-body">${weekCal(W.series, t)}
-            <div class="db-wsum"><span><b>${number(W.kpis.appointments)}</b> citas</span><span><b>${number(W.kpis.completed)}</b> atendidas</span><span><b>${money(Math.round(W.kpis.revenue))}</b> cobrado</span></div>
+            <div class="db-wsum"><span>${countB(W.kpis.appointments, 'cita')}</span><span>${countB(W.kpis.completed, 'atendida')}</span><span><b>${money(Math.round(W.kpis.revenue))}</b> cobrado</span></div>
           </div>
         </section>
         ${R ? html`<section class="card db-card db-today" aria-labelledby="dbTmT">
-          <div class="card-head"><div><h3 id="dbTmT" style="font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:0">Mañana</h3><span class="sub">${tom.length ? plural(tom.length, 'cita') + ' · la primera a las ' + time(tom[0].start_min) : 'Sin citas por ahora'}</span></div>
-            ${tom.length && can('messages.send') ? html`<a class="btn btn-ghost btn-sm db-to-agenda" href="#/mensajes?tab=recordatorios">${raw(icon('whatsapp', 'ic-sm'))}Recordar</a>` : ''}</div>
+          <div class="card-head"><div class="grow"><div class="db-ttl mid"><h3 id="dbTmT" style="font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:0">Mañana</h3>
+            ${tom.length && can('messages.send') ? html`<a class="btn btn-ghost btn-sm" href="#/mensajes?tab=recordatorios">${raw(icon('whatsapp', 'ic-sm'))}Recordar</a>` : ''}</div><span class="sub">${tom.length ? plural(tom.length, 'cita') + ' · la primera a las ' + time(tom[0].start_min) : 'Sin citas por ahora'}</span></div></div>
           ${tom.length ? html`<div class="db-alist" style="margin-top:12px">${tom.slice(0, 3).map((a) => apptRow(a, -1))}</div>
             ${tom.length > 3 ? html`<div class="db-tmore"><a class="link-btn" style="min-height:46px;justify-content:center;width:100%" href="${'#/agenda?fecha=' + addDays(t, 1)}">Ver las ${tom.length} de mañana</a></div>` : ''}`
             : html`<div class="db-tempty"><span class="art">${raw(icon('calendar'))}</span><div class="grow"><b>Mañana tienes la agenda libre</b><span>Comparte tu enlace para que te reserven.</span></div></div>`}
@@ -1157,6 +1202,9 @@ async function renderBarber(el) {
   await load();
   return () => { gone = true; clearTimeout(tRefresh); clearInterval(tick); document.removeEventListener('visibilitychange', onVis); offs.forEach((f) => f()); };
 }
+
+// «1 cita», «3 atendidas» con el número en negritas (plural() decide la palabra).
+function countB(n, one, many) { const w = plural(n, one, many); const i = w.indexOf(' '); return html`<b>${w.slice(0, i)}</b>${w.slice(i)}`; }
 
 function nextHero(next, live, now, all, done, tom) {
   if (!next) {
@@ -1199,7 +1247,7 @@ function timeline(all, now) {
       <div class="t">${time(a.start_min)}<small>${a.duration_min} min</small></div>
       <div class="rail"><i></i></div>
       <div class="bd">
-        <button type="button" data-open="${a.id}" aria-label="${'Abrir cita de ' + (a.client_name || 'cliente') + ' a las ' + time(a.start_min) + ', ' + statusLabel(a.status)}"><b class="truncate">${a.client_name || 'Cliente sin nombre'}</b><span class="truncate"><em class="db-stt">${statusLabel(a.status)} · </em>${svcText(a)} · ${money(a.total)}</span></button>
+        <button type="button" data-open="${a.id}" aria-label="${'Abrir cita de ' + (a.client_name || 'cliente') + ' a las ' + time(a.start_min) + ', ' + statusLabel(a.status)}"><b class="truncate">${a.client_name || 'Cliente sin nombre'}</b><span class="truncate">${QUIET.includes(a.status) ? '' : html`<em class="db-stt">${statusLabel(a.status)} · </em>`}${svcText(a)} · ${money(a.total)}</span></button>
         <span class="act">${q ? html`<button type="button" class="btn btn-sm ${q.cls}" data-quick="${q.act}" data-id="${a.id}">${raw(icon(q.icon, 'ic-sm'))}${q.label}</button>` : statusBadge(a.status)}</span>
       </div>
     </div>`);

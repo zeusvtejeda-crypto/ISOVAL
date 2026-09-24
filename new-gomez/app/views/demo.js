@@ -22,7 +22,7 @@ export default {
           <p class="lead">"La Navaja Barber Club" es una barbería ficticia con 4 barberos, 140 clientes y 3 meses de historial. Elige cómo quieres entrar; puedes cambiar de rol cuando quieras desde la barra superior.</p>
           <div class="stack stagger" id="roles">
             ${ROLES.map((r) => html`
-              <button type="button" class="card interactive card-pad" data-role="${r.k}" style="text-align:left;display:flex;gap:14px;align-items:center;width:100%">
+              <button type="button" class="card interactive card-pad" data-role="${r.k}" style="text-align:left;display:flex;gap:14px;align-items:flex-start;width:100%">
                 <span class="avatar lg" style="--c:var(--ink);color:var(--brand)">${raw(icon(r.ic))}</span>
                 <span class="grow"><b style="font-size:16px">${r.t}</b><span class="muted" style="display:block;font-size:13.5px;margin-top:2px">${r.d}</span>
                 <span class="faint mono" style="display:block;font-size:12px;margin-top:6px">${r.cred} · demo1234</span></span>

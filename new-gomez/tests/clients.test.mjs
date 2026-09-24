@@ -296,7 +296,26 @@ test('reserva en línea sin sesión: no agrega un correo a la ficha existente (n
   assert.equal((await sdb.findOne('clients', { id: 'cl_victima' })).user_id, null);
 });
 
-test('findOrCreateClient: con user_id solo SU ficha; reclama una ficha sin cuenta solo por el correo de SU cuenta', async () => {
+test('reserva en línea sin sesión: nunca cae en una ficha con cuenta (su dueño vería citas ajenas)', async () => {
+  const f = await makeFixture();
+  await f.login('clientA', 'client.a@t.mx');
+  const sdb = scopedDb(f.db, 'shop_a');
+  // Cliente A tiene cuenta y su ficha tiene el teléfono 3110000001. Alguien reserva sin sesión con ese teléfono.
+  const b = await bookOnline(f, undefined, { name: 'Otra Persona', phone: '3110000001', email: 'otra@correo.mx' });
+  assert.equal(b.status, 200, b.body);
+  const cid = (await sdb.findOne('appointments', { id: b.data.appointment.id })).client_id;
+  assert.notEqual(cid, 'cl_clientA');
+  const my = await f.call('GET', '/api/my/appointments', { as: 'clientA', shop: 'shop_a' });
+  assert.ok(!my.data.upcoming.some((a) => a.id === b.data.appointment.id), 'no aparece en «Mis citas» de Cliente A');
+  // Otra reserva sin sesión con el mismo teléfono reutiliza esa ficha sin cuenta (no crea otra).
+  const b2 = await bookOnline(f, undefined, { name: 'Otra Persona', phone: '3110000001', start_min: 960 });
+  assert.equal((await sdb.findOne('appointments', { id: b2.data.appointment.id })).client_id, cid);
+  // Desde el panel (el equipo sí conoce al cliente) se sigue usando la ficha por teléfono.
+  const r = await findOrCreateClient(sdb, { name: 'Cliente A', phone: '3110000001', source: 'manual' });
+  assert.equal(r.client.id, 'cl_clientA');
+});
+
+test('findOrCreateClient: con user_id solo SU ficha; nunca reclama otra por teléfono ni por correo', async () => {
   const f = await makeFixture();
   const sdb = scopedDb(f.db, 'shop_a');
   // Ya tiene ficha → esa, aunque escriba el teléfono de otra persona (que no se copia).
@@ -305,16 +324,14 @@ test('findOrCreateClient: con user_id solo SU ficha; reclama una ficha sin cuent
   assert.equal(r.created, false);
   assert.equal(r.client.name, 'Cliente A');
   await sdb.insert('clients', { id: 'cl_mail', name: 'Carla', email: 'carla@correo.mx', phone: '3117776666', tags: [], source: 'manual', created_at: nowIso() });
-  // El correo ESCRITO en el formulario no basta para reclamarla.
-  r = await findOrCreateClient(sdb, { name: 'Carla', email: 'carla@correo.mx', phone: '3117776666', user_id: 'u_otro', user_email: 'otro@correo.mx', source: 'online' });
+  // El correo o el teléfono escritos en el formulario no bastan para reclamarla (tampoco si es el de su cuenta:
+  // no está verificado).
+  r = await findOrCreateClient(sdb, { name: 'Carla', email: 'carla@correo.mx', phone: '3117776666', user_id: 'u_otro', source: 'online' });
   assert.notEqual(r.client.id, 'cl_mail');
   assert.equal(r.created, true);
   assert.equal(r.client.user_id, 'u_otro');
+  assert.deepEqual([r.client.phone, r.client.email], [null, null], 'no duplica los datos de otra ficha');
   assert.equal((await sdb.findOne('clients', { id: 'cl_mail' })).user_id, null);
-  // El correo de la cuenta (lo pone el servidor desde la sesión) sí.
-  r = await findOrCreateClient(sdb, { name: 'Carla M', user_id: 'u_carla', user_email: 'Carla@Correo.MX', source: 'online' });
-  assert.equal(r.client.id, 'cl_mail');
-  assert.equal((await sdb.findOne('clients', { id: 'cl_mail' })).user_id, 'u_carla');
   // Sin user_id (panel): por teléfono como siempre, y completa el correo que falta.
   r = await findOrCreateClient(sdb, { name: 'X', phone: '3110000001', email: 'nuevo@correo.mx', source: 'manual' });
   assert.equal(r.client.id, 'cl_clientA');

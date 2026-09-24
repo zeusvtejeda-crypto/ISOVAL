@@ -124,6 +124,41 @@ test('mis citas: una reserva en línea con sesión aparece en el portal', async 
   assert.ok(r.data.upcoming.some((a) => a.id === b.data.appointment.id));
 });
 
+test('mis citas: resumen de las próximas en mis otras barberías (misma cuenta)', async () => {
+  const f = await setup();
+  let r = await f.call('GET', '/api/my/appointments', me);
+  assert.deepEqual(r.data.elsewhere, [], 'sin otras barberías');
+  // Reserva en línea con sesión en Beta: la cuenta queda como cliente de las dos barberías.
+  const b1 = await f.call('POST', '/api/public/shops/beta/appointments', { as: 'clientA', body: { services: ['sv_corteB'], staff_id: 'st_ownerB', date: addDays(f.day, 1), start_min: 660, name: 'Cliente A', phone: '3110000001' } });
+  assert.equal(b1.status, 200, b1.body);
+  const b2 = await f.call('POST', '/api/public/shops/beta/appointments', { as: 'clientA', body: { services: ['sv_corteB'], staff_id: 'st_ownerB', date: f.day, start_min: 720, name: 'Cliente A', phone: '3110000001' } });
+  assert.equal(b2.status, 200, b2.body);
+  r = await f.call('GET', '/api/my/appointments', me);
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.upcoming.length, 2, 'las de Alfa siguen solas en upcoming');
+  assert.equal(r.data.elsewhere.length, 1);
+  const e = r.data.elsewhere[0];
+  assert.equal(e.shop_id, 'shop_b');
+  assert.equal(e.shop_slug, 'beta');
+  assert.equal(e.shop_name, 'Barbería Beta');
+  assert.equal(e.count, 2);
+  assert.equal(e.next.id, b2.data.appointment.id, 'la más cercana primero');
+  assert.equal(e.next.staff_name, 'Dueño B');
+  assert.equal(e.next.internal_note, undefined, 'vista pública');
+  // Desde Beta se ven las de Alfa.
+  const inB = await f.call('GET', '/api/my/appointments', { as: 'clientA', shop: 'shop_b' });
+  assert.equal(inB.status, 200, inB.body);
+  assert.deepEqual(inB.data.elsewhere.map((x) => [x.shop_slug, x.count]), [['alfa', 2]]);
+  // Canceladas y pasadas no cuentan; una barbería suspendida no aparece.
+  await f.call('POST', '/api/my/appointments/' + b2.data.appointment.id + '/cancel', { as: 'clientA', shop: 'shop_b', body: {} });
+  r = await f.call('GET', '/api/my/appointments', me);
+  assert.equal(r.data.elsewhere[0].count, 1);
+  assert.equal(r.data.elsewhere[0].next.id, b1.data.appointment.id);
+  await f.db.update('shops', { id: 'shop_b' }, { status: 'suspended' });
+  r = await f.call('GET', '/api/my/appointments', me);
+  assert.deepEqual(r.data.elsewhere, []);
+});
+
 test('mi perfil: actualizar nombre, teléfono, marketing y cumpleaños con validación', async () => {
   const f = await setup();
   let r = await f.call('PATCH', '/api/my/profile', { ...me, body: { name: '  Ana   María  ', phone: '(55) 1234-0000', marketing_ok: false, birthday: '1990-05-01' } });

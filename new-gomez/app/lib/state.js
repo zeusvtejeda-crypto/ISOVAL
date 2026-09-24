@@ -33,7 +33,8 @@ export const nowMin = () => nowMinIn(tz());
 export const me = () => (state.ctx && state.ctx.staff) || null; // ficha de staff del usuario en esta barbería
 
 export async function loadMe() {
-  const r = await api.get('/auth/me', null, { silent401: true });
+  // /auth/session responde 200 también sin sesión ({ user: null }): una carga anónima no deja un 401 en consola.
+  const r = await api.get('/auth/session', null, { silent401: true });
   state.user = r.user || null;
   state.staff = r.staff || null;
   state.contexts = r.contexts || [];

@@ -292,7 +292,7 @@ export default {
       <section class="card cl-card" aria-label="Lista de clientes">
         <div class="cl-tools">
           <div class="input-group search">${raw(icon('search'))}
-            <input class="input" id="clQ" type="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar por nombre, teléfono o correo" aria-label="Buscar clientes" value="${st.q}"/>
+            <input class="input" id="clQ" type="search" enterkeyhint="search" autocomplete="off" placeholder="Nombre, teléfono o correo" aria-label="Buscar clientes" value="${st.q}"/>
             <button type="button" class="btn btn-ghost btn-icon btn-sm" data-clear aria-label="Limpiar búsqueda" ${st.q ? '' : 'hidden'}>${raw(icon('x', 'ic-sm'))}</button>
           </div>
           <select class="select" id="clSort" aria-label="Ordenar clientes">

@@ -21,6 +21,8 @@ new-gomez/                  ← raíz del proyecto de Cloudflare Pages (salida =
 
 1. **Un solo motor.** El mismo `core/router.js` atiende al servidor (D1) y a la demo del navegador
    (memoria + localStorage). La demo no es una maqueta: ejecuta exactamente las mismas reglas y permisos.
+   Con varias pestañas (panel + página pública), cada una guarda solo sus filas cambiadas sobre la copia más
+   reciente (por tabla e id, bajo un candado entre pestañas): ninguna pisa lo que confirmó la otra.
 2. **Aislamiento total entre barberías.** Toda tabla con `shop_id` se consulta solo vía `ctx.sdb`
    (`scopedDb(db, ctx.shop.id)`), que inyecta `shop_id` desde la sesión. Ningún handler filtra por un
    `shop_id` recibido del cliente. `ctx.db` (sin scope) solo para tablas globales (`shops`, `users`,

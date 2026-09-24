@@ -131,7 +131,7 @@ async function runReminders(ctx) {
       const cl = a.client_id && clients[a.client_id] && !clients[a.client_id].deleted_at ? clients[a.client_id] : null;
       const phone = messagePhone(cl, a);
       if (!validPhone(phone)) { skipped++; continue; }
-      const text = await composeMessage({ sdb, shop }, { kind: 'reminder', appt: a, client: cl, base, withToken: true, staffName: staff[a.staff_id] || '' });
+      const text = await composeMessage({ sdb, shop, demo: ctx.env.MODE === 'demo' }, { kind: 'reminder', appt: a, client: cl, base, withToken: true, staffName: staff[a.staff_id] || '' });
       if (!text) { skipped++; continue; }
       await recordMessage(sdb, { appointment_id: a.id, client_id: a.client_id, kind: 'reminder', to_phone: phone, body: text, status: 'queued', created_by: 'automation' }, ACTOR);
       await sdb.update('appointments', { id: a.id }, { reminder_sent_at: nowIso() });

@@ -116,8 +116,8 @@ test('flujo completo: cobros + movimientos → resumen exacto → corte con falt
   const nts = await f.db.find('notifications', { shop_id: 'shop_a', type: 'cash_closed' });
   assert.equal(nts.length, 1, 'un aviso por dueño activo');
   assert.equal(nts[0].staff_id, 'st_ownerA');
-  assert.match(nts[0].title, /faltante de \$20\.00/);
-  assert.match(nts[0].body, /Esperado \$670\.00/);
+  assert.equal(nts[0].title, 'Corte de caja con faltante de $20', 'mismo formato que el panel: sin .00');
+  assert.match(nts[0].body, /^Esperado \$670 · Contado \$650 · Diferencia −\$20 · /);
   assert.equal(nts[0].data.difference, -20);
   assert.equal(nts[0].link, '#/caja');
   // Ya cerrada: current vuelve a vacío con el último corte.
@@ -164,7 +164,7 @@ test('movimientos: validaciones y no sale más efectivo del que hay', async () =
   assert.ok(r.error.fields.amount && r.error.fields.concept);
   r = await f.move({ type: 'withdrawal', amount: 100.01, concept: 'Retiro' });
   assert.equal(r.status, 400);
-  assert.match(r.error.fields.amount, /\$100\.00/);
+  assert.equal(r.error.fields.amount, 'En caja solo hay $100.');
   r = await f.move({ type: 'withdrawal', amount: 100, concept: 'Retiro' });
   assert.equal(r.status, 200);
   r = await f.move({ type: 'expense', amount: 1, concept: 'Café' });

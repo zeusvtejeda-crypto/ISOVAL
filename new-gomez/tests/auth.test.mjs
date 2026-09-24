@@ -259,29 +259,73 @@ test('registro con barbería: crea ficha de cliente, contexto cliente y avisa a 
   assert.equal(await scopedDb(f.db, 'shop_b').count('clients', { email: 'beto@correo.mx' }), 0);
 });
 
-test('registro vincula una ficha existente SOLO por correo (sin cuenta), nunca por teléfono', async () => {
+test('registro: el correo (sin verificar) nunca basta para quedarse con una ficha, ni el teléfono', async () => {
   const f = await makeFixture();
   const sdb = scopedDb(f.db, 'shop_a');
-  await sdb.insert('clients', { id: 'cl_mail', name: 'Carla', email: 'carla@correo.mx', phone: null, tags: [], created_at: 'x' });
-  await sdb.insert('clients', { id: 'cl_phone', name: 'Víctima', email: null, phone: '3119990000', tags: [], created_at: 'x' });
+  // Reserva en línea sin cuenta: ficha con el correo y el teléfono que escribió quien reservó.
+  const b = await f.call('POST', '/api/public/shops/alfa/appointments', { body: { services: ['sv_corte'], staff_id: 'st_barberA', date: f.day, start_min: 600, name: 'Carla', phone: '3111112222', email: 'carla@correo.mx', note: 'Alergia al talco' } });
+  assert.equal(b.status, 200, b.body);
+  const fichaId = (await sdb.findOne('appointments', { id: b.data.appointment.id })).client_id;
+  await sdb.insert('clients', { id: 'cl_manual', name: 'Víctima', email: 'victima@correo.mx', phone: '3119990000', tags: [], source: 'manual', created_at: 'x' });
   await sdb.insert('clients', { id: 'cl_taken', name: 'Dani', email: 'dani@correo.mx', user_id: 'u_otro', tags: [], created_at: 'x' });
 
-  const a = await f.call('POST', '/api/auth/register', { body: { name: 'Carla M', email: 'carla@correo.mx', password: 'clave1234', phone: '3111112222', shop_slug: 'alfa' } });
-  assert.equal(a.status, 200);
-  assert.equal(a.data.contexts[0].client_id, 'cl_mail');
-  const carla = await sdb.findOne('clients', { id: 'cl_mail' });
-  assert.equal(carla.user_id, a.data.user.id);
-  assert.equal(carla.phone, '3111112222');
-
-  const b = await f.call('POST', '/api/auth/register', { body: { name: 'Intruso', email: 'intruso@correo.mx', password: 'clave1234', phone: '3119990000', shop_slug: 'alfa' } });
-  assert.equal(b.status, 200);
-  assert.notEqual(b.data.contexts[0].client_id, 'cl_phone');
-  assert.equal((await sdb.findOne('clients', { id: 'cl_phone' })).user_id, null);
-
-  const c = await f.call('POST', '/api/auth/register', { body: { name: 'Dani 2', email: 'dani@correo.mx', password: 'clave1234', shop_slug: 'alfa' } });
-  assert.equal(c.status, 200);
-  assert.notEqual(c.data.contexts[0].client_id, 'cl_taken');
+  // Quien conoce el correo (y el teléfono) se registra con ellos: ficha nueva, vacía y sin datos ajenos.
+  const reg = (body) => f.call('POST', '/api/auth/register', { ip: '9.9.9.9', body: Object.assign({ password: 'clave1234', shop_slug: 'alfa' }, body) });
+  const a = await reg({ name: 'Intruso', email: 'carla@correo.mx', phone: '3111112222' });
+  assert.equal(a.status, 200, a.body);
+  assert.notEqual(a.data.contexts[0].client_id, fichaId);
+  assert.equal((await sdb.findOne('clients', { id: fichaId })).user_id, null);
+  const mine = await sdb.findOne('clients', { id: a.data.contexts[0].client_id });
+  assert.deepEqual([mine.user_id, mine.phone, mine.email], [a.data.user.id, null, null], 'teléfono y correo ya usados por otra ficha: no se duplican');
+  const my = await f.call('GET', '/api/my/appointments', { token: a.data.token, shop: 'shop_a' });
+  assert.equal(my.status, 200, my.body);
+  assert.deepEqual([my.data.upcoming.length, my.data.past.length], [0, 0], 'no ve la cita de otra persona');
+  // Tampoco una ficha capturada por el equipo (correo y teléfono) ni una que ya tiene cuenta.
+  const v = await reg({ name: 'Intruso 2', email: 'victima@correo.mx', phone: '3119990000' });
+  assert.equal(v.status, 200, v.body);
+  assert.notEqual(v.data.contexts[0].client_id, 'cl_manual');
+  assert.equal((await sdb.findOne('clients', { id: 'cl_manual' })).user_id, null);
+  const d = await reg({ name: 'Dani 2', email: 'dani@correo.mx' });
+  assert.equal(d.status, 200);
+  assert.notEqual(d.data.contexts[0].client_id, 'cl_taken');
   assert.equal((await sdb.findOne('clients', { id: 'cl_taken' })).user_id, 'u_otro');
+  // Con sesión, reservar tampoco reclama la ficha por el correo de la cuenta.
+  const b2 = await f.call('POST', '/api/public/shops/alfa/appointments', { token: v.data.token, body: { services: ['sv_corte'], staff_id: 'st_barberA', date: f.day, start_min: 700, name: 'Intruso 2', phone: '3119990000', email: 'victima@correo.mx' } });
+  assert.equal(b2.status, 200, b2.body);
+  assert.equal((await sdb.findOne('appointments', { id: b2.data.appointment.id })).client_id, v.data.contexts[0].client_id);
+  assert.equal((await sdb.findOne('clients', { id: 'cl_manual' })).user_id, null);
+});
+
+test('registro: con los enlaces de TODAS sus citas (claim) se vincula la ficha de quien reservó sin cuenta', async () => {
+  const f = await makeFixture();
+  const sdb = scopedDb(f.db, 'shop_a');
+  const book = (body) => f.call('POST', '/api/public/shops/alfa/appointments', { body: Object.assign({ services: ['sv_corte'], staff_id: 'st_barberA', date: f.day, name: 'Carla', phone: '3111112222', email: 'carla@correo.mx' }, body) });
+  const b1 = await book({ start_min: 600 });
+  const b2 = await book({ start_min: 700 }); // mismo teléfono → misma ficha
+  const fichaId = (await sdb.findOne('appointments', { id: b1.data.appointment.id })).client_id;
+  assert.equal((await sdb.findOne('appointments', { id: b2.data.appointment.id })).client_id, fichaId);
+  const reg = (email, claim) => f.call('POST', '/api/auth/register', { ip: '9.9.9.9', body: { name: 'Carla M', email, password: 'clave1234', phone: '3111112222', shop_slug: 'alfa', claim } });
+  // Solo el enlace de UNA de sus dos citas: no prueba que la ficha completa sea suya.
+  let r = await reg('carla1@correo.mx', [b1.data.manage_token]);
+  assert.equal(r.status, 200, r.body);
+  assert.notEqual(r.data.contexts[0].client_id, fichaId);
+  // Basura, tokens repetidos o de otra barbería: se ignoran sin error.
+  r = await reg('carla2@correo.mx', ['x', 42, null, 'A'.repeat(40)]);
+  assert.equal(r.status, 200, r.body);
+  assert.notEqual(r.data.contexts[0].client_id, fichaId);
+  // Con los dos enlaces (como los guarda la página pública en el dispositivo): sí.
+  r = await reg('carla@otro.mx', [b1.data.manage_token, b2.data.manage_token, b1.data.manage_token]);
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.contexts[0].client_id, fichaId);
+  const ficha = await sdb.findOne('clients', { id: fichaId });
+  assert.equal(ficha.user_id, r.data.user.id);
+  assert.equal(ficha.email, 'carla@correo.mx', 'la ficha conserva sus datos');
+  const my = await f.call('GET', '/api/my/appointments', { token: r.data.token, shop: 'shop_a' });
+  assert.deepEqual(my.data.upcoming.map((a) => a.id).sort(), [b1.data.appointment.id, b2.data.appointment.id].sort());
+  // Ya tiene cuenta: nadie más la reclama, ni con los mismos enlaces.
+  r = await reg('carla3@correo.mx', [b1.data.manage_token, b2.data.manage_token]);
+  assert.notEqual(r.data.contexts[0].client_id, fichaId);
+  assert.equal((await sdb.findOne('clients', { id: fichaId })).user_id, (await f.db.findOne('users', { email: 'carla@otro.mx' })).id);
 });
 
 test('registro: validaciones, correo duplicado y barbería inexistente', async () => {

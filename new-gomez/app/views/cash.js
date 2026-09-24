@@ -10,15 +10,17 @@ import { api } from '../lib/api.js';
 import { bus, can, today, tz, getStaff } from '../lib/state.js';
 import { setQuery, navigate } from '../lib/router.js';
 import { toast, modal, confirmDialog, busy, menu, emptyState, errorState, skeletonRows, skeletonCards, showFieldErrors, clearFieldErrors, saveFile } from '../lib/ui.js';
-import { money, METHOD, dateLongCap, dateShort, addDays, startOfMonth, endOfMonth, startOfWeek, addMonths, number, plural, MONTHS_SHORT, WEEKDAYS, weekday } from '../lib/fmt.js';
+import { money, moneyIn, clock as clockIn, METHOD, dateLongCap, dateShort, addDays, startOfMonth, endOfMonth, startOfWeek, addMonths, number, plural, MONTHS_SHORT, WEEKDAYS, weekday } from '../lib/fmt.js';
 import { openPaymentSheet, parseMoney, tweenMoney, METHOD_ICON, injectPayStyle, paymentMethods } from '../lib/payment-sheet.js';
+import { periodHtml, wirePeriod, fitPeriod } from '../lib/period.js';
 
 const MKEYS = ['cash', 'card', 'transfer', 'other'];
 const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-const clock = (iso) => { try { return new Date(iso).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', timeZone: tz() }); } catch (e) { return ''; } };
+const clock = (iso) => clockIn(iso, tz()); // 24 h, como la agenda: '14:05'
 const dayOf = (iso) => { try { return new Intl.DateTimeFormat('en-CA', { timeZone: tz(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso)); } catch (e) { return String(iso || '').slice(0, 10); } };
 const WEEKDAY_CAP = (k) => { const w = WEEKDAYS[weekday(k)] || ''; return w.charAt(0).toUpperCase() + w.slice(1); };
-const signed = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + money(Math.abs(n));
+const signed = (n, m) => (n > 0 ? '+' : n < 0 ? '−' : '') + (m || money)(Math.abs(n));
+const payTotal = (p) => (p.total != null ? p.total : r2(p.amount + (p.tip || 0)));
 
 const CSS = `
 .v-cash .grid-main-side,.v-cash .stack-lg,.v-cash .stack,.v-cash .list,.v-cash .pf{grid-template-columns:minmax(0,1fr)}
@@ -138,11 +140,14 @@ function methodBars(by, opts) {
   const active = paymentMethods();
   const keys = MKEYS.filter((k) => by[k] || active.includes(k));
   const pctOf = (k) => Math.round(((Number(by[k]) || 0) / total) * 100);
+  const m = moneyIn(keys.map((k) => by[k]));
   return html`<div class="mb-bar" role="img" aria-label="${keys.map((k) => METHOD[k] + ' ' + pctOf(k) + '%').join(', ')}">${keys.filter((k) => by[k]).map((k) => html`<span class="m-${k}" style="width:${String(((Number(by[k]) || 0) / total) * 100)}%"></span>`)}</div>
-    <div class="mb-legend">${keys.map((k) => html`<div class="mb-row m-${k}"><span class="dot"></span><span class="grow">${METHOD[k]}</span><span class="faint">${String(pctOf(k))}%</span><b>${money(by[k] || 0)}</b></div>`)}</div>`;
+    <div class="mb-legend">${keys.map((k) => html`<div class="mb-row m-${k}"><span class="dot"></span><span class="grow">${METHOD[k]}</span><span class="faint">${String(pctOf(k))}%</span><b>${m(by[k] || 0)}</b></div>`)}</div>`;
 }
+// opts: { noTime, m (formato de dinero común a la lista, ver moneyIn) }
 function payRow(p, opts) {
   opts = opts || {};
+  const m = opts.m || money;
   const refunded = p.status === 'refunded';
   const title = p.client_name || p.concept || 'Venta';
   const meta = [p.client_name ? p.concept : '', p.staff_name, opts.noTime ? '' : clock(p.created_at)].filter(Boolean).join(' · ');
@@ -150,8 +155,8 @@ function payRow(p, opts) {
   return html`<div class="list-item pay-row ${refunded ? 'is-refunded' : ''}">
     <span class="pm-ic m-${p.method}" aria-hidden="true">${raw(icon(METHOD_ICON[p.method] || 'receipt'))}</span>
     <div class="grow"><div class="title truncate">${title}</div><div class="meta truncate">${meta}</div></div>
-    <div class="trail"><div class="pay-amt"><b class="num">${money(p.total != null ? p.total : r2(p.amount + (p.tip || 0)))}</b>
-      ${refunded ? raw('<span class="badge err plain">Reembolsado</span>') : Number(p.tip) ? html`<small>incl. ${money(p.tip)} de propina</small>` : html`<small>${METHOD[p.method] || ''}</small>`}</div>
+    <div class="trail"><div class="pay-amt"><b class="num">${m(payTotal(p))}</b>
+      ${refunded ? raw('<span class="badge err plain">Reembolsado</span>') : Number(p.tip) ? html`<small>incl. ${m(p.tip)} de propina</small>` : html`<small>${METHOD[p.method] || ''}</small>`}</div>
       ${hasMenu ? html`<button type="button" class="btn btn-ghost btn-icon btn-sm" data-act="pay-menu" data-pid="${p.id}" aria-label="Opciones del cobro de ${title}">${raw(icon('more-v'))}</button>` : ''}</div>
   </div>`;
 }
@@ -238,9 +243,10 @@ export default {
     function todayPaysCard(pays) {
       const items = (pays && pays.items) || [];
       const tt = (pays && pays.totals) || { count: 0, total: 0 };
+      const m = moneyIn(items.slice(0, 12).map(payTotal));
       return html`<section class="card" aria-labelledby="hPays">
         <div class="card-head"><h3 id="hPays">Cobros de hoy</h3><span class="sub">${tt.count ? plural(tt.count, 'cobro') + ' · ' + money(tt.total) : ''}</span></div>
-        ${items.length ? html`<div class="list" style="margin-top:8px">${items.slice(0, 12).map((p) => payRow(p))}</div>
+        ${items.length ? html`<div class="list" style="margin-top:8px">${items.slice(0, 12).map((p) => payRow(p, { m }))}</div>
           <div class="card-foot-link"><button type="button" data-act="tab" data-tab="pagos">${items.length > 12 ? 'Ver los ' + items.length + ' cobros' : 'Ver todos los pagos'}${raw(icon('arrow-right', 'ic-sm'))}</button></div>`
           : html`<div class="card-body">${emptyState({ icon: 'receipt', title: 'Aún no hay cobros hoy', text: 'Cobra desde la agenda al terminar cada cita, o registra aquí una venta suelta.', compact: true, action: can('payments.write') ? { label: 'Registrar cobro', id: 'emptyCharge', icon: 'plus' } : null })}</div>`}
       </section>`;
@@ -283,6 +289,9 @@ export default {
       const sales = r2(s.cash_sales + s.card_sales + s.transfer_sales + s.other_sales);
       const movs = (cur.movements || []).slice().reverse();
       const old = ses.date < today();
+      const mf = moneyIn([s.opening_float, s.cash_sales, s.cash_tips, s.income, s.expense, s.withdrawal]);
+      const mk = moneyIn([sales, tips, s.card_sales, s.transfer_sales]);
+      const mm = moneyIn([s.income, s.expense, s.withdrawal].concat(movs.map((mv) => mv.amount)));
       return html`<div class="grid-main-side cash-grid">
         <div class="stack-lg cash-main">
           ${old ? html`<div class="banner warn">${raw(icon('alert'))}<div class="grow"><b>Esta caja sigue abierta desde el ${dateLongCap(ses.date).toLowerCase()}.</b> Haz el corte para empezar el día con las cuentas claras.</div></div>` : ''}
@@ -291,12 +300,12 @@ export default {
             <div class="ch-label" id="chL">Efectivo que debe haber en caja</div>
             <div class="ch-big" id="chBig" aria-live="polite">${money(s.expected_cash)}</div>
             <div class="ch-formula">
-              <span>Fondo <b>${money(s.opening_float)}</b></span>
-              <span>+ Ventas en efectivo <b>${money(s.cash_sales)}</b></span>
-              <span>+ Propinas en efectivo <b>${money(s.cash_tips)}</b></span>
-              ${s.income ? html`<span>+ Ingresos <b>${money(s.income)}</b></span>` : ''}
-              ${s.expense ? html`<span>− Gastos <b>${money(s.expense)}</b></span>` : ''}
-              ${s.withdrawal ? html`<span>− Retiros <b>${money(s.withdrawal)}</b></span>` : ''}
+              <span>Fondo <b>${mf(s.opening_float)}</b></span>
+              <span>+ Ventas en efectivo <b>${mf(s.cash_sales)}</b></span>
+              <span>+ Propinas en efectivo <b>${mf(s.cash_tips)}</b></span>
+              ${s.income ? html`<span>+ Ingresos <b>${mf(s.income)}</b></span>` : ''}
+              ${s.expense ? html`<span>− Gastos <b>${mf(s.expense)}</b></span>` : ''}
+              ${s.withdrawal ? html`<span>− Retiros <b>${mf(s.withdrawal)}</b></span>` : ''}
             </div>
             <div class="ch-actions">
               ${can('payments.write') ? html`<button type="button" class="btn btn-primary" data-act="charge">${raw(icon('plus'))}Registrar cobro</button>` : ''}
@@ -305,10 +314,10 @@ export default {
             </div>
           </section>
           <div class="kpis stagger">
-            <div class="card kpi"><span class="label">${raw(icon('receipt'))}Vendido en el turno</span><span class="value">${money(sales)}</span><span class="foot">${plural(s.payments_count || 0, 'cobro')}</span></div>
-            <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${money(tips)}</span><span class="foot">Efectivo ${money(s.cash_tips)}</span></div>
-            <div class="card kpi"><span class="label">${raw(icon('card'))}Tarjeta</span><span class="value">${money(s.card_sales)}</span><span class="foot">${s.card_tips ? '+ ' + money(s.card_tips) + ' propinas' : 'Sin propinas'}</span></div>
-            <div class="card kpi"><span class="label">${raw(icon('transfer'))}Transferencia</span><span class="value">${money(s.transfer_sales)}</span><span class="foot">${s.transfer_tips ? '+ ' + money(s.transfer_tips) + ' propinas' : 'Sin propinas'}</span></div>
+            <div class="card kpi"><span class="label">${raw(icon('receipt'))}Vendido en el turno</span><span class="value">${mk(sales)}</span><span class="foot">${plural(s.payments_count || 0, 'cobro')}</span></div>
+            <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${mk(tips)}</span><span class="foot">Efectivo ${money(s.cash_tips)}</span></div>
+            <div class="card kpi"><span class="label">${raw(icon('card'))}Tarjeta</span><span class="value">${mk(s.card_sales)}</span><span class="foot">${s.card_tips ? '+ ' + money(s.card_tips) + ' propinas' : 'Sin propinas'}</span></div>
+            <div class="card kpi"><span class="label">${raw(icon('transfer'))}Transferencia</span><span class="value">${mk(s.transfer_sales)}</span><span class="foot">${s.transfer_tips ? '+ ' + money(s.transfer_tips) + ' propinas' : 'Sin propinas'}</span></div>
           </div>
         </div>
         <div class="cash-pays">${todayPaysCard(pays)}</div>
@@ -320,11 +329,11 @@ export default {
           <section class="card" aria-labelledby="hMov">
             <div class="card-head"><h3 id="hMov">Movimientos de caja</h3>${can('cash.manage') ? html`<button type="button" class="btn btn-ghost btn-sm" data-act="movement">${raw(icon('plus'))}Nuevo</button>` : ''}</div>
             <div class="card-body">
-              <div class="mv-sum"><div><span>Ingresos</span><b class="ok-t">${signed(s.income)}</b></div><div><span>Gastos</span><b class="err-t">${s.expense ? '−' + money(s.expense) : money(0)}</b></div><div><span>Retiros</span><b class="warn-t">${s.withdrawal ? '−' + money(s.withdrawal) : money(0)}</b></div></div>
+              <div class="mv-sum"><div><span>Ingresos</span><b class="ok-t">${signed(s.income, mm)}</b></div><div><span>Gastos</span><b class="err-t">${s.expense ? '−' + mm(s.expense) : mm(0)}</b></div><div><span>Retiros</span><b class="warn-t">${s.withdrawal ? '−' + mm(s.withdrawal) : mm(0)}</b></div></div>
               ${movs.length ? html`<div>${movs.map((mv) => html`<div class="mv-row mv-${mv.type}">
                   <span class="mv-ic" aria-hidden="true">${raw(icon(mv.type === 'income' ? 'arrow-down' : mv.type === 'expense' ? 'receipt' : 'arrow-up'))}</span>
                   <div class="grow" style="min-width:0"><div class="t truncate">${mv.concept || ''}</div><div class="m">${{ income: 'Ingreso', expense: 'Gasto', withdrawal: 'Retiro' }[mv.type]} · ${clock(mv.created_at)}${mv.created_by_name ? ' · ' + mv.created_by_name : ''}</div></div>
-                  <span class="a ${mv.type === 'income' ? 'ok-t' : ''}">${mv.type === 'income' ? '+' : '−'}${money(mv.amount)}</span></div>`)}</div>`
+                  <span class="a ${mv.type === 'income' ? 'ok-t' : ''}">${mv.type === 'income' ? '+' : '−'}${mm(mv.amount)}</span></div>`)}</div>`
                 : html`<p class="muted" style="font-size:13.5px;margin-top:10px">Registra aquí lo que pagues con efectivo de la caja (insumos, comida), los retiros y el dinero que entre aparte de los cobros.</p>`}
             </div>
           </section>
@@ -508,7 +517,7 @@ export default {
       const r = rangeOf(pq.r, pq);
       if (!soft) {
         box.innerHTML = String(html`<div class="pf">
-            <div class="seg" role="group" aria-label="Periodo">${RANGES.map(([k, l]) => html`<button type="button" data-range="${k}" aria-pressed="${String(k === pq.r)}">${l}</button>`)}</div>
+            ${periodHtml(RANGES, pq.r)}
             <div class="pf-custom" ${pq.r === 'otro' ? '' : 'hidden'}>
               <label class="sr" for="pfFrom">Desde</label><input class="input" type="date" id="pfFrom" data-pf="desde" value="${r.from}" max="${today()}"/>
               <span class="faint">a</span>
@@ -527,6 +536,7 @@ export default {
             </div>
           </div>
           <div id="payRes"></div>`);
+        fitPeriod(box);
         (staffList ? Promise.resolve(staffList) : getStaff(true)).then((list) => {
           staffList = list || [];
           const sel = $('#pfStaff', box);
@@ -547,21 +557,23 @@ export default {
       const items = data.items || [], tt = data.totals || {};
       const avg = tt.count ? Math.round(tt.amount / tt.count) : 0;
       const multiDay = r.from !== r.to;
+      const mk = moneyIn([tt.total, tt.amount, tt.tip, avg]);
       let rows = [];
       if (multiDay) {
         let lastD = '';
         const dayTot = {};
         for (const p of items) { if (p.status === 'paid') dayTot[p.date] = (dayTot[p.date] || 0) + (Number(p.amount) || 0) + (Number(p.tip) || 0); }
+        const m = moneyIn(items.map(payTotal).concat(Object.values(dayTot)));
         for (const p of items) {
-          if (p.date !== lastD) { lastD = p.date; rows.push(html`<div class="day-sep"><span>${dateLongCap(p.date)}</span><b>${money(dayTot[p.date] || 0)}</b></div>`); }
-          rows.push(payRow(p));
+          if (p.date !== lastD) { lastD = p.date; rows.push(html`<div class="day-sep"><span>${dateLongCap(p.date)}</span><b>${m(dayTot[p.date] || 0)}</b></div>`); }
+          rows.push(payRow(p, { m }));
         }
-      } else rows = items.map((p) => payRow(p));
+      } else { const m = moneyIn(items.map(payTotal)); rows = items.map((p) => payRow(p, { m })); }
       res.innerHTML = String(html`
         <div class="kpis stagger" style="margin-bottom:16px">
-          <div class="card kpi hl"><span class="label">${raw(icon('wallet'))}Cobrado</span><span class="value">${money(tt.total || 0)}</span><span class="foot">${rangeLabel(r)}</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('receipt'))}Servicios y ventas</span><span class="value">${money(tt.amount || 0)}</span><span class="foot">Sin propinas</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${money(tt.tip || 0)}</span><span class="foot">100% para los barberos</span></div>
+          <div class="card kpi hl"><span class="label">${raw(icon('wallet'))}Cobrado</span><span class="value">${mk(tt.total || 0)}</span><span class="foot">${rangeLabel(r)}</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('receipt'))}Servicios y ventas</span><span class="value">${mk(tt.amount || 0)}</span><span class="foot">Sin propinas</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('gift'))}Propinas</span><span class="value">${mk(tt.tip || 0)}</span><span class="foot">100% para los barberos</span></div>
           <div class="card kpi"><span class="label">${raw(icon('hash'))}Cobros</span><span class="value">${number(tt.count || 0)}</span><span class="foot">${tt.count ? 'Ticket promedio ' + money(avg) : 'Sin cobros'}</span></div>
         </div>
         <div class="grid-main-side">
@@ -594,12 +606,14 @@ export default {
       const exact = closed.filter((s) => Math.abs(Number(s.difference) || 0) < 0.005).length;
       const short = r2(closed.reduce((a, s) => a + Math.min(0, Number(s.difference) || 0), 0));
       const over = r2(closed.reduce((a, s) => a + Math.max(0, Number(s.difference) || 0), 0));
+      const mk = moneyIn([short, over]);
+      const mn = moneyIn(list.flatMap((s) => [s.opening_float, s.expected_cash, s.counted_cash]));
       $('#sesRes', box).innerHTML = String(html`
         <div class="kpis stagger" style="margin-bottom:16px">
           <div class="card kpi"><span class="label">${raw(icon('lock'))}Cortes</span><span class="value">${number(closed.length)}</span><span class="foot">Últimos ${sesRange === '365' ? '12 meses' : sesRange + ' días'}</span></div>
           <div class="card kpi"><span class="label">${raw(icon('check-circle'))}Cuadraron</span><span class="value">${closed.length ? Math.round((exact / closed.length) * 100) + '%' : '—'}</span><span class="foot">${plural(exact, 'corte exacto', 'cortes exactos')}</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('arrow-down'))}Faltantes</span><span class="value ${short ? 'err-t' : ''}">${short ? signed(short) : money(0)}</span><span class="foot">${plural(closed.filter((s) => (Number(s.difference) || 0) < -0.004).length, 'corte')}</span></div>
-          <div class="card kpi"><span class="label">${raw(icon('arrow-up'))}Sobrantes</span><span class="value ${over ? 'warn-t' : ''}">${over ? signed(over) : money(0)}</span><span class="foot">${plural(closed.filter((s) => (Number(s.difference) || 0) > 0.004).length, 'corte')}</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('arrow-down'))}Faltantes</span><span class="value ${short ? 'err-t' : ''}">${short ? signed(short, mk) : mk(0)}</span><span class="foot">${plural(closed.filter((s) => (Number(s.difference) || 0) < -0.004).length, 'corte')}</span></div>
+          <div class="card kpi"><span class="label">${raw(icon('arrow-up'))}Sobrantes</span><span class="value ${over ? 'warn-t' : ''}">${over ? signed(over, mk) : mk(0)}</span><span class="foot">${plural(closed.filter((s) => (Number(s.difference) || 0) > 0.004).length, 'corte')}</span></div>
         </div>
         <section class="card" aria-label="Historial de cortes">
           ${list.length ? html`<div class="list">${list.map((s) => {
@@ -610,7 +624,7 @@ export default {
               <div class="grow">
                 <div class="title">${WEEKDAY_CAP(s.date)}${s.date.slice(0, 4) !== today().slice(0, 4) ? ' · ' + s.date.slice(0, 4) : ''}</div>
                 <div class="meta">${clock(s.opened_at)}${s.closed_at ? ' → ' + clock(s.closed_at) + (dayOf(s.closed_at) !== s.date ? ' (' + dateShort(dayOf(s.closed_at)) + ')' : '') : ' · sigue abierta'}${s.opened_by_name ? ' · Abrió ' + s.opened_by_name : ''}${s.closed_by_name && s.closed_by_name !== s.opened_by_name ? ' · Cerró ' + s.closed_by_name : ''}</div>
-                <div class="ses-nums"><span>Fondo <b>${money(s.opening_float)}</b></span>${s.status === 'closed' ? html`<span>Esperado <b>${money(s.expected_cash)}</b></span><span>Contado <b>${money(s.counted_cash)}</b></span>` : ''}</div>
+                <div class="ses-nums"><span>Fondo <b>${mn(s.opening_float)}</b></span>${s.status === 'closed' ? html`<span>Esperado <b>${mn(s.expected_cash)}</b></span><span>Contado <b>${mn(s.counted_cash)}</b></span>` : ''}</div>
                 ${s.notes ? html`<div class="ses-note">${s.notes}</div>` : ''}
               </div>
               <div class="trail">${diffBadge(d)}</div>
@@ -659,6 +673,7 @@ export default {
     }
 
     const offs = [];
+    offs.push(wirePeriod(el, { describe: (k) => (k === 'otro' ? (pq.r === 'otro' ? rangeLabel(rangeOf('otro', pq)) : 'Elige desde y hasta qué día') : rangeLabel(rangeOf(k, pq))) }));
     offs.push(on(el, 'click', '[data-tab]', (e, b) => { if (b.dataset.tab === tab) return; tab = b.dataset.tab; show(); }));
     offs.push(on(el, 'keydown', '[role=tab]', (e, b) => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;

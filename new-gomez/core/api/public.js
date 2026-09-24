@@ -8,6 +8,7 @@ import { shopSettings } from '../domain/settings.js';
 import { publicShopView, publicApptView } from '../domain/views.js';
 import { findOrCreateClient } from '../domain/clients.js';
 import { sendBookingEmail } from '../domain/email.js';
+import { findByManageToken } from '../domain/messages.js';
 import { loadAgenda, candidates, offersAll, computeSlots, computeDays } from '../domain/slots.js';
 import {
   ACTIVE, failIf, parseIds, parseStart, parseDateField, parseContact, textField, loadServices, createAppointment,
@@ -89,6 +90,22 @@ async function home(ctx) {
 
 async function shopInfo(ctx) { return shopPayload(ctx.db, await shopBySlug(ctx.db, ctx.params.slug)); }
 
+// Reagendar desde el enlace o desde «Mis citas»: la cita que se mueve no ocupa su propio horario (así se puede
+// correr 20 minutos). Solo con prueba de que es de quien pregunta: `token` = token del enlace de gestión, o
+// `exclude` = id de una cita de SU ficha en esta barbería (sesión de cliente). Si no se prueba, se ignora.
+async function movingId(ctx, shop) {
+  const q = ctx.req.query;
+  if (q.token) {
+    const a = await findByManageToken(ctx.db, q.token);
+    return a && a.shop_id === shop.id ? a.id : undefined;
+  }
+  if (!q.exclude) return undefined;
+  const mine = (ctx.contexts || []).filter((x) => x.shop_id === shop.id && x.client_id).map((x) => x.client_id);
+  if (!mine.length) return undefined;
+  const a = await scopedDb(ctx.db, shop.id).findOne('appointments', { id: String(q.exclude).slice(0, 64), client_id: { in: mine } });
+  return a ? a.id : undefined;
+}
+
 async function days(ctx) {
   const shop = await shopBySlug(ctx.db, ctx.params.slug);
   const c = scope(ctx, shop);
@@ -100,7 +117,8 @@ async function days(ctx) {
   const to = addDays(from, n - 1);
   const ag = await loadAgenda(c.sdb, shop, { from, to });
   const inp = await bookingInput(c, ag, q, { requireServices: false });
-  return { days: computeDays(ag, { from, days: n, duration: inp.duration, staffIds: inp.staffIds, now: c.now, mode: 'public' }) };
+  const excludeId = await movingId(ctx, shop);
+  return { days: computeDays(ag, { from, days: n, duration: inp.duration, staffIds: inp.staffIds, now: c.now, mode: 'public', excludeId }) };
 }
 
 async function slots(ctx) {
@@ -110,7 +128,8 @@ async function slots(ctx) {
   if (!date) throw bad('Elige una fecha válida.', { date: 'Usa el formato AAAA-MM-DD.' });
   const ag = await loadAgenda(c.sdb, shop, { from: date, to: date });
   const inp = await bookingInput(c, ag, ctx.req.query);
-  return computeSlots(ag, { date, duration: inp.duration, staffIds: inp.staffIds, now: c.now, mode: 'public' });
+  const excludeId = await movingId(ctx, shop);
+  return computeSlots(ag, { date, duration: inp.duration, staffIds: inp.staffIds, now: c.now, mode: 'public', excludeId });
 }
 
 // Envía el aviso por correo sin romper la reserva (en Workers usa waitUntil si el adaptador lo expone).
@@ -167,7 +186,7 @@ async function bookInner(ctx) {
   const isTeam = ctx.user && (ctx.user.is_superadmin || ctx.contexts.some((x) => x.shop_id === shop.id && x.role !== 'client'));
   const user_id = ctx.user && !isTeam ? ctx.user.id : null;
   const getClient = async () => {
-    const { client, created } = await findOrCreateClient(c.sdb, { name: contact.name, phone: contact.phone, email: contact.email, user_id, user_email: user_id ? ctx.user.email : null, source: 'online' });
+    const { client, created } = await findOrCreateClient(c.sdb, { name: contact.name, phone: contact.phone, email: contact.email, user_id, source: 'online' });
     let first_visit = true;
     if (!created) {
       const prev = await c.sdb.count('appointments', { client_id: client.id, status: 'completed' });
@@ -190,11 +209,10 @@ async function bookInner(ctx) {
 
 // ── Enlace de gestión ──
 // El token identifica la cita en cualquier barbería: la búsqueda es global por hash (secreto de 40
-// caracteres) y todo lo demás se hace con scope de la barbería de ESA cita.
+// caracteres) y todo lo demás se hace con scope de la barbería de ESA cita. También vale el token de los
+// mensajes de WhatsApp (derivado del mismo hash, domain/messages.js → linkToken): los dos sirven a la vez.
 async function byToken(ctx) {
-  const token = String(ctx.params.token || '');
-  if (!/^[A-Za-z0-9]{20,80}$/.test(token)) throw notFound('No encontramos esa cita. Revisa el enlace.');
-  const a = await ctx.db.findOne('appointments', { manage_token_hash: await sha256Hex(token) });
+  const a = await findByManageToken(ctx.db, String(ctx.params.token || ''));
   if (!a) throw notFound('No encontramos esa cita. Revisa el enlace.');
   const shop = await ctx.db.findOne('shops', { id: a.shop_id });
   if (!shop || shop.status !== 'active') throw notFound('Esta barbería no está disponible.');

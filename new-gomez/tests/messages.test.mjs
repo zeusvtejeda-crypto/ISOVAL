@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeFixture } from './helpers.mjs';
 import { createSession } from '../core/session.js';
-import { sha256Hex } from '../core/crypto.js';
 import { newId, nowIso, nowInTz, addDays } from '../core/util.js';
 import { fmtDateEs } from '../core/domain/appointments.js';
 import { renderTemplate, buildVars, waLink, fmtMoney, publicBase, firstName, usesVar } from '../core/domain/messages.js';
@@ -38,7 +37,7 @@ async function mkAppt(f, o) {
     reschedule_count: 0, reminder_sent_at: o.reminder_sent_at || null, manage_token_hash: o.manage_token_hash || null, created_at: nowIso()
   });
 }
-const tokenIn = (text) => { const m = /\/\?cita=([A-Za-z0-9]+)/.exec(text); return m ? m[1] : null; };
+const tokenIn = (text) => { const m = /[?&]cita=([A-Za-z0-9]+)/.exec(text); return m ? m[1] : null; };
 
 test('plantillas: variables en español, alias con acentos y líneas vacías', () => {
   assert.equal(renderTemplate('Hola {cliente}, {Barbería} · {reseña} · {desconocida}', { cliente: 'Ana', barberia: 'Alfa', resena: 'r' }), 'Hola Ana, Alfa · r · {desconocida}');
@@ -84,8 +83,9 @@ test('base pública: PUBLIC_URL, host, demo y relativa', () => {
   assert.equal(publicBase({ PUBLIC_URL: 'javascript:alert(1)' }, {}), '');
 });
 
-test('preparar confirmación: texto, wa_link, registro, historial y token de gestión rotado', async () => {
+test('preparar confirmación: texto, wa_link, registro, historial y enlace de gestión estable', async () => {
   const f = await setup();
+  f.env.MODE = 'server'; // enlace de producción: /?cita=<token> (la demo agrega ?b=<slug>)
   f.env.PUBLIC_URL = 'https://gomez.tubarberia.mx';
   const a = await mkAppt(f, { manage_token_hash: 'viejo' });
   const r = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { appointment_id: a.id, kind: 'confirmation' } }));
@@ -106,10 +106,10 @@ test('preparar confirmación: texto, wa_link, registro, historial y token de ges
   assert.equal(message.appointment.folio, a.folio);
   assert.equal(message.body, body);
   assert.equal(message.shop_id, 'shop_a');
-  // Token nuevo guardado como hash y funcional en el enlace público.
+  // El enlace funciona y no reemplaza el hash de la cita (el enlace que el cliente ya tenía sigue sirviendo).
   const token = tokenIn(body);
-  const saved = await f.db.findOne('appointments', { id: a.id });
-  assert.equal(saved.manage_token_hash, await sha256Hex(token));
+  assert.match(token, /^[A-Za-z0-9]{20,80}$/);
+  assert.equal((await f.db.findOne('appointments', { id: a.id })).manage_token_hash, 'viejo');
   let pub = await f.call('GET', '/api/public/appointments/' + token);
   assert.equal(pub.status, 200, pub.body);
   assert.equal(pub.data.appointment.id, a.id);
@@ -118,14 +118,61 @@ test('preparar confirmación: texto, wa_link, registro, historial y token de ges
   assert.equal(ev.length, 1);
   assert.equal(ev[0].data.kind, 'confirmation');
   assert.equal(ev[0].actor_name, 'Dueño A');
-  // Un segundo mensaje con enlace rota el token: el anterior deja de servir.
+  // Un segundo mensaje con enlace usa el mismo token: el de la confirmación sigue sirviendo.
   const r2 = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { appointment_id: a.id, kind: 'reminder' } }));
   assert.equal(r2.status, 200);
-  const token2 = tokenIn(r2.data.body);
-  assert.ok(token2 && token2 !== token);
+  assert.equal(tokenIn(r2.data.body), token);
   assert.ok(r2.data.body.includes('📍 Av. México 123, Tepic'));
+  assert.equal((await f.call('GET', '/api/public/appointments/' + token)).status, 200);
+  // Un token con la firma alterada, de otra cita o con otro hash no abre nada.
+  const bad = token.slice(0, -1) + (token.endsWith('0') ? '1' : '0');
+  assert.equal((await f.call('GET', '/api/public/appointments/' + bad)).status, 404);
+  const other = await mkAppt(f, { manage_token_hash: 'viejo' });
+  assert.equal((await f.call('GET', '/api/public/appointments/' + other.id.slice(3) + token.slice(-32))).status, 404);
+  await f.db.update('appointments', { id: a.id }, { manage_token_hash: 'otro' });
   assert.equal((await f.call('GET', '/api/public/appointments/' + token)).status, 404);
-  assert.equal((await f.call('GET', '/api/public/appointments/' + token2)).status, 200);
+});
+
+test('enlace de gestión: la reserva, la confirmación y el recordatorio sirven a la vez; la demo lleva ?b=', async () => {
+  const f = await setup();
+  f.env.MODE = 'server'; // enlace de producción: /?cita=<token> (la demo agrega ?b=<slug>)
+  f.env.PUBLIC_URL = 'https://gomez.tubarberia.mx';
+  const b = await f.call('POST', '/api/public/shops/alfa/appointments', { body: { services: ['sv_corte'], staff_id: 'st_barberA', date: f.tomorrow, start_min: 700, name: 'Laura Gómez', phone: '5598765432' } });
+  assert.equal(b.status, 200, b.body);
+  const id = b.data.appointment.id, booked = b.data.manage_token;
+  const hash = (await f.db.findOne('appointments', { id })).manage_token_hash;
+  const tokens = [];
+  for (const kind of ['confirmation', 'reminder', 'reschedule', 'no_show']) {
+    const r = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { appointment_id: id, kind } }));
+    assert.equal(r.status, 200, r.body);
+    if (tokenIn(r.data.body)) tokens.push(tokenIn(r.data.body));
+  }
+  assert.ok(tokens.length >= 3, 'las plantillas con {enlace} llevan el de gestión');
+  assert.equal(new Set(tokens).size, 1, 'el mismo enlace en todos los mensajes');
+  assert.equal((await f.db.findOne('appointments', { id })).manage_token_hash, hash, 'mandar mensajes no toca el hash');
+  for (const tk of [booked, tokens[0]]) {
+    const r = await f.call('GET', '/api/public/appointments/' + tk);
+    assert.equal(r.status, 200, tk);
+    assert.equal(r.data.appointment.id, id);
+  }
+  // Se puede gestionar con el enlace del mensaje y el de la reserva sigue abriendo la cita ya movida.
+  const mv = await f.call('POST', '/api/public/appointments/' + tokens[0] + '/reschedule', { body: { date: f.tomorrow, start_min: 800 } });
+  assert.equal(mv.status, 200, mv.body);
+  assert.equal((await f.call('GET', '/api/public/appointments/' + booked)).data.appointment.start_min, 800);
+
+  // Cita agendada por el equipo (sin hash): se le asigna uno la primera vez y después es estable.
+  const a = await mkAppt(f);
+  const r1 = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { appointment_id: a.id, kind: 'confirmation' } }));
+  const h1 = (await f.db.findOne('appointments', { id: a.id })).manage_token_hash;
+  assert.ok(h1);
+  const r2 = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { appointment_id: a.id, kind: 'reminder' } }));
+  assert.equal(tokenIn(r2.data.body), tokenIn(r1.data.body));
+  assert.equal((await f.db.findOne('appointments', { id: a.id })).manage_token_hash, h1);
+
+  // Demo: el enlace lleva ?b=<slug> para que la página pública abra la cita guardada en el navegador.
+  f.env.MODE = 'demo';
+  const d = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { appointment_id: a.id, kind: 'confirmation' } }));
+  assert.ok(d.data.body.includes('https://gomez.tubarberia.mx/?b=alfa&cita=' + tokenIn(r1.data.body)), d.data.body);
 });
 
 test('preparar: cancelación/agradecimiento usan el link de reservas y no tocan el token', async () => {
@@ -352,8 +399,9 @@ test('recordatorios y plantilla propia con variables acentuadas', async () => {
 });
 
 // ── Regresiones de la revisión ──
-test('vista previa: no rota el token de gestión; al enviar, el marcador {enlace} se vuelve el enlace real', async () => {
+test('vista previa: no toca el token de gestión; al enviar, el marcador {enlace} se vuelve el enlace real', async () => {
   const f = await setup();
+  f.env.MODE = 'server'; // enlace de producción: /?cita=<token> (la demo agrega ?b=<slug>)
   f.env.PUBLIC_URL = 'https://gomez.tubarberia.mx';
   // Reserva en línea: el cliente ya tiene su enlace.
   const b = await f.call('POST', '/api/public/shops/alfa/appointments', { body: { services: ['sv_corte'], staff_id: 'st_barberA', date: f.day, start_min: 700, name: 'Laura Gómez', phone: '5598765432' } });
@@ -384,6 +432,7 @@ test('vista previa: no rota el token de gestión; al enviar, el marcador {enlace
   assert.equal(r.data.message.body, r.data.body);
   assert.equal(r.data.wa_link, 'https://wa.me/525598765432?text=' + encodeURIComponent(r.data.body));
   assert.equal((await f.call('GET', '/api/public/appointments/' + token)).status, 200);
+  assert.equal((await f.call('GET', '/api/public/appointments/' + tk)).status, 200, 'el de la reserva también');
   // Texto libre con {enlace} en un tipo sin enlace de gestión → link de reservas (no toca el token).
   const h2 = (await f.db.findOne('appointments', { id })).manage_token_hash;
   const c = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { kind: 'custom', appointment_id: id, body: 'Reserva otra vez: {enlace}' } }));

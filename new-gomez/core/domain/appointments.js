@@ -30,8 +30,13 @@ export const MAX_CLIENT_RESCHEDULES = 5;
 // ── Tiempo ──
 // Minutos que faltan para que empiece (negativo = ya empezó). Cruza medianoche y días.
 export function minutesUntil(a, now) { return diffDays(now.date, a.date) * 1440 + a.start_min - now.minutes; }
-// ¿Ya empezó (o empieza en ≤ 60 min, aunque sea después de medianoche)? Requisito para marcar atendida / no asistió.
+// ¿Ya empezó (o empieza en ≤ 60 min, aunque sea después de medianoche)? Requisito para marcar atendida: el cliente
+// puede llegar antes de su hora.
 export function hasStarted(a, now) { return minutesUntil(a, now) <= 60; }
+// ¿Ya llegó la hora de inicio? Requisito para marcar «no asistió»: antes de esa hora el cliente todavía puede llegar.
+export function startReached(a, now) { return minutesUntil(a, now) <= 0; }
+// Regla ¹ de docs/API.md según el estado de cierre: 'completed' → hasStarted; 'no_show' → startReached.
+export function canCloseAs(status, a, now) { return status === 'no_show' ? startReached(a, now) : hasStarted(a, now); }
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -224,8 +229,12 @@ export async function changeStatus(c, a, next, opts) {
   if (!STATUSES.includes(next)) throw bad('Estado no válido.', { status: 'Estado no válido.' });
   if (a.status === next) return a;
   if (!canTransition(a.status, next)) throw bad('No se puede pasar una cita ' + STATUS_LABEL[a.status] + ' a ' + STATUS_LABEL[next] + '.', { status: 'Cambio no permitido.' });
-  if ((next === 'completed' || next === 'no_show') && !hasStarted(a, c.now)) {
-    throw bad('Solo puedes marcar como ' + STATUS_LABEL[next] + ' una cita que ya empezó o empieza en menos de una hora.', { status: 'La cita aún no empieza.' });
+  if ((next === 'completed' || next === 'no_show') && !canCloseAs(next, a, c.now)) {
+    // fmtTimeEs ya termina en 'a.m.' / 'p.m.': sin punto final extra.
+    const when = fmtTimeEs(a.start_min) + (a.date !== c.now.date ? ' del ' + fmtDateEs(a.date) : '');
+    throw bad(next === 'no_show'
+      ? 'Aún no es la hora de la cita: podrás marcarla como no asistió a partir de las ' + when + (when.endsWith('.') ? '' : '.')
+      : 'Solo puedes marcar como atendida una cita que ya empezó o empieza en menos de una hora.', { status: 'La cita aún no empieza.' });
   }
   // Restaurar (cancelada / no asistió → activa) exige que el horario siga libre (antes y después de escribir).
   const restoring = !OCCUPYING.includes(a.status) && OCCUPYING.includes(next) && !opts.force;
@@ -285,7 +294,7 @@ export async function reschedule(c, a, o) {
     throw new HttpError(409, 'slot_taken', TAKEN_MSG, { start_min: TAKEN_MSG });
   }
   await logEvent(c.sdb, a.id, 'rescheduled', { from: { date: prev.date, start_min: prev.start_min, staff_id: prev.staff_id }, to: { date, start_min: start, staff_id }, by: o.by || 'staff' }, c.actor);
-  await notifyChange(c, out, 'rescheduled', o.by, prev.staff_id);
+  await notifyChange(c, out, 'rescheduled', o.by, prev);
   return out;
 }
 
@@ -313,7 +322,7 @@ export async function updateAppointment(c, a, p, { force } = {}) {
     if (!st || (staff_id !== a.staff_id && !st.active)) throw bad('Ese barbero no está disponible.', { staff_id: 'Barbero no disponible.' });
     if (start + duration > 1440) throw bad('La cita debe terminar antes de medianoche.', { start_min: 'Termina después de las 24:00.' });
     // Regla ¹ de docs/API.md: no hay atendida / no asistió en el futuro (force no la salta).
-    if (CLOSED.includes(a.status) && (date !== a.date || start !== a.start_min) && !hasStarted({ date, start_min: start }, c.now)) {
+    if (CLOSED.includes(a.status) && (date !== a.date || start !== a.start_min) && !canCloseAs(a.status, { date, start_min: start }, c.now)) {
       const msg = 'Una cita ' + STATUS_LABEL[a.status] + ' no puede moverse a un horario que aún no empieza.';
       throw bad(msg + ' Si fue un error, primero deshaz el estado.', { [date !== a.date ? 'date' : 'start_min']: msg });
     }
@@ -352,7 +361,7 @@ export async function updateAppointment(c, a, p, { force } = {}) {
   if (Object.keys(payMove).length) await c.sdb.update('payments', { appointment_id: a.id, status: 'paid' }, payMove);
   if (moved) {
     await logEvent(c.sdb, a.id, 'rescheduled', { from: { date: a.date, start_min: a.start_min, staff_id: a.staff_id }, to: { date, start_min: start, staff_id }, by: 'staff' }, c.actor);
-    await notifyChange(c, out, 'rescheduled', 'staff', a.staff_id);
+    await notifyChange(c, out, 'rescheduled', 'staff', a);
   }
   if (changed.length) {
     const onlyNote = changed.every((k) => k === 'internal_note');
@@ -366,6 +375,14 @@ function summary(a, staffName) {
   return (a.client_name || 'Cliente') + ' · ' + (a.services || []).map((s) => s.name).join(', ') + ' · ' + fmtDateEs(a.date) + ', ' + fmtTimeEs(a.start_min) + (staffName ? ' con ' + staffName : '');
 }
 async function staffName(c, id) { const s = id ? await c.sdb.findOne('staff', { id }) : null; return s ? s.name : ''; }
+// Horario que dejó una cita movida: " · Antes: viernes 25, 11:00 a.m." (mismo día → solo la hora; otro mes → con el
+// mes; otro barbero → "con …"). Así quien recibe el aviso sabe qué hueco se liberó.
+function beforeText(prev, a, prevStaffName) {
+  if (!prev || !prev.date) return '';
+  const d = parseDateKey(prev.date), n = parseDateKey(a.date);
+  const day = prev.date === a.date ? '' : (d.getUTCMonth() === n.getUTCMonth() && d.getUTCFullYear() === n.getUTCFullYear() ? DIAS[d.getUTCDay()] + ' ' + d.getUTCDate() : fmtDateEs(prev.date)) + ', ';
+  return ' · Antes: ' + day + fmtTimeEs(prev.start_min) + (prevStaffName ? ' con ' + prevStaffName : '');
+}
 
 // Reserva en línea nueva → dueños + barbero. Cita creada en el panel para otro barbero → ese barbero.
 export async function notifyNew(c, a, { online } = {}) {
@@ -380,15 +397,18 @@ export async function notifyNew(c, a, { online } = {}) {
 }
 // Cancelación / reagenda: si la hizo el cliente → dueños + barbero(s); si fue el equipo y el cliente
 // tiene cuenta → aviso al cliente en su centro de notificaciones.
-async function notifyChange(c, a, kind, by, prevStaffId) {
+// prev (reagenda): { date, start_min, staff_id } de ANTES del cambio; el aviso dice qué horario se liberó.
+async function notifyChange(c, a, kind, by, prev) {
   const name = await staffName(c, a.staff_id);
   const type = kind === 'cancelled' ? 'booking_cancelled' : 'booking_rescheduled';
+  const prevStaffId = prev && prev.staff_id;
+  const moved = kind === 'rescheduled' ? beforeText(prev, a, prevStaffId && prevStaffId !== a.staff_id ? await staffName(c, prevStaffId) : '') : '';
   if (by === 'client') {
     const to = ['owners', 'staff:' + a.staff_id];
     if (prevStaffId && prevStaffId !== a.staff_id) to.push('staff:' + prevStaffId);
     return notify(c.sdb, to, {
       type, title: kind === 'cancelled' ? 'Cita cancelada por el cliente' : 'Cita reagendada por el cliente',
-      body: summary(a, name) + (kind === 'cancelled' && a.cancel_reason ? ' · Motivo: ' + a.cancel_reason : ''),
+      body: summary(a, name) + moved + (kind === 'cancelled' && a.cancel_reason ? ' · Motivo: ' + a.cancel_reason : ''),
       link: '#/agenda?cita=' + a.id, data: { appointment_id: a.id, folio: a.folio }
     });
   }
@@ -398,7 +418,7 @@ async function notifyChange(c, a, kind, by, prevStaffId) {
     if (cl && cl.user_id) {
       n += await notify(c.sdb, 'client:' + cl.id, {
         type, title: kind === 'cancelled' ? 'Tu cita fue cancelada' : 'Tu cita cambió de horario',
-        body: kind === 'cancelled' ? 'Tu cita del ' + fmtDateEs(a.date) + ' a las ' + fmtTimeEs(a.start_min) + ' fue cancelada.' : summary(a, name),
+        body: kind === 'cancelled' ? 'Tu cita del ' + fmtDateEs(a.date) + ' a las ' + fmtTimeEs(a.start_min) + ' fue cancelada.' : summary(a, name) + moved,
         link: '#/mis-citas', data: { appointment_id: a.id, folio: a.folio }
       });
     }
@@ -409,7 +429,7 @@ async function notifyChange(c, a, kind, by, prevStaffId) {
   if (to.length && c.actor && c.actor.kind !== 'client') {
     n += await notify(c.sdb, to, {
       type, title: kind === 'cancelled' ? 'Se canceló una cita de tu agenda' : 'Se movió una cita de tu agenda',
-      body: summary(a, name), link: '#/agenda?cita=' + a.id, data: { appointment_id: a.id, folio: a.folio }
+      body: summary(a, name) + moved, link: '#/agenda?cita=' + a.id, data: { appointment_id: a.id, folio: a.folio }
     });
   }
   return n;

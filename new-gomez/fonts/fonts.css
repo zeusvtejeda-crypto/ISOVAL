@@ -1,0 +1,58 @@
+/* Tipografías de TuBarbería, servidas desde el propio sitio (página pública y panel).
+ *
+ * Mismo origen que la página: sin la conexión extra a Google Fonts, las precarga el <link rel="preload"> de cada
+ * página y el service worker las guarda para usarlas sin conexión. Subconjunto latino de Google Fonts (cubre el
+ * español, ¿¡ñ, comillas, rayas y el signo de pesos); lo demás cae en la fuente de respaldo. Licencia: OFL.txt.
+ *
+ * 'TB Display Fallback' es Arial Bold (o Roboto Bold en Android) escalada con size-adjust para que ocupe lo mismo
+ * que Big Shoulders Display mientras la fuente real llega: los títulos y precios no cambian de renglón ni de
+ * ancho al cambiar de fuente. Medido sobre textos reales de la página (fontTools, anchos de avance):
+ * 800 → 75.5 % del ancho de Arial Bold y 700 → 70.2 %; ascent/descent = los de Big Shoulders ÷ size-adjust.
+ * IBM Plex Sans y Plex Mono miden ±2.5 % de Arial / Courier: sus respaldos de sistema ya casi no mueven nada.
+ */
+@font-face {
+  font-family: 'Big Shoulders Display';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(big-shoulders-display-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url(ibm-plex-sans-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(ibm-plex-mono-500-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Respaldo con las medidas de Big Shoulders Display (el rango de peso evita la negrita sintética). */
+@font-face {
+  font-family: 'TB Display Fallback';
+  font-style: normal;
+  font-weight: 100 700;
+  src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('LiberationSans-Bold'), local('Roboto Bold'), local('Roboto-Bold');
+  size-adjust: 70.2%;
+  ascent-override: 140.2%;
+  descent-override: 30.3%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'TB Display Fallback';
+  font-style: normal;
+  font-weight: 701 900;
+  src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('LiberationSans-Bold'), local('Roboto Bold'), local('Roboto-Bold');
+  size-adjust: 75.5%;
+  ascent-override: 130.3%;
+  descent-override: 28.2%;
+  line-gap-override: 0%;
+}

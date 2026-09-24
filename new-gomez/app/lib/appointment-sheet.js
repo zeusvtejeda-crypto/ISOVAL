@@ -32,7 +32,9 @@ const canAll = () => can('appointments.write.all');
 const canPay = () => can('payments.write');
 const canMsg = () => can('messages.send');
 const canClient = () => canAny(['clients.read.all', 'clients.read.own']);
+// Regla ¹ (docs/API.md): «Atendida» desde 60 min antes (el cliente llega antes); «No asistió» solo desde la hora de inicio.
 const hasStarted = (a) => a.date < today() || (a.date === today() && a.start_min <= nowMin() + 60);
+const startReached = (a) => a.date < today() || (a.date === today() && a.start_min <= nowMin());
 const ACTIVE = ['pending', 'confirmed'];
 const whenText = (a) => relDay(a.date, today()) + ', ' + time(a.start_min);
 
@@ -362,7 +364,7 @@ function openDetail(id) {
     if (canPay() && st !== 'cancelled' && a.balance > 0) g.push(['pay', 'cash', 'Cobrar', 'brand']);
     if (w && active) g.push(['reschedule', 'calendar-clock', 'Reagendar', '']);
     if (w && st !== 'cancelled') g.push(['edit', 'edit', 'Editar', '']);
-    if (w && active && started) g.push(['noshow', 'user-x', 'No asistió', '']);
+    if (w && active && startReached(a)) g.push(['noshow', 'user-x', 'No asistió', '']);
     if (w && (st === 'completed' || st === 'no_show')) g.push(['undo', 'undo', 'Deshacer', '']);
     if (w && st === 'cancelled') g.push(['restore', 'refresh', 'Restaurar', 'brand']);
     if (w && !active) g.push(['again', 'calendar-plus', 'Agendar otra', '']);

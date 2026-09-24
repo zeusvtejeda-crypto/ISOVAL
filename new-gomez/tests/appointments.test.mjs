@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { makeFixture } from './helpers.mjs';
 import { createSession } from '../core/session.js';
 import { addDays, nowInTz } from '../core/util.js';
-import { canTransition, hasStarted, TRANSITIONS, managePolicy, fmtDateEs, fmtTimeEs } from '../core/domain/appointments.js';
+import { canTransition, hasStarted, startReached, canCloseAs, changeStatus, updateAppointment, TRANSITIONS, managePolicy, fmtDateEs, fmtTimeEs } from '../core/domain/appointments.js';
+import { scopedDb } from '../core/db.js';
 
 async function setup() {
   const f = await makeFixture();
@@ -38,6 +39,12 @@ test('reglas puras: tabla de transiciones y "ya empezó"', () => {
   assert.ok(hasStarted({ date: '2026-10-05', start_min: 660 }, now), 'empieza en 60 min');
   assert.ok(!hasStarted({ date: '2026-10-05', start_min: 661 }, now));
   assert.ok(!hasStarted({ date: '2026-10-06', start_min: 0 }, now));
+  // «No asistió» solo desde la hora de inicio (antes el cliente aún puede llegar); «atendida» con 60 min de margen.
+  assert.ok(startReached({ date: '2026-10-05', start_min: 600 }, now), 'es la hora');
+  assert.ok(!startReached({ date: '2026-10-05', start_min: 601 }, now));
+  assert.ok(canCloseAs('completed', { date: '2026-10-05', start_min: 660 }, now));
+  assert.ok(!canCloseAs('no_show', { date: '2026-10-05', start_min: 620 }, now), 'empieza en 20 min');
+  assert.ok(canCloseAs('no_show', { date: '2026-10-04', start_min: 1300 }, now));
   assert.equal(fmtDateEs('2026-10-05'), 'lunes 5 de octubre');
   assert.equal(fmtTimeEs(630), '10:30 a.m.');
   assert.equal(fmtTimeEs(780), '1:00 p.m.');
@@ -54,7 +61,7 @@ test('reglas puras: política de cancelación (cancel_hours)', () => {
   p = managePolicy(a('2026-10-05', 719), shop, now);
   assert.equal(p.can_cancel, false);
   assert.match(p.deadline_text, /2 horas/);
-  assert.match(p.deadline_text, /5500000000/);
+  assert.match(p.deadline_text, /550 000 0000/, 'teléfono legible');
   p = managePolicy(a('2026-10-06', 60), shop, now);
   assert.equal(p.can_cancel, true);
   assert.match(p.deadline_text, /lunes 5 de octubre a las 11:00 p\.m\./, 'el límite cae el día anterior');
@@ -314,6 +321,31 @@ test('estados: transiciones válidas, inválidas, reglas de tiempo y restaurar',
   assert.equal(d.data.events[1].actor_name, 'Dueño A');
   // El barbero puede cambiar estados de sus citas.
   assert.equal((await st(old.id, { status: 'confirmed' }, 'barberA')).status, 200);
+});
+
+test('estados: «no asistió» solo desde la hora de inicio; «atendida» desde 60 min antes', async () => {
+  const f = await setup();
+  const sdb = scopedDb(f.db, 'shop_a');
+  const shop = await f.db.findOne('shops', { id: 'shop_a' });
+  const at = (date, minutes) => ({ sdb, shop, now: { date, minutes }, actor: { id: 'st_ownerA', name: 'Dueño A', kind: 'staff' }, env: f.env });
+  const a = (await f.newAppt({ start_min: 740 })).data; // 12:20
+  // 12:00 → faltan 20 min: todavía puede llegar.
+  await assert.rejects(changeStatus(at(a.date, 720), a, 'no_show'), (e) => e.status === 400 && e.message === 'Aún no es la hora de la cita: podrás marcarla como no asistió a partir de las 12:20 p.m.' && !!e.fields.status);
+  await assert.rejects(changeStatus(at(a.date, 739), a, 'no_show'), /12:20 p\.m\./);
+  // Desde otro día, el mensaje dice la fecha.
+  await assert.rejects(changeStatus(at(addDays(a.date, -1), 720), a, 'no_show'), /a partir de las 12:20 p\.m\. del /);
+  assert.equal((await f.db.findOne('appointments', { id: a.id })).status, 'confirmed');
+  // «Atendida» sí con margen (llegó antes).
+  const b = (await f.newAppt({ start_min: 900, client: { name: 'Temprano' } })).data;
+  assert.equal((await changeStatus(at(b.date, 840), b, 'completed')).status, 'completed', '60 min antes');
+  // A las 12:20 ya se puede.
+  assert.equal((await changeStatus(at(a.date, 740), a, 'no_show')).status, 'no_show');
+  // Editar: una no asistida no se mueve a un horario que aún no llega (aunque falten menos de 60 min); una atendida sí.
+  const ns = await f.db.findOne('appointments', { id: a.id });
+  await assert.rejects(updateAppointment(at(a.date, 740), ns, { start_min: 760 }), (e) => e.status === 400 && !!e.fields.start_min);
+  assert.equal((await updateAppointment(at(a.date, 740), ns, { start_min: 700 })).start_min, 700, 'hacia un horario que ya pasó, sí');
+  const done = await f.db.findOne('appointments', { id: b.id });
+  assert.equal((await updateAppointment(at(b.date, 840), done, { start_min: 880 })).start_min, 880);
 });
 
 test('no_show libera el horario y deshacerlo exige que siga libre', async () => {

@@ -455,7 +455,7 @@ test('notificaciones, mensajes de WhatsApp e historial de citas', async () => {
   const cashN = nts.find((n) => n.type === 'cash_closed');
   const cs = of(r.shop, 'cash_sessions').find((s) => s.id === cashN.data.cash_session_id);
   assert.equal(cs.difference, cashN.data.difference);
-  assert.match(cashN.title, /faltante de \$20\.00/);
+  assert.equal(cashN.title, 'Corte de caja con faltante de $20');
 
   const msgs = of(r.shop, 'messages');
   assert.ok(msgs.length >= 30, 'mensajes: ' + msgs.length);

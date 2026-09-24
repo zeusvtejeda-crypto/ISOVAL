@@ -3,10 +3,12 @@
 // /api/public/shops/<slug>/days y /slots con los servicios de la cita → POST /api/my/appointments/:id/reschedule),
 // cancelar con confirmación y motivo (respeta la política cancel_hours; si no se puede, explica por qué y ofrece
 // contacto), agregar al calendario (Google o .ics), historial de visitas y "Reservar otra cita".
+// Si la cuenta también es cliente de otras barberías, sus próximas citas allá aparecen en «En tus otras barberías»
+// (resumen `elsewhere` de /api/my/appointments) con un botón para cambiar a esa barbería y gestionarlas.
 import { html, raw, esc, $, on } from '../lib/html.js';
 import { icon } from '../lib/icons.js';
 import { api, SITE_BASE, APP_BASE } from '../lib/api.js';
-import { state, shop, bus, today as todayKey, nowMin } from '../lib/state.js';
+import { state, shop, bus, selectShop, today as todayKey, nowMin } from '../lib/state.js';
 import { toast, modal, promptDialog, menu, busy, emptyState, errorState, avatar, statusBadge, saveFile } from '../lib/ui.js';
 import { money, time as fmtTime, duration, dateLongCap, dateLong, dateShort, relDay, diffDays, weekday, dayNum, firstName, plural, WEEKDAYS_SHORT, MONTHS_SHORT, phone as fmtPhone, colorFor } from '../lib/fmt.js';
 import { dayStrip } from '../lib/pickers.js';
@@ -68,6 +70,10 @@ const CSS = `
 .ma-card .meta{font-size:13px;color:var(--text-2)}
 .ma-card .acts{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:10px}
 .ma-card .acts .btn{flex:1;min-width:0}
+.ma-away .shop{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--brand-strong);margin-bottom:2px;min-width:0}
+.ma-away .shop .ic{width:14px;height:14px;flex:none}
+.ma-away .shop span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ma-here{margin-bottom:12px}
 .ma-hist .list{grid-template-columns:minmax(0,1fr)}
 .ma-hist .list-item{gap:12px;align-items:center;min-width:0}
 .ma-hist .ma-mini{width:48px}
@@ -194,7 +200,8 @@ function openReschedule(a, sh, onDone) {
   });
   m.foot.querySelector('[data-close]').onclick = () => m.close();
   const slotsEl = $('#rsSlots', m.body), okBtn = $('#rsOk', m.foot), sumEl = $('#rsSum', m.foot);
-  const q = () => ({ services: ids.join(','), staff: st.staff });
+  // exclude: la cita que se mueve no ocupa su propio horario (el servidor lo acepta solo si es de mi ficha).
+  const q = () => ({ services: ids.join(','), staff: st.staff, exclude: a.id });
 
   const strip = dayStrip($('#rsDays', m.body), { today: t0, value: t0, days: win, isOff: (d) => st.off.has(d), onChange: (d) => { st.date = d; st.start = null; loadSlots(); } });
   function paintSum() {
@@ -318,7 +325,7 @@ export default {
 
     el.innerHTML = String(html`
       <div class="page-head">
-        <div><h2>Mis citas</h2><p>${name ? 'Hola, ' + name + '. ' : ''}Tus citas en ${sh.name}.</p></div>
+        <div><h2>Mis citas</h2><p>${name ? 'Hola, ' + name + '. ' : ''}Tus citas en ${sh.name}.${(state.contexts || []).length > 1 ? html` <button type="button" class="link-btn" data-switch-shop>Cambiar de barbería</button>` : ''}</p></div>
         <div class="actions"><a class="btn btn-primary" href="${bookUrl(sh.slug)}" target="_blank" rel="noopener">${raw(icon('calendar-plus'))}Reservar otra cita</a></div>
       </div>
       <div id="maBody"><div class="ma-grid"><div class="stack"><div class="skel" style="height:340px;border-radius:var(--r-xl)"></div></div><div class="stack">${raw('<div class="card skel" style="height:72px;border:0"></div>'.repeat(4))}</div></div></div>`);
@@ -362,6 +369,17 @@ export default {
           <button type="button" class="btn btn-danger-ghost btn-sm" data-act="cancel">${raw(icon('x-circle', 'ic-sm'))}Cancelar</button></div>
       </article>`;
     }
+    // Próxima cita en otra barbería de la misma cuenta: se gestiona allá (cambiando de barbería).
+    function awayCard(e) {
+      const a = e.next;
+      return html`<article class="card ma-card ma-away fade-up">
+        <span class="ma-mini" aria-hidden="true"><small>${WEEKDAYS_SHORT[weekday(a.date)]}</small><b>${dayNum(a.date)}</b><small>${MONTHS_SHORT[+a.date.slice(5, 7) - 1]}</small></span>
+        <div style="min-width:0"><div class="shop">${raw(icon('store'))}<span>${e.shop_name}</span></div>
+          <div class="row between" style="gap:8px"><span class="ttl">${cap(relDay(a.date, t0))} · ${fmtTime(a.start_min)}</span>${statusBadge(a.status)}</div>
+          <div class="meta truncate">${svcNames(a).join(', ')}</div><div class="meta">con ${a.staff_name || 'por asignar'}${e.count > 1 ? ' · y ' + plural(e.count - 1, 'cita más', 'citas más') + ' ahí' : ''}</div></div>
+        <div class="acts"><button type="button" class="btn btn-secondary btn-sm" data-go-shop="${e.shop_id}" aria-label="${'Ver y gestionar tus citas en ' + e.shop_name}">${raw(icon('arrow-right', 'ic-sm'))}Ver y gestionar</button></div>
+      </article>`;
+    }
     function histItem(a) {
       const again = (a.services || []).find((s) => s.id);
       return html`<div class="list-item ${a.status}">
@@ -373,11 +391,15 @@ export default {
       </div>`;
     }
     function paint() {
-      const up = data.upcoming || [], past = data.past || [];
+      const up = data.upcoming || [], past = data.past || [], away = data.elsewhere || [];
       const visits = past.filter((a) => a.status === 'completed');
       const first = visits.length ? visits[visits.length - 1].date : null;
       const spent = visits.reduce((s, a) => s + (Number(a.total) || 0), 0);
-      const nextHtml = up.length ? html`${nextCard(up[0])}${up.length > 1 ? html`<div class="ma-sec" style="margin-top:18px"><h3>También tienes <span class="n">${up.length - 1}</span></h3>${up.slice(1).map(otherCard)}</div>` : ''}`
+      const awayN = away.reduce((n, e) => n + (e.count || 1), 0);
+      const awaySec = (gap) => html`<div class="ma-sec" style="${'margin-top:' + gap + 'px'}"><h3>En tus otras barberías <span class="n">${awayN}</span></h3>${away.map(awayCard)}</div>`;
+      const nextHtml = up.length ? html`${nextCard(up[0])}${up.length > 1 ? html`<div class="ma-sec" style="margin-top:18px"><h3>También tienes <span class="n">${up.length - 1}</span></h3>${up.slice(1).map(otherCard)}</div>` : ''}${away.length ? awaySec(18) : ''}`
+        // Sin citas aquí pero sí en otra barbería: se dice claro y se muestran esas (no un «no tienes citas» a secas).
+        : away.length ? html`<div class="banner info ma-here">${raw(icon('info'))}<div class="grow">No tienes citas próximas en <b>${sh.name}</b>, pero sí ${awayN === 1 ? 'una' : awayN} en ${away.length === 1 ? away[0].shop_name : 'tus otras barberías'}.</div></div>${awaySec(0)}`
         : html`<div class="card">${emptyState({ icon: 'calendar-plus', title: past.length ? 'No tienes citas próximas' : '¡Bienvenido!', text: past.length ? '¿Ya toca el siguiente corte? Reserva en segundos y elige a tu barbero favorito.' : 'Aquí verás tus citas en ' + sh.name + '. Reserva la primera en segundos.', action: { label: 'Reservar cita', href: bookUrl(sh.slug), icon: 'calendar-plus' } })}</div>`;
       body.innerHTML = String(html`<div class="ma-grid">
         <section class="ma-sec" aria-labelledby="maUp"><h3 id="maUp">Próximas${up.length ? html` <span class="n">${up.length}</span>` : ''}</h3>${nextHtml}</section>
@@ -419,6 +441,19 @@ export default {
 
     const offs = [];
     offs.push(on(el, 'click', '#maRetry', () => { body.innerHTML = String(html`<div class="skel" style="height:340px;border-radius:var(--r-xl)"></div>`); load(); }));
+    offs.push(on(el, 'click', '[data-switch-shop]', () => window.TB.openShopSwitcher()));
+    // Cambiar a la otra barbería: selectShop emite 'context' y el shell vuelve a pintar «Mis citas» con esa barbería.
+    offs.push(on(el, 'click', '[data-go-shop]', async (e, b) => {
+      const prev = sh.id;
+      try {
+        if (!(await busy(b, () => selectShop(b.dataset.goShop)))) return; // doble toque: ya se está cambiando
+        window.scrollTo(0, 0);
+        toast.success('Ahora ves tus citas en ' + shop().name);
+      } catch (err) {
+        toast.error(err);
+        try { await selectShop(prev); } catch (er) { /* se queda como estaba */ }
+      }
+    }));
     offs.push(on(el, 'click', '[data-act]', (e, b) => {
       const card = b.closest('[data-appt]');
       const a = card && find(card.dataset.appt);

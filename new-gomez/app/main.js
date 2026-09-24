@@ -4,11 +4,13 @@ import { state, bus, loadMe, clearSession, selectShop, preferredShopId, canAny, 
 import { defineRoutes, parseHash, match, navigate, startRouter } from './lib/router.js';
 import { html, raw, esc, $, $$, on } from './lib/html.js';
 import { icon } from './lib/icons.js';
-import { toast, modal, confirmDialog, menu, avatar, emptyState, errorState, spinner } from './lib/ui.js';
-import { ROLE } from './lib/fmt.js';
+import { toast, modal, confirmDialog, menu, avatar, emptyState, errorState, spinner, closeAllModals } from './lib/ui.js';
+import { ROLE, shopMark } from './lib/fmt.js';
 
 const V = (name) => () => import('./views/' + name + '.js');
 const STAFF_ROLES = ['owner', 'superadmin', 'barber'];
+// Navegación lateral (barra completa ≥1024, riel en tablet) o barra inferior (teléfono). Mismas consultas que app.css.
+const SIDE_Q = '(min-width:1024px), (min-width:720px) and (min-height:600px)';
 
 defineRoutes([
   { path: '/login', view: V('login'), public: true, title: 'Iniciar sesión' },
@@ -42,22 +44,22 @@ const NAV = [
   { group: '', items: [
     { path: '/inicio', label: () => (role() === 'barber' ? 'Mi día' : 'Inicio'), icon: 'home', roles: STAFF_ROLES },
     { path: '/agenda', label: 'Agenda', icon: 'calendar', perm: ['appointments.read.all', 'appointments.read.own'] },
-    { path: '/clientes', label: () => (role() === 'barber' ? 'Mis clientes' : 'Clientes'), icon: 'users', perm: ['clients.read.all', 'clients.read.own'] },
+    { path: '/clientes', label: () => (role() === 'barber' ? 'Mis clientes' : 'Clientes'), short: 'Clientes', icon: 'users', perm: ['clients.read.all', 'clients.read.own'] },
     { path: '/mensajes', label: 'WhatsApp', icon: 'whatsapp', perm: 'messages.send' },
     { path: '/mis-citas', label: 'Mis citas', icon: 'calendar-check', roles: ['client'] },
-    { href: bookingUrl, label: 'Reservar cita', icon: 'calendar-plus', roles: ['client'] },
-    { path: '/notificaciones', label: 'Notificaciones', icon: 'bell', perm: 'notifications.read', count: true }
+    { href: bookingUrl, label: 'Reservar cita', short: 'Reservar', icon: 'calendar-plus', roles: ['client'] },
+    { path: '/notificaciones', label: 'Notificaciones', short: 'Avisos', icon: 'bell', perm: 'notifications.read', count: true }
   ] },
   { group: 'Negocio', items: [
-    { path: '/caja', label: 'Caja y pagos', icon: 'wallet', perm: 'cash.read' },
-    { path: '/comisiones', label: () => (role() === 'barber' ? 'Mis ganancias' : 'Comisiones'), icon: 'percent', perm: ['commissions.read.all', 'commissions.read.own'] },
+    { path: '/caja', label: 'Caja y pagos', short: 'Caja', icon: 'wallet', perm: 'cash.read' },
+    { path: '/comisiones', label: () => (role() === 'barber' ? 'Mis ganancias' : 'Comisiones'), short: () => (role() === 'barber' ? 'Ganancias' : 'Comisiones'), icon: 'percent', perm: ['commissions.read.all', 'commissions.read.own'] },
     { path: '/reportes', label: 'Reportes', icon: 'chart', perm: 'reports.read' }
   ] },
   { group: 'Configuración', items: [
     { path: '/equipo', label: 'Equipo', icon: 'scissors', perm: 'staff.manage' },
     { path: '/servicios', label: 'Servicios', icon: 'tag', perm: 'services.manage' },
-    { path: '/horarios', label: () => (role() === 'barber' ? 'Mi horario' : 'Horarios'), icon: 'clock', perm: ['availability.manage.all', 'availability.manage.own'] },
-    { path: '/enlace', label: 'Enlace y QR', icon: 'qr', perm: 'shop.update' },
+    { path: '/horarios', label: () => (role() === 'barber' ? 'Mi horario' : 'Horarios'), short: () => (role() === 'barber' ? 'Horario' : 'Horarios'), icon: 'clock', perm: ['availability.manage.all', 'availability.manage.own'] },
+    { path: '/enlace', label: 'Enlace y QR', short: 'Enlace', icon: 'qr', perm: 'shop.update' },
     { path: '/ajustes', label: 'Ajustes', icon: 'settings', perm: 'settings.manage' }
   ] },
   { group: 'Plataforma', items: [{ path: '/plataforma', label: 'Barberías', icon: 'shield', superOnly: true }] }
@@ -70,6 +72,9 @@ function visible(it) {
   return true;
 }
 const labelOf = (it) => (typeof it.label === 'function' ? it.label() : it.label);
+const shortOf = (it) => (typeof it.short === 'function' ? it.short() : it.short) || labelOf(it);
+// Etiqueta completa (barra lateral) y corta (riel de tablet); CSS muestra una u otra.
+const navLabel = (it) => '<span class="nl">' + esc(labelOf(it)) + '</span><span class="ns">' + esc(shortOf(it)) + '</span>';
 
 // ── Tema ──
 function applyTheme(t) {
@@ -117,6 +122,8 @@ if (navigator.onLine === false) window.addEventListener('DOMContentLoaded', offl
 const root = document.getElementById('app');
 let current = { cleanup: null, key: '' };
 let shellEl = null;
+let netError = null;   // no se pudo comprobar la sesión por falta de red (la cookie puede seguir siendo válida)
+let shopError = null;  // /api/context rechazó la barbería (p. ej. suspendida): { kind: 'suspended', name }
 
 async function boot() {
   state.mode = getMode();
@@ -126,15 +133,7 @@ async function boot() {
     toast.info('Tu sesión terminó. Vuelve a entrar.');
     navigate('/login', { replace: true });
   });
-  try {
-    // Entrar directo a #/demo sin sesión de demo: no hace falta consultar al servidor (evita un 404 en hosting estático).
-    if (getMode() !== 'demo' && parseHash().path === '/demo') throw Object.assign(new Error('skip'), { code: 'skip' });
-    await loadMe();
-  } catch (e) {
-    clearSession();
-    if (e.code === 'backend_unavailable' || e.code === 'backend_not_configured' || e.code === 'network') state.backendDown = e;
-  }
-  if (state.user || state.staff) await ensureShop();
+  await checkSession();
   hideSplash();
   startRouter(route);
   bus.on('context', () => { renderShell(); route(); });
@@ -143,36 +142,122 @@ async function boot() {
   bus.on('context:refresh', repaintShell);
   setInterval(pollUnread, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pollUnread(); });
+  window.addEventListener('online', () => { if (netError) retrySession(); });
 }
+async function checkSession() {
+  netError = null;
+  try {
+    // Entrar directo a #/demo sin sesión de demo: no hace falta consultar al servidor (evita un 404 en hosting estático).
+    if (getMode() !== 'demo' && parseHash().path === '/demo') throw Object.assign(new Error('skip'), { code: 'skip' });
+    await loadMe();
+  } catch (e) {
+    clearSession();
+    // Sin red no es lo mismo que sin sesión: no se manda al login (la cookie puede seguir sirviendo).
+    if (e.code === 'network') netError = e;
+    if (e.code === 'backend_unavailable' || e.code === 'backend_not_configured' || e.code === 'network') state.backendDown = e;
+  }
+  if (state.user || state.staff) await ensureShop();
+}
+async function retrySession(btn) {
+  if (btn) btn.setAttribute('aria-busy', 'true');
+  await checkSession();
+  if (btn && btn.isConnected) btn.removeAttribute('aria-busy');
+  if (netError) { if (btn) toast.error(netError); return; }
+  shellEl = null;
+  if (!state.ctx) route(); // con barbería, selectShop ya emitió 'context' (shell + ruta)
+}
+const isSuspendedError = (e) => !!e && e.status === 403 && /suspendid/i.test(e.message || '');
+// Barbería activa al entrar. Si la preferida está suspendida se prueba con las demás del usuario; si ninguna
+// sirve, la vista explica por qué (en lugar de «aún no perteneces a ninguna barbería»).
 async function ensureShop() {
+  shopError = null;
   const id = preferredShopId();
   if (!id) return;
-  try { await selectShop(id); } catch (e) { state.ctx = null; toast.error(e); }
+  const ids = [id].concat((state.contexts || []).map((c) => c.shop_id).filter((x) => x !== id));
+  for (const sid of ids) {
+    try {
+      await selectShop(sid);
+      if (shopError) toast.info('«' + shopError.name + '» está suspendida. Te mostramos ' + shop().name + '.');
+      shopError = null;
+      return;
+    } catch (e) {
+      state.ctx = null;
+      if (!isSuspendedError(e)) { toast.error(e); return; }
+      if (!shopError) { const c = (state.contexts || []).find((x) => x.shop_id === sid); shopError = { kind: 'suspended', name: c ? c.shop_name : '' }; }
+    }
+  }
+}
+function suspendedInfo() {
+  if (state.ctx || isSuper()) return null;
+  if (shopError && shopError.kind === 'suspended') return shopError;
+  const ctxs = state.contexts || [];
+  if (ctxs.length && ctxs.every((c) => c.shop_status === 'suspended')) return { kind: 'suspended', name: ctxs[0].shop_name };
+  return null;
 }
 function hideSplash() { const s = document.getElementById('splash'); if (s) { s.classList.add('out'); setTimeout(() => s.remove(), 400); } }
 
 function homePath() {
-  if (!state.user && !state.staff) return '/login';
-  if (!state.ctx) return isSuper() ? '/plataforma' : '/perfil';
+  if (!state.user && !state.staff) return netError ? '/inicio' : '/login';
+  if (!state.ctx) return isSuper() ? '/plataforma' : (suspendedInfo() ? '/inicio' : '/perfil');
   return role() === 'client' ? '/mis-citas' : '/inicio';
 }
 
-async function route() {
+// ── Historial y modales ──
+// Cada entrada del historial lleva un índice (tbi) para distinguir «Atrás» de una navegación nueva. Con un modal
+// abierto, Atrás (navegador o botón de Android) cierra primero el modal y la pantalla se queda donde estaba;
+// cualquier otra navegación cierra los modales para que no queden encima de otra pantalla.
+let histIdx = 0;
+// El router y algunas vistas reemplazan la entrada actual con estado null (filtros en la URL): conserva su índice.
+const nativeReplaceState = history.replaceState.bind(history);
+history.replaceState = function (st, title, url) {
+  const cur = history.state;
+  if ((st == null || (typeof st === 'object' && !('tbi' in st))) && cur && typeof cur.tbi === 'number') st = Object.assign({}, st, { tbi: cur.tbi });
+  return nativeReplaceState(st, title, url);
+};
+function stampHistory() {
+  const s = history.state;
+  if (s && typeof s.tbi === 'number') { histIdx = s.tbi; return; }
+  histIdx += 1;
+  try { history.replaceState(Object.assign({}, s, { tbi: histIdx }), ''); } catch (e) { /* */ }
+}
+const openOverlays = () => $$('.overlay').filter((o) => !o.classList.contains('closing'));
+function backClosesModal(e) {
+  const open = openOverlays();
+  const s = history.state;
+  if (!open.length || !e.oldURL || !(s && typeof s.tbi === 'number' && s.tbi < histIdx)) return false;
+  try { history.pushState({ tbi: histIdx }, '', e.oldURL); } catch (x) { return false; }
+  const x = open[open.length - 1].querySelector('.modal-head [data-close]');
+  if (x) x.click(); // mismo camino que la X: respeta «¿descartar cambios?»
+  return true;
+}
+
+async function route(e) {
   const { path, query } = parseHash();
   if (path === '/' || path === '') return navigate(homePath(), { replace: true });
   if (path === '/panel') return navigate(homePath(), { replace: true });
+  if (e && e.type === 'hashchange' && backClosesModal(e)) return;
+  $$('.menu').forEach((m) => m.remove());
+  if (openOverlays().length) closeAllModals();
+  stampHistory();
   const m = match(path);
   const authed = !!(state.user || state.staff);
+  if (authed) netError = null;
   if (!m) return renderPage(null, { notFound: true });
   const r = m.route;
   if (r.public && !(r.shellIfAuthed && authed)) {
     if (authed && ['/login', '/registro', '/crear-barberia'].includes(path) && !query.next) return navigate(homePath(), { replace: true });
     return renderBare(r, m.params, query);
   }
-  if (!r.public && !authed) return navigate('/login', { replace: true, query: { next: location.hash.slice(1) } });
-  if (!r.public && !r.noShop && !state.ctx && !(r.path === '/perfil')) {
-    if (isSuper()) return navigate('/plataforma', { replace: true });
-    return renderPage(r, { noShop: true });
+  if (!r.public && !authed) {
+    if (netError) return renderOffline();
+    return navigate('/login', { replace: true, query: { next: location.hash.slice(1) } });
+  }
+  if (!r.public && !state.ctx && r.path !== '/perfil') {
+    if (isSuper()) { if (!r.noShop) return navigate('/plataforma', { replace: true }); }
+    else {
+      const sus = suspendedInfo();
+      return renderPage(r, sus ? { suspended: sus } : r.noShop ? { forbidden: true } : { noShop: true });
+    }
   }
   if (!allowed(r)) return renderPage(r, { forbidden: true });
   return renderPage(r, { params: m.params, query });
@@ -205,25 +290,61 @@ async function renderBare(r, params, query) {
   if (seq !== renderSeq) { if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { /* */ } } return; }
   current.cleanup = cleanup;
 }
+// Recarga sin internet con una sesión que quizá sigue viva: se explica y se reintenta solo al volver la red.
+function renderOffline() {
+  ++renderSeq;
+  runCleanup();
+  shellEl = null;
+  current.key = '';
+  document.body.classList.remove('has-shell');
+  document.title = 'Sin conexión · TuBarbería';
+  root.innerHTML = '<div id="bare"><div class="page" style="min-height:100vh;min-height:100dvh;display:grid;place-items:center">' + String(emptyState({
+    icon: 'alert', title: 'Sin conexión',
+    text: 'No pudimos comprobar tu sesión porque no hay internet. No la cerramos: en cuanto vuelva la conexión sigues donde estabas.',
+    action: { label: 'Reintentar', id: 'offRetry', icon: 'refresh' }
+  })) + '</div></div>';
+  const b = $('#offRetry');
+  if (b) b.addEventListener('click', () => retrySession(b));
+}
+
+function blockedState(r, opts) {
+  if (opts.notFound) return { icon: 'help', title: 'Página no encontrada', text: 'El enlace que abriste no existe o cambió.', action: { label: 'Ir al inicio', href: '#' + homePath() } };
+  if (opts.suspended) return { icon: 'ban', title: opts.suspended.name ? '«' + opts.suspended.name + '» está suspendida' : 'Tu barbería está suspendida',
+    text: 'Mientras esté suspendida no puedes ver la agenda, los clientes ni la caja, y su página no recibe reservas. Tus datos se conservan: contacta a soporte de TuBarbería para reactivarla.',
+    action: { label: 'Reintentar', id: 'susRetry', icon: 'refresh' } };
+  if (opts.forbidden && role() === 'client') return { icon: 'lock', title: 'Esta sección es para el equipo', text: 'Aquí entran el dueño y los barberos de la barbería. Tus citas, cambios y cancelaciones están en Mis citas.', action: { label: 'Ir a Mis citas', href: '#/mis-citas', icon: 'calendar-check' } };
+  if (opts.forbidden) return { icon: 'lock', title: 'Sin acceso a esta sección', text: 'Tu rol no tiene permiso para ver esto. Si crees que es un error, pídele acceso al dueño.', action: { label: 'Ir al inicio', href: '#' + homePath() } };
+  return { icon: 'store', title: 'Aún no perteneces a ninguna barbería', text: 'Pide al dueño que te agregue a su equipo, o crea tu propia barbería.', action: { label: 'Crear mi barbería', href: '#/crear-barberia' } };
+}
 
 async function renderPage(r, opts) {
   const seq = ++renderSeq;
   if (!shellEl || !document.body.contains(shellEl)) renderShell();
   runCleanup();
   const page = $('#page');
-  const key = r ? r.path : '404';
   highlightNav(r ? (r.nav || r.path) : '');
-  closeSidebar();
   if (current.key !== location.hash.split('?')[0]) window.scrollTo(0, 0);
   current.key = location.hash.split('?')[0];
-  if (opts.notFound || opts.forbidden || opts.noShop) {
-    const cfg = opts.notFound ? { icon: 'help', title: 'Página no encontrada', text: 'El enlace que abriste no existe o cambió.', action: { label: 'Ir al inicio', href: '#' + homePath() } }
-      : opts.forbidden ? { icon: 'lock', title: 'Sin acceso a esta sección', text: 'Tu rol no tiene permiso para ver esto. Si crees que es un error, pídele acceso al dueño.', action: { label: 'Ir al inicio', href: '#' + homePath() } }
-      : { icon: 'store', title: 'Aún no perteneces a ninguna barbería', text: 'Pide al dueño que te agregue a su equipo, o crea tu propia barbería.', action: { label: 'Crear mi barbería', href: '#/crear-barberia' } };
-    setTitle(cfg.title);
+  if (opts.notFound || opts.forbidden || opts.noShop || opts.suspended) {
+    const cfg = blockedState(r, opts);
     page.innerHTML = '<div class="page">' + String(emptyState(cfg)) + '</div>';
+    // La barra dice dónde estás (la sección); el estado ya lleva su propio título grande.
+    setTitle(cfg.title, r && !(r.superOnly && !isSuper()) ? r.title : '');
+    watchLargeTitle(true);
+    const retry = $('#susRetry', page);
+    if (retry) retry.addEventListener('click', async () => {
+      retry.setAttribute('aria-busy', 'true');
+      await ensureShop();
+      if (!retry.isConnected) return;
+      retry.removeAttribute('aria-busy');
+      if (state.ctx) navigate(homePath(), { replace: true, force: true });
+      else if (suspendedInfo()) toast.info('Sigue suspendida. Si ya hablaste con soporte, intenta en unos minutos.');
+      else route();
+    });
     return;
   }
+  // Mientras carga, el título de la barra no aparece y desaparece (si la vista trae su h2, se queda oculto).
+  const tb = $('#topbar'); if (tb) { tb.classList.add('large-title'); tb.classList.remove('title-in'); }
   page.innerHTML = '<div class="page">' + String(spinner()) + '</div>';
   const view = await loadView(r);
   if (seq !== renderSeq) return; // el usuario ya navegó a otra parte
@@ -238,11 +359,37 @@ async function renderPage(r, opts) {
     if (seq !== renderSeq) { if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { /* */ } } return; }
     current.cleanup = cleanup;
   } catch (e) { console.error(e); if (seq === renderSeq) el.innerHTML = String(errorState(e)); }
+  if (seq === renderSeq) watchLargeTitle(true);
 }
-function setTitle(t) {
+// document.title lleva el título completo; la barra superior, el nombre de la sección (bar) si se indica.
+function setTitle(t, bar) {
   document.title = t + ' · ' + (shop() ? shop().name : 'TuBarbería');
-  const h = $('#tbTitle'); if (h) h.textContent = t;
+  const h = $('#tbTitle'); if (h) h.textContent = bar === undefined ? t : bar;
 }
+
+// ── Título grande (patrón iOS) ──
+// Si la vista abre con un h2 en .page-head, ese es el título: el de la barra se oculta y aparece solo cuando el h2
+// pasa por debajo de la barra al desplazarse. Sin h2 visible (p. ej. Agenda), la barra muestra el título siempre.
+let titleIO = null, titleEl = null, titleRaf = 0;
+function watchLargeTitle(force) {
+  titleRaf = 0;
+  const tb = $('#topbar'), page = $('#page');
+  if (!tb || !page) return;
+  const h = $$('.page-head h2', page).find((x) => !x.classList.contains('sr')) || null;
+  if (h === titleEl && titleIO && !force) return;
+  if (titleIO) { titleIO.disconnect(); titleIO = null; }
+  titleEl = h;
+  if (!h || typeof IntersectionObserver !== 'function') { tb.classList.remove('large-title', 'title-in'); return; }
+  tb.classList.add('large-title');
+  titleIO = new IntersectionObserver((entries) => {
+    const bar = $('#topbar');
+    if (bar) bar.classList.toggle('title-in', !entries[entries.length - 1].isIntersecting);
+  }, { rootMargin: -tb.offsetHeight + 'px 0px 0px 0px' });
+  titleIO.observe(h);
+}
+// Las vistas pintan su encabezado cuando quieren (y algunas lo reemplazan): se vuelve a buscar tras cada cambio.
+new MutationObserver(() => { if (!titleRaf && shellEl) titleRaf = requestAnimationFrame(() => watchLargeTitle(false)); })
+  .observe(root, { childList: true, subtree: true });
 
 // Reconstruye el shell conservando la vista actual (su DOM, estado y scroll).
 function repaintShell() {
@@ -256,9 +403,18 @@ function repaintShell() {
   const t = $('#tbTitle'); if (t) t.textContent = title;
   highlightNav(currentNavPath());
   window.scrollTo(0, y);
+  watchLargeTitle(true);
 }
 
 // ── Shell ──
+// Avatar de la barbería: su logo o su monograma (el mismo que ve el cliente en la página pública).
+function shopAvatar(name, o) {
+  o = o || {};
+  if (o.src) return String(avatar(name, o));
+  return '<span class="avatar' + (o.size ? ' ' + o.size : '') + '" style="--c:' + esc(o.color || '#15130F') + '" aria-hidden="true">' + esc(shopMark(name)) + '</span>';
+}
+const myColor = () => (state.ctx && state.ctx.staff && state.ctx.staff.color) || undefined;
+const themeLabel = () => 'Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[getTheme()]);
 function renderShell() {
   const authed = !!(state.user || state.staff);
   if (!authed) return;
@@ -268,31 +424,31 @@ function renderShell() {
   const canSwitch = ctxs.length > 1 || isSuper();
   const groups = NAV.map((g) => ({ g, items: g.items.filter(visible) })).filter((x) => x.items.length);
   const navHtml = groups.map(({ g, items }) => (g.group ? '<div class="nav-group">' + esc(g.group) + '</div>' : '') + items.map((it) =>
-    it.href ? '<a href="' + esc(it.href()) + '" target="_blank" rel="noopener">' + icon(it.icon) + '<span>' + esc(labelOf(it)) + '</span></a>'
-      : '<a href="#' + it.path + '" data-path="' + it.path + '">' + icon(it.icon) + '<span>' + esc(labelOf(it)) + '</span>' + (it.count ? '<span class="count" data-unread hidden></span>' : '') + '</a>').join('')).join('');
+    it.href ? '<a href="' + esc(it.href()) + '">' + icon(it.icon) + navLabel(it) + '</a>'
+      : '<a href="#' + it.path + '" data-path="' + it.path + '">' + icon(it.icon) + navLabel(it) + (it.count ? '<span class="count" data-unread hidden></span>' : '') + '</a>').join('')).join('');
   const sh = shop();
   const canCreate = canAny(['appointments.write.all', 'appointments.write.own']);
   const demoOn = getMode() === 'demo';
+  const roleName = isSuper() && r !== 'superadmin' ? 'Superadmin' : (ROLE[r] || '');
 
   root.innerHTML =
     (demoOn ? '<div class="demo-ribbon">' + icon('sparkles', 'ic-sm') + '<span>Demo con datos ficticios</span> · <button type="button" id="dmRole">Cambiar rol</button> · <button type="button" id="dmGuide">Guía</button> · <button type="button" id="dmExit">Salir</button></div>' : '') +
     '<div class="shell has-sidebar">' +
     '<aside class="sidebar" id="sidebar" aria-label="Menú principal">' +
       '<div class="sb-brand"><span class="logo-mark">' + icon('logo') + '</span><span class="brandname">Tu<b>Barbería</b></span></div>' +
-      (sh ? '<button type="button" class="shop-switch" id="shopSwitch"' + (canSwitch ? '' : ' disabled') + '>' + avatar(sh.name, { src: sh.logo_url || '', color: sh.brand_color || '#15130F' }) +
+      (sh ? '<button type="button" class="shop-switch" id="shopSwitch" title="' + esc(sh.name) + '"' + (canSwitch ? '' : ' disabled') + '>' + shopAvatar(sh.name, { src: sh.logo_url || '', color: sh.brand_color || '#15130F' }) +
         '<span class="grow"><span class="name truncate" style="display:block">' + esc(sh.name) + '</span><span class="role">' + esc(ROLE[r] || '') + '</span></span>' + (canSwitch ? icon('chevron-down', 'ic-sm') : '') + '</button>' : '') +
       '<nav class="nav">' + navHtml + '</nav>' +
       '<div class="sb-foot">' +
-        (pwa.installed ? '' : '<a href="#/instalar">' + icon('download') + '<span>Instalar app</span></a>') +
-        (demoOn ? '<a href="#/guia">' + icon('book') + '<span>Guía de la demo</span></a>' : '') +
-        '<button type="button" id="themeBtn">' + icon(document.documentElement.getAttribute('data-theme') === 'dark' ? 'sun' : 'moon') + '<span>Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[getTheme()]) + '</span></button>' +
-        '<a href="#/perfil" class="sb-user">' + avatar(name, { size: 'sm' }) + '<span class="grow"><span class="name truncate" style="display:block">' + esc(name) + '</span><span class="role">' + esc(isSuper() && r !== 'superadmin' ? 'Superadmin' : (ROLE[r] || '')) + '</span></span></a>' +
-        '<button type="button" id="logoutBtn">' + icon('logout') + '<span>Cerrar sesión</span></button>' +
+        (pwa.installed ? '' : '<a href="#/instalar" title="Instalar app">' + icon('download') + '<span>Instalar app</span></a>') +
+        (demoOn ? '<a href="#/guia" title="Guía de la demo">' + icon('book') + '<span>Guía de la demo</span></a>' : '') +
+        '<button type="button" id="themeBtn" title="' + esc(themeLabel()) + '">' + icon(document.documentElement.getAttribute('data-theme') === 'dark' ? 'sun' : 'moon') + '<span>' + esc(themeLabel()) + '</span></button>' +
+        '<a href="#/perfil" class="sb-user" title="' + esc(name) + '">' + avatar(name, { size: 'sm', color: myColor() }) + '<span class="grow"><span class="name truncate" style="display:block">' + esc(name) + '</span><span class="role">' + esc(roleName) + '</span></span></a>' +
+        '<button type="button" id="logoutBtn" title="Cerrar sesión">' + icon('logout') + '<span>Cerrar sesión</span></button>' +
       '</div>' +
     '</aside>' +
     '<div class="main">' +
       '<header class="topbar" id="topbar">' +
-        '<button type="button" class="btn btn-ghost btn-icon" id="menuBtn" aria-label="Abrir menú" style="margin-left:-8px">' + icon('menu') + '</button>' +
         '<h1 id="tbTitle"></h1>' +
         '<div class="tb-actions">' +
           (canCreate ? '<button type="button" class="btn btn-primary btn-sm" id="newApptTop" style="display:none">' + icon('plus') + 'Nueva cita</button>' : '') +
@@ -304,31 +460,39 @@ function renderShell() {
     '<nav class="bottom-nav" aria-label="Navegación">' + bottomNavHtml(canCreate) + '</nav>' +
     '</div>';
   shellEl = root.querySelector('.shell');
+  titleEl = null;
   document.body.classList.add('has-shell');
   syncTopbar();
   wireShell();
   paintUnread(state.ctx ? state.ctx.unread : 0);
 }
+// Barra inferior (teléfono): 3–5 destinos por rol. Lo que no tiene pestaña propia vive en «Más», que se marca
+// como activa en esas pantallas (highlightNav).
 function bottomNavHtml(canCreate) {
   const r = role();
-  const it = (path, label, ic) => '<a href="#' + path + '" data-path="' + path + '">' + icon(ic) + '<span>' + esc(label) + '</span></a>';
+  const it = (path, label, ic, attrs) => '<a href="#' + path + '" data-path="' + path.split('?')[0] + '"' + (attrs || '') + '>' + icon(ic) + '<span>' + esc(label) + '</span></a>';
+  const more = '<button type="button" data-more aria-haspopup="dialog">' + icon('menu') + '<span>Más</span></button>';
+  const profile = it('/perfil', 'Perfil', 'user', ' data-also="/instalar /guia"');
   if (r === 'client') return it('/mis-citas', 'Mis citas', 'calendar-check') +
-    '<a href="' + esc(bookingUrl()) + '" target="_blank" rel="noopener">' + icon('calendar-plus') + '<span>Reservar</span></a>' +
-    '<a href="#/notificaciones" data-path="/notificaciones" style="position:relative">' + icon('bell') + '<span>Avisos</span><span class="count-badge" data-unread hidden></span></a>' +
-    it('/perfil', 'Perfil', 'user');
-  if (!state.ctx) return it('/plataforma', 'Barberías', 'shield') + '<button type="button" data-more>' + icon('menu') + '<span>Más</span></button>';
+    // La página pública se abre en la misma ventana (en la app instalada no salta al navegador).
+    '<a href="' + esc(bookingUrl()) + '">' + icon('calendar-plus') + '<span>Reservar</span></a>' +
+    (canAny(['notifications.read']) ? '<a href="#/notificaciones" data-path="/notificaciones">' + icon('bell') + '<span>Avisos</span><span class="count-badge" data-unread hidden></span></a>' : '') +
+    profile;
+  if (!state.ctx) {
+    if (isSuper()) return it('/plataforma', 'Barberías', 'shield') + it('/plataforma?tab=usuarios', 'Usuarios', 'users', ' data-q="tab=usuarios"') + profile + more;
+    // Sin barbería activa (ninguna todavía, o suspendida): su estado, el perfil y «Más».
+    return it('/inicio', 'Inicio', 'home') + profile + more;
+  }
   return it('/inicio', r === 'barber' ? 'Mi día' : 'Inicio', 'home') + it('/agenda', 'Agenda', 'calendar') +
     (canCreate ? '<button type="button" data-newappt aria-label="Nueva cita"><span class="fab">' + icon('plus') + '</span></button>' : '') +
-    it('/clientes', r === 'barber' ? 'Clientes' : 'Clientes', 'users') +
-    '<button type="button" data-more style="position:relative">' + icon('menu') + '<span>Más</span></button>';
+    it('/clientes', 'Clientes', 'users') + more;
 }
 // Los listeners delegados viven en #app (que nunca se reemplaza): se conectan UNA sola vez.
 let shellWired = false;
 function wireShell() {
   if (shellWired) return;
   shellWired = true;
-  on(root, 'click', '#menuBtn', () => openSidebar());
-  on(root, 'click', '#themeBtn', () => { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); repaintShell(); toast.info('Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[n])); });
+  on(root, 'click', '#themeBtn', () => { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); repaintShell(); toast.info(themeLabel()); });
   on(root, 'click', '#logoutBtn', logout);
   on(root, 'click', '#shopSwitch', () => openShopSwitcher());
   on(root, 'click', '#bellBtn', (e, el) => openBell(el));
@@ -337,26 +501,28 @@ function wireShell() {
   on(root, 'click', '#dmRole', () => openRoleSwitcher());
   on(root, 'click', '#dmGuide', () => navigate('/guia'));
   on(root, 'click', '#dmExit', () => exitDemo());
-  on(root, 'click', '#sidebar a[href^="#"]', () => closeSidebar());
+  // Pestañas internas que cambian la URL sin navegar (p. ej. Plataforma → Usuarios): se vuelve a marcar la barra.
+  on(root, 'click', '#page [role="tab"]', () => setTimeout(() => highlightNav(currentNavPath()), 0));
   window.addEventListener('scroll', () => { const t = $('#topbar'); if (t) t.classList.toggle('scrolled', window.scrollY > 4); }, { passive: true });
-  const mq = window.matchMedia('(min-width:1024px)');
-  mq.addEventListener('change', syncTopbar);
+  window.matchMedia(SIDE_Q).addEventListener('change', () => { syncTopbar(); watchLargeTitle(true); });
 }
+// Con barra lateral o riel no hay barra inferior: «Nueva cita» pasa a la barra superior.
 function syncTopbar() {
-  const wide = window.matchMedia('(min-width:1024px)').matches;
-  const b = $('#newApptTop'); if (b) b.style.display = wide ? '' : 'none';
-  const mb = $('#menuBtn'); if (mb) mb.style.display = wide ? 'none' : '';
+  const b = $('#newApptTop'); if (b) b.style.display = window.matchMedia(SIDE_Q).matches ? '' : 'none';
 }
 function currentNavPath() { const { path } = parseHash(); const m = match(path); return m ? (m.route.nav || m.route.path) : ''; }
 function highlightNav(p) {
-  $$('.nav a[data-path], .bottom-nav [data-path]').forEach((a) => { if (a.dataset.path === p) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  const q = parseHash().query;
+  const qOk = (a) => !a.dataset.q || Array.from(new URLSearchParams(a.dataset.q)).every(([k, v]) => q[k] === v);
+  [$$('.nav a[data-path]'), $$('.bottom-nav [data-path]')].forEach((items) => {
+    let hits = items.filter((a) => a.dataset.path === p && qOk(a));
+    if (hits.some((a) => a.dataset.q)) hits = hits.filter((a) => a.dataset.q);
+    if (!hits.length && p) hits = items.filter((a) => (a.dataset.also || '').split(' ').includes(p));
+    items.forEach((a) => { if (hits.includes(a)) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  });
+  const more = $('.bottom-nav [data-more]');
+  if (more) { if (p && !$('.bottom-nav [data-path][aria-current="page"]')) more.setAttribute('aria-current', 'page'); else more.removeAttribute('aria-current'); }
 }
-function openSidebar() {
-  const sb = $('#sidebar'); if (!sb) return;
-  sb.classList.add('open');
-  const s = document.createElement('div'); s.className = 'scrim'; s.id = 'scrim'; s.onclick = closeSidebar; document.body.appendChild(s);
-}
-function closeSidebar() { const sb = $('#sidebar'); if (sb) sb.classList.remove('open'); const s = $('#scrim'); if (s) s.remove(); }
 
 async function newAppointment(prefill) {
   try { const m = await import('./lib/appointment-sheet.js'); m.openNewAppointment(prefill || {}); }
@@ -369,20 +535,29 @@ async function openBell(el) {
   navigate('/notificaciones');
 }
 
+// «Más» (teléfono): la barbería activa arriba, luego las secciones sin pestaña propia y la cuenta.
 function openMoreSheet() {
-  const primary = ['/inicio', '/agenda', '/clientes', '/mis-citas', '/perfil'];
-  const items = NAV.flatMap((g) => g.items.filter(visible).filter((it) => !primary.includes(it.path) || !it.path).map((it) => ({ it, g: g.group })));
+  const inBar = $$('.bottom-nav [data-path]').map((a) => a.dataset.path);
+  const here = currentNavPath();
+  const items = NAV.flatMap((g) => g.items.filter(visible).filter((it) => !it.path || !inBar.includes(it.path)));
+  const sh = shop();
+  const canSwitch = (state.contexts || []).length > 1 || isSuper();
+  const cur = (path) => (path === here ? ' aria-current="page"' : '');
+  const shopRow = !sh ? '' : (canSwitch ? '<button type="button" class="list-item" data-switch>' : '<div class="list-item">') +
+    shopAvatar(sh.name, { src: sh.logo_url || '', color: sh.brand_color || '#15130F' }) +
+    '<span class="grow"><span class="title truncate" style="display:block">' + esc(sh.name) + '</span><span class="meta">' + esc(ROLE[role()] || '') + (canSwitch ? ' · Cambiar de barbería' : '') + '</span></span>' +
+    (canSwitch ? icon('chevron-right', 'ic-sm') + '</button>' : '</div>');
   const m = modal({
     title: 'Más opciones',
-    body: '<div class="list" style="margin:0 -20px">' +
-      items.map(({ it }) => it.href
-        ? '<a class="list-item" href="' + esc(it.href()) + '" target="_blank" rel="noopener">' + icon(it.icon) + '<span class="title">' + esc(labelOf(it)) + '</span></a>'
-        : '<a class="list-item" href="#' + it.path + '">' + icon(it.icon) + '<span class="title">' + esc(labelOf(it)) + '</span>' + (it.count ? '<span class="trail"><span class="badge err plain" data-unread hidden></span></span>' : '') + '</a>').join('') +
-      ((state.contexts || []).length > 1 || isSuper() ? '<button type="button" class="list-item" data-switch>' + icon('store') + '<span class="title">Cambiar de barbería</span></button>' : '') +
-      (pwa.installed ? '' : '<a class="list-item" href="#/instalar">' + icon('download') + '<span class="title">Instalar app</span></a>') +
-      (getMode() === 'demo' ? '<a class="list-item" href="#/guia">' + icon('book') + '<span class="title">Guía de la demo</span></a>' : '') +
-      '<a class="list-item" href="#/perfil">' + icon('user') + '<span class="title">Mi perfil</span></a>' +
-      '<button type="button" class="list-item" data-theme-t>' + icon('moon') + '<span class="title">Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[getTheme()]) + '</span></button>' +
+    body: '<div class="list" style="margin:0 -20px">' + shopRow +
+      items.map((it) => it.href
+        ? '<a class="list-item" href="' + esc(it.href()) + '">' + icon(it.icon) + '<span class="title">' + esc(labelOf(it)) + '</span></a>'
+        : '<a class="list-item" href="#' + it.path + '"' + cur(it.path) + '>' + icon(it.icon) + '<span class="title">' + esc(labelOf(it)) + '</span>' + (it.count ? '<span class="trail"><span class="badge err plain" data-unread hidden></span></span>' : '') + '</a>').join('') +
+      (!sh && canSwitch ? '<button type="button" class="list-item" data-switch>' + icon('store') + '<span class="title">Cambiar de barbería</span></button>' : '') +
+      (pwa.installed ? '' : '<a class="list-item" href="#/instalar"' + cur('/instalar') + '>' + icon('download') + '<span class="title">Instalar app</span></a>') +
+      (getMode() === 'demo' ? '<a class="list-item" href="#/guia"' + cur('/guia') + '>' + icon('book') + '<span class="title">Guía de la demo</span></a>' : '') +
+      (inBar.includes('/perfil') ? '' : '<a class="list-item" href="#/perfil"' + cur('/perfil') + '>' + icon('user') + '<span class="title">Mi perfil</span></a>') +
+      '<button type="button" class="list-item" data-theme-t>' + icon('moon') + '<span class="title">' + esc(themeLabel()) + '</span></button>' +
       '<button type="button" class="list-item" data-logout style="color:var(--err)">' + icon('logout') + '<span class="title">Cerrar sesión</span></button></div>'
   });
   paintUnread(lastUnread);
@@ -390,7 +565,7 @@ function openMoreSheet() {
     if (e.target.closest('a')) m.close();
     if (e.target.closest('[data-switch]')) { m.close(); openShopSwitcher(); }
     if (e.target.closest('[data-logout]')) { m.close(); logout(); }
-    if (e.target.closest('[data-theme-t]')) { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); m.close(); repaintShell(); toast.info('Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[n])); }
+    if (e.target.closest('[data-theme-t]')) { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); m.close(); repaintShell(); toast.info(themeLabel()); }
   });
 }
 
@@ -399,8 +574,9 @@ function openShopSwitcher() {
   const m = modal({
     title: 'Cambiar de barbería',
     body: '<div class="list" style="margin:0 -20px">' + ctxs.map((c) =>
-      '<button type="button" class="list-item" data-shop="' + esc(c.shop_id) + '">' + avatar(c.shop_name) + '<span class="grow"><span class="title truncate" style="display:block">' + esc(c.shop_name) + '</span><span class="meta">' + esc(ROLE[c.role] || c.role) + '</span></span>' +
-      (state.shopId === c.shop_id ? '<span class="trail">' + icon('check', 'brand-t') + '</span>' : '') + '</button>').join('') +
+      '<button type="button" class="list-item" data-shop="' + esc(c.shop_id) + '">' + shopAvatar(c.shop_name, { src: c.shop_logo || '', color: (shop() && shop().id === c.shop_id && shop().brand_color) || '#15130F' }) +
+      '<span class="grow"><span class="title truncate" style="display:block">' + esc(c.shop_name) + '</span><span class="meta">' + esc(ROLE[c.role] || c.role) + (c.shop_status === 'suspended' ? ' · Suspendida' : '') + '</span></span>' +
+      (state.shopId === c.shop_id && state.ctx ? '<span class="trail">' + icon('check', 'brand-t') + '</span>' : '') + '</button>').join('') +
       (isSuper() ? '<a class="list-item" href="#/plataforma">' + icon('shield') + '<span class="title">Plataforma: todas las barberías</span></a>' : '') + '</div>'
   });
   m.body.addEventListener('click', async (e) => {
@@ -408,7 +584,7 @@ function openShopSwitcher() {
     if (e.target.closest('a')) m.close();
     if (!b) return;
     m.close();
-    try { await selectShop(b.dataset.shop); navigate(homePath(), { replace: true, force: true }); toast.success('Ahora ves ' + shop().name); }
+    try { await selectShop(b.dataset.shop); shopError = null; navigate(homePath(), { replace: true, force: true }); toast.success('Ahora ves ' + shop().name); }
     catch (err) { toast.error(err); }
   });
 }
@@ -494,6 +670,6 @@ window.addEventListener('tb:demo-sync', () => { bus.emit('appointments:changed',
 bus.on('notifications:changed', (n) => { if (typeof n === 'number') paintUnread(n); else pollUnread(); });
 
 // API global mínima para vistas que la necesiten sin importar main.js (evita ciclos).
-window.TB = { navigate, newAppointment, enterShop, demoLogin, setTheme, getTheme, pwa, refreshContext, renderShell: repaintShell, repaintShell, homePath };
+window.TB = { navigate, newAppointment, enterShop, demoLogin, setTheme, getTheme, pwa, refreshContext, renderShell: repaintShell, repaintShell, homePath, ensureShop, openShopSwitcher };
 
 boot();

@@ -12,10 +12,19 @@ export function money(n, opts) {
   const s = (cents || (opts && opts.cents) ? nf2 : nf0).format(Math.abs(n));
   return (n < 0 ? '−$' : '$') + s;
 }
+// Cifras que se leen juntas (una lista, las tarjetas de un periodo): si alguna lleva centavos, todas los llevan,
+// para que no queden '$4,170' junto a '$2,709.50'. const m = moneyIn([a, b, c]); m(a) → '$4,170.00'.
+export function moneyIn(values) {
+  const cents = (values || []).some((n) => Math.round((Number(n) || 0) * 100) % 100 !== 0);
+  return (n) => money(n, cents ? { cents: true } : undefined);
+}
+// Importe corto para KPIs y ejes: '$89.8k', '$1.2M' (la unidad va pegada, como en '$84,670').
 export function compactMoney(n) {
   n = Number(n) || 0;
-  if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1).replace('.0', '') + ' M';
-  if (Math.abs(n) >= 1e4) return '$' + (n / 1e3).toFixed(1).replace('.0', '') + ' k';
+  const sign = n < 0 ? '−$' : '$';
+  const a = Math.abs(n);
+  if (a >= 1e6) return sign + (a / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (a >= 1e4) return sign + (a / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
   return money(n);
 }
 export const number = (n) => nf0.format(Number(n) || 0);
@@ -23,6 +32,11 @@ export const pct = (n) => (Number.isFinite(n) ? (Math.round(n * 10) / 10).toStri
 
 export function time(min) { if (min == null) return ''; return pad2(Math.floor(min / 60)) + ':' + pad2(min % 60); }
 export function timeRange(a, b) { return time(a) + '–' + time(b); }
+// Hora de un ISO en la zona de la barbería (o la del dispositivo), en 24 h como time(): '14:05'.
+export function clock(iso, tz) {
+  if (!iso) return '';
+  try { return new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: tz || undefined }).format(new Date(iso)); } catch (e) { return ''; }
+}
 export function duration(m) { m = Number(m) || 0; const h = Math.floor(m / 60), r = m % 60; return h ? (r ? h + ' h ' + r + ' min' : h + ' h') : r + ' min'; }
 
 const DOW = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -57,9 +71,10 @@ export function ago(iso) {
   if (s < 86400 * 7) { const d = Math.round(s / 86400); return 'hace ' + d + (d === 1 ? ' día' : ' días'); }
   return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
-export function dateTimeIso(iso) {
+// '24 sep, 14:05' (24 h, como el resto de las horas del panel).
+export function dateTimeIso(iso, tz) {
   if (!iso) return '';
-  return new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  try { return new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: tz || undefined }); } catch (e) { return ''; }
 }
 
 export function todayIn(tz) { return nowInTz(tz).date; }
@@ -70,6 +85,14 @@ export function endOfMonth(k) { const d = parseDateKey(startOfMonth(k)); d.setUT
 export function addMonths(k, n) { const d = parseDateKey(startOfMonth(k)); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); }
 
 export function phone(p) { const d = String(p || '').replace(/\D/g, ''); return d.length === 10 ? d.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : d; }
+// Monograma de la barbería: dos palabras significativas, sin artículos ("La Navaja Barber Club" → NB,
+// "Barbería del Norte" → BN). Es el mismo que muestra la página pública (index.html → shopMark).
+export function shopMark(name) {
+  const all = String(name || '?').trim().split(/\s+/);
+  const kept = all.filter((x) => !/^(la|el|los|las|de|del|y|the|&)$/i.test(x));
+  const w = kept.length ? kept : all;
+  return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
+}
 export function initials(name) { const w = String(name || '?').trim().split(/\s+/); return ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase(); }
 export function firstName(name) { return String(name || '').trim().split(/\s+/)[0] || ''; }
 export function plural(n, one, many) { return number(n) + ' ' + (n === 1 ? one : (many || one + 's')); }

@@ -1,5 +1,5 @@
 // #/mensajes — Centro de WhatsApp. Pestañas:
-//   Recordatorios  → citas de Hoy/Mañana/otra fecha con su recordatorio listo; "Enviar" por cita, progreso
+//   Recordatorios  → citas de Hoy/Mañana/otra fecha con su recordatorio listo; botón de WhatsApp por cita, progreso
 //                    "4 de 12 enviados" y modo "uno tras otro" (o "todos a la cola" en modo automático).
 //   Historial      → mensajes con estado (preparado, abierto, enviado, en cola, falló) y detalle.
 //   Plantillas     → (dueño) editar cada plantilla con variables clicables y vista previa en vivo.
@@ -7,10 +7,10 @@
 import { html, raw, on, $, $$ } from '../lib/html.js';
 import { icon } from '../lib/icons.js';
 import { api, SITE_BASE } from '../lib/api.js';
-import { bus, can, shop, today, role } from '../lib/state.js';
+import { bus, can, shop, today, role, tz } from '../lib/state.js';
 import { setQuery, navigate } from '../lib/router.js';
-import { toast, modal, confirmDialog, busy, emptyState, errorState, skeletonRows } from '../lib/ui.js';
-import { time, dateLong, dateLongCap, addDays, ago, dateTimeIso, phone as fmtPhone, plural, number } from '../lib/fmt.js';
+import { toast, modal, confirmDialog, busy, menu, emptyState, errorState, skeletonRows } from '../lib/ui.js';
+import { time, clock, dateLong, dateLongCap, addDays, ago, dateTimeIso, phone as fmtPhone, plural, number } from '../lib/fmt.js';
 import { sendWhatsApp, editAndSendWhatsApp, markMessage, bubbleHtml, waMode, waLinkFor, KIND_LABEL, MSG_STATUS, MAX_BODY } from '../lib/whatsapp.js';
 import { DEFAULT_TEMPLATES } from '../../core/domain/settings.js';
 
@@ -26,8 +26,6 @@ const VARS = [
   ['cliente', 'Cliente'], ['fecha', 'Fecha'], ['hora', 'Hora'], ['servicios', 'Servicios'], ['barbero', 'Barbero'],
   ['total', 'Total'], ['folio', 'Folio'], ['enlace', 'Enlace'], ['barberia', 'Barbería'], ['direccion', 'Dirección'], ['resena', 'Reseña']
 ];
-// 17:30 → { t: '5:30', ap: 'p.m.' }
-const h12 = (min) => { const h = Math.floor(min / 60) % 24, m = min % 60; return { t: (h % 12 || 12) + ':' + String(m).padStart(2, '0'), ap: h < 12 ? 'a.m.' : 'p.m.' }; };
 const KIND_ICON = { confirmation: 'calendar-check', reminder: 'clock', reschedule: 'repeat', cancellation: 'x-circle', thanks: 'star', no_show: 'ban', custom: 'message' };
 
 // Misma regla que el servidor (core/domain/messages.js → renderTemplate) para la vista previa.
@@ -58,19 +56,30 @@ const CSS = `
 .rm-prog .count{font-family:var(--disp);font-size:30px;font-weight:800;line-height:1.05}
 .rm-prog .count span{font-family:var(--sans);font-size:14px;font-weight:500;color:var(--text-2);margin-left:4px}
 .rm-prog .progress-bar{height:8px}
-.rm-prog .progress-bar>span{background:#25D366}
+.rm-prog .progress-bar>span{background:var(--wa-fill)}
 .rm-prog .sub{font-size:12.5px;color:var(--text-3)}
-.rm-row{gap:12px;padding:12px 14px 12px 16px}
+.v-msg,.rm-seq{--wa:#1C9D4F;--wa-fill:#25D366}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .v-msg,:root:not([data-theme="light"]) .rm-seq{--wa:#5CC98A;--wa-fill:#1E9E50}}
+:root[data-theme="dark"] .v-msg,:root[data-theme="dark"] .rm-seq{--wa:#5CC98A;--wa-fill:#1E9E50}
+.rm-row{gap:12px;padding:12px 8px 12px 16px;align-items:flex-start}
 .rm-time{width:52px;flex:none;display:grid;justify-items:center;padding:6px 0;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);line-height:1.05}
 .rm-time b{font-size:15px;font-variant-numeric:tabular-nums}
-.rm-time span{font-size:10.5px;color:var(--text-3);font-weight:600;margin-top:2px}
-.rm-row .meta{display:flex;gap:2px 8px;align-items:center;min-width:0;flex-wrap:wrap}
+.rm-time span{font-size:10.5px;color:var(--text-3);font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.rm-row .grow{min-width:0;align-self:center}
+.rm-row .title{white-space:normal;overflow-wrap:anywhere;line-height:1.3}
+.rm-row .svc{font-size:13px;color:var(--text-2);line-height:1.35;margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.rm-row .meta{display:flex;gap:2px 8px;align-items:center;min-width:0;flex-wrap:wrap;margin-top:2px}
 .rm-row .meta .faint{white-space:nowrap}
 .rm-row .done-t{color:var(--ok);font-weight:600;display:inline-flex;align-items:center;gap:3px;flex:none}
 .rm-row .done-t .ic{width:14px;height:14px;stroke-width:2.4}
 .rm-row.done .rm-time{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
 .rm-row.nophone .rm-time{opacity:.6}
-.rm-row .trail{gap:4px}
+.rm-row .trail{gap:2px;align-self:center;flex:none}
+.rm-send{color:var(--wa)}
+.rm-send .ic{width:22px;height:22px}
+@media (hover:hover) and (pointer:fine){.rm-send:hover:not(:disabled){border-color:var(--wa);background:color-mix(in srgb,var(--wa) 8%,var(--surface))}}
+.rm-row.done .rm-send{color:var(--text-3);box-shadow:none}
+.rm-add{white-space:nowrap}
 .rm-row.flash{animation:flash 1.2s var(--ease)}
 .rm-seq{display:grid;gap:14px}
 .rm-seq .who{display:flex;align-items:center;gap:12px}
@@ -222,19 +231,20 @@ export default {
       const a = x.appointment;
       const svc = (a.services || []).map((s) => s.name).join(' + ');
       const owner2 = can('appointments.read.all');
-      const hm = h12(a.start_min);
+      const who = a.client_name || 'el cliente';
+      // Fila: hora, cliente (sin cortar el nombre) y un botón de WhatsApp de 40 px; editar va en el menú «⋮».
+      // El verde lleno queda solo para «Enviar uno tras otro».
       return html`<div class="list-item rm-row ${x.reminded ? 'done' : ''} ${x.to_phone ? '' : 'nophone'}" data-aid="${a.id}">
-        <div class="rm-time" aria-hidden="true"><b>${hm.t}</b><span>${hm.ap}</span></div>
-        <div class="grow" style="min-width:0">
-          <div class="title truncate">${a.client_name || 'Cliente'}</div>
-          <div class="meta"><span class="truncate">${svc}${owner2 && a.staff_name ? ' · ' + a.staff_name : ''}</span></div>
+        <div class="rm-time" aria-hidden="true"><b>${time(a.start_min)}</b><span>${time(a.end_min)}</span></div>
+        <div class="grow">
+          <div class="title">${a.client_name || 'Cliente'}</div>
+          <div class="svc">${svc}${owner2 && a.staff_name ? ' · ' + a.staff_name : ''}</div>
           <div class="meta">${x.to_phone ? html`<span class="faint">${fmtPhone(x.to_phone)}</span>` : raw('<span class="warn-t">Sin teléfono</span>')}${x.reminded ? html`<span class="done-t">${raw(icon('check'))}Enviado</span>` : ''}</div>
         </div>
         <div class="trail">
-          ${x.to_phone ? html`<button type="button" class="btn btn-ghost btn-icon btn-sm" data-rm-edit="${a.id}" aria-label="Editar mensaje para ${a.client_name || 'el cliente'}">${raw(icon('edit'))}</button>
-            ${x.reminded ? html`<button type="button" class="btn btn-secondary btn-icon btn-sm" data-rm-send="${a.id}" title="Reenviar" aria-label="Reenviar recordatorio a ${a.client_name || 'el cliente'}">${raw(icon('repeat'))}</button>`
-              : html`<button type="button" class="btn btn-wa btn-sm" data-rm-send="${a.id}" aria-label="Enviar recordatorio a ${a.client_name || 'el cliente'}">${raw(icon('whatsapp'))}Enviar</button>`}`
-            : can('clients.write') && a.client_id ? html`<a class="btn btn-secondary btn-sm" href="#/clientes/${a.client_id}">Agregar tel.</a>` : ''}
+          ${x.to_phone ? html`<button type="button" class="btn btn-secondary btn-icon rm-send" data-rm-send="${a.id}" title="${x.reminded ? 'Reenviar por WhatsApp' : 'Enviar por WhatsApp'}" aria-label="${(x.reminded ? 'Reenviar' : 'Enviar') + ' recordatorio a ' + who + ' por WhatsApp'}">${raw(icon('whatsapp'))}</button>
+            <button type="button" class="btn btn-ghost btn-icon" data-rm-menu="${a.id}" aria-haspopup="menu" aria-label="Más opciones para ${who}">${raw(icon('more-v'))}</button>`
+            : can('clients.write') && a.client_id ? html`<a class="btn btn-secondary btn-sm rm-add" href="#/clientes/${a.client_id}">Agregar tel.</a>` : ''}
         </div>
       </div>`;
     }
@@ -319,10 +329,9 @@ export default {
           return;
         }
         const x = queue[i], a = x.appointment;
-        const hm = h12(a.start_min);
         bodyEl.innerHTML = String(html`<div class="rm-seq">
           <div class="progress-bar"><span style="width:${String(Math.round((i / queue.length) * 100))}%"></span></div>
-          <div class="who"><div class="rm-time"><b>${hm.t}</b><span>${hm.ap}</span></div>
+          <div class="who"><div class="rm-time"><b>${time(a.start_min)}</b><span>${time(a.end_min)}</span></div>
             <div style="min-width:0"><span class="eyebrow">${String(i + 1)} de ${String(queue.length)}</span><b class="truncate" style="display:block">${a.client_name || 'Cliente'}</b><span class="muted" style="font-size:13px">${fmtPhone(x.to_phone)} · ${(a.services || []).map((s) => s.name).join(' + ')}</span></div></div>
           ${raw(bubbleHtml(x.body))}
           <p class="faint" style="font-size:12.5px">El enlace para gestionar la cita se genera al enviarlo.</p>
@@ -390,11 +399,11 @@ export default {
       const m = modal({
         title: KIND_LABEL[msg.kind] || 'Mensaje',
         subtitle: (msg.client_name ? msg.client_name + ' · ' : '') + fmtPhone(msg.to_phone),
-        body: String(html`<div class="msg-det">${raw(bubbleHtml(msg.body, { time: new Date(msg.created_at).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' }) }))}
+        body: String(html`<div class="msg-det">${raw(bubbleHtml(msg.body, { time: clock(msg.created_at, tz()) }))}
           <dl>
             <dt>Estado</dt><dd><span class="badge ${st.cls}">${st.label}</span></dd>
-            <dt>Preparado</dt><dd>${dateTimeIso(msg.created_at)}</dd>
-            ${msg.sent_at ? html`<dt>Enviado</dt><dd>${dateTimeIso(msg.sent_at)}</dd>` : ''}
+            <dt>Preparado</dt><dd>${dateTimeIso(msg.created_at, tz())}</dd>
+            ${msg.sent_at ? html`<dt>Enviado</dt><dd>${dateTimeIso(msg.sent_at, tz())}</dd>` : ''}
             ${msg.appointment ? html`<dt>Cita</dt><dd>${dateLongCap(msg.appointment.date)} · ${time(msg.appointment.start_min)}${msg.appointment.folio ? ' · ' + msg.appointment.folio : ''}</dd>` : ''}
             ${msg.error ? html`<dt>Error</dt><dd class="err-t">${msg.error}</dd>` : ''}
           </dl></div>`),
@@ -419,7 +428,7 @@ export default {
       const s = shop() || {};
       const booking = SITE_BASE + '?b=' + encodeURIComponent(s.slug || '');
       const review = (s.settings && s.settings.public && s.settings.public.review_url) || booking;
-      return { cliente: 'Carlos', barberia: s.name || 'Tu barbería', fecha: dateLong(addDays(today(), 1)), hora: '5:30 p.m.', servicios: 'Corte clásico + Barba', barbero: 'Luis', total: '$350', folio: 'TB-1042', enlace: SITE_BASE + '?cita=…', direccion: s.address || '', resena: review };
+      return { cliente: 'Carlos', barberia: s.name || 'Tu barbería', fecha: dateLong(addDays(today(), 1)), hora: '17:30', servicios: 'Corte clásico + Barba', barbero: 'Luis', total: '$350', folio: 'TB-1042', enlace: SITE_BASE + '?cita=…', direccion: s.address || '', resena: review };
     }
     function renderTemplates() {
       const cur = templates();
@@ -575,7 +584,15 @@ export default {
       renderReminders(++seq, true);
     }));
     offs.push(on(el, 'click', '[data-rm-send]', (e, b) => sendOne(b, b.dataset.rmSend)));
-    offs.push(on(el, 'click', '[data-rm-edit]', (e, b) => editOne(b.dataset.rmEdit)));
+    offs.push(on(el, 'click', '[data-rm-menu]', (e, b) => {
+      const aid = b.dataset.rmMenu;
+      const x = R.items.find((i) => i.appointment.id === aid);
+      if (!x) return;
+      menu(b, [
+        { label: 'Editar y enviar', icon: 'edit', onClick: () => editOne(aid) },
+        { label: 'Ver la cita', icon: 'calendar', onClick: () => navigate('/agenda', { query: { cita: aid } }) }
+      ]);
+    }));
     offs.push(on(el, 'click', '[data-act="seq"]', openSequence));
     offs.push(on(el, 'click', '[data-act="queue-all"]', (e, b) => queueAll(b)));
     // Historial

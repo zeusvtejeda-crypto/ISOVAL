@@ -4,6 +4,7 @@
 //   const ag = await loadAgenda(sdb, shop, { from, to });          // 4 consultas para todo el rango
 //   computeSlots(ag, { date, duration, staffIds, now, mode })       // → { date, duration_min, closed, slots:[{start_min, staff_ids}] }
 //   computeDays(ag, { from, days, duration, staffIds, now, mode })  // → [{ date, open, available }]
+//     (ambas aceptan excludeId: la cita que se está moviendo no ocupa su propio horario)
 //   pickStaff(ag, { date, start, duration, staffIds, now, mode })   // 'any' → barbero libre con menos minutos ese día
 //   checkFree(ag, { staffId, date, start, duration, now, mode })    // null = libre | { reason, message }
 //
@@ -186,9 +187,9 @@ export function computeSlots(ag, { date, duration, staffIds, now, mode, excludeI
 // { date, open, available, reason? }. Sin horarios, reason dice por qué: 'closed' (no hay servicio), 'full'
 // (abierto pero sin lugar), 'out_of_window' (más allá de window_days), 'past' u 'offline' (reservas en línea
 // apagadas). Solo 'full' cuenta como día abierto: fuera de la ventana u offline no es "lleno".
-export function computeDays(ag, { from, days, duration, staffIds, now, mode }) {
+export function computeDays(ag, { from, days, duration, staffIds, now, mode, excludeId }) {
   return eachDay(from, addDays(from, Math.max(1, days) - 1)).map((date) => {
-    const r = computeSlots(ag, { date, duration, staffIds, now, mode });
+    const r = computeSlots(ag, { date, duration, staffIds, now, mode, excludeId });
     const available = r.slots.length > 0;
     const out = { date, open: !r.closed && !['out_of_window', 'past', 'offline'].includes(r.reason), available };
     if (!available) out.reason = r.reason || 'full';
