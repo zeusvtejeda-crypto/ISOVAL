@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS staff (
   updated_at TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_staff_shop_id_user_id ON staff (shop_id, user_id);
+CREATE INDEX IF NOT EXISTS ix_staff_user_id ON staff (user_id);
 CREATE TABLE IF NOT EXISTS clients (
   id TEXT PRIMARY KEY,
   shop_id TEXT NOT NULL,
@@ -96,6 +97,7 @@ CREATE TABLE IF NOT EXISTS clients (
 CREATE INDEX IF NOT EXISTS ix_clients_shop_id_phone ON clients (shop_id, phone);
 CREATE INDEX IF NOT EXISTS ix_clients_shop_id_user_id ON clients (shop_id, user_id);
 CREATE INDEX IF NOT EXISTS ix_clients_shop_id_email ON clients (shop_id, email);
+CREATE INDEX IF NOT EXISTS ix_clients_user_id ON clients (user_id);
 CREATE TABLE IF NOT EXISTS services (
   id TEXT PRIMARY KEY,
   shop_id TEXT NOT NULL,
@@ -189,6 +191,9 @@ CREATE TABLE IF NOT EXISTS payments (
   method TEXT NOT NULL,
   concept TEXT,
   status TEXT NOT NULL DEFAULT 'paid',
+  refunded_at TEXT,
+  refunded_by TEXT,
+  refund_reason TEXT,
   cash_session_id TEXT,
   created_by TEXT,
   created_at TEXT NOT NULL,

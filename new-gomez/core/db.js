@@ -64,7 +64,7 @@ function matchCond(v, cond) {
     else if (op === 'gte') { if (!(v !== null && v >= x)) return false; }
     else if (op === 'lt') { if (!(v !== null && v < x)) return false; }
     else if (op === 'lte') { if (!(v !== null && v <= x)) return false; }
-    else if (op === 'like') { if (!String(v == null ? '' : v).toLowerCase().includes(String(x).toLowerCase())) return false; }
+    else if (op === 'like') { if (!String(v == null ? '' : v).toLowerCase().includes(String(x).toLowerCase().replace(/[%_]/g, '').slice(0, 40))) return false; }
     else if (op === 'isNull') { if ((v === null || v === undefined) !== !!x) return false; }
     else throw new Error('Operador no soportado: ' + op);
   }

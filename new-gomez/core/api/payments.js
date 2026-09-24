@@ -242,8 +242,9 @@ async function refund(ctx) {
   const reason = textField(errs, 'reason', body(ctx).reason, 200, 'El motivo');
   failIf(errs);
   // Condición en el update: dos reembolsos simultáneos → solo uno cambia la fila.
-  if (!(await ctx.sdb.update('payments', { id: p.id, status: 'paid' }, { status: 'refunded' }))) throw conflict('Este cobro ya fue reembolsado.');
-  const out = Object.assign({}, p, { status: 'refunded' });
+  const refundPatch = { status: 'refunded', refunded_at: new Date().toISOString(), refunded_by: ctx.actor.name || null, refund_reason: reason || null };
+  if (!(await ctx.sdb.update('payments', { id: p.id, status: 'paid' }, refundPatch))) throw conflict('Este cobro ya fue reembolsado.');
+  const out = Object.assign({}, p, refundPatch);
   // Efectivo cobrado fuera de la caja abierta (otra caja ya cerrada o sin caja): el dinero sale de la caja
   // abierta hoy → se registra como gasto para que el corte cuadre. Si es de la misma caja, el resumen ya lo descuenta.
   let movement = null;

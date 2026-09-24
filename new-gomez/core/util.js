@@ -43,7 +43,12 @@ export function newFolio(prefix) {
 
 // ── Fechas: una cita vive en la hora LOCAL de la barbería: date 'YYYY-MM-DD' + minutos desde medianoche.
 export const pad2 = (n) => String(n).padStart(2, '0');
-export const isDateKey = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s + 'T00:00:00Z'));
+// Fecha real (rechaza 2026-02-30: Date.parse es permisivo y la "corre" al mes siguiente).
+export const isDateKey = (s) => {
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(s + 'T00:00:00Z');
+  return !isNaN(d) && d.toISOString().slice(0, 10) === s;
+};
 export function dateKeyUTC(d) { return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate()); }
 export function parseDateKey(k) { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); }
 export function addDays(k, n) { const d = parseDateKey(k); d.setUTCDate(d.getUTCDate() + n); return dateKeyUTC(d); }

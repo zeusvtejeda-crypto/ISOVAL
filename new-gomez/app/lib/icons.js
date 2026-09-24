@@ -94,6 +94,14 @@ const P = {
   pin: '<circle cx="12" cy="12" r="1.5"/><path d="M7 7h.01M12 7h.01M17 7h.01M7 12h.01M17 12h.01M7 17h.01M12 17h.01M17 17h.01"/>',
   building: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01M10 21v-3h4v3"/>',
   inbox: '<path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5.5 5h13L21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6z"/>',
+  door: '<path d="M4 21h16M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M14.5 12h.01"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  'calendar-x': '<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M10 13l4 4M14 13l-4 4"/>',
+  'calendar-clock': '<path d="M21 10.5V7a2.5 2.5 0 0 0-2.5-2.5h-13A2.5 2.5 0 0 0 3 7v11.5A2.5 2.5 0 0 0 5.5 21H11"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="17.5" cy="17.5" r="4"/><path d="M17.5 15.8v1.9l1.2.8"/>',
+  'user-x': '<circle cx="10" cy="8" r="4"/><path d="M2.5 21c.8-4 3.7-6.5 7.5-6.5 1.6 0 3 .4 4.2 1.2M16.5 14.5l5 5M21.5 14.5l-5 5"/>',
+  'user-check': '<circle cx="10" cy="8" r="4"/><path d="M2.5 21c.8-4 3.7-6.5 7.5-6.5 1.6 0 3 .4 4.2 1.2M16 17.5l2 2 4-4"/>',
+  move: '<path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/>',
+  'eye-off': '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   logo: '<path d="M7 3h10v2.5a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" fill="currentColor" stroke="none"/><path d="M7 21h10v-2.5a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3z" fill="currentColor" stroke="none"/><path d="M9 8.5 15 15.5M15 8.5 9 15.5" stroke-width="2.2"/>'
 };
 

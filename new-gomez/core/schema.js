@@ -102,7 +102,7 @@ export const SCHEMA = {
       created_at: T('text', { notNull: true }),
       updated_at: T('text')
     },
-    indexes: [['shop_id', 'user_id']]
+    indexes: [['shop_id', 'user_id'], ['user_id']]
   },
 
   clients: {
@@ -123,7 +123,7 @@ export const SCHEMA = {
       created_at: T('text', { notNull: true }),
       updated_at: T('text')
     },
-    indexes: [['shop_id', 'phone'], ['shop_id', 'user_id'], ['shop_id', 'email']]
+    indexes: [['shop_id', 'phone'], ['shop_id', 'user_id'], ['shop_id', 'email'], ['user_id']]
   },
 
   services: {
@@ -237,6 +237,9 @@ export const SCHEMA = {
       method: T('text', { notNull: true }), // cash | card | transfer | other
       concept: T('text'),
       status: T('text', { notNull: true, default: 'paid' }), // paid | refunded
+      refunded_at: T('text'),
+      refunded_by: T('text'),
+      refund_reason: T('text'),
       cash_session_id: T('text'),
       created_by: T('text'),
       created_at: T('text', { notNull: true }),

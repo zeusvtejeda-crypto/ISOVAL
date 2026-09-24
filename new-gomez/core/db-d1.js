@@ -50,7 +50,7 @@ function buildWhere(table, where, params) {
       else if (op === 'gte') { params.push(encode(d, x)); parts.push(k + ' >= ?'); }
       else if (op === 'lt') { params.push(encode(d, x)); parts.push(k + ' < ?'); }
       else if (op === 'lte') { params.push(encode(d, x)); parts.push(k + ' <= ?'); }
-      else if (op === 'like') { params.push('%' + String(x).toLowerCase().replace(/[%_]/g, '') + '%'); parts.push('LOWER(COALESCE(' + k + ",'')) LIKE ?"); }
+      else if (op === 'like') { params.push('%' + String(x).toLowerCase().replace(/[%_]/g, '').slice(0, 40) + '%'); /* D1 rechaza patrones LIKE de más de 50 bytes */ parts.push('LOWER(COALESCE(' + k + ",'')) LIKE ?"); }
       else if (op === 'isNull') parts.push(k + (x ? ' IS NULL' : ' IS NOT NULL'));
       else throw new Error('Operador no soportado: ' + op);
     }

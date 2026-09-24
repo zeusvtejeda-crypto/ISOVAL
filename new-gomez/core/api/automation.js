@@ -16,6 +16,9 @@ import { KIND_LABEL, composeMessage, recordMessage, messagePhone, validPhone, pu
 const ACTOR = { id: null, name: 'Automatización', kind: 'system' };
 const PROVIDER = { id: null, name: 'WhatsApp automático', kind: 'system' };
 const IN_CHUNK = 80;
+// Tope de recordatorios por corrida (cada uno son ~4 escrituras y D1 limita las consultas por petición).
+// Lo que falte se encola en la siguiente corrida del cron (la operación es idempotente).
+export const MAX_REMINDERS_PER_RUN = 150;
 const body = (ctx) => { const b = ctx.req.body; return b && typeof b === 'object' && !Array.isArray(b) ? b : {}; };
 const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
 
@@ -94,16 +97,17 @@ async function report(ctx) {
   return out;
 }
 
-// POST /api/automation/reminders/run → { queued, shops, skipped, notified }
+// POST /api/automation/reminders/run → { queued, shops, skipped, notified, more }
 // Barberías activas en modo `auto`: encola el recordatorio de cada cita pendiente/confirmada de MAÑANA (en la zona
 // horaria de cada barbería) sin reminder_sent_at ni un mensaje de recordatorio previo, y marca reminder_sent_at.
 // Barberías en modo `manual`: avisa una vez por día (centro de notificaciones) cuántos recordatorios faltan.
-// Pensado para un cron cada hora: es idempotente.
+// Pensado para un cron cada hora: es idempotente. more:true = se llegó al tope; vuelve a llamarlo.
 async function runReminders(ctx) {
   const shops = await ctx.db.find('shops', { status: 'active' }, { order: 'created_at asc' });
   const base = publicBase(ctx.env, ctx.req.headers);
-  let queued = 0, autoShops = 0, skipped = 0, notified = 0;
+  let queued = 0, autoShops = 0, skipped = 0, notified = 0, more = false;
   for (const shop of shops) {
+    if (more) break;
     const st = shopSettings(shop);
     const sdb = scopedDb(ctx.db, shop.id);
     const date = addDays(nowInTz(shop.timezone).date, 1);
@@ -117,6 +121,7 @@ async function runReminders(ctx) {
     const staff = Object.fromEntries((await sdb.find('staff', {})).map((s) => [s.id, s.name]));
     for (const a of appts) {
       if (prior.has(a.id)) continue;
+      if (queued >= MAX_REMINDERS_PER_RUN) { more = true; break; }
       const cl = a.client_id && clients[a.client_id] && !clients[a.client_id].deleted_at ? clients[a.client_id] : null;
       const phone = messagePhone(cl, a);
       if (!validPhone(phone)) { skipped++; continue; }
@@ -127,7 +132,7 @@ async function runReminders(ctx) {
       queued++;
     }
   }
-  return { queued, shops: autoShops, skipped, notified };
+  return { queued, shops: autoShops, skipped, notified, more };
 }
 
 // Modo manual: "Mañana hay N citas sin recordatorio" a dueños (total) y a cada barbero (las suyas), una vez por fecha.
