@@ -1,6 +1,49 @@
 # TuBarbería — NEW GOMEZ
 
 SaaS de reservas y gestión para barberías (multibarbería) sobre Cloudflare Pages + D1.
+Una sola base de código sirve la página pública de reservas de cada barbería, el panel (PWA instalable)
+y la API. NEW GOMEZ Barbershop es la barbería principal del dominio `gomez.tubarberia.mx`.
+
+## Qué incluye
+
+| Área | Funciones |
+|---|---|
+| Reserva en línea | Enlace por barbería (`/?b=<slug>` o `/b/<slug>`), QR descargable e imprimible, 4 pasos (servicio → barbero → fecha/hora → datos), horarios reales sin encimarse, enlace para que el cliente cancele o reagende, fallback por WhatsApp si no hay servidor |
+| Agenda | Vistas Día (columna por barbero), Semana, Mes y Lista; arrastrar para reagendar; estados pendiente/confirmada/atendida/cancelada/no asistió; notas internas; historial de cada cita |
+| Disponibilidad | Horario semanal por barbero con bloques (comida), descansos/vacaciones y feriados de toda la barbería |
+| Dashboard | Ingresos, citas, ticket promedio, clientes nuevos, ocupación, barbero más activo, filtros por rango y barbero, gráficas |
+| CRM | Fichas con historial, gasto, visitas, etiquetas, notas y cumpleaños |
+| Equipo y servicios | Barberos con color, comisión, PIN y acceso; servicios con precio, duración, categoría y quién los ofrece |
+| Dinero | Cobros (efectivo, tarjeta, transferencia, propina), reembolsos, caja con apertura/movimientos/corte, comisiones y pagos a barberos, reportes y exportación CSV |
+| WhatsApp | Confirmación, recordatorio, reagenda, cancelación, agradecimiento y no-show con plantillas editables; envío manual (wa.me) y cola lista para automatizar (`/api/automation/*`) |
+| Notificaciones | Centro de notificaciones por persona (nueva reserva, cancelación, reagenda, corte de caja…) con insignia en el ícono |
+| Plataforma | Superadmin: todas las barberías, alta, suspensión, planes, dominios, usuarios; aislamiento total de datos por barbería |
+| PWA | Instalable en iPhone/Android/escritorio con ícono y nombre, funciona sin conexión (shell), pantalla «Instalar app» con instrucciones por sistema |
+| Demo | Barbería ficticia completa (4 barberos, ~140 clientes, ~1,200 citas, caja, comisiones) que corre dentro del navegador, con cambio de rol y guía para presentarla |
+
+## Roles y permisos
+
+| Rol | Puede |
+|---|---|
+| Superadmin | Todo, en todas las barberías; gestiona la plataforma |
+| Dueño | Todo en su barbería: agenda completa, clientes, equipo, servicios, horarios, caja, comisiones, reportes, ajustes, enlace/QR |
+| Barbero | Su agenda, sus clientes, su horario y descansos, cobrar sus citas, enviar WhatsApp de sus citas, ver sus ganancias |
+| Cliente | Reservar, ver sus citas, reagendar o cancelar dentro de la política, su perfil |
+
+La matriz exacta está en `core/permissions.js` y el servidor la valida en cada petición.
+
+## Probar la demo
+
+Abre `/app/#/demo` (o «Entrar a la demo» en el acceso) y elige un rol. Todo corre en tu navegador con datos
+ficticios. Credenciales: `dueno@demo.mx`, `barbero@demo.mx`, `cliente@demo.mx`, `admin@demo.mx` — contraseña
+`demo1234`; PIN del equipo con código de barbería `demo`: 1111–4444. Página pública de la demo: `/?b=demo`.
+Guion para presentarla en una barbería: `/app/#/guia` (y `REPORTE.md`).
+
+## Documentación técnica
+
+- `docs/ARCHITECTURE.md` — estructura, aislamiento multibarbería, contexto de la API.
+- `docs/API.md` — contrato de todos los endpoints, estados de cita y reglas de negocio.
+- `docs/FRONTEND.md` — cómo se construyen las vistas del panel y el sistema de diseño.
 
 ## Despliegue en Cloudflare Pages
 
