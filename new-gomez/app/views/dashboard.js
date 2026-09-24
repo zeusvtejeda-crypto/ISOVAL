@@ -14,10 +14,13 @@
 //   Se refresca al volver a la pestaña y con los eventos 'appointments:changed' / 'payments:changed'.
 //
 // Exporta utilidades que reutiliza #/reportes (reports.js):
-//   PRESETS, rangeOf(key, q), rangeText(from, to), prevRange(from, to), readPrefs(k), writePrefs(k, v),
-//   filtersHtml(presets, S, staff), wireFilters(el, opts), paintFilters(el, presets, S),
-//   deltaInfo(cur, prev, o), deltaHtml(d), kpiTile(def, k, prevK, series), animateKpis(root, first),
-//   bucketSeries(series, days), mountChart(store, key, host, factory, opts), injectDashStyle(), pctText(n)
+//   PRESETS, MAX_DAYS, rangeOf(key, q), prevRange(from, to), rangeText(from, to), shortDay(key),
+//   readPrefs(k), writePrefs(k, v), initialFilters(query, presets, def, storeKey),
+//   filtersHtml(presets, S, staff|null), paintFilters(el, presets, S, staff), wireFilters(el, { presets, S, storeKey, staff, onChange }),
+//   deltaInfo(cur, prev, { invert, pts }), deltaHtml(d, prevText), kpiTile(def, k, prevK|null|false, series, prevText),
+//   animateKpis(root, defs, first), bucketSeries(series, days), mountChart(store, key, host, factory, opts), destroyCharts(store),
+//   METHOD_ORDER, METHOD_ICON, methodSegments(by_method), hourLabel(h), peakOf(by_hour), statusBars(by_status),
+//   kpiSkeleton(n, cls), cardSkeleton(h, cls), injectDashStyle(), pctText(n), greeting()
 import { html, raw, $, $$, on } from '../lib/html.js';
 import { icon } from '../lib/icons.js';
 import { api, LS } from '../lib/api.js';
@@ -312,6 +315,7 @@ const CSS = `
 @media (min-width:720px){.db-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.db-kpis.four{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (min-width:1280px){.db-kpis.six{grid-template-columns:repeat(6,minmax(0,1fr))}}
 .db-kpi{min-height:132px;align-content:start;gap:5px}
+@media (min-width:1280px){.db-kpis.six .db-kpi{min-height:156px}}
 .db-kpi .value{font-size:30px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (min-width:1280px){.db-kpis.six .db-kpi .value{font-size:29px}}
 .db-kpi-row{display:flex;align-items:center;gap:8px;min-height:22px}
@@ -330,7 +334,7 @@ const CSS = `
 .db-card .card-head .sub{display:block;margin-top:2px;line-height:1.4}
 .db-card .card-body{flex:1;min-width:0}
 .db-card .seg button{min-height:32px;font-size:12.5px;padding:0 11px}
-@media (pointer:coarse){.db .btn-sm,.db .db-appt .acts .btn-sm{--h:44px}.db .db-card .seg button{min-height:44px;padding:0 14px}.db .link-btn{min-height:44px}}
+@media (pointer:coarse){.db .btn-sm,.db .db-appt .acts .btn-sm{--h:44px}.db .db-card .seg button{min-height:44px;padding:0 14px}.db .link-btn,.db .db-foot-link .link-btn{min-height:44px}}
 .db-a{transition:opacity .25s var(--ease)}
 .db-busy{opacity:.5;pointer-events:none}
 .db-skel-card{border:0;box-shadow:none}
@@ -490,6 +494,7 @@ const CSS = `
 .db-nowline i{width:10px;height:10px;border-radius:50%;background:var(--err);justify-self:center;box-shadow:0 0 0 4px var(--err-soft)}
 .db-nowline em{height:2px;background:var(--err);opacity:.55;border-radius:2px}
 .db-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+@media (max-width:519px){.db-week{gap:0;margin:0 -6px}}
 .db-day{display:grid;justify-items:center;gap:5px;padding:10px 0 9px;border-radius:12px;text-decoration:none;color:inherit;border:1px solid transparent;transition:background .12s,border-color .12s;min-width:0}
 .db-day:hover{background:var(--surface-2);border-color:var(--border)}
 .db-day .wd{font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
@@ -580,7 +585,7 @@ const OWNER_KPIS = [
   { k: 'appointments', label: 'Citas', icon: 'calendar', fmt: (n) => number(n), spark: 'appointments', foot: (k) => plural(k.completed, 'atendida') },
   { k: 'avg_ticket', label: 'Ticket promedio', icon: 'receipt', fmt: (n) => money(Math.round(n)), foot: () => 'Por cada venta cobrada' },
   { k: 'new_clients', label: 'Clientes nuevos', icon: 'user-plus', fmt: (n) => number(n), foot: (k) => plural(k.returning_clients, 'cliente recurrente', 'clientes recurrentes') },
-  { k: 'occupancy_pct', label: 'Ocupación', icon: 'clock', pts: true, fmt: (n) => pctText(n), bar: (k) => k.occupancy_pct, foot: () => 'De las horas disponibles del equipo' },
+  { k: 'occupancy_pct', label: 'Ocupación', icon: 'clock', pts: true, fmt: (n) => pctText(n), bar: (k) => k.occupancy_pct, foot: () => 'Del tiempo disponible del equipo' },
   { k: 'lost', label: 'Citas perdidas', icon: 'calendar-x', invert: true, fmt: (n) => number(n), val: (k) => (k.cancelled || 0) + (k.no_show || 0), foot: (k) => plural(k.cancelled, 'cancelada') + ' · ' + number(k.no_show) + ' no ' + (k.no_show === 1 ? 'llegó' : 'llegaron') }
 ];
 

@@ -43,12 +43,12 @@ const EXPORTS = [
 ];
 
 const KPIS = [
-  { k: 'revenue', label: 'Ingresos', icon: 'wallet', fmt: m0, spark: 'revenue', foot: (k, D) => m0(k.revenue / Math.max(1, D.range.days)) + ' por día en promedio' },
+  { k: 'revenue', label: 'Ingresos', icon: 'wallet', fmt: m0, spark: 'revenue', foot: (k, D) => m0(k.revenue / Math.max(1, D.range.days)) + ' al día en promedio' },
   { k: 'appointments', label: 'Citas', icon: 'calendar', fmt: (n) => number(n), spark: 'appointments', foot: (k) => plural(k.completed, 'atendida') },
   { k: 'avg_ticket', label: 'Ticket promedio', icon: 'receipt', fmt: m0, foot: () => 'Por cada venta cobrada' },
   { k: 'tips', label: 'Propinas', icon: 'gift', fmt: m0, foot: (k) => (k.revenue ? pctText(share(k.tips, k.revenue)) + ' sobre los ingresos' : 'Aparte de los ingresos') },
   { k: 'new_clients', label: 'Clientes nuevos', icon: 'user-plus', fmt: (n) => number(n), foot: (k) => plural(k.returning_clients, 'cliente recurrente', 'clientes recurrentes') },
-  { k: 'occupancy_pct', label: 'Ocupación', icon: 'clock', pts: true, fmt: (n) => pctText(n), bar: (k) => k.occupancy_pct, foot: () => 'De las horas disponibles del equipo' }
+  { k: 'occupancy_pct', label: 'Ocupación', icon: 'clock', pts: true, fmt: (n) => pctText(n), bar: (k) => k.occupancy_pct, foot: () => 'Del tiempo disponible' }
 ];
 const RATE_KPIS = [
   { k: 'appointments', label: 'Citas agendadas', icon: 'calendar', fmt: (n) => number(n), foot: () => 'Sin contar las canceladas' },

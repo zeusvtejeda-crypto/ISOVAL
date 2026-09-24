@@ -137,6 +137,20 @@ async function boot() {
   hideSplash();
   startRouter(route);
   bus.on('context', () => { renderShell(); route(); });
+  // Refresco de la misma barbería (p. ej. tras guardar Ajustes): se reconstruye el shell conservando la vista,
+  // su estado y el scroll.
+  bus.on('context:refresh', () => {
+    const page = $('#page');
+    const view = page && page.firstElementChild;
+    const y = window.scrollY;
+    const title = $('#tbTitle') ? $('#tbTitle').textContent : '';
+    renderShell();
+    const np = $('#page');
+    if (np && view) { np.innerHTML = ''; np.appendChild(view); }
+    const t = $('#tbTitle'); if (t) t.textContent = title;
+    highlightNav(currentNavPath());
+    window.scrollTo(0, y);
+  });
   setInterval(pollUnread, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pollUnread(); });
 }
@@ -307,7 +321,7 @@ function wireShell() {
   on(root, 'click', '#shopSwitch', () => openShopSwitcher());
   on(root, 'click', '#bellBtn', (e, el) => openBell(el));
   on(root, 'click', '#newApptTop,[data-newappt]', () => newAppointment());
-  on(root, 'click', '[data-more]', () => openMoreSheet());
+  on(root, 'click', '.bottom-nav [data-more]', () => openMoreSheet());
   on(root, 'click', '#dmRole', () => openRoleSwitcher());
   on(root, 'click', '#dmGuide', () => navigate('/guia'));
   on(root, 'click', '#dmExit', () => exitDemo());

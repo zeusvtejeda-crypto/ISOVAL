@@ -64,7 +64,7 @@ export async function selectShop(id) {
 export async function refreshContext() {
   if (!state.shopId) return null;
   state.ctx = await api.get('/context');
-  bus.emit('context', state.ctx);
+  bus.emit('context:refresh', state.ctx); // misma barbería: el shell se actualiza sin repintar la vista
   return state.ctx;
 }
 

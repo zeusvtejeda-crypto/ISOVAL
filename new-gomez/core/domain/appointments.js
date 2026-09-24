@@ -448,7 +448,7 @@ export function managePolicy(a, shop, now, clientMoves) {
     text = hours > 0 ? 'Puedes cancelar o reagendar hasta el ' + fmtDateEs(d) + ' a las ' + fmtTimeEs(m) : 'Puedes cancelar o reagendar antes de tu cita.';
     if (!text.endsWith('.')) text += '.';
   } else {
-    text = 'Ya no es posible cancelar ni reagendar en línea: se requiere hacerlo con ' + (hours === 1 ? '1 hora' : hours + ' horas') + ' de anticipación. Comunícate con la barbería' + (phone ? ' al ' + phone : '') + '.';
+    text = 'Ya no es posible cancelar ni reagendar en línea: se requiere hacerlo con ' + (hours === 1 ? '1 hora' : hours + ' horas') + ' de anticipación. Comunícate con la barbería' + (phone ? ' al ' + String(phone).replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3') : '') + '.';
   }
   return { can_cancel: ok, can_reschedule: ok && st.booking.online_enabled !== false && !tooMany, deadline_text: text };
 }
