@@ -46,11 +46,13 @@ Se conservó lo que ya funcionaba bien: el diseño y SEO de la página pública 
 
 | Prueba | Resultado |
 |---|---|
-| Pruebas automáticas del backend (`npm test`) | **270/270** en verde (permisos por rol, aislamiento entre barberías, agenda, dinero, seguridad) |
+| Pruebas automáticas del backend (`npm test`) | **280/280** en verde (permisos por rol, aislamiento entre barberías, agenda, dinero, seguridad) |
 | Prueba real con Wrangler + D1 local (`npm run test:d1`) | **30/30** pasos: setup, cookies HttpOnly, PIN, reserva pública, choque de horario → 409, aislamiento, CSRF, logout |
-| Revisión adversarial del backend | 25 hallazgos → 28 correcciones con prueba de regresión (incluye 1 crítico: suplantación de ficha de cliente) |
-| Recorrido E2E en navegador (`scripts/e2e-smoke.mjs`) | **192 capturas** en iPhone, Android, iPad y escritorio, claro y oscuro, 5 roles: **0 errores de consola, 0 pantallas vacías, 0 scroll horizontal** |
-| QA final (visual + flujos completos en demo y en servidor D1) | ver sección 7 |
+| Revisión adversarial del backend | 25 hallazgos verificados con prueba reproducible → 28 correcciones con prueba de regresión (1 crítico: suplantación de ficha de cliente; carreras de doble reserva; fuerza bruta de PIN; limitadores no atómicos) |
+| QA final (4 revisores: visual del dueño, visual de otros roles, flujo de negocio en demo, flujo en servidor D1 real) | 64 hallazgos (9 altos, 29 medios, 26 bajos) → corregidos por área y re-verificados en navegador |
+| Recorrido E2E en navegador (`scripts/e2e-smoke.mjs`) | **256 capturas** en iPhone, Android, iPad y escritorio, claro y oscuro, 5 roles: **0 errores de consola, 0 pantallas vacías, 0 scroll horizontal** |
+| QR | Decodificado con 2 lectores (jsQR y zxing-cpp) en 16 variantes, con y sin logo |
+| PWA | Manifest válido e instalable según Chrome (sin errores de instalabilidad), service worker activo, el panel abre sin conexión |
 
 ## 5. Cómo usar la demo para enseñar en una barbería (paso a paso)
 
@@ -101,7 +103,7 @@ Pasos detallados en `README.md` → «Despliegue». En corto:
 
 ## 7. Pendientes y límites conocidos (honestos)
 
-- **Recuperar contraseña por correo** y **verificación de correo** no existen aún: el superadmin puede restablecer contraseñas desde Plataforma, y el equipo puede usar PIN.
+- **Recuperar contraseña por correo** y **verificación de correo** no existen aún: el superadmin restablece contraseñas desde **Plataforma → Usuarios**, y el equipo puede entrar con PIN. Sin verificación de correo, alguien podría registrar primero el correo de otra persona (no obtiene sus datos: las citas solo se reclaman con su enlace de gestión).
 - **WhatsApp automático** queda preparado (cola + endpoints + plantillas), pero enviar sin tocar requiere conectar un proveedor (API oficial de WhatsApp Business; ver `whatsapp-assistant/`) y un cron externo que llame `/api/automation/reminders/run`.
 - **Plan gratuito de Cloudflare**: PBKDF2 con 10,000 iteraciones para caber en el límite de CPU (se puede subir en plan de pago sin invalidar contraseñas). Cargar la demo **en el servidor** hace miles de escrituras: en plan gratuito puede exceder el límite por petición; la demo del navegador no tiene ese límite.
 - El enlace «gestionar mi cita» se renueva cada vez que se envía un mensaje con enlace: el último mensaje siempre trae un enlace válido y los anteriores dejan de servir.
