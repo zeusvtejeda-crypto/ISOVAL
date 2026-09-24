@@ -11,7 +11,6 @@
 
 <!-- Fuentes self-hosted: sin round-trip a Google, sin CSS bloqueante -->
 <link rel="preload" href="fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin/>
-<link rel="preload" href="fonts/jetbrainsmono-latin.woff2" as="font" type="font/woff2" crossorigin/>
 
 <!-- Primer frame del hero: prioridad máxima, resto se difiere -->
 <link rel="preload" as="image" href="imgs/hero1-sm.avif" type="image/avif" media="(max-width:768px)" fetchpriority="high"/>
@@ -278,12 +277,13 @@ nav:not(.scrolled) .nav-cta{color:#FF3B4E;border-color:#FF3B4E;}
 
 /* Texto animado */
 .rw{overflow:hidden;display:block;}
-.rl{display:block;opacity:0;transform:translateY(110%) skewY(1.5deg);}
-.rl.go{
-  opacity:1;transform:translateY(0) skewY(0);
-  transition:opacity 900ms cubic-bezier(0.16,1,0.3,1),
-             transform 900ms cubic-bezier(0.16,1,0.3,1);
+/* El texto del hero entra por CSS: no espera a que arranque el JS */
+.rl{
+  display:block;opacity:0;transform:translateY(110%) skewY(1.5deg);
+  animation:rlIn 620ms var(--ease-out) var(--d,0ms) both;
 }
+.rl.go{opacity:1;transform:none;}
+@keyframes rlIn{to{opacity:1;transform:translateY(0) skewY(0);}}
 
 .hero-eyebrow{
   font-family:'JetBrains Mono',monospace;font-size:10px;
@@ -658,15 +658,17 @@ nav:not(.scrolled) .nav-cta{color:#FF3B4E;border-color:#FF3B4E;}
    frame de scroll. Ahora es una capa propia movida con transform. */
 .q-bg{
   position:absolute;inset:-12% 0;z-index:0;
+  background-size:cover;background-position:center 30%;
+  background-repeat:no-repeat;
+  opacity:0;transition:opacity 700ms ease;
+}
+.q-bg.on{
+  opacity:1;
   background-image:url('imgs/quote-sm.webp');
   background-image:image-set(url('imgs/quote-sm.avif') type('image/avif'),url('imgs/quote-sm.webp') type('image/webp'));
-  background-size:cover;background-position:center 30%;
-  opacity:0;transition:opacity 700ms ease;
-  will-change:transform;
 }
-.q-bg.on{opacity:1;}
 @media(min-width:769px){
-  .q-bg{background-image:url('imgs/quote-lg.webp');background-image:image-set(url('imgs/quote-lg.avif') type('image/avif'),url('imgs/quote-lg.webp') type('image/webp'));}
+  .q-bg.on{background-image:url('imgs/quote-lg.webp');background-image:image-set(url('imgs/quote-lg.avif') type('image/avif'),url('imgs/quote-lg.webp') type('image/webp'));}
 }
 #quote::before{
   content:'';position:absolute;inset:0;z-index:1;
@@ -1159,18 +1161,18 @@ footer{content-visibility:auto;contain-intrinsic-size:auto 500px;}
   <div class="hero-content">
     <div class="hero-eyebrow">Appraiser & Architect · Tepic, Nayarit</div>
     <h1 class="hero-h1">
-      <span class="rw"><span class="rl" data-d="280">No es solo</span></span>
-      <span class="rw"><span class="rl" data-d="400">un espacio.</span></span>
-      <span class="rw"><span class="rl" data-d="520">Es tu <em>legado.</em></span></span>
+      <span class="rw"><span class="rl" data-d="280" style="--d:60ms">No es solo</span></span>
+      <span class="rw"><span class="rl" data-d="400" style="--d:140ms">un espacio.</span></span>
+      <span class="rw"><span class="rl" data-d="520" style="--d:220ms">Es tu <em>legado.</em></span></span>
     </h1>
     <div class="hero-sub">
-      <span class="rw"><span class="rl" data-d="700">
+      <span class="rw"><span class="rl" data-d="700" style="--d:340ms">
         Diseño con propósito. Construcción sin excusas.<br>
         Valuación con precisión — todo bajo un mismo techo.
       </span></span>
     </div>
     <div class="hero-actions">
-      <span class="rw"><span class="rl" data-d="900" style="display:flex;gap:14px;">
+      <span class="rw"><span class="rl" data-d="900" style="--d:460ms;display:flex;gap:14px;">
         <a href="#contacto" class="btn solid"><span>Iniciar proyecto →</span></a>
         <a href="#proyectos" class="btn outline"><span>Ver proyectos</span></a>
       </span></span>
@@ -1668,9 +1670,10 @@ var idle=window.requestIdleCallback||function(fn){return setTimeout(fn,1);};
 
 function boot(){
   try{initReveals();}catch(e){}      /* primero: es lo que se ve */
-  try{initLazyMedia();}catch(e){}
+  /* los fondos de secciones lejanas no compiten con el hero */
+  if(document.readyState==='complete'){idle(initLazyMedia);}
+  else{window.addEventListener('load',function(){idle(initLazyMedia);},{once:true});}
   try{initScroll();}catch(e){}
-  try{initTextReveals();}catch(e){}
   try{initSlideDots();}catch(e){}
   try{initVisibility();}catch(e){}
   if(fine){try{initCursor();}catch(e){}}
@@ -1824,16 +1827,6 @@ function initVisibility(){
     var hidden=document.hidden;
     document.querySelectorAll('.slides,.mq-wrap').forEach(function(el){
       el.classList.toggle('idle',hidden);
-    });
-  });
-}
-
-function initTextReveals(){
-  var els=document.querySelectorAll('.rl');
-  if(reduced){els.forEach(function(el){el.classList.add('go');});return;}
-  requestAnimationFrame(function(){
-    els.forEach(function(el){
-      setTimeout(function(){el.classList.add('go');},+(el.dataset.d||0));
     });
   });
 }
