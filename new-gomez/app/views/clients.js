@@ -123,7 +123,7 @@ export const clientActions = {
     if (!c.phone) { toast.error('Este cliente no tiene teléfono. Agrégalo en su ficha para escribirle.'); return null; }
     try {
       const m = await import('../lib/whatsapp.js');
-      const r = await m.editAndSendWhatsApp({ client_id: c.id, kind: 'custom', client: c, client_name: c.name });
+      const r = await m.editAndSendWhatsApp({ client_id: c.id, kind: 'custom', name: c.name, phone: c.phone || '' });
       return r;
     } catch (e) { toast.error(e); return null; }
   },
@@ -157,7 +157,7 @@ export function openClientForm(client, opts) {
   const body = html`
     <form id="cfForm" class="form-grid cols-2" novalidate autocomplete="off">
       <div class="field span-2"><label for="cfName">Nombre completo</label>
-        <input class="input" id="cfName" name="name" maxlength="80" autocapitalize="words" enterkeyhint="next" placeholder="p. ej. Juan Pérez" value="${c.name || ''}" ${isNew ? raw('autofocus') : ''}/>
+        <input class="input" id="cfName" name="name" maxlength="80" autocapitalize="words" enterkeyhint="next" placeholder="p. ej. Juan Pérez" value="${c.name || ''}"/>
         <p class="error">Escribe el nombre del cliente.</p></div>
       <div class="field"><label for="cfPhone">Teléfono <span class="opt">(10 dígitos)</span></label>
         <input class="input" id="cfPhone" name="phone" type="tel" inputmode="tel" maxlength="20" placeholder="669 123 4567" value="${c.phone ? fmtPhone(c.phone) : ''}"/>
@@ -254,7 +254,8 @@ export function openClientForm(client, opts) {
         saved = r;
         bus.emit('clients:changed', { id: r.id });
         if (isNew) {
-          toast.success(firstName(r.name) + ' quedó registrado', canNewAppt() ? { action: { label: 'Agendar cita', onClick: () => clientActions.newAppointment(r) } } : undefined);
+          const own = !can('clients.read.all');
+          toast.success(firstName(r.name) + ' quedó registrado' + (own ? '. Agéndale una cita para verlo en tus clientes.' : ''), canNewAppt() ? { duration: own ? 8000 : 6000, action: { label: 'Agendar cita', onClick: () => clientActions.newAppointment(r) } } : undefined);
         } else toast.success('Cambios guardados');
         m.close(r);
       } catch (err) {

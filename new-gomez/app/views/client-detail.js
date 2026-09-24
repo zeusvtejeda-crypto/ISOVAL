@@ -308,15 +308,11 @@ export default {
     offs.push(on(el, 'click', '[data-appt]', async (e, b) => {
       try {
         const m = await import('../lib/appointment-sheet.js');
-        const r = await m.openAppointment(b.dataset.appt);
-        if (r) load(true);
+        await m.openAppointment(b.dataset.appt); // los cambios llegan por bus 'appointments:changed'
       } catch (err) { toast.error('No se pudo abrir la cita.'); }
     }));
     offs.push(on(el, 'click', '[data-act="appt"],#cdFirstAppt', () => clientActions.newAppointment(st.data.client)));
-    offs.push(on(el, 'click', '[data-act="wa"],#cdFirstWa', async () => {
-      const r = await clientActions.whatsapp(st.data.client);
-      if (r) load(true);
-    }));
+    offs.push(on(el, 'click', '[data-act="wa"],#cdFirstWa', () => clientActions.whatsapp(st.data.client)));
     offs.push(on(el, 'click', '[data-act="edit"]', () => edit()));
     offs.push(on(el, 'click', '[data-act="notes-retry"]', () => saveNotes()));
     offs.push(on(el, 'click', '[data-act="more"]', (e, b) => {
@@ -342,6 +338,7 @@ export default {
     offs.push(on(el, 'focusout', '#cdNotes', () => saveNotes()));
     offs.push(bus.on('appointments:changed', () => load(true)));
     offs.push(bus.on('payments:changed', () => load(true)));
+    offs.push(bus.on('messages:changed', () => load(true)));
 
     await load(false);
     return () => {

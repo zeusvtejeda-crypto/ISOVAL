@@ -107,7 +107,7 @@ function openStaffForm(staff, used) {
         <div class="sf-preview"><span id="sfAv">${avatar(s.name || '?', { color, size: 'lg' })}</span>
           <div class="grow"><b id="sfPrevName">${s.name || 'Nuevo integrante'}</b><div class="muted" id="sfPrevRole" style="font-size:13px">${ROLE[s.role] || 'Barbero'}</div></div></div>
         <div class="field"><label for="sfName">Nombre</label>
-          <input class="input" id="sfName" name="name" maxlength="60" autocapitalize="words" placeholder="p. ej. Luis Hernández" value="${s.name || ''}" ${isNew ? raw('autofocus') : ''}/>
+          <input class="input" id="sfName" name="name" maxlength="60" autocapitalize="words" placeholder="p. ej. Luis Hernández" value="${s.name || ''}"/>
           <p class="error">Escribe el nombre.</p></div>
         <div class="field"><span class="label" id="sfRoleL">Rol</span>
           <div class="seg sf-seg" role="radiogroup" aria-labelledby="sfRoleL" style="width:100%">

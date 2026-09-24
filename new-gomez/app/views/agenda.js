@@ -58,6 +58,10 @@ function ensureStyles() {
 .ag-chips .chip .n{font-size:11.5px;opacity:.65;font-variant-numeric:tabular-nums;font-weight:600}
 .ag-dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px rgba(var(--c-rgb),.22)}
 .ag-cx{flex:none;font-size:13px;color:var(--text-2);min-height:38px;gap:8px}
+.ag-cxchip,.ag-sep{display:none!important}
+.ag-sep{width:1px;background:var(--border-strong);margin:6px 2px;flex:none}
+@media (max-width:719px){.ag-cx{display:none}.ag-cxchip{display:inline-flex!important}.ag-sep{display:block!important}}
+.ag-today[aria-pressed="true"]{color:var(--text-3);box-shadow:none}
 .ag-cx .track{width:36px;height:21px}.ag-cx .track::after{width:15px;height:15px}.ag-cx input:checked+.track::after{transform:translateX(15px)}
 .ag-stats{display:flex;gap:6px;margin-bottom:12px;min-height:32px;overflow-x:auto;scrollbar-width:none;padding:1px}
 .ag-stats::-webkit-scrollbar{display:none}
@@ -82,8 +86,9 @@ button.ag-stat:hover{border-color:var(--border-strong);background:var(--surface-
 .ag-scroll{overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;position:relative;scrollbar-width:thin;max-height:calc(100vh - 220px)}
 .ag-grid{--gut:60px;min-width:calc(var(--gut) + var(--n) * var(--colmin));position:relative}
 .ag-dayv{--colmin:172px}.ag-dayv .ag-grid.one{--colmin:0px}
-.ag-weekv{--colmin:108px}
-@media (max-width:719px){.ag-grid{--gut:50px}.ag-dayv{--colmin:150px}.ag-weekv{--colmin:86px}}
+.ag-weekv{--colmin:140px}
+@media (max-width:1180px){.ag-weekv{--colmin:118px}}
+@media (max-width:719px){.ag-grid{--gut:50px}.ag-dayv{--colmin:150px}.ag-weekv{--colmin:112px}}
 .ag-hrow,.ag-brow{display:grid;grid-template-columns:var(--gut) repeat(var(--n),minmax(var(--colmin),1fr))}
 .ag-hrow{position:sticky;top:0;z-index:8;background:var(--surface);box-shadow:0 1px 0 var(--border)}
 .ag-corner{position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--border);display:grid;place-items:end center;padding-bottom:6px;font-size:10px;color:var(--text-3);font-weight:600}
@@ -140,6 +145,12 @@ button.ag-stat:hover{border-color:var(--border-strong);background:var(--surface-
 .ag-ev.st-no_show .ag-ev-n,.ag-ev.st-no_show .ag-ev-i{color:var(--st-no_show)}
 .ag-weekv .ag-ev{padding:4px 5px 4px 7px;border-left-width:3px}
 .ag-weekv .ag-ev-n{font-size:12px}
+.ag-ev.narrow{padding:3px 3px 3px 5px}
+.ag-ev.narrow .ag-ev-i,.ag-ev.narrow .ag-ev-s,.ag-ev.narrow .ag-ev-due{display:none}
+.ag-ev.narrow .ag-ev-n{font-size:11.5px;text-overflow:clip}
+.ag-ev.narrow .ag-ev-t{font-size:10.5px;text-overflow:clip}
+.ag-ev.narrow.xs .ag-ev-tt{display:none}
+.ag-weekv .ag-off-l{top:96px}
 .ag-now{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--err);z-index:7;pointer-events:none}
 .ag-now.first::before{content:"";position:absolute;left:-6px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--err);animation:agPulse 2.2s infinite}
 @keyframes agPulse{0%{box-shadow:0 0 0 0 rgba(179,38,30,.45)}70%{box-shadow:0 0 0 9px rgba(179,38,30,0)}100%{box-shadow:0 0 0 0 rgba(179,38,30,0)}}
@@ -365,7 +376,10 @@ export default {
           S.staffList.filter((s) => s.bookable !== false || act.some((x) => x.staff_id === s.id)).map((s) => '<button type="button" class="chip" data-staff="' + esc(s.id) + '" aria-pressed="' + String(S.staff === s.id) + '" style="--c:' + esc(s.color || '#8C8577') + ';--c-rgb:' + hexRgb(s.color) + '"><span class="ag-dot"></span>' + esc(firstName(s.name)) + ' <span class="n">' + cnt(s.id) + '</span></button>').join('') + '</div>';
       }
       const cx = S.view === 'month' ? '' : '<label class="switch ag-cx" title="Mostrar u ocultar citas canceladas"><input type="checkbox" id="agCx" ' + (S.cx ? 'checked' : '') + '/><span class="track"></span><span>Canceladas</span></label>';
-      f.innerHTML = chips + (chips ? cx : '<div class="grow"></div>' + cx);
+      const cxChip = S.view === 'month' ? '' : '<button type="button" class="chip ag-cxchip" data-cx aria-pressed="' + String(S.cx) + '">' + icon(S.cx ? 'eye' : 'eye-off', 'ic-sm') + 'Canceladas</button>';
+      if (chips) chips = chips.replace(/<\/div>$/, (cxChip ? '<span class="ag-sep" aria-hidden="true"></span>' + cxChip : '') + '</div>');
+      else chips = '<div class="ag-chips">' + cxChip + '</div>';
+      f.innerHTML = chips + cx;
     }
     function paintStats(xs) {
       const st = $('#agStats', el);
@@ -405,14 +419,16 @@ export default {
       const top = (a.start_min - rs) * ppm + 1;
       const h = Math.max(MIN_H, (a.end_min - a.start_min) * ppm - 2);
       const sz = h < 36 ? 'xs' : h < 60 ? 'sm' : '';
+      const narrow = o.week && (lay.lanes >= 3 || (isMobile() && lay.lanes >= 2));
+      const name = o.week ? firstName(a.client_name || 'Cliente') : (a.client_name || 'Cliente');
       const c = colorOf(a);
       const svc = (a.services || []).map((s) => s.name).join(', ');
       const stIc = { completed: 'check-circle', no_show: 'user-x', pending: 'clock', cancelled: 'x-circle' }[a.status];
       const due = a.status === 'completed' && a.balance > 0 && payable;
       const label = time(a.start_min) + ' a ' + time(a.end_min) + ', ' + (a.client_name || 'Cliente') + ', ' + svc + ', ' + statusLabel(a.status) + (own ? '' : ', con ' + a.staff_name);
-      return '<button type="button" class="ag-ev st-' + esc(a.status) + ' ' + sz + '" data-id="' + esc(a.id) + '" style="top:' + top + 'px;height:' + h + 'px;left:calc(' + lay.lane + ' * 100% / ' + lay.lanes + ' + 2px);width:calc(100% / ' + lay.lanes + ' - 4px);--c:' + esc(c) + ';--c-rgb:' + hexRgb(c) + '" aria-label="' + esc(label) + '">' +
-        '<span class="ag-ev-h"><span class="ag-ev-n"><span class="ag-ev-tt">' + time(a.start_min) + '</span>' + esc(a.client_name || 'Cliente') + '</span>' + (stIc ? icon(stIc, 'ag-ev-i') : '') + '</span>' +
-        '<span class="ag-ev-t">' + time(a.start_min) + '–' + time(a.end_min) + (o.showStaff ? ' · ' + esc(firstName(a.staff_name)) : '') + '</span>' +
+      return '<button type="button" class="ag-ev st-' + esc(a.status) + ' ' + sz + (narrow ? ' narrow' : '') + '" data-id="' + esc(a.id) + '" style="top:' + top + 'px;height:' + h + 'px;left:calc(' + lay.lane + ' * 100% / ' + lay.lanes + ' + 2px);width:calc(100% / ' + lay.lanes + ' - 4px);--c:' + esc(c) + ';--c-rgb:' + hexRgb(c) + '" aria-label="' + esc(label) + '">' +
+        '<span class="ag-ev-h"><span class="ag-ev-n"><span class="ag-ev-tt">' + time(a.start_min) + '</span>' + esc(name) + '</span>' + (stIc ? icon(stIc, 'ag-ev-i') : '') + '</span>' +
+        '<span class="ag-ev-t">' + time(a.start_min) + (narrow ? '' : '–' + time(a.end_min)) + (o.showStaff && !narrow ? ' · ' + esc(firstName(a.staff_name)) : '') + '</span>' +
         '<span class="ag-ev-s">' + esc(svc) + '</span>' + (due ? '<span class="ag-ev-due">Por cobrar</span>' : '') + '</button>';
     }
     function offHtml(blocks, rs, re, ppm, label) {
@@ -514,7 +530,7 @@ export default {
         const items = lanes(list.filter((a) => a.date === d), ppm);
         return '<div class="ag-col' + (d === t ? ' today' : '') + '" data-date="' + d + '"' + (staffCols.length === 1 ? ' data-staff="' + esc(staffCols[0].id) + '"' : '') + ' aria-label="' + esc(dateLongCap(d)) + '">' +
           offHtml(merged, rs, re, ppm, 'Cerrado') + toHtml(tos, rs, re, ppm) +
-          items.map((it) => evHtml(it.a, it, rs, ppm, { showStaff: !own && !S.staff && it.lanes < 3 })).join('') +
+          items.map((it) => evHtml(it.a, it, rs, ppm, { week: true, showStaff: !own && !S.staff && it.lanes < 3 })).join('') +
           (d === t ? nowLine(rs, re, ppm, true) : '') + '</div>';
       }).join('');
       return '<div class="card ag-cal ag-weekv' + (writable ? ' w' : '') + '" style="--n:7;--hour:' + (60 * ppm) + 'px">' +
@@ -541,7 +557,7 @@ export default {
         const rev = sumTotal(act);
         const out = d.slice(0, 7) !== month;
         const closed = staffCols.length && staffCols.every((s) => !blocksFor(s.id, d).length || fullDayOff(s.id, d));
-        const heat = act.length ? (0.05 + 0.16 * (act.length / max)).toFixed(3) : 0;
+        const heat = act.length ? (0.025 + 0.11 * (act.length / max)).toFixed(3) : 0;
         const dots = xs.slice().sort((x, y) => ST_ORDER.indexOf(x.status) - ST_ORDER.indexOf(y.status));
         const nd = isMobile() ? 5 : 10;
         cells += '<button type="button" class="ag-mc' + (out ? ' out' : '') + (d === t ? ' today' : '') + (d === S.date && S.date !== startOfMonth(S.date) ? ' sel' : '') + '" data-go="' + d + '"' +
@@ -594,7 +610,7 @@ export default {
               '<button type="button" class="ag-row-main" data-open="' + esc(a.id) + '" aria-label="' + esc('Ver cita de ' + (a.client_name || 'cliente') + ' a las ' + time(a.start_min)) + '">' +
               '<span class="ag-row-time"><b>' + time(a.start_min) + '</b><span>' + time(a.end_min) + '</span></span><span class="ag-row-bar"></span>' +
               '<span class="ag-row-info"><span class="ag-row-n truncate">' + esc(a.client_name || 'Cliente') + '</span><span class="ag-row-s truncate">' + esc(svc) + (own ? '' : ' · ' + esc(firstName(a.staff_name))) +
-              ' · <span class="ag-row-st" style="color:var(--st-' + esc(a.status) + ')">' + esc(statusLabel(a.status)) + '</span></span></span>' +
+              '<span class="ag-row-st" style="color:var(--st-' + esc(a.status) + ')"> · ' + esc(statusLabel(a.status)) + '</span></span></span>' +
               '<span class="ag-row-r">' + String(statusBadge(a.status)) + '<span class="ag-row-p' + (due ? ' due' : '') + '">' + esc(money(a.total)) + '</span></span></button>' +
               '<div class="ag-row-acts">' + quickFor(a) + (more ? '<button type="button" class="btn btn-ghost btn-icon btn-sm" data-q="more" aria-label="Más acciones">' + icon('more') + '</button>' : '') + '</div></div>';
           }).join('') + '</div></section>';
@@ -722,7 +738,9 @@ export default {
     dateIn.addEventListener('click', () => { if (dateIn.showPicker) { try { dateIn.showPicker(); } catch (x) { /* */ } } });
     dateIn.addEventListener('change', () => { if (/^\d{4}-\d{2}-\d{2}$/.test(dateIn.value)) go({ date: dateIn.value }); });
     offs.push(on(el, 'click', '[data-staff]', (e, b) => { if (b.closest('.ag-col')) return; S.staff = b.dataset.staff; syncUrl(); paint({ keepScroll: S.view !== 'day' }); }));
-    offs.push(on(el, 'change', '#agCx', (e, i) => { S.cx = i.checked; LS.set(LSK.cx, S.cx ? '1' : '0'); paint({ keepScroll: true }); toast.info(S.cx ? 'Mostrando citas canceladas' : 'Canceladas ocultas'); }));
+    const setCx = (v) => { S.cx = v; LS.set(LSK.cx, S.cx ? '1' : '0'); paint({ keepScroll: true }); toast.info(S.cx ? 'Mostrando citas canceladas' : 'Citas canceladas ocultas'); };
+    offs.push(on(el, 'change', '#agCx', (e, i) => setCx(i.checked)));
+    offs.push(on(el, 'click', '[data-cx]', () => setCx(!S.cx)));
     offs.push(on(el, 'click', '[data-stat]', (e, b) => {
       const k = b.dataset.stat;
       if (k === 'cancelled') { S.cx = true; LS.set(LSK.cx, '1'); }

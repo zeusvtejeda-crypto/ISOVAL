@@ -254,7 +254,7 @@ export default {
             ${can('cash.manage') ? html`<form class="cc-form" id="openF" novalidate>
               <div class="field"><label for="ofFloat">Fondo inicial</label>
                 <div class="money-in xl"><span>$</span><input class="input" id="ofFloat" name="opening_float" inputmode="decimal" autocomplete="off" placeholder="0"/></div>
-                <p class="hint">${last && last.counted_cash != null ? 'En el último corte contaste ' + money(last.counted_cash) + '.' : 'Es el cambio con el que abres. Puede ser $0.'}</p>
+                <p class="hint">Es el cambio con el que empiezas. Puede ser $0.</p>
                 <p class="error">Revisa el monto.</p></div>
               <button class="btn btn-primary btn-lg btn-block" type="submit">${raw(icon('wallet'))}Abrir caja</button>
             </form>` : ''}
@@ -356,12 +356,12 @@ export default {
           <div class="field"><label for="clCount">Efectivo contado</label>
             <div class="money-in xl"><span>$</span><input class="input" id="clCount" name="counted_cash" inputmode="decimal" autocomplete="off" placeholder="0"/></div>
             <p class="error">Escribe cuánto efectivo contaste.</p></div>
+          <div class="cl-diff idle" id="clDiff" aria-live="polite"></div>
           <button type="button" class="link-btn" data-den-toggle aria-expanded="false" aria-controls="clDen" style="justify-self:start;min-height:36px">${raw(icon('grid', 'ic-sm'))}Contar por billetes y monedas</button>
           <div class="den-grid" id="clDen" hidden>
             ${DEN.map((d) => html`<label class="den"><span>${d >= 1 ? '$' + number(d) : '50¢'}<small>${d >= 20 ? 'billete' : 'moneda'}</small></span><input class="input" type="number" min="0" step="1" inputmode="numeric" data-den="${String(d)}" placeholder="0" aria-label="Cantidad de ${d >= 20 ? 'billetes' : 'monedas'} de ${d >= 1 ? '$' + d : '50 centavos'}"/></label>`)}
             <div class="den-total"><span>Suma del conteo</span><b id="clDenSum">$0</b></div>
           </div>
-          <div class="cl-diff idle" id="clDiff" aria-live="polite"></div>
           <div class="field"><label for="clNotes">Notas <span class="opt">(opcional)</span></label>
             <textarea class="textarea" id="clNotes" name="notes" maxlength="300" rows="2" placeholder="Ej. Faltaron $20 de un cambio mal dado"></textarea><p class="error"></p></div>
         </form>`),

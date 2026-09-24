@@ -122,7 +122,7 @@ function openServiceForm(sv, { categories, staff, dup }) {
     <form id="svForm" class="svf" novalidate autocomplete="off">
       <div class="form-grid cols-2">
         <div class="field span-2"><label for="svName">Nombre del servicio</label>
-          <input class="input" id="svName" name="name" maxlength="80" placeholder="p. ej. Corte clásico" value="${s.name || ''}" ${isNew ? raw('autofocus') : ''}/>
+          <input class="input" id="svName" name="name" maxlength="80" placeholder="p. ej. Corte clásico" value="${s.name || ''}"/>
           <p class="error">Escribe el nombre del servicio.</p></div>
         <div class="field"><label for="svCat">Categoría</label>
           <input class="input" id="svCat" name="category" list="svCats" maxlength="40" placeholder="p. ej. Cortes" value="${s.category || ''}"/>

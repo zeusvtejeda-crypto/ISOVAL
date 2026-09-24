@@ -247,11 +247,18 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .day:disabled .n{font-size:12px;font-family:var(--sans);font-weight:600;padding:7px 0;color:var(--smoke)}
 .day.skel-day{pointer-events:none;border-color:transparent;background:var(--skel);position:relative;overflow:hidden}
 .day.skel-day::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,var(--shine),transparent);animation:shimmer 1.4s infinite}
-.dnav{display:none;position:absolute;top:calc(50% - 26px);width:36px;height:36px;border-radius:50%;background:var(--paper);border:1.5px solid var(--line);box-shadow:var(--shadow);place-items:center;z-index:2;color:var(--text)}
+.dnav{display:none;position:absolute;top:calc(50% - 24px);width:40px;height:40px;border-radius:50%;background:var(--paper);border:1.5px solid var(--line);box-shadow:var(--shadow);place-items:center;z-index:2;color:var(--text);transition:border-color .15s,transform .12s}
 .dnav:hover{border-color:var(--brass-deep)}
-.dnav svg{width:16px;height:16px}
-.dnav.prev{left:-6px}.dnav.next{right:-6px}
-@media (hover:hover) and (min-width:720px){.dnav.show{display:grid}}
+.dnav:active{transform:scale(.94)}
+.dnav svg{width:18px;height:18px}
+.dnav.prev{left:0}.dnav.next{right:0}
+@media (hover:hover) and (min-width:720px){
+  .dnav.show{display:grid}
+  .dates,.rs .dates{margin:0;padding:4px 0 12px}
+  .dates-wrap.fl .dates{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 64px);mask-image:linear-gradient(to right,transparent 0,#000 64px)}
+  .dates-wrap.fr .dates{-webkit-mask-image:linear-gradient(to left,transparent 0,#000 64px);mask-image:linear-gradient(to left,transparent 0,#000 64px)}
+  .dates-wrap.fl.fr .dates{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 64px,#000 calc(100% - 64px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 64px,#000 calc(100% - 64px),transparent 100%)}
+}
 .tgroup{margin-top:14px}
 .tgroup:first-child{margin-top:6px}
 .tgroup .eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -315,7 +322,6 @@ h1,h2,h3{font-family:var(--disp);text-wrap:balance;line-height:1}
 .ticket .tot .v small{font-family:var(--mono);font-size:12px;color:var(--smoke);margin-left:4px}
 .ticket-foot{padding:12px 18px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--smoke);display:grid;gap:4px}
 .ticket .pending{color:var(--smoke);font-style:italic;font-weight:400}
-.ticket-side .ticket{animation:fadeUp .4s var(--ease)}
 
 /* ── Acciones ── */
 .actions{display:grid;gap:10px;margin-top:18px}
@@ -1368,8 +1374,9 @@ function syncDnav(wrap) {
   const strip = $('.dates', wrap); if (!strip) return;
   const upd = () => {
     const p = $('.dnav.prev', wrap), n = $('.dnav.next', wrap); if (!p || !n) return;
-    p.classList.toggle('show', strip.scrollLeft > 8);
-    n.classList.toggle('show', strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 8);
+    const l = strip.scrollLeft > 8, r = strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 8;
+    p.classList.toggle('show', l); n.classList.toggle('show', r);
+    wrap.classList.toggle('fl', l); wrap.classList.toggle('fr', r);
   };
   strip.onscroll = upd; upd();
 }
