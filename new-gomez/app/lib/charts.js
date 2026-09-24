@@ -14,8 +14,12 @@
    · color: número de ranura 1–6, 'brand', 'muted', 'var(--x)', '--x' o cualquier color CSS.
    · Colores desde variables CSS (--chart-1…6, --chart-muted, --chart-grid, --chart-axis,
      --chart-seq-0…2, --chart-empty, --chart-surface + tokens de app.css). Se definen aquí con
-     especificidad 0, así que app.css puede sobrescribirlos. Paleta categórica validada
-     (daltonismo protan/deutan ΔE ≥ 8 entre vecinas, contraste ≥ 3:1) en claro y oscuro.
+     especificidad 0, así que app.css puede sobrescribirlos. Paleta categórica de 6 ranuras
+     (latón, petróleo, terracota, amatista, bosque, ciruela) validada en claro (#FFF) y oscuro
+     (#191713): vecinas con ΔE OKLab ≥ 9.4 bajo protan/deutan y ≥ 19.5 visión normal, contraste
+     ≥ 3:1, y las 4 primeras distinguibles entre todas (donas de 2–6 segmentos, incluido el cierre).
+     Magnitud (heatmap) = rampa de un solo tono latón; en oscuro se invierte (más = más claro).
+     Máximo 6 series/segmentos con color propio: en la dona el resto se agrupa en "Otros".
    · Responsivas (ResizeObserver), se redibujan al cambiar data-theme / prefers-color-scheme,
      animación de entrada que respeta prefers-reduced-motion, tooltip con mouse, dedo o teclado,
      role="img" + <title> + tabla oculta para lectores de pantalla.
@@ -81,8 +85,9 @@ const FORMATS = {
   },
   percent: { full: (n) => sign(n) + NF1.format(Math.abs(n)) + '%', axis: () => (n) => sign(n) + NF0.format(Math.abs(n)) + '%' }
 };
-FORMATS.money.compact = (n) => compactFor('$', '', Math.abs(n))(n);
-FORMATS.number.compact = (n) => compactFor('', '', Math.abs(n))(n);
+const kFrom1000 = (n) => (Math.abs(n) >= 1e3 && Math.abs(n) < 1e6 ? 1e4 : Math.abs(n));
+FORMATS.money.compact = (n) => compactFor('$', '', kFrom1000(n))(n);
+FORMATS.number.compact = (n) => compactFor('', '', kFrom1000(n))(n);
 FORMATS.percent.compact = FORMATS.percent.full;
 function resolveFormat(o) {
   const f = o.format;
@@ -126,16 +131,25 @@ function longText(labels, i, mode) {
   return k;
 }
 
-// ─── escala "bonita" para el eje Y (3–5 líneas guía) ────────────────
+// ─── escala "bonita" para el eje Y (3–5 líneas guía, el menor desperdicio arriba) ───
 function niceTicks(lo, hi, count, integer) {
   if (!(hi > lo)) { hi = lo + (Math.abs(lo) || 1); }
-  const raw = (hi - lo) / count, mag = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / mag;
-  let step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
-  if (integer) step = Math.max(1, Math.round(step));
-  const a = Math.floor(lo / step + 1e-9) * step, b = Math.ceil(hi / step - 1e-9) * step;
+  const span = hi - lo, e0 = Math.floor(Math.log10(span / 4)) - 1;
+  let best = null;
+  for (let e = e0; e <= e0 + 3; e++) {
+    [1, 2, 2.5, 4, 5].forEach((m) => {
+      const step = m * Math.pow(10, e);
+      if (integer && (step < 1 || step % 1)) return;
+      const a = Math.floor(lo / step + 1e-9) * step, b = Math.ceil(hi / step - 1e-9) * step, k = Math.round((b - a) / step);
+      if (k < 2 || k > 4) return; // 3 a 5 líneas
+      const score = (b - a - span) / (b - a) + 0.04 * Math.abs(k - count) + (m === 4 ? 0.02 : 0) + 0.001 * k; // empate → menos líneas
+      if (!best || score < best.score - 1e-9) best = { a, b, step, score };
+    });
+  }
+  if (!best) { const step = Math.max(integer ? 1 : 0, span / count) || 1; best = { a: lo, b: lo + step * count, step }; }
   const ticks = [];
-  for (let v = a; v <= b + step / 2; v += step) ticks.push(Math.abs(v) < step / 1e6 ? 0 : +v.toPrecision(12));
-  return { lo: a, hi: b, ticks };
+  for (let v = best.a; v <= best.b + best.step / 2; v += best.step) ticks.push(Math.abs(v) < best.step / 1e6 ? 0 : +v.toPrecision(12));
+  return { lo: best.a, hi: best.b, ticks };
 }
 
 // ─── curva monótona (Fritsch–Carlson): suave sin rebasar los datos ──
@@ -216,7 +230,6 @@ function ramp(stops) {
     return fromOklab([A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k, A[2] + (B[2] - A[2]) * k]);
   };
 }
-function luminance(c) { const [r, g, b] = rgbOf(c).map(toLin); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
 
 // ─── tokens de tema (se leen con getComputedStyle en cada dibujo) ───
 function readTokens(el) {
@@ -224,7 +237,7 @@ function readTokens(el) {
   const v = (n, fb) => (cs.getPropertyValue(n) || '').trim() || fb;
   return {
     cs,
-    series: [1, 2, 3, 4, 5, 6].map((i) => v('--chart-' + i, ['#B28C39', '#00839B', '#A45032', '#644994', '#648337', '#8E4367'][i - 1])),
+    series: [1, 2, 3, 4, 5, 6].map((i) => v('--chart-' + i, ['#B28C39', '#00839B', '#A45032', '#644994', '#365F19', '#8E4367'][i - 1])),
     muted: v('--chart-muted', '#CEC6B7'),
     grid: v('--chart-grid', '#EFEBE4'),
     axis: v('--chart-axis', '#D6CFC2'),
@@ -251,12 +264,12 @@ function resolveColor(c, i, t) {
 }
 
 // ─── estilos (una sola vez) ─────────────────────────────────────────
-const LIGHT = '--chart-1:#B28C39;--chart-2:#00839B;--chart-3:#A45032;--chart-4:#644994;--chart-5:#648337;--chart-6:#8E4367;' +
+const LIGHT = '--chart-1:#B28C39;--chart-2:#00839B;--chart-3:#A45032;--chart-4:#644994;--chart-5:#365F19;--chart-6:#8E4367;' +
   '--chart-muted:#CEC6B7;--chart-grid:#EFEBE4;--chart-axis:#D6CFC2;--chart-seq-0:#F6EEDC;--chart-seq-1:#C49A3C;--chart-seq-2:#5C430F;' +
   '--chart-empty:#F4F1EB;--chart-area-opacity:.18;--chart-surface:var(--surface,#fff);';
-const DARK = '--chart-1:#B58F3C;--chart-2:#1896AD;--chart-3:#A84D2B;--chart-4:#725AAE;--chart-5:#76964A;--chart-6:#A8547C;' +
+const DARK = '--chart-1:#B58F3C;--chart-2:#1896AD;--chart-3:#A84D2B;--chart-4:#725AAE;--chart-5:#3A732C;--chart-6:#A8547C;' +
   '--chart-muted:#4A443A;--chart-grid:#27231D;--chart-axis:#3A352D;--chart-seq-0:#2E291F;--chart-seq-1:#9C7A2F;--chart-seq-2:#EDD08A;' +
-  '--chart-empty:#211E19;--chart-area-opacity:.22;--chart-surface:var(--surface,#191713);';
+  '--chart-empty:#24211B;--chart-area-opacity:.22;--chart-surface:var(--surface,#191713);';
 const CSS =
   ':where(:root){' + LIGHT + '}' +
   '@media (prefers-color-scheme:dark){:where(:root:not([data-theme="light"])){' + DARK + '}}' +
@@ -285,8 +298,8 @@ const CSS =
   '.tbc-tn{color:var(--text-2);overflow:hidden;text-overflow:ellipsis;min-width:0}' +
   '.tbc-tk{width:12px;height:3px;border-radius:2px;flex:none}.tbc-tk.sq{width:9px;height:9px;border-radius:3px}' +
   '.tbc-sr{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}' +
-  '.tbc-donut{display:flex;align-items:center;gap:28px}.tbc-donut.narrow{flex-direction:column;align-items:stretch;gap:16px}' +
-  '.tbc-donut .tbc-plot{flex:none;margin:0 auto;border-radius:50%}' +
+  '.tbc-dw{display:flex;align-items:center;gap:28px}.tbc-dw.narrow{flex-direction:column;align-items:stretch;gap:16px}' +
+  '.tbc-dw .tbc-plot{flex:none;margin:0 auto;border-radius:50%}' +
   '.tbc-dl{flex:1;min-width:0;display:grid;gap:2px;align-content:center}' +
   '.tbc-dr{display:grid;grid-template-columns:10px minmax(0,1fr) auto 44px;align-items:center;gap:10px;min-height:34px;padding:4px 8px;margin:0 -8px;border-radius:8px;font-size:13.5px;cursor:default;transition:background .12s,opacity .15s}' +
   '.tbc-dr.on{background:var(--muted-soft,rgba(0,0,0,.05))}.tbc-dl.dim .tbc-dr:not(.on){opacity:.5}' +
@@ -571,7 +584,7 @@ class LineChart extends Chart {
     this.gMarks = svg.querySelector('.tbc-marks'); this.gAnn = svg.querySelector('.tbc-ann'); this.gHover = svg.querySelector('.tbc-hover');
     this.clip = svg.querySelector('clipPath rect');
   }
-  legendUI(g) {
+  legendUI() {
     const o = this.opts, L = this.legendEl;
     L.textContent = '';
     L.hidden = o.series.length < 2;
@@ -698,7 +711,8 @@ class BarChart extends Chart {
     const geo = { W, H, n, mode: labelMode(o.labels), empty: !n || vals.every((v) => !v) && !o.values.some((v) => v === 0) };
     if (!n) return geo;
     const mode = geo.mode, short = mode === 'date' && n <= 8;
-    const padT = 22, padB = 28;
+    const padT = 22;
+    let padB = 28;
     const nt = niceTicks(Math.min(0, minOf(vals)), Math.max(0, maxOf(vals)), H - padT - padB < 150 ? 3 : 4, vals.every((v) => v === Math.round(v)) && maxOf(vals) < 12);
     // ¿caben todas las etiquetas de valor? (primero completas, luego compactas)
     let slot = (W - 8) / n, lab = vals.map((v) => F.full(v));
@@ -706,8 +720,14 @@ class BarChart extends Chart {
     if (!fits && F.compact) { const c = vals.map((v) => F.compact(v)); if (c.every((s) => textW(s, 11.5, 600, fam) + 6 <= slot)) { lab = c; fits = true; } }
     let padL = 4, yl = null;
     if (!fits) { const ax = F.axis(Math.max(Math.abs(nt.lo), Math.abs(nt.hi))); yl = nt.ticks.map((v) => ax(v)); padL = Math.ceil(maxOf(yl.map((s) => textW(s, 11, 400, fam)))) + 12; }
-    const padR = 4, pw = W - padL - padR, ph = H - padT - padB;
+    const padR = 4, pw = W - padL - padR;
     slot = pw / n;
+    // etiquetas del eje X: completas; si no caben y son días de la semana, en dos renglones ("Jue" / "24"); si no, se adelgazan
+    const txt = o.labels.map((_, i) => tickText(o.labels, i, mode, short));
+    const lw = maxOf(txt.map((s) => textW(s, 11, 400, fam)));
+    let step = Math.max(1, Math.ceil((lw + 10) / slot)), two = false;
+    if (step > 1 && short && maxOf(txt.map((s) => maxOf(s.split(' ').map((p) => textW(p, 11, 400, fam))))) + 8 <= slot) { two = true; step = 1; padB = 42; }
+    const ph = H - padT - padB;
     const bw = clamp(slot * 0.62, 3, 24);
     const y = (v) => padT + ph - ((v - nt.lo) / (nt.hi - nt.lo)) * ph, base = y(0);
     const cols = this.colors();
@@ -716,17 +736,14 @@ class BarChart extends Chart {
     let showLab;
     if (fits) showLab = bars.map(() => true);
     else { const key = o.highlight != null && o.highlight >= 0 && o.highlight < n ? o.highlight : vals.indexOf(maxOf(vals)); showLab = bars.map((b) => b.i === key); lab = vals.map((v) => F.full(v)); }
-    // etiquetas del eje X con adelgazamiento
-    const txt = o.labels.map((_, i) => tickText(o.labels, i, mode, short));
-    const lw = maxOf(txt.map((s) => textW(s, 11, 400, fam)));
-    const step = Math.max(1, Math.ceil((lw + 10) / slot));
     const xt = [];
     for (let i = 0; i < n; i++) {
       if (mode !== 'text' ? (n - 1 - i) % step : i % step) continue;
+      if (two) { xt.push({ i, lines: txt[i].split(' '), cx: bars[i].cx }); continue; }
       const s = step === 1 && lw + 4 > slot ? truncate(txt[i], slot - 4, 11, 400, fam) : txt[i];
       const w_ = textW(s, 11, 400, fam); xt.push({ i, s, left: clamp(bars[i].cx - w_ / 2, 0, W - w_) });
     }
-    return Object.assign(geo, { padL, padR, padT, padB, pw, ph, slot, bw, base, nt, yl, bars, lab, showLab, xt, horizontal: false });
+    return Object.assign(geo, { padL, padR, padT, padB, pw, ph, slot, bw, base, nt, yl, bars, lab, showLab, xt, two, horizontal: false });
   }
   layoutH(W) {
     const o = this.opts, t = this.t, F = this.F, fam = t.font, n = o.labels.length;
@@ -771,7 +788,11 @@ class BarChart extends Chart {
         if (v !== 0) s += '<line x1="' + g.padL + '" x2="' + (g.W - g.padR) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + esc(t.grid) + '" stroke-width="1" shape-rendering="crispEdges"/>';
         s += '<text class="tbc-tick" x="' + (g.padL - 10) + '" y="' + yy + '" text-anchor="end" dominant-baseline="middle">' + esc(g.yl[i]) + '</text>';
       });
-      g.xt.forEach((tk) => { s += '<text class="tbc-tick" x="' + r1(tk.left) + '" y="' + (g.H - 8) + '">' + esc(tk.s) + '</text>'; });
+      g.xt.forEach((tk) => {
+        s += tk.lines
+          ? '<text class="tbc-tick" x="' + r1(tk.cx) + '" y="' + (g.H - 22) + '" text-anchor="middle">' + esc(tk.lines[0]) + '<tspan x="' + r1(tk.cx) + '" dy="14" style="fill:' + esc(t.text2) + ';font-weight:500">' + esc(tk.lines.slice(1).join(' ')) + '</tspan></text>'
+          : '<text class="tbc-tick" x="' + r1(tk.left) + '" y="' + (g.H - 8) + '">' + esc(tk.s) + '</text>';
+      });
       s += '</g><g class="tbc-marks"></g>';
       s += '<line x1="' + g.padL + '" x2="' + (g.W - g.padR) + '" y1="' + (r1(g.base) + 0.5) + '" y2="' + (r1(g.base) + 0.5) + '" stroke="' + esc(t.axis) + '" stroke-width="1" shape-rendering="crispEdges"/>';
       s += '<g class="tbc-ann">';
@@ -874,7 +895,7 @@ class DonutChart extends Chart {
     return Object.assign({}, o, { segs });
   }
   mount(root) {
-    this.wrap = div('tbc-donut');
+    this.wrap = div('tbc-dw');
     this.list = div('tbc-dl'); this.list.setAttribute('aria-hidden', 'true');
     this.wrap.appendChild(this.plot); this.wrap.appendChild(this.list);
     root.appendChild(this.wrap);
