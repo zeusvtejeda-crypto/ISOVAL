@@ -26,9 +26,14 @@ export function randomString(len, alphabet) {
   for (let i = 0; i < len; i++) s += a[bytes[i] % a.length];
   return s;
 }
-// id ordenable por tiempo: 8 chars de tiempo (base36) + 8 aleatorios. Prefijo por tipo.
+// id ordenable por tiempo: 9 chars de tiempo (base36) + 8 aleatorios. Prefijo por tipo.
+// Reloj lógico: dos ids creados en el mismo milisegundo siguen ordenándose por creación.
+let lastIdTime = 0;
 export function newId(prefix) {
-  const t = Date.now().toString(36).padStart(9, '0');
+  let now = Date.now();
+  if (now <= lastIdTime) now = lastIdTime + 1;
+  lastIdTime = now;
+  const t = now.toString(36).padStart(9, '0');
   return (prefix ? prefix + '_' : '') + t + randomString(8);
 }
 // Folio legible para el cliente (sin 0/O/1/I para dictarlo por teléfono sin confusiones).
