@@ -66,6 +66,8 @@ test('public days/slots: rango, cierre en domingo, duración y barbero', async (
   assert.deepEqual([sunday.open, sunday.available], [false, false]);
   const beyond = r.data.days.find((d) => d.date === addDays(f.today, 30));
   assert.equal(beyond.available, false, 'fuera de window_days (21)');
+  assert.equal(beyond.open, false, 'no se ve como "lleno"');
+  assert.equal(beyond.reason, 'out_of_window');
   r = await f.call('GET', '/api/public/shops/alfa/days?from=2020-01-01');
   assert.equal(r.status, 200, 'sin servicios: vista previa');
   assert.equal(r.data.days[0].date, f.today, 'no muestra días pasados');
@@ -222,6 +224,7 @@ test('public reservar: con sesión vincula la ficha a la cuenta (no la del equip
 
 test('public reservar: límite de 15 reservas por hora por IP', async () => {
   const f = await setup();
+  f.env.MODE = 'server';
   for (let i = 0; i < 15; i++) {
     const r = await f.book({ staff_id: 'st_barberA', start_min: 600 + i * 40, services: ['sv_corte'], phone: '55000000' + String(i).padStart(2, '0') }, { ip: '9.9.9.9' });
     assert.equal(r.status, 200, 'reserva ' + i + ': ' + r.body);
@@ -328,4 +331,58 @@ test('aislamiento público: la reserva en beta no ve ni usa datos de alfa', asyn
   assert.equal(row.shop_id, 'shop_b');
   const cl = await f.db.findOne('clients', { id: row.client_id });
   assert.equal(cl.shop_id, 'shop_b', 'ficha propia en beta aunque el teléfono exista en alfa');
+});
+
+// ── Regresiones de la revisión ──
+test('public reservar: en la demo no aplica el límite por IP (todas comparten la IP "demo")', async () => {
+  const f = await setup();
+  assert.equal(f.env.MODE, 'demo');
+  for (let i = 0; i < 17; i++) {
+    const r = await f.book({ staff_id: i < 13 ? 'st_barberA' : 'st_barberA2', start_min: 600 + (i % 13) * 40, phone: '55000001' + String(i).padStart(2, '0') }, { ip: 'demo' });
+    assert.equal(r.status, 200, 'reserva ' + i + ': ' + r.body);
+  }
+  assert.equal(await f.db.count('login_attempts', {}), 0, 'no se registran intentos');
+});
+
+test('public: cerrar un día (o acortar) el horario de la barbería cierra la reserva en línea aunque el barbero tenga el suyo', async () => {
+  const f = await setup();
+  const wd = new Date(f.day + 'T12:00:00Z').getUTCDay();
+  const s = await f.db.findOne('shops', { id: 'shop_a' });
+  const setHours = (h) => f.db.update('shops', { id: 'shop_a' }, { settings: Object.assign({}, s.settings, { hours: Object.assign({}, s.settings.hours, { [wd]: h }) }) });
+  await setHours([]);
+  let r = await f.call('GET', '/api/public/shops/alfa/slots?date=' + f.day + '&services=sv_corte&staff=any');
+  assert.equal(r.status, 200);
+  assert.equal(r.data.closed, true, r.body);
+  assert.equal(r.data.slots.length, 0);
+  r = await f.call('GET', '/api/public/shops/alfa/days?services=sv_corte&staff=any&from=' + f.day + '&days=1');
+  assert.deepEqual([r.data.days[0].open, r.data.days[0].available], [false, false]);
+  r = await f.book({ start_min: 600 });
+  assert.ok(r.status === 400 || r.status === 409, r.body);
+  assert.equal(await f.db.count('appointments', { shop_id: 'shop_a' }), 0);
+  // El panel sí puede agendar (horario del barbero).
+  r = await f.call('POST', '/api/appointments', { as: 'ownerA', shop: 'shop_a', body: { staff_id: 'st_barberA', date: f.day, start_min: 600, services: ['sv_corte'], client: { name: 'Especial' } } });
+  assert.equal(r.status, 200, r.body);
+  // Horario más corto (12:00–18:00): solo esas horas en línea.
+  await setHours([[720, 1080]]);
+  r = await f.call('GET', '/api/public/shops/alfa/slots?date=' + f.day + '&services=sv_corte&staff=st_barberA2');
+  assert.equal(r.data.slots[0].start_min, 720);
+  assert.equal(r.data.slots[r.data.slots.length - 1].start_min, 1040);
+  r = await f.book({ staff_id: 'st_barberA2', start_min: 680 });
+  assert.equal(r.status, 409, 'antes de que abra la barbería');
+  r = await f.book({ staff_id: 'st_barberA2', start_min: 720 });
+  assert.equal(r.status, 200, r.body);
+});
+
+test('enlace de gestión: cancelar y reagendar devuelven también la política (can_cancel, can_reschedule, deadline_text)', async () => {
+  const f = await setup();
+  const b = await f.book();
+  assert.equal(b.status, 200, b.body);
+  let r = await f.call('POST', '/api/public/appointments/' + b.data.manage_token + '/reschedule', { body: { date: f.day, start_min: 700 } });
+  assert.equal(r.status, 200, r.body);
+  assert.deepEqual(Object.keys(r.data).sort(), ['appointment', 'can_cancel', 'can_reschedule', 'deadline_text']);
+  assert.equal(r.data.appointment.start_min, 700);
+  r = await f.call('POST', '/api/public/appointments/' + b.data.manage_token + '/cancel', { body: {} });
+  assert.equal(r.status, 200, r.body);
+  assert.deepEqual(Object.keys(r.data).sort(), ['appointment', 'can_cancel', 'can_reschedule', 'deadline_text']);
+  assert.equal(r.data.can_cancel, false);
 });

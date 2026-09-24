@@ -159,3 +159,18 @@ test('mis citas: ficha borrada → sin acceso al portal', async () => {
   const r = await f.call('GET', '/api/my/appointments', me);
   assert.ok(r.status === 403 || r.status === 404, String(r.status));
 });
+
+// ── Regresiones de la revisión ──
+test('mis citas: los movimientos del equipo no cuentan para mi límite de reagendas', async () => {
+  const f = await setup();
+  for (let i = 1; i <= 5; i++) {
+    const r = await f.call('PATCH', '/api/appointments/' + f.up.id, { as: 'ownerA', ...A, body: { start_min: 600 + i * 20 } });
+    assert.equal(r.status, 200, r.body);
+  }
+  let list = await f.call('GET', '/api/my/appointments', me);
+  assert.equal(list.status, 200, list.body);
+  assert.equal(list.data.upcoming.find((a) => a.id === f.up.id).can_reschedule, true);
+  const r = await f.call('POST', '/api/my/appointments/' + f.up.id + '/reschedule', { ...me, body: { date: f.day, start_min: 1100 } });
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.appointment.can_reschedule, true, 'lleva 1 de 5');
+});

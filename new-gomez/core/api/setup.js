@@ -6,7 +6,7 @@
 //   POST /api/setup        { key, email, password, name?, pins?:{ angel, alexis }, demo? }
 import { conflict, forbidden, normEmail, newId, nowIso } from '../util.js';
 import { hashSecret, sha256Hex, PIN_ITERATIONS } from '../crypto.js';
-import { publicUser, rateCheck, rateFail, rateReset } from '../session.js';
+import { publicUser, rateHit, rateRelease } from '../session.js';
 import { scopedDb, tableDef } from '../db.js';
 import { TABLES } from '../schema.js';
 import { notify } from '../domain/notify.js';
@@ -211,12 +211,11 @@ async function setup(ctx) {
   const key = ctx.env.SETUP_KEY;
   if (!key) throw forbidden('La configuración inicial está desactivada: define la variable SETUP_KEY en Cloudflare y vuelve a intentarlo.');
   const rk = 'setup:' + (txt(ctx.req.ip).slice(0, 64) || 'anon');
-  await rateCheck(db, rk, SETUP_LIMIT);
+  const receipt = await rateHit(db, rk, SETUP_LIMIT); // cuenta el intento antes de comparar (atómico)
   if (typeof b.key !== 'string' || !b.key || b.key.length > 500 || !(await sameSecret(b.key, key))) {
-    await rateFail(db, rk, SETUP_LIMIT);
     throw forbidden('La llave de configuración no es correcta.');
   }
-  await rateReset(db, rk);
+  await rateRelease(db, receipt);
   if (b.demo !== undefined && typeof b.demo !== 'boolean') failIf({ demo: 'El campo demo debe ser true o false.' });
   const wantDemo = b.demo === true;
 

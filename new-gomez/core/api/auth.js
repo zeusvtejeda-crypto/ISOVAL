@@ -2,12 +2,15 @@
 // sesión actual, perfil y cambio de contraseña. Ver docs/API.md → "Autenticación".
 import { HttpError, bad, forbidden, notFound, conflict, unauthorized, normEmail, isEmail, normPhone, isPhone, slugify, newId, nowIso } from '../util.js';
 import { hashSecret, verifySecret } from '../crypto.js';
-import { COOKIE, SESSION_TTL, publicUser, createSession, destroySession, contextsFor, rateCheck, rateFail, rateReset } from '../session.js';
+import { COOKIE, SESSION_TTL, publicUser, createSession, destroySession, contextsFor, rateHit, rateRelease, rateReset, pinSessionStaff, revokeUserSessions } from '../session.js';
 import { scopedDb } from '../db.js';
 import { DEFAULT_HOURS } from '../domain/settings.js';
 import { notify } from '../domain/notify.js';
 
-// ── Límites de intentos (tabla login_attempts) ──
+// ── Límites de intentos (tabla login_attempts; ver session.js → rateHit) ──
+// Cada intento se cuenta ANTES de verificar (atómico ante peticiones simultáneas); los que salen bien se
+// retiran (pw:/pin: se borran con rateReset, ip: con rateRelease), así que al final solo cuentan los fallos.
+// reg:/signup: cuentan TODOS los intentos (también los que crean la cuenta).
 export const LIMITS = {
   pw: { max: 5, windowMin: 15, lockMin: 15 },      // 'pw:<email>'
   ip: { max: 30, windowMin: 15, lockMin: 15 },     // 'ip:<ip>' (fallos de contraseña/PIN desde una IP)
@@ -23,7 +26,12 @@ export const RESERVED_SLUGS = ['demo', 'app', 'api', 'admin', 'b', 'www', 'panel
 export const DEFAULT_TIMEZONE = 'America/Mexico_City';
 const OWNER_COLOR = '#C8A24A';
 const BAD_LOGIN = 'Correo o contraseña incorrectos.';
-const DUP_EMAIL = 'Ya existe una cuenta con ese correo. Inicia sesión.';
+// Registro/alta con un correo que ya tiene cuenta: 409 'duplicate' (el panel ofrece "Inicia sesión").
+// Decisión: se acepta este 409 (confirma que el correo existe) porque sin él un cliente con cuenta no
+// entendería por qué no puede registrarse; la enumeración queda acotada por reg:/signup: (10 y 5 intentos
+// por IP y hora, contados de forma atómica, incluidos los 409) y el login no revela nada (fakeVerify).
+// El mensaje no afirma de más: no dice de quién es ni si tiene barbería.
+const DUP_EMAIL = 'No se puede crear una cuenta nueva con ese correo. Si ya tienes una, inicia sesión.';
 
 // Servicios con los que arranca toda barbería nueva (el dueño los edita después).
 export const TEMPLATE_SERVICES = [
@@ -93,6 +101,18 @@ async function openSession(ctx, { kind, user, staff, shop }) {
 // Un nuevo inicio de sesión en el mismo navegador reemplaza la sesión de la cookie anterior (no queda viva en la base).
 async function dropCookieSession(ctx) {
   if (ctx.token && !ctx.req.headers.authorization) await destroySession(ctx.db, ctx.token);
+}
+// Cuenta el intento en varias claves (en orden) antes de verificar. Si una está al límite, retira los que
+// ya contó y lanza 429. Devuelve los recibos (null para las claves vacías).
+async function holdAttempts(db, list) {
+  const held = [];
+  try {
+    for (const [key, lim] of list) held.push(key ? await rateHit(db, key, lim) : null);
+  } catch (e) {
+    for (const h of held) await rateRelease(db, h);
+    throw e;
+  }
+  return held;
 }
 function requireUser(ctx) {
   if (!ctx.user) throw forbidden('Esta acción requiere iniciar sesión con tu correo y contraseña.');
@@ -216,17 +236,13 @@ async function login(ctx) {
   const ip = ipOf(ctx);
   const kPw = 'pw:' + email;
   const kIp = ip ? 'ip:' + ip : null;
-  await rateCheck(db, kPw, LIMITS.pw);
-  if (kIp) await rateCheck(db, kIp, LIMITS.ip);
+  const ipHold = await holdAttempts(db, [[kPw, LIMITS.pw], [kIp, LIMITS.ip]]);
 
   const u = await db.findOne('users', { email });
   const ok = u && u.password_hash ? await verifySecret(password, u.password_hash) : await fakeVerify(password);
-  if (!ok) {
-    await rateFail(db, kPw, LIMITS.pw);
-    if (kIp) await rateFail(db, kIp, LIMITS.ip);
-    throw unauthorized(BAD_LOGIN);
-  }
+  if (!ok) throw unauthorized(BAD_LOGIN); // el intento ya quedó contado en pw: e ip:
   await rateReset(db, kPw);
+  await rateRelease(db, ipHold[1]);
   if (u.status !== 'active') throw forbidden('Tu cuenta está desactivada. Contacta al administrador de la plataforma.');
 
   const now = nowIso();
@@ -254,20 +270,16 @@ async function pinLogin(ctx) {
   const ip = ipOf(ctx);
   const kPin = 'pin:' + shop.id + ':' + ip;
   const kIp = ip ? 'ip:' + ip : null;
-  await rateCheck(db, kPin, LIMITS.pin);
-  if (kIp) await rateCheck(db, kIp, LIMITS.ip);
+  const ipHold = await holdAttempts(db, [[kPin, LIMITS.pin], [kIp, LIMITS.ip]]);
 
   // Solo el equipo activo de ESTA barbería (scopedDb) con PIN configurado.
   const sdb = scopedDb(db, shop.id);
   const candidates = await sdb.find('staff', { active: true, pin_hash: { isNull: false } }, { order: ['sort asc', 'created_at asc'] });
   let st = null;
   for (const s of candidates) if (await verifySecret(pin, s.pin_hash)) { st = s; break; }
-  if (!st) {
-    await rateFail(db, kPin, LIMITS.pin);
-    if (kIp) await rateFail(db, kIp, LIMITS.ip);
-    throw unauthorized('PIN incorrecto.');
-  }
+  if (!st) throw unauthorized('PIN incorrecto.'); // el intento ya quedó contado en pin: e ip:
   await rateReset(db, kPin);
+  await rateRelease(db, ipHold[1]);
   if (st.user_id) {
     const u = await db.findOne('users', { id: st.user_id });
     if (u && u.status !== 'active') throw forbidden('Tu cuenta está desactivada. Habla con el dueño de la barbería.');
@@ -319,10 +331,7 @@ async function register(ctx) {
 
   const db = ctx.db;
   const ip = ipOf(ctx);
-  if (ip) {
-    await rateCheck(db, 'reg:' + ip, LIMITS.reg);
-    await rateFail(db, 'reg:' + ip, LIMITS.reg); // cuenta cada intento, no solo los fallidos
-  }
+  if (ip) await rateHit(db, 'reg:' + ip, LIMITS.reg); // cuenta cada intento, no solo los fallidos
   let shop = null;
   if (slug) {
     shop = await db.findOne('shops', { slug });
@@ -368,10 +377,7 @@ async function signup(ctx) {
 
   const db = ctx.db;
   const ip = ipOf(ctx);
-  if (ip) {
-    await rateCheck(db, 'signup:' + ip, LIMITS.signup);
-    await rateFail(db, 'signup:' + ip, LIMITS.signup);
-  }
+  if (ip) await rateHit(db, 'signup:' + ip, LIMITS.signup); // cuenta cada intento
   if (await db.findOne('users', { email })) throw conflict(DUP_EMAIL, 'duplicate');
 
   const r = await createShopWithOwner(db, {
@@ -393,8 +399,9 @@ async function me(ctx) {
   const s = ctx.session;
   let staff = null;
   if (s.kind === 'pin') {
-    const st = s.shop_id ? await scopedDb(ctx.db, s.shop_id).findOne('staff', { id: s.staff_id }) : null;
-    if (!st || !st.active) {
+    // Miembro activo, con PIN todavía configurado y cuenta vinculada (si tiene) activa.
+    const st = await pinSessionStaff(ctx.db, s);
+    if (!st) {
       await destroySession(ctx.db, ctx.token);
       ctx.setCookie(COOKIE, '', { maxAge: 0 });
       throw unauthorized('Tu acceso fue desactivado. Habla con el dueño de la barbería.');
@@ -438,15 +445,15 @@ async function changePassword(ctx) {
 
   // Mismo límite que el login: una sesión robada no puede adivinar la contraseña actual sin freno.
   const key = 'pw:' + u.email;
-  await rateCheck(ctx.db, key, LIMITS.pw);
+  await rateHit(ctx.db, key, LIMITS.pw);
   if (current.length > MAX_PASSWORD || !(await verifySecret(current, u.password_hash))) {
-    await rateFail(ctx.db, key, LIMITS.pw);
     throw bad('Tu contraseña actual no es correcta.', { current: 'Tu contraseña actual no es correcta.' });
   }
   await rateReset(ctx.db, key);
   await ctx.db.update('users', { id: u.id }, { password_hash: await hashSecret(next) });
-  // Cierra todas las demás sesiones del usuario (otros dispositivos); la actual sigue activa.
-  await ctx.db.delete('sessions', { user_id: u.id, id: { ne: ctx.session.id } });
+  // Cierra todas las demás sesiones del usuario (otros dispositivos), también las de PIN de sus fichas de
+  // staff (no llevan user_id); la actual sigue activa.
+  await revokeUserSessions(ctx.db, u.id, { exceptId: ctx.session.id });
   return null;
 }
 

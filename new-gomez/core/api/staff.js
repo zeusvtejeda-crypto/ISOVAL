@@ -2,10 +2,11 @@
 // PIN y cuenta de acceso. Dueño: todo (staff.manage). Barbero: solo su propio perfil (nombre, teléfono,
 // bio, foto, PIN y color). Ver docs/API.md → "Contexto de barbería".
 import { conflict, forbidden, notFound, bad, newId, nowIso, normEmail, isEmail } from '../util.js';
-import { hashSecret, verifySecret } from '../crypto.js';
-import { rateCheck, rateFail } from '../session.js';
+import { hashSecret, verifySecret, PIN_ITERATIONS } from '../crypto.js';
+import { rateHit, rateCheck, rateFail, revokePinSessions } from '../session.js';
 import { staffView } from '../domain/views.js';
 import { shopSettings } from '../domain/settings.js';
+import { notify } from '../domain/notify.js';
 import { passwordError } from './auth.js';
 import { body, failIf, dupError, textIn, phoneIn, colorIn, boolIn, boolOf, numIn, intIn, urlIn, IMAGE_KB } from './shop.js';
 
@@ -14,7 +15,14 @@ export const STAFF_ROLES = ['owner', 'barber'];
 export const STAFF_COLORS = ['#c8a24a', '#4f7cac', '#3e8e7e', '#b5654a', '#8e6c8a', '#6b7a8f', '#5e8c61', '#c27c8e', '#d4a373', '#2f6690', '#9c6644', '#7d8cc4'];
 const SELF_FIELDS = ['name', 'phone', 'bio', 'avatar_url', 'pin', 'color'];
 const MANAGER_FIELDS = ['role', 'bookable', 'commission_pct', 'active', 'sort', 'email', 'password'];
-const PIN_LIMIT = { max: 5, windowMin: 15, lockMin: 15 }; // choques de PIN por persona (evita adivinar PINs ajenos)
+// Límites al fijar PIN (el PIN es único en la barbería, así que "ese PIN ya existe" delata un PIN ajeno):
+//  - PIN_SELF_LIMIT: quien cambia SU PROPIO PIN sin ser dueño (barbero): cuenta CADA intento, choque o no,
+//    5 por día. Probar PINs ajenos por aquí es muchísimo más lento que el propio login por PIN.
+//  - PIN_SET_LIMIT + PIN_DUP_LIMIT: dueños (staff.manage), que dan de alta al equipo: cada intento cuenta con
+//    un margen amplio y, además, los choques se limitan a 5 cada 15 min.
+const PIN_SELF_LIMIT = { max: 5, windowMin: 1440, lockMin: 1440 };
+const PIN_SET_LIMIT = { max: 30, windowMin: 60, lockMin: 60 };
+const PIN_DUP_LIMIT = { max: 5, windowMin: 15, lockMin: 15 };
 const IN_CHUNK = 80;
 const BAD_EMAIL = 'Escribe un correo válido, por ejemplo nombre@correo.com.';
 
@@ -69,15 +77,26 @@ function parseInput(errs, b, { create }) {
 }
 
 // PIN único dentro de la barbería (se compara contra los hashes de todo el equipo, activo o no).
-// Cada choque cuenta como intento fallido del que lo cambia: sin esto, cambiar tu PIN serviría para adivinar el de otro.
+// Como la respuesta "ya existe" revela un PIN ajeno, cada intento se cuenta ANTES de comparar (rateHit,
+// atómico): ver PIN_SELF_LIMIT / PIN_SET_LIMIT. Al barbero no se le dice de quién es ni que es de alguien.
 async function assertPinFree(ctx, pin, exceptId) {
-  const key = 'pinset:' + ctx.shop.id + ':' + (ctx.staff ? ctx.staff.id : (ctx.user ? ctx.user.id : 'anon'));
-  await rateCheck(ctx.db, key, PIN_LIMIT);
+  const who = ctx.staff ? ctx.staff.id : (ctx.user ? ctx.user.id : 'anon');
+  const manager = ctx.can('staff.manage');
+  const dupKey = 'pindup:' + ctx.shop.id + ':' + who;
+  if (manager) {
+    await rateCheck(ctx.db, dupKey, PIN_DUP_LIMIT);
+    await rateHit(ctx.db, 'pinset:' + ctx.shop.id + ':' + who, PIN_SET_LIMIT);
+  } else {
+    await rateHit(ctx.db, 'pinself:' + ctx.shop.id + ':' + who, PIN_SELF_LIMIT);
+  }
   const rows = await ctx.sdb.find('staff', { pin_hash: { isNull: false } });
   for (const s of rows) {
     if (s.id !== exceptId && await verifySecret(pin, s.pin_hash)) {
-      await rateFail(ctx.db, key, PIN_LIMIT);
-      throw dupError('Ese PIN ya lo usa otra persona del equipo. Elige otro.', 'pin');
+      if (manager) {
+        await rateFail(ctx.db, dupKey, PIN_DUP_LIMIT);
+        throw dupError('Ese PIN ya lo usa otra persona del equipo. Elige otro.', 'pin');
+      }
+      throw dupError('Ese PIN no se puede usar. Elige otro.', 'pin');
     }
   }
 }
@@ -137,6 +156,31 @@ async function accountUser(ctx, plan, { name, phone }) {
   });
 }
 const accountLabel = (plan) => (plan && plan.kind === 'create' ? 'created' : plan && plan.kind === 'link' ? 'linked' : plan && plan.kind === 'unlink' ? 'removed' : null);
+// Campos extra de la respuesta cuando se tocó el acceso por correo. Al VINCULAR una cuenta que ya existía
+// (el correo ya estaba registrado en TuBarbería) nunca se cambia su contraseña: se avisa claramente al dueño,
+// porque la contraseña que escribió (si escribió una) no se usa. Ver docs/API.md → "Contexto de barbería", nota ³.
+function accountInfo(plan, password) {
+  const account = accountLabel(plan);
+  if (!account) return {};
+  const out = { account };
+  if (plan.kind === 'link') {
+    const typed = typeof password === 'string' && password !== '';
+    out.password_ignored = typed;
+    out.notice = 'Ese correo ya tenía una cuenta en TuBarbería, así que se vinculó esa cuenta: la persona entra con SU contraseña de siempre.'
+      + (typed ? ' La contraseña que escribiste no se usó ni se guardó.' : '')
+      + ' Si no reconoce esa cuenta, quítale el acceso y usa otro correo.';
+  }
+  return out;
+}
+// Aviso en el panel del miembro cuando se vincula su cuenta existente (lo ve quien controla esa cuenta).
+async function notifyLinked(ctx, plan, st) {
+  if (!plan || plan.kind !== 'link' || !st) return;
+  await notify(ctx.sdb, 'staff:' + st.id, {
+    type: 'system', title: 'Te agregaron al equipo de ' + ctx.shop.name,
+    body: 'Tu cuenta ' + plan.user.email + ' ahora da acceso a ' + ctx.shop.name + '. Si no esperabas esto, avisa al dueño de la barbería.',
+    link: '#/', data: { kind: 'staff_linked', shop_id: ctx.shop.id }
+  });
+}
 
 // ── Handlers ──
 async function list(ctx) {
@@ -145,7 +189,8 @@ async function list(ctx) {
   const rows = await ctx.sdb.find('staff', all ? {} : { active: true }, { order: ['sort asc', 'name asc'] });
   const views = await staffViews(ctx.db, rows);
   if (manage) return views;
-  // Barbero: de sus compañeros no ve correo, teléfono ni comisión.
+  // Barbero: de sus compañeros no ve correo, teléfono ni comisión. La forma NO cambia (mismas claves que
+  // la vista Staff): email '', phone null y commission_pct null. Ver docs/API.md → "Vistas".
   const me = ctx.staff ? ctx.staff.id : null;
   return views.map((v) => (v.id === me ? v : Object.assign(v, { email: '', phone: null, commission_pct: null })));
 }
@@ -165,7 +210,7 @@ async function create(ctx) {
     color: v.color || pickColor(team.filter((s) => s.active).map((s) => s.color)),
     avatar_url: v.avatar_url || null, bio: v.bio || null, phone: v.phone || null,
     commission_pct: v.commission_pct === undefined ? (role === 'owner' ? 0 : 50) : v.commission_pct,
-    pin_hash: v.pin ? await hashSecret(v.pin) : null,
+    pin_hash: v.pin ? await hashSecret(v.pin, PIN_ITERATIONS) : null,
     sort: v.sort === undefined ? team.reduce((m, s) => Math.max(m, Number(s.sort) || 0), -1) + 1 : v.sort,
     created_at: now, updated_at: now
   };
@@ -189,7 +234,8 @@ async function create(ctx) {
     if (plan && plan.kind === 'create' && user) { try { await ctx.db.delete('users', { id: user.id }); } catch (x) { /* nada */ } }
     throw e;
   }
-  return Object.assign(staffView(st, user), { account: accountLabel(plan) });
+  await notifyLinked(ctx, plan, st);
+  return Object.assign(staffView(st, user), { account: accountLabel(plan) }, accountInfo(plan, b.password));
 }
 
 function unchanged(k, v, st, curEmail) {
@@ -245,7 +291,7 @@ async function update(ctx) {
   }
   if (!active && patch.bookable) patch.bookable = false; // inactivo nunca aparece en la reserva
   if (v.pin !== undefined) {
-    if (v.pin) { await assertPinFree(ctx, v.pin, st.id); patch.pin_hash = await hashSecret(v.pin); } else patch.pin_hash = null;
+    if (v.pin) { await assertPinFree(ctx, v.pin, st.id); patch.pin_hash = await hashSecret(v.pin, PIN_ITERATIONS); } else patch.pin_hash = null;
   }
   let user;
   if (plan) {
@@ -256,9 +302,12 @@ async function update(ctx) {
     patch.updated_at = nowIso();
     await ctx.sdb.update('staff', { id: st.id }, patch);
   }
+  // PIN cambiado o quitado, o miembro desactivado: se cierran sus sesiones PIN abiertas (quien conociera el
+  // PIN viejo queda fuera). La sesión actual se conserva si es la suya (cambió su propio PIN desde el PIN).
+  if (patch.pin_hash !== undefined || patch.active === false) await revokePinSessions(ctx.db, [st.id], { exceptId: ctx.session && ctx.session.id });
   const fresh = await ctx.sdb.findOne('staff', { id: st.id });
   const out = staffView(fresh, user);
-  if (plan && plan.kind !== 'none') out.account = accountLabel(plan);
+  if (plan && plan.kind !== 'none') { Object.assign(out, accountInfo(plan, b.password)); await notifyLinked(ctx, plan, fresh); }
   return out;
 }
 
@@ -268,6 +317,7 @@ async function deactivate(ctx) {
   if (ctx.staff && ctx.staff.id === st.id) throw conflict('No puedes desactivarte a ti mismo.');
   if (st.role === 'owner' && st.active && !(await otherActiveOwners(ctx.sdb, st.id))) throw conflict('Debe quedar al menos un dueño activo en la barbería.');
   if (st.active || st.bookable) await ctx.sdb.update('staff', { id: st.id }, { active: false, bookable: false, updated_at: nowIso() });
+  await revokePinSessions(ctx.db, [st.id]);
   const [fresh, user, upcoming] = await Promise.all([
     ctx.sdb.findOne('staff', { id: st.id }),
     st.user_id ? ctx.db.findOne('users', { id: st.user_id }) : null,
@@ -289,7 +339,8 @@ async function setAccount(ctx) {
   const user = await accountUser(ctx, plan, { name: st.name, phone: st.phone });
   if (plan.kind !== 'none') await ctx.sdb.update('staff', { id: st.id }, { user_id: user ? user.id : null, updated_at: nowIso() });
   const fresh = await ctx.sdb.findOne('staff', { id: st.id });
-  return Object.assign(staffView(fresh, user), { account: accountLabel(plan) });
+  await notifyLinked(ctx, plan, fresh);
+  return Object.assign(staffView(fresh, user), { account: accountLabel(plan) }, accountInfo(plan, remove ? undefined : b.password));
 }
 
 export const routes = [

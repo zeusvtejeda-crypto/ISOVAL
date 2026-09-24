@@ -76,7 +76,9 @@ const CSS = `
 .pf-appt b{display:block;font-size:14px}
 .pf-appt small{display:block;color:var(--text-2);font-size:12.5px}
 .pf-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pf-row .grow{flex:1 1 200px;min-width:0}
 .pf-row .grow b{display:block;font-size:14.5px}
+@media (max-width:559px){.pf-row>.row{width:100%;padding-left:56px}.pf-row>.row .btn{flex:1}}
 .pf-row .grow small{display:block;color:var(--text-2);font-size:13px;margin-top:1px}
 .pf-pinic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--surface-3);color:var(--text-2);flex:none}
 .pf-pinic.on{background:var(--ok-soft);color:var(--ok)}

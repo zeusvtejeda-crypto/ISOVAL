@@ -7,11 +7,14 @@
 //   pickStaff(ag, { date, start, duration, staffIds, now, mode })   // 'any' → barbero libre con menos minutos ese día
 //   checkFree(ag, { staffId, date, start, duration, now, mode })    // null = libre | { reason, message }
 //
-// mode: 'public'  → reserva en línea: online_enabled, ventana, lead_min, horario del barbero y rejilla (step_min).
+// mode: 'public'  → reserva en línea: online_enabled, ventana, lead_min, horario del barbero ∩ horario de la
+//                   barbería (settings.hours) y rejilla (step_min).
 //       'staff'   → panel: sin lead ni ventana (se permiten citas pasadas: walk-in ya atendido); exige horario.
 //       'restore' → restaurar una cita cancelada / no asistida: solo choques (citas y descansos), no el horario.
 //
-// Reglas: un barbero sin NINGUNA fila de availability usa settings.hours de la barbería. Los descansos
+// Reglas: un barbero sin NINGUNA fila de availability usa settings.hours de la barbería. En línea solo se
+// ofrece la intersección de su horario con el de la barbería: si la barbería está cerrada ese día u hora
+// (settings.hours), no se reserva en línea aunque el barbero tenga su propio horario. Los descansos
 // (time_off) con staff_id null aplican a todos; sin start_min/end_min son de día completo; con minutos,
 // el rango aplica a cada día de date_from..date_to. buffer_min separa citas del mismo barbero.
 import { weekday, diffDays, addDays, eachDay, fmtMin } from '../util.js';
@@ -93,12 +96,27 @@ export function weekFor(ag, staffId) {
   return w;
 }
 
+// Intersección de dos listas de rangos ordenadas y sin traslapes.
+export function intersectRanges(a, b) {
+  const out = [];
+  let i = 0, j = 0;
+  while (i < a.length && j < b.length) {
+    const s = Math.max(a[i][0], b[j][0]), e = Math.min(a[i][1], b[j][1]);
+    if (e > s) out.push([s, e]);
+    if (a[i][1] < b[j][1]) i++; else j++;
+  }
+  return out;
+}
+
 // Bloques de trabajo de un barbero en una fecha ([] = no trabaja / descanso de día completo).
-export function blocksFor(ag, staffId, date) {
+// mode 'public': además, solo dentro del horario de la barbería (settings.hours) de ese día.
+export function blocksFor(ag, staffId, date, mode) {
   if (ag.off.some((t) => fullDay(t) && offApplies(t, staffId, date))) return [];
   const own = ag.av[staffId];
   const wd = weekday(date);
-  return own ? own[wd] : mergeRanges(ag.hours[wd]);
+  const shop = mergeRanges(ag.hours[wd]);
+  if (!own) return shop;
+  return mode === 'public' ? intersectRanges(own[wd], shop) : own[wd];
 }
 
 // Rangos ocupados (citas expandidas por buffer + descansos parciales), ordenados y unidos.
@@ -117,8 +135,8 @@ export function bookedMinutes(ag, staffId, date, excludeId) {
 }
 
 // Inicios libres de un barbero (rejilla de step_min desde el inicio de cada bloque). null = no trabaja ese día.
-export function freeStarts(ag, staffId, date, dur, { minStart = -Infinity, excludeId } = {}) {
-  const blocks = blocksFor(ag, staffId, date);
+export function freeStarts(ag, staffId, date, dur, { minStart = -Infinity, excludeId, mode } = {}) {
+  const blocks = blocksFor(ag, staffId, date, mode);
   if (!blocks.length) return null;
   const busy = busyFor(ag, staffId, date, excludeId);
   const out = [];
@@ -154,7 +172,7 @@ export function computeSlots(ag, { date, duration, staffIds, now, mode, excludeI
   const by = new Map();
   let open = false;
   for (const id of staffIds) {
-    const starts = freeStarts(ag, id, date, duration, { minStart, excludeId });
+    const starts = freeStarts(ag, id, date, duration, { minStart, excludeId, mode });
     if (!starts) continue;
     open = true;
     for (const t of starts) { if (!by.has(t)) by.set(t, []); by.get(t).push(id); }
@@ -165,10 +183,16 @@ export function computeSlots(ag, { date, duration, staffIds, now, mode, excludeI
   return res;
 }
 
+// { date, open, available, reason? }. Sin horarios, reason dice por qué: 'closed' (no hay servicio), 'full'
+// (abierto pero sin lugar), 'out_of_window' (más allá de window_days), 'past' u 'offline' (reservas en línea
+// apagadas). Solo 'full' cuenta como día abierto: fuera de la ventana u offline no es "lleno".
 export function computeDays(ag, { from, days, duration, staffIds, now, mode }) {
   return eachDay(from, addDays(from, Math.max(1, days) - 1)).map((date) => {
     const r = computeSlots(ag, { date, duration, staffIds, now, mode });
-    return { date, open: !r.closed, available: r.slots.length > 0 };
+    const available = r.slots.length > 0;
+    const out = { date, open: !r.closed && !['out_of_window', 'past', 'offline'].includes(r.reason), available };
+    if (!available) out.reason = r.reason || 'full';
+    return out;
   });
 }
 
@@ -192,7 +216,7 @@ export function checkFree(ag, { staffId, date, start, duration, excludeId, now, 
     }
   }
   if (mode !== 'restore') {
-    const blocks = blocksFor(ag, staffId, date);
+    const blocks = blocksFor(ag, staffId, date, mode);
     const inBlock = blocks.find(([s, e]) => start >= s && end <= e);
     if (!blocks.length) return { reason: 'day_off', message: pub ? 'Ese día no hay servicio con ese barbero. Elige otra fecha.' : who + ' no trabaja ese día.' };
     if (!inBlock) return { reason: 'outside_hours', message: pub ? 'Ese horario no está disponible. Elige otro.' : 'Ese horario está fuera del horario de trabajo de ' + who + '.' };

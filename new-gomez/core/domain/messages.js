@@ -7,6 +7,8 @@
 //
 // Enlace de gestión: el token de la cita solo se guarda hasheado (appointments.manage_token_hash), así que
 // para poner un enlace "gestiona tu cita" en un mensaje se genera un token NUEVO (el anterior deja de servir).
+// Por eso la VISTA PREVIA no genera token: deja el marcador literal {enlace} (LINK_MARKER) y el token se rota
+// solo al registrar el mensaje de verdad (fillLink reemplaza el marcador en el texto que manda el panel).
 import { newId, nowIso, fmtMin, normPhone, waNumber } from '../util.js';
 import { sha256Hex, newToken } from '../crypto.js';
 import { shopSettings, DEFAULT_TEMPLATES } from './settings.js';
@@ -25,6 +27,7 @@ export const APPT_KINDS = ['confirmation', 'reminder', 'reschedule', 'cancellati
 export const MESSAGE_STATUSES = ['prepared', 'opened', 'sent', 'queued', 'failed'];
 export const MAX_BODY = 1000;
 export const VARS = ['cliente', 'barberia', 'fecha', 'hora', 'servicios', 'barbero', 'total', 'folio', 'enlace', 'direccion', 'resena'];
+export const LINK_MARKER = '{enlace}';
 
 const fold = (s) => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
 const VAR_RE = /\{([^{}\n]{1,24})\}/g;
@@ -138,13 +141,15 @@ export async function rotateManageToken(sdb, appointmentId) {
 }
 
 // Texto del mensaje desde la plantilla de la barbería. c = { sdb, shop }.
-// o: { kind, appt?, client?, base, withToken (rota el token si la plantilla usa {enlace}), staffName? }
+// o: { kind, appt?, client?, base, withToken (rota el token si la plantilla usa {enlace}), preview, staffName? }
+// preview: el enlace de gestión queda como el marcador {enlace} (no se rota el token).
 export async function composeMessage(c, o) {
   const tpl = templateFor(c.shop, o.kind);
   if (!tpl) return '';
   let link = '';
-  if (o.withToken && o.appt && TOKEN_KINDS.includes(o.kind) && usesVar(tpl, 'enlace')) {
-    link = manageUrl(o.base, await rotateManageToken(c.sdb, o.appt.id));
+  if (o.appt && TOKEN_KINDS.includes(o.kind) && usesVar(tpl, 'enlace')) {
+    if (o.preview) link = LINK_MARKER;
+    else if (o.withToken) link = manageUrl(o.base, await rotateManageToken(c.sdb, o.appt.id));
   }
   let staffName = o.staffName;
   if (staffName == null && o.appt && o.appt.staff_id) {
@@ -152,6 +157,14 @@ export async function composeMessage(c, o) {
     staffName = s ? s.name : '';
   }
   return renderTemplate(tpl, buildVars(c.shop, o.appt, { client: o.client, staffName, link, base: o.base })).slice(0, MAX_BODY * 2);
+}
+
+// Texto ya armado (p. ej. el de la vista previa, editado en el panel) con {enlace}: al registrarlo se reemplaza
+// por el enlace de gestión (token nuevo) si el tipo lo lleva y hay cita; si no, por el link de reservas.
+export async function fillLink(c, text, { kind, appt, base }) {
+  if (!usesVar(text, 'enlace')) return text;
+  const link = appt && TOKEN_KINDS.includes(kind) ? manageUrl(base, await rotateManageToken(c.sdb, appt.id)) : bookingUrl(base, c.shop);
+  return String(text).replace(VAR_RE, (m, k) => (fold(k) === 'enlace' ? link : m));
 }
 
 // Estado inicial según el modo de WhatsApp de la barbería: manual → 'prepared' (wa.me); auto → 'queued'.

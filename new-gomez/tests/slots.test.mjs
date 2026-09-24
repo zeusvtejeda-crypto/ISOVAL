@@ -171,9 +171,39 @@ test('slots: computeDays marca abiertos/disponibles', () => {
   const ag = buildAgenda({ settings: { hours, booking: { window_days: 3 } }, staff, availability: [], timeOff: [], appointments: [] });
   const d = computeDays(ag, { from: SUN, days: 6, duration: 40, staffIds: ['a'], now: { date: SUN, minutes: 0 }, mode: 'public' });
   assert.equal(d.length, 6);
-  assert.deepEqual(d[0], { date: SUN, open: false, available: false });
+  assert.deepEqual(d[0], { date: SUN, open: false, available: false, reason: 'closed' });
   assert.deepEqual(d[1], { date: MON, open: true, available: true });
   assert.equal(d[4].available, false, 'fuera de la ventana de 3 días');
+});
+
+test('slots: computeDays — días fuera de la ventana no se ven "llenos": open:false con motivo', () => {
+  const ag = buildAgenda({ settings: { hours, booking: { window_days: 3 } }, staff, availability: [], timeOff: [], appointments: [ap('1', 'a', MON, 600, 1200)] });
+  const d = computeDays(ag, { from: SUN, days: 6, duration: 40, staffIds: ['a'], now: { date: SUN, minutes: 0 }, mode: 'public' });
+  assert.deepEqual(d[1], { date: MON, open: true, available: false, reason: 'full' }, 'lleno de verdad');
+  assert.deepEqual(d[3], { date: '2026-10-07', open: true, available: true }, 'último día de la ventana');
+  assert.deepEqual(d[4], { date: '2026-10-08', open: false, available: false, reason: 'out_of_window' });
+  const off = buildAgenda({ settings: { hours, booking: { online_enabled: false } }, staff, availability: [], timeOff: [], appointments: [] });
+  assert.deepEqual(computeDays(off, { from: MON, days: 1, duration: 40, staffIds: ['a'], now: farNow, mode: 'public' })[0], { date: MON, open: false, available: false, reason: 'offline' });
+});
+
+test('slots: la reserva en línea es la intersección del horario del barbero con el de la barbería', () => {
+  // Ana trabaja 9:00–21:00 todos los días (sus propias filas); la barbería abre 10:00–20:00 y cierra el domingo.
+  const av = [0, 1, 2, 3, 4, 5, 6].map((wd) => ({ staff_id: 'a', weekday: wd, start_min: 540, end_min: 1260 }));
+  let ag = agenda({ availability: av });
+  let r = computeSlots(ag, { date: MON, duration: 40, staffIds: ['a'], now: farNow, mode: 'public' });
+  assert.equal(starts(r)[0], 600, 'no antes de que abra la barbería');
+  assert.equal(starts(r)[starts(r).length - 1], 1160, 'termina antes del cierre');
+  assert.equal(checkFree(ag, { staffId: 'a', date: MON, start: 540, duration: 40, now: farNow, mode: 'public' }).reason, 'outside_hours');
+  assert.equal(checkFree(ag, { staffId: 'a', date: MON, start: 540, duration: 40, now: farNow, mode: 'staff' }), null, 'el panel usa el horario del barbero');
+  r = computeSlots(ag, { date: SUN, duration: 40, staffIds: ['a'], now: farNow, mode: 'public' });
+  assert.equal(r.closed, true, 'barbería cerrada el domingo → sin reserva en línea');
+  assert.equal(checkFree(ag, { staffId: 'a', date: SUN, start: 600, duration: 40, now: farNow, mode: 'public' }).reason, 'day_off');
+  assert.equal(computeSlots(ag, { date: SUN, duration: 40, staffIds: ['a'], now: farNow, mode: 'staff' }).closed, false);
+  // Horario partido de la barbería: nada cruza el hueco.
+  ag = buildAgenda({ settings: { hours: Object.assign({}, hours, { 1: [[600, 840], [960, 1200]] }), booking: { step_min: 20, lead_min: 0, window_days: 21 } }, staff, availability: av, timeOff: [], appointments: [] });
+  r = computeSlots(ag, { date: MON, duration: 40, staffIds: ['a'], now: farNow, mode: 'public' });
+  assert.ok(starts(r).every((t) => t + 40 <= 840 || t >= 960));
+  assert.ok(starts(r).includes(960));
 });
 
 test('slots: mergeRanges ordena, une contiguos y descarta inválidos', () => {
@@ -194,6 +224,7 @@ test('slots: rendimiento — 60 días × 4 barberos con muchas citas', () => {
 async function setup() {
   const f = await makeFixture();
   for (const k of ['ownerA', 'barberA', 'ownerB', 'clientA', 'super']) f.tokens[k] = await createSession(f.db, { kind: 'password', user_id: 'u_' + k });
+  await f.db.update('staff', { id: 'st_barberA2' }, { pin_hash: 'pbkdf2$1000$prueba$prueba' }); // una sesión PIN exige PIN configurado
   f.tokens.barberA2 = await createSession(f.db, { kind: 'pin', staff_id: 'st_barberA2', shop_id: 'shop_a' });
   return f;
 }

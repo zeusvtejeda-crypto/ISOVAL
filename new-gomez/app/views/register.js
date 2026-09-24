@@ -239,7 +239,8 @@ const ART_CSS = `
 .rg-art-shop .avatar{--s:46px;border-radius:13px;box-shadow:0 0 0 1px rgba(217,178,90,.35)}
 .rg-art-shop b{display:block;color:#F2EDE3;font-size:16px}.rg-art-shop small{color:#A39A88;font-size:12.5px}
 .rg-tick{display:flex;gap:10px;align-items:center;color:#D9D3C6;font-size:14px;padding:7px 0;border-top:1px solid rgba(242,237,227,.08)}
-.rg-tick:first-of-type{border-top:0}
+.rg-art-shop:empty{display:none}
+.rg-art-shop:empty+.rg-tick{border-top:0}
 .rg-tick .ic{color:#D9B25A;width:18px;height:18px}
 `;
 
@@ -332,11 +333,12 @@ export default {
         if (gone) return;
         shopInfo = null;
         paintShop();
-        if (e.status === 404 && slug) {
+        if (e.code === 'backend_unavailable' || e.code === 'backend_not_configured' || e.code === 'network') {
+          banner('warn', 'alert', e.code === 'network' ? html`<b>Sin conexión.</b> Revisa tu internet para crear tu cuenta.` : html`<b>El servidor no está disponible.</b> Este sitio aún no tiene la base de datos conectada.`,
+            e.code === 'network' ? html` <button type="button" class="link-btn" data-retry>Reintentar</button>` : html` <a class="link-btn" href="#/demo">Prueba la demo</a>`);
+        } else if (e.status === 404 && slug) {
           banner('warn', 'alert', html`<b>No encontramos esa barbería.</b> Revisa el enlace que te compartieron o pide uno nuevo.`);
           slug = '';
-        } else if (e.code === 'backend_unavailable' || e.code === 'backend_not_configured') {
-          banner('warn', 'alert', html`<b>El servidor no está disponible.</b> Este sitio aún no tiene la base de datos conectada.`, html` <a class="link-btn" href="#/demo">Prueba la demo</a>`);
         } else {
           banner('err', 'alert', html`<b>No pudimos cargar la barbería.</b> ${e.message}`, html` <button type="button" class="link-btn" data-retry>Reintentar</button>`);
         }

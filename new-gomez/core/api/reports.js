@@ -1,13 +1,18 @@
 // Tablero (dashboard) y exportación CSV. Barbero: versión propia del tablero (staff_id = el suyo).
 //
 // Reglas del tablero (docs/API.md → /api/reports/dashboard):
-//   revenue        = pagos `paid` (monto sin propina) con fecha en el rango + `total` de citas `completed`
-//                    del rango que no tienen ningún pago registrado (ni reembolsado).
+//   revenue        = cobros (monto sin propina) con fecha en el rango, incluidos los que después se reembolsaron,
+//                    − reembolsos hechos en el rango (fecha local de refunded_at) + `total` de citas `completed`
+//                    del rango que no tienen ningún cobro registrado (ni reembolsado), en cualquier fecha.
+//                    El reembolso resta el día en que se hace: no cambia días/periodos anteriores.
 //   appointments   = citas no canceladas (pending, confirmed, completed, no_show).
-//   avg_ticket     = revenue / ventas (citas cobradas + ventas sueltas + citas atendidas sin pago).
+//   avg_ticket     = revenue / ventas (citas cobradas + ventas sueltas + citas atendidas sin pago); un cobro
+//                    reembolsado dentro del mismo rango no cuenta como venta.
+//   tips           = propinas de esos cobros − propinas reembolsadas en el rango.
 //   cancel_rate    = canceladas / todas las citas del rango × 100.
 //   no_show_rate   = no asistió / (atendidas + no asistió) × 100.
-//   occupancy_pct  = minutos agendados (no canceladas) / minutos disponibles × 100 (tope 100). Disponibles =
+//   occupancy_pct  = minutos agendados (pending, confirmed, completed: no cuentan cancelled ni no_show) /
+//                    minutos disponibles × 100 (tope 100). Disponibles =
 //                    bloques de availability (o settings.hours) − descansos, de barberos activos y reservables.
 //   new_clients    = clientes cuya primera cita no cancelada cae en el rango; returning = ya tenían una antes.
 //   by_service     = servicios de citas atendidas (conteo y precio de lista).
@@ -17,12 +22,11 @@ import { shopSettings } from '../domain/settings.js';
 import { apptView } from '../domain/views.js';
 import { buildAgenda, blocksFor, busyFor, weekFor } from '../domain/slots.js';
 import { failIf, STATUSES, STATUS_LABEL } from '../domain/appointments.js';
-import { parseRange, findIn, METHODS, METHOD_LABEL } from './payments.js';
+import { parseRange, findIn, refundsIn, refundDate, METHODS, METHOD_LABEL } from './payments.js';
 import { computeCommissions } from './commissions.js';
 
 const EXPECTED = ['pending', 'confirmed', 'completed'];
-const PAY_LOOKBACK = 31;   // anticipos: pagos hasta 31 días antes del rango cuentan como "la cita ya tiene pago"
-const PAY_LOOKAHEAD = 62;  // cobros tardíos: hasta 62 días después
+const OCCUPYING = ['pending', 'confirmed', 'completed']; // docs/API.md: cancelled y no_show no ocupan agenda
 const pct = (a, b) => (b > 0 ? Math.min(100, Math.round((a / b) * 1000) / 10) : 0);
 const inRange = (d, a, b) => d >= a && d <= b;
 const num = (v) => Number(v) || 0;
@@ -45,33 +49,44 @@ export async function computeDashboard(sdb, shop, { from, to, staffId, today }) 
   const days = diffDays(from, to) + 1;
   const prevFrom = addDays(from, -days), prevTo = addDays(from, -1);
   const sw = staffId ? { staff_id: staffId } : {};
-  const [staff, availability, timeOff, appts, pays, todayRows] = await Promise.all([
+  const tz = shop.timezone;
+  const pw = staffId ? { staff_id: staffId } : {};
+  const [staff, availability, timeOff, appts, pays, refunds, todayRows] = await Promise.all([
     sdb.find('staff', {}, { order: ['sort asc', 'name asc'] }),
     sdb.find('availability', sw),
     sdb.find('time_off', { date_from: { lte: to }, date_to: { gte: from } }),
     sdb.find('appointments', Object.assign({ date: { gte: prevFrom, lte: to } }, sw)),
-    sdb.find('payments', { date: { gte: addDays(prevFrom, -PAY_LOOKBACK), lte: addDays(to, PAY_LOOKAHEAD) } }),
+    sdb.find('payments', Object.assign({ date: { gte: prevFrom, lte: to }, status: { in: ['paid', 'refunded'] } }, pw)),
+    refundsIn(sdb, tz, prevFrom, to, pw),
     sdb.find('appointments', Object.assign({ date: today, status: { ne: 'cancelled' } }, sw), { order: ['start_min asc', 'id asc'] })
   ]);
 
   // ── Ingresos ──
-  const hasPay = new Set(pays.filter((p) => p.appointment_id).map((p) => p.appointment_id));
-  const paidIn = (a, b) => pays.filter((p) => p.status === 'paid' && inRange(p.date, a, b) && (!staffId || p.staff_id === staffId));
+  // ¿La cita atendida tiene algún cobro (en cualquier fecha: anticipo o cobro tardío)? Consulta por id de cita.
+  const done = appts.filter((a) => a.status === 'completed');
+  const hasPay = new Set((await findIn(sdb, 'payments', 'appointment_id', done.map((a) => a.id))).map((p) => p.appointment_id));
+  const salesIn = (a, b) => pays.filter((p) => inRange(p.date, a, b));
+  const refundsBetween = (a, b) => refunds.filter((p) => inRange(refundDate(p, tz), a, b));
   const cur = appts.filter((a) => a.date >= from);
   const prev = appts.filter((a) => a.date < from);
-  const curPays = paidIn(from, to);
+  const curPays = salesIn(from, to);
+  const curRefunds = refundsBetween(from, to);
   const curUnpaid = cur.filter((a) => a.status === 'completed' && !hasPay.has(a.id));
   const prevUnpaid = prev.filter((a) => a.status === 'completed' && !hasPay.has(a.id));
-  const revenueOf = (ps, us) => money(ps.reduce((m, p) => m + num(p.amount), 0) + us.reduce((m, a) => m + num(a.total), 0));
-  const revenue = revenueOf(curPays, curUnpaid);
-  const revenue_prev = revenueOf(paidIn(prevFrom, prevTo), prevUnpaid);
+  const sumOf = (list, f) => list.reduce((m, x) => m + num(f(x)), 0);
+  const revenueOf = (ps, rs, us) => money(sumOf(ps, (p) => p.amount) - sumOf(rs, (p) => p.amount) + sumOf(us, (a) => a.total));
+  const revenue = revenueOf(curPays, curRefunds, curUnpaid);
+  const revenue_prev = revenueOf(salesIn(prevFrom, prevTo), refundsBetween(prevFrom, prevTo), prevUnpaid);
 
   // ── Citas ──
   const live = cur.filter((a) => a.status !== 'cancelled');
   const by_status = Object.fromEntries(STATUSES.map((s) => [s, 0]));
   for (const a of cur) if (a.status in by_status) by_status[a.status]++;
-  const tickets = new Set(curPays.filter((p) => p.appointment_id).map((p) => p.appointment_id)).size
-    + curPays.filter((p) => !p.appointment_id).length + curUnpaid.length;
+  // Ventas: cobros del rango salvo los reembolsados dentro del mismo rango (neto cero).
+  const refundedHere = new Set(curRefunds.map((p) => p.id));
+  const sold = curPays.filter((p) => !refundedHere.has(p.id));
+  const tickets = new Set(sold.filter((p) => p.appointment_id).map((p) => p.appointment_id)).size
+    + sold.filter((p) => !p.appointment_id).length + curUnpaid.length;
 
   // ── Ocupación ──
   const ag = buildAgenda({ settings: shopSettings(shop), staff, availability, timeOff });
@@ -83,7 +98,7 @@ export async function computeDashboard(sdb, shop, { from, to, staffId, today }) 
     return availMin[id];
   };
   const bookedMin = {};
-  for (const a of live) bookedMin[a.staff_id] = (bookedMin[a.staff_id] || 0) + Math.max(0, a.end_min - a.start_min);
+  for (const a of live) if (OCCUPYING.includes(a.status)) bookedMin[a.staff_id] = (bookedMin[a.staff_id] || 0) + Math.max(0, a.end_min - a.start_min);
   const occupancy_pct = pct(occIds.reduce((m, id) => m + (bookedMin[id] || 0), 0), occIds.reduce((m, id) => m + availOf(id), 0));
 
   // ── Clientes nuevos / recurrentes ──
@@ -118,7 +133,9 @@ export async function computeDashboard(sdb, shop, { from, to, staffId, today }) 
     byWd[weekday(date)].revenue += v;
     if (staff_id) S(staff_id).revenue += v;
   };
-  for (const p of curPays) { addRev(p.date, p.staff_id, num(p.amount)); by_method[METHODS.includes(p.method) ? p.method : 'other'] += num(p.amount); }
+  const mKey = (p) => (METHODS.includes(p.method) ? p.method : 'other');
+  for (const p of curPays) { addRev(p.date, p.staff_id, num(p.amount)); by_method[mKey(p)] += num(p.amount); }
+  for (const p of curRefunds) { addRev(refundDate(p, tz), p.staff_id, -num(p.amount)); by_method[mKey(p)] -= num(p.amount); }
   for (const a of curUnpaid) addRev(a.date, a.staff_id, num(a.total));
 
   const names = Object.fromEntries(staff.map((s) => [s.id, s]));
@@ -162,7 +179,7 @@ export async function computeDashboard(sdb, shop, { from, to, staffId, today }) 
       revenue, revenue_prev, appointments: live.length, appointments_prev: prev.filter((a) => a.status !== 'cancelled').length,
       completed, cancelled: by_status.cancelled, no_show,
       avg_ticket: tickets ? money(revenue / tickets) : 0,
-      tips: money(curPays.reduce((m, p) => m + num(p.tip), 0)),
+      tips: money(sumOf(curPays, (p) => p.tip) - sumOf(curRefunds, (p) => p.tip)),
       new_clients: curClients.length - returning_clients, returning_clients, occupancy_pct,
       cancel_rate: pct(by_status.cancelled, cur.length), no_show_rate: pct(no_show, completed + no_show)
     },
@@ -234,11 +251,13 @@ async function exportPayments(ctx, r) {
   return out;
 }
 
+// r = null → todas las fichas con estadísticas de todo el historial (la lista de clientes no depende de un periodo).
 async function exportClients(ctx, r) {
+  const range = r ? { date: { gte: r.from, lte: r.to } } : {};
   const [clients, appts, pays] = await Promise.all([
     ctx.sdb.find('clients', { deleted_at: null }, { order: ['name asc', 'id asc'] }),
-    ctx.sdb.find('appointments', { date: { gte: r.from, lte: r.to }, status: { ne: 'cancelled' } }),
-    ctx.sdb.find('payments', { date: { gte: r.from, lte: r.to }, status: 'paid' })
+    ctx.sdb.find('appointments', Object.assign({ status: { ne: 'cancelled' } }, range)),
+    ctx.sdb.find('payments', Object.assign({ status: 'paid' }, range))
   ]);
   const st = {};
   const S = (id) => st[id] || (st[id] = { appts: 0, completed: 0, paid: 0, last: '' });
@@ -250,7 +269,8 @@ async function exportClients(ctx, r) {
   }
   for (const p of pays) if (p.client_id) S(p.client_id).paid += num(p.amount);
   const SRC = { online: 'En línea', manual: 'Panel', walkin: 'Sin cita', import: 'Importado' };
-  const out = [['Nombre', 'Teléfono', 'Correo', 'Cumpleaños', 'Etiquetas', 'Origen', 'Acepta promociones', 'Fecha de alta', 'Citas en el periodo', 'Atendidas en el periodo', 'Pagado en el periodo', 'Última visita en el periodo', 'Notas']];
+  const per = r ? ' en el periodo' : '';
+  const out = [['Nombre', 'Teléfono', 'Correo', 'Cumpleaños', 'Etiquetas', 'Origen', 'Acepta promociones', 'Fecha de alta', 'Citas' + per, 'Atendidas' + per, 'Pagado' + per, 'Última visita' + per, 'Notas']];
   for (const c of clients) {
     const x = st[c.id] || { appts: 0, completed: 0, paid: 0, last: '' };
     const alta = localDate(ctx.shop.timezone, c.created_at);
@@ -261,7 +281,7 @@ async function exportClients(ctx, r) {
 }
 
 async function exportCommissions(ctx, r) {
-  const { items, totals } = await computeCommissions(ctx.sdb, { from: r.from, to: r.to });
+  const { items, totals } = await computeCommissions(ctx.sdb, { from: r.from, to: r.to, tz: ctx.shop.timezone });
   const out = [['Barbero', '% comisión', 'Servicios atendidos', 'Ventas', 'Comisión', 'Propinas', 'Pagado', 'Saldo']];
   for (const x of items) out.push([x.staff_name, x.commission_pct, x.services_count, x.revenue, x.commission, x.tips, x.payouts, x.balance]);
   out.push(['Total', '', totals.services_count, totals.revenue, totals.commission, totals.tips, totals.payouts, totals.balance]);
@@ -275,12 +295,14 @@ async function exportCsv(ctx) {
   const errs = {};
   const type = q.type ? String(q.type) : '';
   if (!EXPORTERS[type]) errs.type = 'Elige qué exportar: citas, cobros, clientes o comisiones.';
-  const r = parseRange(errs, q);
+  // type=clients sin from ni to → todo el historial; los demás tipos (y clients con una sola fecha) exigen rango.
+  const all = type === 'clients' && !q.from && !q.to;
+  const r = all ? null : parseRange(errs, q);
   failIf(errs);
   const rows = await EXPORTERS[type](ctx, r);
   return {
     __raw: true, body: '﻿' + toCSV(rows.map((row) => row.map(safe))), contentType: 'text/csv; charset=utf-8',
-    filename: slugify(ctx.shop.slug) + '-' + type + '-' + r.from + '_' + r.to + '.csv'
+    filename: slugify(ctx.shop.slug) + '-' + type + '-' + (r ? r.from + '_' + r.to : ctx.now().date) + '.csv'
   };
 }
 

@@ -284,3 +284,119 @@ test('POST /api/staff/:id/account: crear, no resetear cuentas ajenas, quitar y p
   // Barbero no tiene acceso a esta ruta.
   assert.equal((await f.call('POST', '/api/staff/st_barberA/account', as('barberA', { body: { email: 'z@t.mx', password: 'secreto123' } }))).status, 403);
 });
+
+// ── Regresiones de la revisión de seguridad ──
+import { hashSecret, PIN_ITERATIONS } from '../core/crypto.js';
+
+const iterOf = (hash) => Number(String(hash).split('$')[1]);
+
+test('PIN propio (barbero): cada intento cuenta, choque o no, y el choque no dice de quién es (no sirve para adivinar el del dueño)', async () => {
+  const f = await setup();
+  await f.db.update('staff', { id: 'st_ownerA' }, { pin_hash: await hashSecret('0007', 1000) });
+  // Un choque con el PIN del dueño: 409 genérico (no menciona a otra persona).
+  const hit = await f.call('PATCH', '/api/staff/st_barberA', as('barberA', { body: { pin: '0007' } }));
+  assert.equal(hit.status, 409, hit.body);
+  assert.ok(hit.error.fields.pin);
+  assert.doesNotMatch(hit.error.message, /otra persona|dueñ/i);
+  // Barrido 0000, 0001…: los intentos que NO chocan también cuentan → a los 5 del día, 429.
+  const tries = [];
+  for (let i = 0; i < 10; i++) tries.push((await f.call('PATCH', '/api/staff/st_barberA', as('barberA', { body: { pin: String(i).padStart(4, '0') } }))).status);
+  assert.deepEqual(tries, [200, 200, 200, 200, 429, 429, 429, 429, 429, 429]);
+  const last = await f.call('PATCH', '/api/staff/st_barberA', as('barberA', { body: { pin: '0007' } }));
+  assert.equal(last.status, 429);
+  assert.match(last.error.message, /Intenta de nuevo en \d+ h/);
+  // El resto del perfil se sigue pudiendo editar.
+  assert.equal((await f.call('PATCH', '/api/staff/st_barberA', as('barberA', { body: { bio: 'Fades' } }))).status, 200);
+  // El dueño no se ve afectado al dar de alta a su equipo con PIN.
+  for (let i = 0; i < 8; i++) {
+    const r = await f.call('POST', '/api/staff', as('ownerA', { body: { name: 'Nuevo ' + i, pin: String(5000 + i) } }));
+    assert.equal(r.status, 200, r.body);
+  }
+});
+
+test('PIN de Equipo se guarda con PIN_ITERATIONS (alta, cambio del dueño y cambio propio)', async () => {
+  const f = await setup();
+  const c = await f.call('POST', '/api/staff', as('ownerA', { body: { name: 'Nuevo Barbero', pin: '4567' } }));
+  assert.equal(c.status, 200, c.body);
+  assert.equal(iterOf((await f.db.findOne('staff', { id: c.data.id })).pin_hash), PIN_ITERATIONS);
+  assert.equal((await f.call('PATCH', '/api/staff/st_barberA2', as('ownerA', { body: { pin: '7654' } }))).status, 200);
+  assert.equal(iterOf((await f.db.findOne('staff', { id: 'st_barberA2' })).pin_hash), PIN_ITERATIONS);
+  assert.equal((await f.call('PATCH', '/api/staff/st_barberA', as('barberA', { body: { pin: '8765' } }))).status, 200);
+  const row = await f.db.findOne('staff', { id: 'st_barberA' });
+  assert.equal(iterOf(row.pin_hash), PIN_ITERATIONS);
+  assert.ok(await verifySecret('8765', row.pin_hash));
+  assert.equal((await pinLogin(f, '8765')).status, 200);
+});
+
+test('alta con un correo que ya tiene cuenta: se vincula SIN tocar su contraseña y la respuesta lo avisa', async () => {
+  const f = await setup();
+  // Alguien ya se registró con ese correo (con SU contraseña).
+  const reg = await f.call('POST', '/api/auth/register', { ip: '7.7.7.7', body: { name: 'Luis', email: 'luis@gmail.com', password: 'delatacante1' } });
+  assert.equal(reg.status, 200, reg.body);
+  const before = (await f.db.findOne('users', { email: 'luis@gmail.com' })).password_hash;
+  const r = await f.call('POST', '/api/staff', as('ownerA', { body: { name: 'Luis', email: 'luis@gmail.com', password: 'delDueno123' } }));
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.account, 'linked');
+  assert.equal(r.data.password_ignored, true);
+  assert.match(r.data.notice, /ya tenía una cuenta/);
+  assert.match(r.data.notice, /no se usó/);
+  assert.equal((await f.db.findOne('users', { email: 'luis@gmail.com' })).password_hash, before, 'nunca se cambia la contraseña de otra persona');
+  assert.equal((await f.call('POST', '/api/auth/login', { body: { email: 'luis@gmail.com', password: 'delDueno123' } })).status, 401);
+  // El titular de esa cuenta ve el aviso en su panel.
+  const nts = await scopedDb(f.db, 'shop_a').find('notifications', { staff_id: r.data.id });
+  assert.equal(nts.length, 1);
+  assert.equal(nts[0].data.kind, 'staff_linked');
+  // Cuenta nueva: sin aviso.
+  const c = await f.call('POST', '/api/staff', as('ownerA', { body: { name: 'Mario', email: 'mario@t.mx', password: 'navaja2024' } }));
+  assert.equal(c.data.account, 'created');
+  assert.equal(c.data.notice, undefined);
+  // PATCH y /account también avisan al vincular (sin contraseña escrita → password_ignored false).
+  const p = await f.call('PATCH', '/api/staff/st_barberA2', as('ownerA', { body: { email: 'client.a@t.mx' } }));
+  assert.equal(p.status, 200, p.body);
+  assert.equal(p.data.account, 'linked');
+  assert.equal(p.data.password_ignored, false);
+  assert.match(p.data.notice, /SU contraseña/);
+  await f.call('POST', '/api/staff/st_barberA2/account', as('ownerA', { body: { remove: true } }));
+  const a = await f.call('POST', '/api/staff/st_barberA2/account', as('ownerA', { body: { email: 'owner.b@t.mx', password: 'otracosa123' } }));
+  assert.equal(a.status, 200, a.body);
+  assert.equal(a.data.account, 'linked');
+  assert.equal(a.data.password_ignored, true);
+  assert.equal((await f.call('POST', '/api/auth/login', { body: { email: 'owner.b@t.mx', password: PW } })).status, 200);
+});
+
+test('GET /api/staff como barbero: misma forma para todos; de sus compañeros email "", phone y commission_pct en null', async () => {
+  const f = await setup();
+  await f.db.update('staff', { id: 'st_barberA2' }, { phone: '3119998888' });
+  const own = await f.call('GET', '/api/staff', as('ownerA'));
+  const b = await f.call('GET', '/api/staff', as('barberA'));
+  assert.equal(b.status, 200, b.body);
+  const keys = Object.keys(own.data[0]).sort();
+  for (const v of b.data) assert.deepEqual(Object.keys(v).sort(), keys, 'mismas claves que la vista Staff');
+  for (const v of b.data.filter((x) => x.id !== 'st_barberA')) {
+    assert.deepEqual([v.email, v.phone, v.commission_pct], ['', null, null], v.id);
+  }
+  const me = b.data.find((x) => x.id === 'st_barberA');
+  assert.equal(me.commission_pct, 50);
+});
+
+test('cambiar o quitar un PIN cierra las sesiones PIN abiertas de esa persona (salvo la propia actual)', async () => {
+  const f = await setup();
+  const s1 = await pinLogin(f, '2222');
+  assert.equal(s1.status, 200);
+  // Quitar el PIN (dueño) → la sesión PIN muere.
+  assert.equal((await f.call('PATCH', '/api/staff/st_barberA', as('ownerA', { body: { pin: null } }))).status, 200);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: s1.data.token })).status, 401);
+  assert.equal((await f.call('GET', '/api/staff', { token: s1.data.token, shop: 'shop_a' })).status, 401);
+  // PIN nuevo; dos dispositivos con PIN; el barbero cambia su PIN desde uno: el otro se cierra, el suyo sigue.
+  assert.equal((await f.call('PATCH', '/api/staff/st_barberA', as('ownerA', { body: { pin: '3333' } }))).status, 200);
+  const d1 = await pinLogin(f, '3333');
+  const d2 = await pinLogin(f, '3333');
+  const ch = await f.call('PATCH', '/api/staff/st_barberA', { token: d1.data.token, shop: 'shop_a', body: { pin: '4444' } });
+  assert.equal(ch.status, 200, ch.body);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: d1.data.token })).status, 200);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: d2.data.token })).status, 401);
+  // El dueño cambia el PIN → la sesión que quedaba también se cierra.
+  assert.equal((await f.call('PATCH', '/api/staff/st_barberA', as('ownerA', { body: { pin: '5555' } }))).status, 200);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: d1.data.token })).status, 401);
+  assert.equal(await f.db.count('sessions', { kind: 'pin', staff_id: 'st_barberA' }), 0);
+});

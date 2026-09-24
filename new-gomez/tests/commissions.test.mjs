@@ -12,6 +12,7 @@ const Q = '?from=' + FROM + '&to=' + TO;
 async function setup() {
   const f = await makeFixture();
   for (const k of ['ownerA', 'barberA', 'ownerB', 'clientA', 'super']) f.tokens[k] = await createSession(f.db, { kind: 'password', user_id: 'u_' + k });
+  await f.db.update('staff', { id: 'st_barberA2' }, { pin_hash: 'pbkdf2$1000$prueba$prueba' }); // una sesión PIN exige PIN configurado
   f.tokens.barberA2 = await createSession(f.db, { kind: 'pin', staff_id: 'st_barberA2', shop_id: 'shop_a' });
   f.today = nowInTz('America/Mexico_City').date;
   const appt = (staff_id, date, status, shop_id) => f.db.insert('appointments', {
@@ -58,7 +59,8 @@ test('comisiones: conteo, ventas, comisión, propinas, pagos y saldo exactos', a
   assert.deepEqual(pick(by.st_barberA2), [40, 1, 300, 120, 30, 0, 150]);
   assert.deepEqual(pick(by.st_ownerA), [0, 0, 0, 0, 0, 0, 0]);
   assert.equal(by.st_barberA.staff_name, 'Barbero A');
-  assert.deepEqual(r.data.totals, { services_count: 3, revenue: 620, commission: 280, tips: 50, payouts: 100, balance: 230 });
+  assert.deepEqual(r.data.totals, { services_count: 3, revenue: 620, commission: 280, tips: 50, refunds: 999, payouts: 100, balance: 230 });
+  assert.equal(by.st_barberA.refunds, 999, 'cobro y reembolso en el mismo periodo: neto cero, pero se informa');
   assert.deepEqual(r.data.range, { from: FROM, to: TO, days: 7 });
   // Filtro por barbero (dueño).
   const one = await f.call('GET', '/api/commissions' + Q + '&staff_id=st_barberA2', { as: 'ownerA', ...A });
@@ -175,4 +177,29 @@ test('aislamiento: la barbería B no ve ni paga comisiones de A', async () => {
   r = await f.call('POST', '/api/commissions/payouts', { as: 'ownerB', ...B, body: { staff_id: 'st_barberA', period_from: FROM, period_to: TO, amount: 10 } });
   assert.equal(r.status, 400);
   assert.equal(await f.db.count('commission_payouts', { shop_id: 'shop_b' }), 0);
+});
+
+// ── Regresiones de la revisión ──
+test('reembolso: resta en el periodo en que se reembolsa (refunded_at), sin cambiar un periodo ya liquidado', async () => {
+  const f = await setup();
+  const D = f.today;
+  const sale = addDays(D, -10);
+  await f.db.insert('payments', { id: 'pold', shop_id: 'shop_a', staff_id: 'st_barberA', amount: 400, tip: 40, method: 'card', status: 'paid', created_at: nowIso(), date: sale });
+  const P1 = '?from=' + addDays(D, -14) + '&to=' + addDays(D, -6);
+  const P2 = '?from=' + addDays(D, -5) + '&to=' + D;
+  const get = async (q) => (await f.call('GET', '/api/commissions' + q + '&staff_id=st_barberA', { as: 'ownerA', ...A })).data.items[0];
+  let p1 = await get(P1);
+  assert.deepEqual([p1.revenue, p1.commission, p1.tips, p1.balance], [400, 200, 40, 240]);
+  const po = await f.call('POST', '/api/commissions/payouts', { as: 'ownerA', ...A, body: { staff_id: 'st_barberA', period_from: addDays(D, -14), period_to: addDays(D, -6), amount: 240 } });
+  assert.equal(po.status, 200, po.body);
+  assert.equal((await get(P1)).balance, 0, 'periodo liquidado');
+  const rf = await f.call('POST', '/api/payments/pold/refund', { as: 'ownerA', ...A, body: { reason: 'Queja' } });
+  assert.equal(rf.status, 200, rf.body);
+  p1 = await get(P1);
+  assert.deepEqual([p1.revenue, p1.commission, p1.tips, p1.payouts, p1.balance, p1.refunds], [400, 200, 40, 240, 0, 0], 'el periodo cerrado no cambia');
+  const p2 = await get(P2);
+  assert.deepEqual([p2.revenue, p2.commission, p2.tips, p2.payouts, p2.balance, p2.refunds], [-400, -200, -40, 0, -240, 400], 'se descuenta en el periodo del reembolso');
+  // Todo el rango: neto cero.
+  const all = await get('?from=' + addDays(D, -14) + '&to=' + D);
+  assert.deepEqual([all.revenue, all.commission, all.tips, all.balance], [0, 0, 0, -240]);
 });

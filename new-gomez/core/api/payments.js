@@ -1,7 +1,7 @@
 // Cobros: pagos de citas y ventas sueltas (productos, servicios sin cita), reembolsos y totales.
 // Barbero (payments.read.own): solo ve sus cobros y solo cobra sus propias citas.
 // También exporta utilidades que reutilizan cash.js, commissions.js y reports.js (rangos, montos, alcance).
-import { HttpError, forbidden, notFound, conflict, newId, nowIso, money, int, clamp, diffDays } from '../util.js';
+import { HttpError, forbidden, notFound, conflict, newId, nowIso, money, int, clamp, diffDays, addDays, nowInTz } from '../util.js';
 import { shopSettings } from '../domain/settings.js';
 import { logEvent } from '../domain/events.js';
 import { failIf, textField, cleanText, canTransition, hasStarted, changeStatus } from '../domain/appointments.js';
@@ -89,6 +89,22 @@ export function shopMethods(shop) {
   const list = (shopSettings(shop).payments || {}).methods;
   const out = (Array.isArray(list) ? list : []).filter((m) => METHODS.includes(m));
   return out.length ? out : ['cash'];
+}
+
+// ── Reembolsos por periodo ──
+// Regla (docs/API.md → "Reembolsos"): un cobro cuenta como ingreso en su fecha (`date`) aunque después se
+// reembolse; el reembolso resta monto y propina en la fecha LOCAL en que se hizo (refunded_at en la zona de la
+// barbería). Así un periodo ya liquidado no cambia y lo pagado de más se descuenta en el periodo del reembolso.
+// Sin refunded_at (datos antiguos) se toma la fecha del cobro.
+export function refundDate(p, tz) { return p.refunded_at ? nowInTz(tz, p.refunded_at).date : p.date; }
+// Cobros reembolsados cuya fecha de reembolso cae en [from, to]. where: filtro extra (p. ej. staff_id).
+export async function refundsIn(sdb, tz, from, to, where) {
+  const w = Object.assign({ status: 'refunded' }, where || {});
+  // refunded_at es ISO (UTC): margen de un día por lado para cubrir cualquier zona horaria.
+  const rows = await sdb.find('payments', Object.assign({}, w, {
+    $or: [{ refunded_at: { gte: addDays(from, -1), lt: addDays(to, 2) } }, { refunded_at: null, date: { gte: from, lte: to } }]
+  }));
+  return rows.filter((p) => { const d = refundDate(p, tz); return d >= from && d <= to; });
 }
 
 // Caja abierta de la barbería (o null).

@@ -3,7 +3,7 @@
 import { bad, notFound, conflict, nowInTz, int, clamp, addDays, omit } from '../util.js';
 import { scopedDb } from '../db.js';
 import { sha256Hex, newToken } from '../crypto.js';
-import { rateCheck, rateFail } from '../session.js';
+import { rateHit, rateRelease } from '../session.js';
 import { shopSettings } from '../domain/settings.js';
 import { publicShopView, publicApptView } from '../domain/views.js';
 import { findOrCreateClient } from '../domain/clients.js';
@@ -11,9 +11,11 @@ import { sendBookingEmail } from '../domain/email.js';
 import { loadAgenda, candidates, offersAll, computeSlots, computeDays } from '../domain/slots.js';
 import {
   ACTIVE, failIf, parseIds, parseStart, parseDateField, parseContact, textField, loadServices, createAppointment,
-  changeStatus, reschedule, notifyNew, managePolicy, assertClientCan
+  changeStatus, reschedule, notifyNew, managePolicy, assertClientCan, clientReschedules
 } from '../domain/appointments.js';
 
+// Reservas por IP y hora. No aplica en la demo (MODE 'demo'): ahí todas las peticiones comparten la IP 'demo'
+// y el límite bloquearía una presentación en vivo.
 export const BOOK_LIMIT = { max: 15, windowMin: 60, lockMin: 60 };
 
 // ── Barbería ──
@@ -123,11 +125,17 @@ async function emailSafe(ctx, shop, appt, staffName) {
   } catch (e) { /* el correo nunca rompe la reserva */ }
 }
 
+// Cuenta cada reserva lograda desde una IP de forma atómica: se aparta el cupo antes de reservar y se
+// libera si la reserva falla (validación, horario ocupado…), así los reintentos legítimos no castigan.
 async function book(ctx) {
+  const limited = ctx.env.MODE !== 'demo';
+  const receipt = limited ? await rateHit(ctx.db, 'book:' + (ctx.req.ip || 'unknown'), BOOK_LIMIT) : null;
+  try { return await bookInner(ctx); }
+  catch (e) { if (receipt) await rateRelease(ctx.db, receipt); throw e; }
+}
+async function bookInner(ctx) {
   const shop = await shopBySlug(ctx.db, ctx.params.slug);
   const st = shopSettings(shop);
-  const rateKey = 'book:' + (ctx.req.ip || 'unknown');
-  await rateCheck(ctx.db, rateKey, BOOK_LIMIT);
   if (!st.booking.online_enabled) throw bad('Por ahora esta barbería no recibe reservas en línea. Comunícate por teléfono o WhatsApp.');
   const c = scope(ctx, shop, { id: null, name: 'Cliente (en línea)', kind: 'public' });
   const b = ctx.req.body || {};
@@ -159,7 +167,7 @@ async function book(ctx) {
   const isTeam = ctx.user && (ctx.user.is_superadmin || ctx.contexts.some((x) => x.shop_id === shop.id && x.role !== 'client'));
   const user_id = ctx.user && !isTeam ? ctx.user.id : null;
   const getClient = async () => {
-    const { client, created } = await findOrCreateClient(c.sdb, { name: contact.name, phone: contact.phone, email: contact.email, user_id, source: 'online' });
+    const { client, created } = await findOrCreateClient(c.sdb, { name: contact.name, phone: contact.phone, email: contact.email, user_id, user_email: user_id ? ctx.user.email : null, source: 'online' });
     let first_visit = true;
     if (!created) {
       const prev = await c.sdb.count('appointments', { client_id: client.id, status: 'completed' });
@@ -174,7 +182,6 @@ async function book(ctx) {
     client_note: note || null, status: st.booking.auto_confirm ? 'confirmed' : 'pending', source: 'online', created_by: 'online',
     mode: 'public', manage_token_hash: await sha256Hex(token)
   });
-  await rateFail(ctx.db, rateKey, BOOK_LIMIT); // cuenta cada reserva hecha desde esta IP
   const staff = await c.sdb.findOne('staff', { id: appt.staff_id });
   await notifyNew(c, appt, { online: true });
   await emailSafe(ctx, shop, appt, staff ? staff.name : '');
@@ -194,9 +201,10 @@ async function byToken(ctx) {
   const c = scope(ctx, shop, { id: a.client_id, name: a.client_name || 'Cliente', kind: 'client' });
   return { a, shop, c };
 }
+const movesOf = async (c, a) => (await clientReschedules(c.sdb, [a.id]))[a.id];
 async function tokenView(c, a) {
   const staff = await c.sdb.findOne('staff', { id: a.staff_id });
-  return Object.assign({ appointment: publicApptView(a, c.shop, staff ? staff.name : '') }, managePolicy(a, c.shop, c.now));
+  return Object.assign({ appointment: publicApptView(a, c.shop, staff ? staff.name : '') }, managePolicy(a, c.shop, c.now, await movesOf(c, a)));
 }
 
 async function manageGet(ctx) { const { a, c } = await byToken(ctx); return tokenView(c, a); }
@@ -223,7 +231,7 @@ async function manageReschedule(ctx) {
   const staff_id = b.staff_id == null || b.staff_id === '' ? null : String(b.staff_id);
   if (staff_id === 'any' && !shopSettings(shop).booking.allow_any_staff) errs.staff_id = 'Elige un barbero.';
   failIf(errs);
-  assertClientCan(a, shop, c.now, 'reschedule');
+  assertClientCan(a, shop, c.now, 'reschedule', await movesOf(c, a));
   const out = await reschedule(c, a, { date, start_min: start, staff_id, mode: 'public', by: 'client' });
   return tokenView(c, out);
 }

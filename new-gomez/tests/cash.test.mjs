@@ -97,7 +97,7 @@ test('flujo completo: cobros + movimientos → resumen exacto → corte con falt
   assert.equal(r.status, 200);
   assert.deepEqual(r.data.summary, {
     opening_float: 500, cash_sales: 200, cash_tips: 20, income: 100, expense: 50, withdrawal: 100, expected_cash: 670,
-    card_sales: 300, transfer_sales: 150, other_sales: 0, card_tips: 10, transfer_tips: 0, payments_count: 3
+    card_sales: 300, transfer_sales: 150, other_sales: 0, card_tips: 10, transfer_tips: 0, other_tips: 0, tips: 30, payments_count: 3
   });
   assert.equal(r.data.movements.length, 3);
   assert.equal(r.data.payments.length, 3);
@@ -215,4 +215,26 @@ test('permisos: solo el dueño (y superadmin) opera la caja; aislamiento entre b
   assert.equal((await f.db.findOne('cash_sessions', { shop_id: 'shop_a' })).status, 'open');
   r = await f.cash('current');
   assert.equal(r.data.summary.expected_cash, 350);
+});
+
+// ── Regresiones de la revisión ──
+test('resumen: propinas de la forma de pago "otro" (other_tips) y total de propinas', async () => {
+  const s = summarize({ opening_float: 0 }, [], [
+    { method: 'other', amount: 200, tip: 50, status: 'paid' }, { method: 'card', amount: 100, tip: 10, status: 'paid' },
+    { method: 'cash', amount: 100, tip: 5, status: 'paid' }, { method: 'transfer', amount: 100, tip: 2, status: 'paid' }
+  ]);
+  assert.equal(s.other_sales, 200);
+  assert.equal(s.other_tips, 50);
+  assert.equal(s.tips, 67);
+  assert.equal(s.expected_cash, 105, 'solo el efectivo entra al esperado');
+  const f = await setup();
+  const shop = await f.db.findOne('shops', { id: 'shop_a' });
+  await f.db.update('shops', { id: 'shop_a' }, { settings: Object.assign({}, shop.settings, { payments: { methods: ['cash', 'card', 'transfer', 'other'], tips: true } }) });
+  await f.cash('open', { opening_float: 0 });
+  assert.equal((await f.pay({ amount: 200, tip: 50, method: 'other' })).status, 200);
+  assert.equal((await f.pay({ amount: 100, tip: 10, method: 'card' })).status, 200);
+  const r = await f.cash('current');
+  assert.equal(r.data.summary.other_tips, 50);
+  assert.equal(r.data.summary.card_tips, 10);
+  assert.equal(r.data.summary.tips, 60);
 });

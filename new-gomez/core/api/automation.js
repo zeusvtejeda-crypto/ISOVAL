@@ -116,7 +116,13 @@ async function runReminders(ctx) {
     autoShops++;
     if (!appts.length) continue;
     const ids = appts.map((a) => a.id);
-    const prior = new Set((await findIn(sdb, 'messages', 'appointment_id', ids, { kind: 'reminder' })).map((m) => m.appointment_id));
+    // Un recordatorio previo solo cuenta si es posterior a la última reagenda (la cita movida necesita uno nuevo).
+    const lastMove = {};
+    for (const ev of await findIn(sdb, 'appointment_events', 'appointment_id', ids, { type: 'rescheduled' })) {
+      if (!lastMove[ev.appointment_id] || ev.created_at > lastMove[ev.appointment_id]) lastMove[ev.appointment_id] = ev.created_at;
+    }
+    const prior = new Set((await findIn(sdb, 'messages', 'appointment_id', ids, { kind: 'reminder' }))
+      .filter((m) => !lastMove[m.appointment_id] || m.created_at >= lastMove[m.appointment_id]).map((m) => m.appointment_id));
     const clients = Object.fromEntries((await findIn(sdb, 'clients', 'id', appts.map((a) => a.client_id))).map((c) => [c.id, c]));
     const staff = Object.fromEntries((await sdb.find('staff', {})).map((s) => [s.id, s.name]));
     for (const a of appts) {

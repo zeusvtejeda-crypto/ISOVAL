@@ -9,8 +9,14 @@
 // - Idempotente: una cita cuyo folio ya existe en la barbería se omite (se puede volver a correr).
 // - Barberos por nombre (sin acentos ni mayúsculas); si no existe se crea como barbero sin PIN (el superadmin
 //   viejo se ignora). 'any' → primer barbero reservable.
-// - Clientes: misma regla que domain/clients.js → findOrCreateClient (ficha por teléfono dentro de la barbería,
-//   source 'import'), pero en LOTE: una consulta para leer las fichas y insertMany para crear las nuevas. Con
+//   · Si viene en la lista `staff` del respaldo: se respetan `activo` y `barbero` (reservable en línea).
+//   · Si SOLO aparece en citas (no está en la lista: típicamente un exempleado) se crea como historial:
+//     bookable:false (nunca sale en la reserva en línea) y active:false, salvo que traiga citas próximas
+//     (hoy o después, registradas/confirmadas): entonces active:true para que esas citas se vean y se
+//     atiendan en la agenda, pero sigue sin reservarse en línea hasta que el dueño lo active en Equipo.
+// - Clientes: ficha por teléfono dentro de la barbería como domain/clients.js → findOrCreateClient (source
+//   'import'); sin teléfono, una ficha por nombre dentro de la importación (historial por persona; el panel,
+//   en cambio, usa la ficha genérica 'Cliente de paso'). En LOTE: una consulta para leer las fichas y insertMany para crear las nuevas. Con
 //   5000 citas, una llamada por cita rebasaría el límite de consultas por petición de Cloudflare D1.
 // - Las citas se guardan tal cual (historial): no se validan contra horarios ni choques.
 import { bad, newId, nowIso, money, normPhone, isPhone, isDateKey, parseDateKey, dateKeyUTC, str } from '../util.js';
@@ -57,6 +63,7 @@ function staffResolver(ctx, existing) {
   const colors = existing.map((s) => s.color);
   let sort = existing.reduce((m, s) => Math.max(m, Number(s.sort) || 0), 0);
   let created = 0;
+  const historyOnly = new Set(); // ids creados solo por aparecer en citas (sin ficha en la lista del respaldo)
   const match = (name) => {
     const k = nameKey(name);
     if (!k) return null;
@@ -74,18 +81,19 @@ function staffResolver(ctx, existing) {
     colors.push(color);
     const row = await ctx.sdb.insert('staff', {
       id: newId('st'), user_id: null, name: clean, role: 'barber',
-      bookable: legacy ? legacy.barbero !== false : true, active: legacy ? legacy.activo !== false : true,
+      bookable: legacy ? legacy.barbero !== false : false, active: legacy ? legacy.activo !== false : false,
       color, avatar_url: legacy ? imgOf(legacy.img) : null, bio: null, phone: null, commission_pct: 50,
       pin_hash: null, sort: ++sort, created_at: nowIso(), updated_at: null
     });
     add(row);
     list.push(row);
+    if (!legacy) historyOnly.add(row.id);
     created++;
     return row;
   };
   // 'any' → primer barbero reservable (activo); si no hay, el primero activo.
   const fallback = () => list.find((s) => s.active && s.bookable) || list.find((s) => s.active) || list[0] || null;
-  return { match, ensure, fallback, created: () => created };
+  return { match, ensure, fallback, created: () => created, historyOnly };
 }
 
 // ── Clientes (semántica de findOrCreateClient, en lote) ──
@@ -239,6 +247,10 @@ async function importLegacy(ctx) {
   if (cl.fresh.length) await ctx.sdb.insertMany('clients', cl.fresh);
   for (const [id, name] of cl.renamed) await ctx.sdb.update('clients', { id }, { name, updated_at: now });
   if (rows.length) await ctx.sdb.insertMany('appointments', rows);
+  // Barberos creados solo por citas viejas que sí tienen citas próximas: activos (para atenderlas), no reservables.
+  const today = ctx.now().date;
+  const upcoming = [...new Set(rows.filter((a) => staff.historyOnly.has(a.staff_id) && a.date >= today && a.status === 'confirmed').map((a) => a.staff_id))];
+  for (let i = 0; i < upcoming.length; i += 80) await ctx.sdb.update('staff', { id: { in: upcoming.slice(i, i + 80) } }, { active: true, updated_at: now });
   return { imported: rows.length, skipped, staff_created: staff.created(), clients_created: cl.fresh.length, errors };
 }
 

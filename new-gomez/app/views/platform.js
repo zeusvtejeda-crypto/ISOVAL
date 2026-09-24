@@ -26,14 +26,15 @@ function genPassword() {
 const CSS = `
 .pf-iso{margin-bottom:18px}
 .pf-kpis .kpi .value{font-size:30px}
+.pf-kpis .kpi{align-content:start}
 .pf-grid{display:grid;gap:16px;margin-top:16px}
-@media (min-width:1180px){.pf-grid{grid-template-columns:minmax(0,1fr) 320px;align-items:start}.pf-top{position:sticky;top:calc(var(--topbar-h) + 12px)}}
+@media (min-width:1600px){.pf-grid{grid-template-columns:minmax(0,1fr) 320px;align-items:start}.pf-top{position:sticky;top:calc(var(--topbar-h) + 12px)}}
 .pf-tb{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .pf-tb .search{flex:1 1 240px;min-width:0}
 .pf-tb .chips{flex:none}
 .pf-count{font-size:12.5px;color:var(--text-3);margin:0 0 8px 2px}
 .pf-list{overflow:hidden}
-.pf-head,.pf-row{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.6fr) 92px 92px 110px 124px;gap:14px;align-items:center;padding:12px 16px}
+.pf-head,.pf-row{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.5fr) 76px 84px 104px 118px;gap:14px;align-items:center;padding:12px 16px}
 .pf-head{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);background:var(--surface-2);border-bottom:1px solid var(--border);padding-top:10px;padding-bottom:10px}
 .pf-head .r,.pf-row .r{text-align:right}
 .pf-row{border-bottom:1px solid var(--border);transition:background .12s;min-height:72px}
@@ -47,7 +48,9 @@ const CSS = `
 .pf-name span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .pf-sub{font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pf-sub .mono{font-size:12px}
-.pf-badges{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+.pf-sub .ic{display:inline-block;vertical-align:-2px;width:13px;height:13px}
+.pf-badges{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;align-items:center}
+.pf-since{font-size:11.5px;color:var(--text-3);white-space:nowrap}
 .pf-owner{min-width:0;font-size:13px}
 .pf-owner b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pf-owner span{display:block;color:var(--text-2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -55,7 +58,7 @@ const CSS = `
 .pf-m small{display:block;font-size:11.5px;color:var(--text-3);font-weight:500}
 .pf-acts{display:flex;gap:4px;justify-content:flex-end}
 .pf-ml{display:none}
-@media (max-width:1023px){
+@media (max-width:1279px){
   .pf-head{display:none}
   .pf-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px;padding:14px 16px}
   .pf-shop{grid-column:1/-1}
@@ -69,8 +72,15 @@ const CSS = `
   .pf-acts{grid-column:1/-1;justify-content:stretch}
   .pf-acts .btn-enter{flex:1}
 }
+@media (min-width:720px) and (max-width:1279px){
+  .pf-row{grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:12px 18px;padding:16px 18px}
+  .pf-shop{grid-column:1 / 3}
+  .pf-owner{grid-column:3 / -1}
+  .pf-acts{grid-column:4;justify-content:flex-end}
+  .pf-acts .btn-enter{flex:none}
+}
 .pf-owner>.ic{display:none}
-@media (max-width:1023px){.pf-owner>.ic{display:block}}
+@media (max-width:1279px){.pf-owner>.ic{display:block}}
 .pf-top .list-item{padding:10px 16px;min-height:56px}
 .pf-rank{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:12.5px;background:var(--surface-3);color:var(--text-2);flex:none}
 .pf-rank.g{background:var(--brand);color:var(--brand-ink)}
@@ -265,10 +275,10 @@ export default {
       <div class="pf-grid">
         <div style="min-width:0">
           <div class="tabs" role="tablist" aria-label="Secciones">
-            <button type="button" role="tab" data-tab="shops" aria-selected="${String(st.tab === 'shops')}">Barberías</button>
-            <button type="button" role="tab" data-tab="users" aria-selected="${String(st.tab === 'users')}">Usuarios</button>
+            <button type="button" role="tab" id="pfTabShops" aria-controls="pfTab" data-tab="shops" aria-selected="${String(st.tab === 'shops')}">Barberías</button>
+            <button type="button" role="tab" id="pfTabUsers" aria-controls="pfTab" data-tab="users" aria-selected="${String(st.tab === 'users')}">Usuarios</button>
           </div>
-          <div id="pfTab"></div>
+          <div id="pfTab" role="tabpanel" aria-labelledby="${st.tab === 'users' ? 'pfTabUsers' : 'pfTabShops'}"></div>
         </div>
         <aside class="card pf-top" id="pfTop" aria-label="Barberías más activas"><div class="card-body"><div class="skel" style="height:220px"></div></div></aside>
       </div>`);
@@ -300,7 +310,7 @@ export default {
     // ── Pestaña Barberías ──
     function shopsFrame() {
       tabEl.innerHTML = String(html`
-        <div class="pf-tb"><div class="input-group search">${raw(icon('search'))}<input class="input" type="search" id="pfQ" placeholder="Buscar por nombre, enlace, ciudad o correo del dueño" value="${st.q}" aria-label="Buscar barberías" autocomplete="off"/></div>
+        <div class="pf-tb"><div class="input-group search">${raw(icon('search'))}<input class="input" type="search" id="pfQ" placeholder="Buscar barbería, ciudad o dueño" value="${st.q}" aria-label="Buscar barberías" autocomplete="off"/></div>
           <div class="chips" role="group" aria-label="Filtrar por estado">${[['all', 'Todas'], ['active', 'Activas'], ['suspended', 'Suspendidas']].map(([k, l]) => html`<button type="button" class="chip" data-status="${k}" aria-pressed="${String(st.status === k)}">${l}</button>`)}</div></div>
         <p class="pf-count" id="pfCount" aria-live="polite"></p>
         <div class="card pf-list" id="pfList">${raw('<div class="skel-row"><div class="skel" style="width:40px;height:40px;border-radius:12px"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;height:10px"></div></div></div>'.repeat(5))}</div>`);
@@ -312,13 +322,13 @@ export default {
         <div class="pf-shop">${avatar(s.name, { src: s.logo_url || '', color: brand })}
           <div style="min-width:0"><div class="pf-name"><span>${s.name}</span></div>
             <div class="pf-sub"><span class="mono">?b=${s.slug}</span>${s.city ? ' · ' + s.city : ''}${s.domain ? html` · ${raw(icon('globe', 'ic-sm'))} ${s.domain}` : ''}</div>
-            <div class="pf-badges">${statusBadgeShop(s)}${planBadge(s.plan)}<span class="badge plain faint" style="background:none;padding:0 2px">Desde ${dateNum((s.created_at || '').slice(0, 10) || '2026-01-01')}</span></div></div></div>
+            <div class="pf-badges">${statusBadgeShop(s)}${planBadge(s.plan)}${s.created_at ? html`<span class="pf-since">Desde ${dateNum(s.created_at.slice(0, 10))}</span>` : ''}</div></div></div>
         <div class="pf-owner">${raw(icon('crown', 'ic-sm'))}<div>${s.owner_name || s.owner_email ? html`<b>${s.owner_name || 'Dueño'}</b><span>${s.owner_email || 'Sin correo'}</span>` : html`<span class="faint">Sin dueño con cuenta</span>`}</div></div>
         <div class="pf-m r"><span class="pf-ml">Equipo</span>${number(s.staff_count)}<small>${number(s.clients_count)} clientes</small></div>
         <div class="pf-m r"><span class="pf-ml">Citas 30 d</span>${number(s.appointments_30d)}<small>&nbsp;</small></div>
         <div class="pf-m r"><span class="pf-ml">Ingresos 30 d</span>${money(s.revenue_30d)}<small>&nbsp;</small></div>
         <div class="pf-acts"><button type="button" class="btn btn-secondary btn-sm btn-enter" data-enter="${s.id}" aria-label="${'Entrar a ' + s.name}">${raw(icon('door', 'ic-sm'))}Entrar</button>
-          <button type="button" class="btn btn-ghost btn-icon btn-sm" data-more="${s.id}" aria-label="${'Más acciones para ' + s.name}" aria-haspopup="menu">${raw(icon('more'))}</button></div>
+          <button type="button" class="btn btn-ghost btn-icon btn-sm" data-shopmenu="${s.id}" aria-label="${'Más acciones para ' + s.name}" aria-haspopup="menu">${raw(icon('more'))}</button></div>
       </div>`;
     }
     function paintShops() {
@@ -429,6 +439,7 @@ export default {
     function showTab(t, push) {
       st.tab = t;
       el.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+      tabEl.setAttribute('aria-labelledby', t === 'users' ? 'pfTabUsers' : 'pfTabShops');
       if (push) setQuery(t === 'users' ? { tab: 'usuarios' } : {});
       if (t === 'users') { usersFrame(); loadUsers(); } else { shopsFrame(); if (st.shops.length) paintShops(); loadShops(); }
     }
@@ -454,8 +465,8 @@ export default {
         toast.success('Entraste a ' + (s ? s.name : 'la barbería') + ' como superadmin');
       } catch (err) { toast.error(err); }
     }));
-    offs.push(on(el, 'click', '[data-more]', (e, b) => {
-      const s = shopById(b.dataset.more);
+    offs.push(on(el, 'click', '[data-shopmenu]', (e, b) => {
+      const s = shopById(b.dataset.shopmenu);
       if (!s) return;
       menu(b, [
         { label: 'Entrar a la barbería', icon: 'door', onClick: () => { const x = el.querySelector('[data-enter="' + s.id + '"]'); if (x) x.click(); } },

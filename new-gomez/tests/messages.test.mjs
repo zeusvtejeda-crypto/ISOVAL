@@ -350,3 +350,43 @@ test('recordatorios y plantilla propia con variables acentuadas', async () => {
   assert.equal(r.data.items[0].body, 'Recordatorio para Juan en Barbería Alfa: ' + fmtDateEs(f.tomorrow) + ' a las 14:30 con Barbero A. Total $320. Dirección: Av. México 123, Tepic');
   assert.equal(r.data.items[0].appointment.id, a.id);
 });
+
+// ── Regresiones de la revisión ──
+test('vista previa: no rota el token de gestión; al enviar, el marcador {enlace} se vuelve el enlace real', async () => {
+  const f = await setup();
+  f.env.PUBLIC_URL = 'https://gomez.tubarberia.mx';
+  // Reserva en línea: el cliente ya tiene su enlace.
+  const b = await f.call('POST', '/api/public/shops/alfa/appointments', { body: { services: ['sv_corte'], staff_id: 'st_barberA', date: f.day, start_min: 700, name: 'Laura Gómez', phone: '5598765432' } });
+  assert.equal(b.status, 200, b.body);
+  const id = b.data.appointment.id, tk = b.data.manage_token;
+  const hash = (await f.db.findOne('appointments', { id })).manage_token_hash;
+  // El editor abre la vista previa (y cambia de plantilla varias veces) y luego se cancela.
+  for (const kind of ['reminder', 'confirmation', 'reschedule', 'no_show']) {
+    const r = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { preview: true, kind, appointment_id: id } }));
+    assert.equal(r.status, 200, r.body);
+    assert.equal(r.data.preview, true);
+    if (kind !== 'reschedule') assert.ok(r.data.body.includes('{enlace}'), kind + ': marcador en lugar del enlace: ' + r.data.body);
+    assert.ok(!/\?cita=/.test(r.data.body));
+  }
+  assert.equal((await f.db.findOne('appointments', { id })).manage_token_hash, hash, 'la vista previa no toca el token');
+  assert.equal((await f.call('GET', '/api/public/appointments/' + tk)).status, 200, 'el enlace del cliente sigue sirviendo');
+  assert.equal(await f.db.count('messages', {}), 0);
+  // Enviar el texto de la vista previa (editado): el marcador se reemplaza por un enlace de gestión que funciona.
+  const pv = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { preview: true, kind: 'reminder', appointment_id: id } }));
+  const edited = pv.data.body + '\n¡Te esperamos!';
+  const r = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { kind: 'reminder', appointment_id: id, body: edited } }));
+  assert.equal(r.status, 200, r.body);
+  assert.ok(!r.data.body.includes('{enlace}'), r.data.body);
+  assert.ok(r.data.body.endsWith('¡Te esperamos!'));
+  const token = tokenIn(r.data.body);
+  assert.ok(token, r.data.body);
+  assert.ok(r.data.body.includes('https://gomez.tubarberia.mx/?cita=' + token));
+  assert.equal(r.data.message.body, r.data.body);
+  assert.equal(r.data.wa_link, 'https://wa.me/525598765432?text=' + encodeURIComponent(r.data.body));
+  assert.equal((await f.call('GET', '/api/public/appointments/' + token)).status, 200);
+  // Texto libre con {enlace} en un tipo sin enlace de gestión → link de reservas (no toca el token).
+  const h2 = (await f.db.findOne('appointments', { id })).manage_token_hash;
+  const c = await f.call('POST', '/api/messages/prepare', f.A('ownerA', { body: { kind: 'custom', appointment_id: id, body: 'Reserva otra vez: {enlace}' } }));
+  assert.equal(c.data.body, 'Reserva otra vez: https://gomez.tubarberia.mx/?b=alfa');
+  assert.equal((await f.db.findOne('appointments', { id })).manage_token_hash, h2);
+});

@@ -28,9 +28,10 @@ export const MAX_SERVICES = 10;
 export const MAX_CLIENT_RESCHEDULES = 5;
 
 // ── Tiempo ──
-// ¿Ya empezó (o empieza en ≤ 60 min)? Requisito para marcar atendida / no asistió.
-export function hasStarted(a, now) { return a.date < now.date || (a.date === now.date && a.start_min <= now.minutes + 60); }
+// Minutos que faltan para que empiece (negativo = ya empezó). Cruza medianoche y días.
 export function minutesUntil(a, now) { return diffDays(now.date, a.date) * 1440 + a.start_min - now.minutes; }
+// ¿Ya empezó (o empieza en ≤ 60 min, aunque sea después de medianoche)? Requisito para marcar atendida / no asistió.
+export function hasStarted(a, now) { return minutesUntil(a, now) <= 60; }
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -97,6 +98,14 @@ export async function loadServices(sdb, ids, { allowInactive } = {}) {
 export const snapshot = (rows) => rows.map((s) => ({ id: s.id, name: s.name, price: money(s.price), duration_min: Math.max(0, Math.round(Number(s.duration_min) || 0)) }));
 
 const TAKEN_MSG = 'Ese horario acaba de ocuparse. Elige otro.';
+const OVERFLOW_MSG = 'La cita debe empezar y terminar el mismo día (antes de las 24:00).';
+const CLOSED = ['completed', 'no_show'];
+
+// Rango del día: empieza en 0..1439 y termina a más tardar a las 24:00. Aplica SIEMPRE (también con force:
+// force solo salta el choque de agenda, nunca un rango inválido).
+function assertSameDay(start, duration) {
+  if (!Number.isInteger(start) || start < 0 || start + duration > 1440) throw slotError({ reason: 'overflow', message: OVERFLOW_MSG });
+}
 
 // Error HTTP para un horario no disponible (reason/message de slots.checkFree).
 export function slotError(r) {
@@ -111,7 +120,17 @@ async function resolveStaff(c, ag, { staff_id, date, start, duration, services, 
     const ids = candidates(ag, services, { bookable: true }).map((s) => s.id);
     if (!ids.length) throw bad('Ningún barbero ofrece esa combinación de servicios.', { staff_id: 'Sin barberos para esos servicios.' });
     const args = { date, start, duration, excludeId, now: c.now, mode };
-    const id = pickStaff(ag, Object.assign({ staffIds: ids }, args)) || (force ? pickStaff(ag, { date, staffIds: ids, excludeId, anyFree: false }) : null);
+    let id = pickStaff(ag, Object.assign({ staffIds: ids }, args));
+    if (!id && force) {
+      // Sobrecupo: solo entre quienes trabajan ese día y no tienen descanso a esa hora (nunca al de vacaciones).
+      // Primero quien solo tiene choque de citas; si no hay, quien trabaja ese día aunque sea fuera de su horario.
+      const why = {};
+      for (const sid of ids) why[sid] = (checkFree(ag, Object.assign({ staffId: sid }, args)) || {}).reason;
+      const tier = (reason) => ids.filter((sid) => why[sid] === reason);
+      id = pickStaff(ag, { date, staffIds: tier('taken'), excludeId, anyFree: false }) ||
+        pickStaff(ag, { date, staffIds: tier('outside_hours'), excludeId, anyFree: false });
+      if (!id) throw slotError({ reason: 'taken', message: 'Ningún barbero trabaja en ese horario (descansos o día libre).' });
+    }
     if (id) return id;
     // Motivos que aplican igual a todos (fecha pasada, anticipación…) se reportan tal cual; si no, "ocupado".
     const r = checkFree(ag, Object.assign({ staffId: ids[0] }, args));
@@ -125,10 +144,34 @@ async function resolveStaff(c, ag, { staff_id, date, start, duration, services, 
   return st.id;
 }
 
-// Segunda verificación tras escribir (dos reservas simultáneas pasan la primera): cede la de id mayor.
-async function raceClash(sdb, a, buffer) {
+// ── Verificación tras escribir ──
+// checkFree se hace ANTES de escribir, así que dos escrituras simultáneas (reserva + reserva, reagenda, edición
+// que alarga la cita, restaurar una cancelada) pueden pasarla las dos. Tras escribir, cada una busca traslapes
+// con otras citas que ocupan agenda del mismo barbero ese día. Clave de cada fila = marca de su última escritura
+// (updated_at || created_at, tomada JUSTO antes de escribir) + id:
+//   · traslape con clave MENOR → esta cede (la otra escribió antes): se revierte y responde 409 slot_taken.
+//   · traslape con clave MAYOR → la otra cederá en cuanto nos vea; se espera (RACE_POLL_MS) a que lo haga. Si
+//     sigue ahí, es que verificó antes de que esta escritura existiera y ya se quedó → esta cede.
+// Así la regla es simétrica y determinista: si ambas se ven, gana la de clave menor; si una verificó antes de
+// que la otra escribiera, gana la que ya estaba. Nunca quedan las dos (aunque los relojes difieran) y, con
+// verificaciones normales (milisegundos), nunca ninguna.
+export const RACE_POLL_MS = [40, 80, 160, 320, 640];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const raceKey = (x) => (x.updated_at || x.created_at || '') + '|' + x.id;
+async function overlapping(sdb, a, buffer) {
   const same = await sdb.find('appointments', { staff_id: a.staff_id, date: a.date, status: { in: OCCUPYING }, id: { ne: a.id } });
-  return same.find((x) => x.start_min - buffer < a.end_min && x.end_min + buffer > a.start_min && x.id < a.id) || null;
+  return same.filter((x) => x.start_min - buffer < a.end_min && x.end_min + buffer > a.start_min);
+}
+// true = esta escritura debe ceder (revertir). `a` = la fila tal como quedó escrita (con su marca).
+export async function raceLost(sdb, a, buffer) {
+  const mine = raceKey(a);
+  for (let i = 0; ; i++) {
+    const hits = await overlapping(sdb, a, buffer || 0);
+    if (!hits.length) return false;
+    if (hits.some((x) => raceKey(x) < mine)) return true;
+    if (i >= RACE_POLL_MS.length) return true;
+    await sleep(RACE_POLL_MS[i]);
+  }
 }
 
 async function uniqueFolio(sdb) {
@@ -145,6 +188,7 @@ export async function createAppointment(c, o) {
   const snap = snapshot(o.services);
   const duration = durationOf(snap);
   if (duration <= 0) throw bad('La duración de los servicios no es válida.', { services: 'Duración inválida.' });
+  assertSameDay(o.start_min, duration);
   const status = o.status || 'confirmed';
   if (!['pending', 'confirmed', 'completed'].includes(status)) throw bad('Una cita nueva solo puede quedar pendiente, confirmada o atendida.', { status: 'Estado no válido.' });
   if (status === 'completed' && !hasStarted({ date: o.date, start_min: o.start_min }, c.now)) {
@@ -153,9 +197,10 @@ export async function createAppointment(c, o) {
   const ag = await loadAgenda(c.sdb, c.shop, { from: o.date, to: o.date });
   const staff_id = await resolveStaff(c, ag, { staff_id: o.staff_id, date: o.date, start: o.start_min, duration, services: o.services, mode: o.mode, force: o.force });
   if (o.getClient) o = Object.assign({}, o, await o.getClient());
-  const at = nowIso();
+  const folio = await uniqueFolio(c.sdb);
+  const at = nowIso(); // marca de escritura (clave del desempate): justo antes de insertar
   const row = await c.sdb.insert('appointments', {
-    id: newId('ap'), folio: await uniqueFolio(c.sdb), client_id: o.client ? o.client.id : null, staff_id,
+    id: newId('ap'), folio, client_id: o.client ? o.client.id : null, staff_id,
     date: o.date, start_min: o.start_min, end_min: o.start_min + duration, duration_min: duration,
     services: snap, total: money(totalOf(snap)), status, source: o.source || 'manual',
     client_name: o.client_name || (o.client && o.client.name) || '', client_phone: o.client_phone || (o.client && o.client.phone) || '',
@@ -164,7 +209,7 @@ export async function createAppointment(c, o) {
     confirmed_at: status === 'confirmed' ? at : null, completed_at: status === 'completed' ? at : null,
     reschedule_count: 0, created_by: o.created_by || (c.actor && c.actor.id) || null, created_at: at, updated_at: null
   });
-  if (!o.force && OCCUPYING.includes(status) && await raceClash(c.sdb, row, ag.buffer)) {
+  if (!o.force && OCCUPYING.includes(status) && await raceLost(c.sdb, row, ag.buffer)) {
     await c.sdb.delete('appointments', { id: row.id });
     throw new HttpError(409, 'slot_taken', TAKEN_MSG, { start_min: TAKEN_MSG });
   }
@@ -182,9 +227,11 @@ export async function changeStatus(c, a, next, opts) {
   if ((next === 'completed' || next === 'no_show') && !hasStarted(a, c.now)) {
     throw bad('Solo puedes marcar como ' + STATUS_LABEL[next] + ' una cita que ya empezó o empieza en menos de una hora.', { status: 'La cita aún no empieza.' });
   }
-  // Restaurar (cancelada / no asistió → activa) exige que el horario siga libre.
-  if (!OCCUPYING.includes(a.status) && OCCUPYING.includes(next) && !opts.force) {
-    const ag = await loadAgenda(c.sdb, c.shop, { from: a.date, to: a.date });
+  // Restaurar (cancelada / no asistió → activa) exige que el horario siga libre (antes y después de escribir).
+  const restoring = !OCCUPYING.includes(a.status) && OCCUPYING.includes(next) && !opts.force;
+  let ag = null;
+  if (restoring) {
+    ag = await loadAgenda(c.sdb, c.shop, { from: a.date, to: a.date });
     const r = checkFree(ag, { staffId: a.staff_id, date: a.date, start: a.start_min, duration: a.end_min - a.start_min, excludeId: a.id, now: c.now, mode: 'restore' });
     if (r) throw new HttpError(409, 'slot_taken', 'No se puede restaurar: ' + r.message.charAt(0).toLowerCase() + r.message.slice(1), { status: r.message });
   }
@@ -197,6 +244,13 @@ export async function changeStatus(c, a, next, opts) {
   if (a.status === 'cancelled') { patch.cancel_reason = null; patch.cancelled_by = null; }
   await c.sdb.update('appointments', { id: a.id }, patch);
   const out = Object.assign({}, a, patch);
+  if (restoring && await raceLost(c.sdb, out, ag.buffer)) {
+    const undo = {};
+    for (const k of Object.keys(patch)) undo[k] = a[k] === undefined ? null : a[k];
+    await c.sdb.update('appointments', { id: a.id }, undo);
+    const msg = 'Ese horario acaba de ocuparse con otra cita.';
+    throw new HttpError(409, 'slot_taken', 'No se puede restaurar: ' + msg.charAt(0).toLowerCase() + msg.slice(1), { status: msg });
+  }
   await logEvent(c.sdb, a.id, 'status', { from: a.status, to: next, reason: patch.cancel_reason || cleanText(opts.reason, 300) || null, by: opts.by || 'staff' }, c.actor);
   if (next === 'cancelled') await notifyChange(c, out, 'cancelled', opts.by);
   return out;
@@ -207,6 +261,7 @@ export async function changeStatus(c, a, next, opts) {
 export async function reschedule(c, a, o) {
   const duration = a.end_min - a.start_min;
   const date = o.date, start = o.start_min;
+  assertSameDay(start, duration);
   const ag = await loadAgenda(c.sdb, c.shop, { from: date, to: date });
   const services = await c.sdb.find('services', { id: { in: (a.services || []).map((s) => s.id) } });
   const wanted = o.staff_id || a.staff_id;
@@ -216,11 +271,16 @@ export async function reschedule(c, a, o) {
     staff_id = await resolveStaff(c, ag, { staff_id: wanted, date, start, duration, services, mode: o.mode, excludeId: a.id, force: o.force || !occupying });
   } else if (!ag.staff[wanted]) throw bad('Ese barbero no está disponible.', { staff_id: 'Barbero no disponible.' });
   if (staff_id === a.staff_id && date === a.date && start === a.start_min) return a;
-  const prev = { date: a.date, start_min: a.start_min, end_min: a.end_min, staff_id: a.staff_id, reschedule_count: a.reschedule_count || 0 };
+  const prev = {
+    date: a.date, start_min: a.start_min, end_min: a.end_min, staff_id: a.staff_id, reschedule_count: a.reschedule_count || 0,
+    reminder_sent_at: a.reminder_sent_at || null, updated_at: a.updated_at || null
+  };
   const patch = { date, start_min: start, end_min: start + duration, staff_id, reschedule_count: prev.reschedule_count + 1, updated_at: nowIso() };
+  // Nueva fecha u hora → el recordatorio enviado era del horario anterior.
+  if (date !== a.date || start !== a.start_min) patch.reminder_sent_at = null;
   await c.sdb.update('appointments', { id: a.id }, patch);
   const out = Object.assign({}, a, patch);
-  if (!o.force && occupying && await raceClash(c.sdb, out, ag.buffer)) {
+  if (!o.force && occupying && await raceLost(c.sdb, out, ag.buffer)) {
     await c.sdb.update('appointments', { id: a.id }, prev);
     throw new HttpError(409, 'slot_taken', TAKEN_MSG, { start_min: TAKEN_MSG });
   }
@@ -252,6 +312,11 @@ export async function updateAppointment(c, a, p, { force } = {}) {
     const st = ag.staff[staff_id];
     if (!st || (staff_id !== a.staff_id && !st.active)) throw bad('Ese barbero no está disponible.', { staff_id: 'Barbero no disponible.' });
     if (start + duration > 1440) throw bad('La cita debe terminar antes de medianoche.', { start_min: 'Termina después de las 24:00.' });
+    // Regla ¹ de docs/API.md: no hay atendida / no asistió en el futuro (force no la salta).
+    if (CLOSED.includes(a.status) && (date !== a.date || start !== a.start_min) && !hasStarted({ date, start_min: start }, c.now)) {
+      const msg = 'Una cita ' + STATUS_LABEL[a.status] + ' no puede moverse a un horario que aún no empieza.';
+      throw bad(msg + ' Si fue un error, primero deshaz el estado.', { [date !== a.date ? 'date' : 'start_min']: msg });
+    }
     if (!force && OCCUPYING.includes(a.status)) {
       // Mover exige horario de trabajo; si solo cambia la duración, basta con no chocar.
       const r = checkFree(ag, { staffId: staff_id, date, start, duration, excludeId: a.id, now: c.now, mode: moved ? 'staff' : 'restore' });
@@ -259,6 +324,7 @@ export async function updateAppointment(c, a, p, { force } = {}) {
     }
     Object.assign(patch, { date, start_min: start, end_min: start + duration, staff_id });
     if (moved) patch.reschedule_count = (a.reschedule_count || 0) + 1;
+    if (date !== a.date || start !== a.start_min) patch.reminder_sent_at = null;
   }
   if (p.client && p.client.id !== a.client_id) {
     Object.assign(patch, { client_id: p.client.id, client_name: p.client.name || '', client_phone: p.client.phone || '' });
@@ -272,13 +338,18 @@ export async function updateAppointment(c, a, p, { force } = {}) {
   await c.sdb.update('appointments', { id: a.id }, patch);
   const out = Object.assign({}, a, patch);
   if (ag && !force && OCCUPYING.includes(a.status)) {
-    if (await raceClash(c.sdb, out, ag.buffer)) {
+    if (await raceLost(c.sdb, out, ag.buffer)) {
       const undo = {};
       for (const k of Object.keys(patch)) undo[k] = a[k] === undefined ? null : a[k];
       await c.sdb.update('appointments', { id: a.id }, undo);
       throw new HttpError(409, 'slot_taken', TAKEN_MSG, { start_min: TAKEN_MSG });
     }
   }
+  // Cobros de la cita: siguen a la persona correcta (comisiones, tablero y estadísticas del cliente).
+  const payMove = {};
+  if (out.staff_id !== a.staff_id) payMove.staff_id = out.staff_id;
+  if (out.client_id !== a.client_id) payMove.client_id = out.client_id;
+  if (Object.keys(payMove).length) await c.sdb.update('payments', { appointment_id: a.id, status: 'paid' }, payMove);
   if (moved) {
     await logEvent(c.sdb, a.id, 'rescheduled', { from: { date: a.date, start_min: a.start_min, staff_id: a.staff_id }, to: { date, start_min: start, staff_id }, by: 'staff' }, c.actor);
     await notifyChange(c, out, 'rescheduled', 'staff', a.staff_id);
@@ -345,12 +416,25 @@ async function notifyChange(c, a, kind, by, prevStaffId) {
 }
 
 // ── Política del cliente (enlace de gestión y portal) ──
-export function managePolicy(a, shop, now) {
+// Reagendas HECHAS POR EL CLIENTE (enlace o portal), por cita: eventos 'rescheduled' con by:'client'.
+// reschedule_count cuenta todos los movimientos (también los del equipo) y no sirve para el límite del cliente.
+export async function clientReschedules(sdb, ids) {
+  const list = [...new Set((ids || []).filter(Boolean))];
+  const out = Object.fromEntries(list.map((id) => [id, 0]));
+  for (let i = 0; i < list.length; i += 80) {
+    const ev = await sdb.find('appointment_events', { appointment_id: { in: list.slice(i, i + 80) }, type: 'rescheduled' });
+    for (const e of ev) if (e.data && e.data.by === 'client') out[e.appointment_id]++;
+  }
+  return out;
+}
+// clientMoves: reagendas del cliente (clientReschedules); sin dato se usa reschedule_count (más estricto).
+export function managePolicy(a, shop, now, clientMoves) {
   const st = shopSettings(shop);
   const hours = Math.max(0, Number(st.booking.cancel_hours) || 0);
   const until = minutesUntil(a, now);
   const ok = ACTIVE.includes(a.status) && until > 0 && until >= hours * 60;
-  const tooMany = (a.reschedule_count || 0) >= MAX_CLIENT_RESCHEDULES;
+  const moves = clientMoves == null ? (a.reschedule_count || 0) : clientMoves;
+  const tooMany = moves >= MAX_CLIENT_RESCHEDULES;
   const phone = shop.whatsapp || shop.phone || '';
   let text;
   if (a.status === 'cancelled') text = 'Esta cita fue cancelada.';
@@ -360,17 +444,20 @@ export function managePolicy(a, shop, now) {
   else if (ok) {
     let m = a.start_min - hours * 60, d = a.date;
     while (m < 0) { m += 1440; d = addDays(d, -1); }
-    text = hours > 0 ? 'Puedes cancelar o reagendar hasta el ' + fmtDateEs(d) + ' a las ' + fmtTimeEs(m) + '.' : 'Puedes cancelar o reagendar antes de tu cita.';
+    // fmtTimeEs ya termina en 'a.m.' / 'p.m.': sin punto final extra.
+    text = hours > 0 ? 'Puedes cancelar o reagendar hasta el ' + fmtDateEs(d) + ' a las ' + fmtTimeEs(m) : 'Puedes cancelar o reagendar antes de tu cita.';
+    if (!text.endsWith('.')) text += '.';
   } else {
     text = 'Ya no es posible cancelar ni reagendar en línea: se requiere hacerlo con ' + (hours === 1 ? '1 hora' : hours + ' horas') + ' de anticipación. Comunícate con la barbería' + (phone ? ' al ' + phone : '') + '.';
   }
   return { can_cancel: ok, can_reschedule: ok && st.booking.online_enabled !== false && !tooMany, deadline_text: text };
 }
 // Lanza el error adecuado si el cliente no puede cancelar / reagendar.
-export function assertClientCan(a, shop, now, action) {
-  const p = managePolicy(a, shop, now);
+export function assertClientCan(a, shop, now, action, clientMoves) {
+  const p = managePolicy(a, shop, now, clientMoves);
   if (action === 'cancel' ? p.can_cancel : p.can_reschedule) return p;
-  if (action === 'reschedule' && p.can_cancel && (a.reschedule_count || 0) >= MAX_CLIENT_RESCHEDULES) {
+  const moves = clientMoves == null ? (a.reschedule_count || 0) : clientMoves;
+  if (action === 'reschedule' && p.can_cancel && moves >= MAX_CLIENT_RESCHEDULES) {
     throw conflict('Esta cita ya se reagendó varias veces. Comunícate con la barbería para cambiarla.');
   }
   if (action === 'reschedule' && p.can_cancel) throw conflict('Por ahora esta barbería no recibe cambios en línea. Comunícate con ella.');

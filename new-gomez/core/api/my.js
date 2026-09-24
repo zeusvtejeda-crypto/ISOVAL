@@ -4,7 +4,8 @@ import { notFound, conflict, nowIso, normPhone, isPhone, isDateKey } from '../ut
 import { publicApptView } from '../domain/views.js';
 import { shopSettings } from '../domain/settings.js';
 import {
-  ACTIVE, failIf, parseStart, parseDateField, textField, cleanText, changeStatus, reschedule, managePolicy, assertClientCan, minutesUntil
+  ACTIVE, failIf, parseStart, parseDateField, textField, cleanText, changeStatus, reschedule, managePolicy, assertClientCan, minutesUntil,
+  clientReschedules
 } from '../domain/appointments.js';
 
 const PERM = 'my.appointments';
@@ -22,10 +23,12 @@ async function myAppt(ctx) {
   if (!a) throw notFound('No encontramos esa cita.');
   return a;
 }
+// Reagendas hechas por el cliente (el límite no cuenta los movimientos del equipo).
+const movesOf = async (ctx, a) => (await clientReschedules(ctx.sdb, [a.id]))[a.id];
 async function view(ctx, a, withPolicy) {
   const st = await ctx.sdb.findOne('staff', { id: a.staff_id });
   const v = publicApptView(a, ctx.shop, st ? st.name : '');
-  return withPolicy ? Object.assign(v, managePolicy(a, ctx.shop, ctx.now())) : v;
+  return withPolicy ? Object.assign(v, managePolicy(a, ctx.shop, ctx.now(), await movesOf(ctx, a))) : v;
 }
 
 async function list(ctx) {
@@ -36,11 +39,13 @@ async function list(ctx) {
     ctx.sdb.find('staff', {})
   ]);
   const names = Object.fromEntries(staff.map((s) => [s.id, s.name]));
+  // Próximas: activas que aún no terminan.
+  const isUpcoming = (a) => ACTIVE.includes(a.status) && minutesUntil(a, now) + (a.end_min - a.start_min) > 0;
+  const moves = await clientReschedules(ctx.sdb, rows.filter(isUpcoming).map((a) => a.id));
   const upcoming = [], past = [];
   for (const a of rows) {
     const v = publicApptView(a, ctx.shop, names[a.staff_id] || '');
-    // Próximas: activas que aún no terminan.
-    if (ACTIVE.includes(a.status) && minutesUntil(a, now) + (a.end_min - a.start_min) > 0) upcoming.push(Object.assign(v, managePolicy(a, ctx.shop, now)));
+    if (isUpcoming(a)) upcoming.push(Object.assign(v, managePolicy(a, ctx.shop, now, moves[a.id])));
     else past.push(v);
   }
   return { upcoming, past: past.reverse().slice(0, PAST_LIMIT) };
@@ -69,7 +74,7 @@ async function move(ctx) {
   if (staff_id === 'any' && !shopSettings(ctx.shop).booking.allow_any_staff) errs.staff_id = 'Elige un barbero.';
   failIf(errs);
   const c = dom(ctx);
-  assertClientCan(a, ctx.shop, c.now, 'reschedule');
+  assertClientCan(a, ctx.shop, c.now, 'reschedule', await movesOf(ctx, a));
   const out = await reschedule(c, a, { date, start_min: start, staff_id, mode: 'public', by: 'client' });
   return { appointment: await view(ctx, out, true) };
 }

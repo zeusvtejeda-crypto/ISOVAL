@@ -8,6 +8,7 @@ import { canTransition, hasStarted, TRANSITIONS, managePolicy, fmtDateEs, fmtTim
 async function setup() {
   const f = await makeFixture();
   for (const k of ['ownerA', 'barberA', 'ownerB', 'clientA', 'super']) f.tokens[k] = await createSession(f.db, { kind: 'password', user_id: 'u_' + k });
+  await f.db.update('staff', { id: 'st_barberA2' }, { pin_hash: 'pbkdf2$1000$prueba$prueba' }); // una sesión PIN exige PIN configurado
   f.tokens.barberA2 = await createSession(f.db, { kind: 'pin', staff_id: 'st_barberA2', shop_id: 'shop_a' });
   const today = nowInTz('America/Mexico_City').date;
   let past = addDays(today, -2);
@@ -384,4 +385,247 @@ test('carrera: dos altas simultáneas al mismo horario → solo una queda', asyn
   assert.ok(rs.filter((r) => r.status !== 200).every((r) => r.status === 409));
   const rows = await f.db.find('appointments', { shop_id: 'shop_a', date: f.day, start_min: 900 });
   assert.equal(rows.length, 1);
+});
+
+// ── Regresiones de la revisión adversarial ──
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Retrasa UNA vez la primera llamada db[method](...) que cumpla pred (latencia desigual de D1).
+function delayOnce(db, method, pred, ms) {
+  const orig = db[method].bind(db);
+  let done = false;
+  db[method] = async (...args) => {
+    if (!done && pred(...args)) { done = true; await sleep(ms); }
+    return orig(...args);
+  };
+}
+// Citas que ocupan agenda de st_barberA en f.day y se traslapan con [start, start+dur).
+async function occupying(f, start, dur) {
+  const rows = await f.db.find('appointments', { shop_id: 'shop_a', staff_id: 'st_barberA', date: f.day, status: { in: ['pending', 'confirmed', 'completed'] } });
+  return rows.filter((x) => x.start_min < start + dur && x.end_min > start);
+}
+const bookAt = (f, body, ip) => f.call('POST', '/api/public/shops/alfa/appointments', {
+  ip, body: Object.assign({ services: ['sv_corte'], staff_id: 'st_barberA', date: f.day, start_min: 900, name: 'Cliente Web', phone: '5511111111' }, body)
+});
+const oneWinner = (rs) => rs.map((r) => r.status).sort().join();
+
+test('carrera: la verificación tras escribir es simétrica — nunca quedan dos ni ninguna', async () => {
+  // (a) La reserva que generó su id primero tarda en la consulta del folio: escribe después y debe ceder.
+  let f = await setup();
+  delayOnce(f.db, 'findOne', (t, w) => t === 'appointments' && w && w.folio !== undefined, 50);
+  let rs = await Promise.all([bookAt(f, { name: 'Ana Uno', phone: '5511111111' }, '2.2.2.1'), bookAt(f, { name: 'Beto Dos', phone: '5522222222' }, '2.2.2.2')]);
+  assert.equal(oneWinner(rs), '200,409', rs.map((r) => r.body).join(' | '));
+  assert.equal((await occupying(f, 900, 40)).length, 1);
+  assert.equal(rs.find((r) => r.status === 409).error.code, 'slot_taken');
+
+  // (a2) La escritura misma llega tarde (su marca es anterior, pero la otra ya verificó y se quedó): cede la tardía.
+  f = await setup();
+  delayOnce(f.db, 'insert', (t) => t === 'appointments', 60);
+  rs = await Promise.all([bookAt(f, { name: 'Ana Uno', phone: '5511111111' }, '2.2.2.1'), bookAt(f, { name: 'Beto Dos', phone: '5522222222' }, '2.2.2.2')]);
+  assert.equal(oneWinner(rs), '200,409');
+  const left = await occupying(f, 900, 40);
+  assert.equal(left.length, 1);
+  assert.equal(left[0].client_name, 'Beto Dos', 'se queda la que ya había verificado');
+
+  // (b) PATCH de una cita vieja (id menor) hacia 15:00 con la escritura retrasada + reserva nueva a las 15:00.
+  f = await setup();
+  let x = (await f.newAppt({ start_min: 600, client: { name: 'Xavier Viejo', phone: '5533333333' } })).data;
+  delayOnce(f.db, 'update', (t, w, p) => t === 'appointments' && p && p.start_min === 900, 50);
+  rs = await Promise.all([f.call('PATCH', '/api/appointments/' + x.id, { as: 'ownerA', ...A, body: { start_min: 900 } }), bookAt(f, { name: 'Nuevo Cliente', phone: '5544444444' }, '2.2.2.3')]);
+  assert.equal(oneWinner(rs), '200,409');
+  assert.equal((await occupying(f, 900, 40)).length, 1);
+
+  // (b2) Reagenda del cliente por enlace (cita vieja) con la escritura retrasada + reserva nueva.
+  f = await setup();
+  const old = await bookAt(f, { name: 'Xavier Viejo', phone: '5533333333', start_min: 600 }, '2.2.2.9');
+  assert.equal(old.status, 200);
+  delayOnce(f.db, 'update', (t, w, p) => t === 'appointments' && p && p.start_min === 900, 50);
+  rs = await Promise.all([
+    f.call('POST', '/api/public/appointments/' + old.data.manage_token + '/reschedule', { body: { date: f.day, start_min: 900 } }),
+    bookAt(f, { name: 'Nuevo Cliente', phone: '5544444444' }, '2.2.2.3')
+  ]);
+  assert.equal(oneWinner(rs), '200,409');
+  assert.equal((await occupying(f, 900, 40)).length, 1);
+  if (rs[0].status === 409) {
+    const back = await f.db.findOne('appointments', { id: old.data.appointment.id });
+    assert.equal(back.start_min, 600, 'la reagenda que cedió vuelve a su horario');
+    assert.equal(back.reschedule_count, 0);
+  }
+
+  // (b3) Alargar la duración de una cita vieja mientras entra una reserva pegada.
+  f = await setup();
+  x = (await f.newAppt({ start_min: 600, client: { name: 'Xavier Viejo', phone: '5533333333' } })).data;
+  delayOnce(f.db, 'update', (t, w, p) => t === 'appointments' && p && p.duration_min === 60, 50);
+  rs = await Promise.all([
+    f.call('PATCH', '/api/appointments/' + x.id, { as: 'ownerA', ...A, body: { services: ['sv_corte', 'sv_barba'] } }),
+    bookAt(f, { name: 'Nuevo Cliente', phone: '5544444444', start_min: 640 }, '2.2.2.3')
+  ]);
+  assert.equal(oneWinner(rs), '200,409');
+  const rows = await occupying(f, 600, 80);
+  assert.ok(!rows.some((p) => rows.some((q) => p !== q && p.start_min < q.end_min && q.start_min < p.end_min)), 'sin traslapes');
+});
+
+test('carrera: latencia aleatoria (simula D1) — siempre queda exactamente una', async () => {
+  for (let i = 0; i < 25; i++) {
+    const f = await setup();
+    for (const m of ['find', 'findOne', 'count', 'insert', 'update', 'delete']) {
+      const o = f.db[m].bind(f.db);
+      f.db[m] = async (...a) => { await sleep(Math.random() * 4); return o(...a); };
+    }
+    const rs = await Promise.all([1, 2].map((n) => bookAt(f, { name: 'Cliente ' + n, phone: '55111111' + n + n }, '3.3.3.' + n)));
+    assert.equal(oneWinner(rs), '200,409', 'intento ' + i);
+    assert.equal((await occupying(f, 900, 40)).length, 1, 'intento ' + i);
+  }
+});
+
+test('restaurar: se vuelve a verificar tras escribir (sin doble reserva) y se revierte si choca', async () => {
+  const f = await setup();
+  const X = (await f.newAppt({ start_min: 900, client: { name: 'Viejo', phone: '5512345678' } })).data;
+  assert.equal((await f.call('POST', '/api/appointments/' + X.id + '/status', { as: 'ownerA', ...A, body: { status: 'cancelled', reason: 'No puede' } })).status, 200);
+  // La restauración valida, se pausa antes de escribir y mientras tanto entra una reserva en línea.
+  const orig = f.db.update.bind(f.db);
+  let hit, release, gated = false;
+  const hitP = new Promise((r) => (hit = r));
+  const gate = new Promise((r) => (release = r));
+  f.db.update = async (table, where, patch) => {
+    if (table === 'appointments' && where && where.id === X.id && patch && patch.status === 'confirmed' && !gated) { gated = true; hit(); await gate; }
+    return orig(table, where, patch);
+  };
+  const pRestore = f.call('POST', '/api/appointments/' + X.id + '/status', { as: 'ownerA', ...A, body: { status: 'confirmed' } });
+  await hitP;
+  const b = await bookAt(f, { name: 'Ana López', phone: '5598765402' }, '9.9.9.2');
+  assert.equal(b.status, 200, b.body);
+  release();
+  const r = await pRestore;
+  assert.equal(r.status, 409, r.body);
+  assert.equal(r.error.code, 'slot_taken');
+  assert.match(r.error.message, /No se puede restaurar/);
+  const occ = await occupying(f, 900, 40);
+  assert.deepEqual(occ.map((a) => a.client_name), ['Ana López']);
+  const back = await f.db.findOne('appointments', { id: X.id });
+  assert.equal(back.status, 'cancelled', 'vuelve a su estado anterior');
+  assert.equal(back.cancel_reason, 'No puede');
+  assert.equal(back.cancelled_by, 'staff');
+  // Latencia aleatoria: restaurar + reservar a la vez nunca deja dos.
+  for (let i = 0; i < 15; i++) {
+    const g = await setup();
+    const Y = (await g.newAppt({ start_min: 900, client: { name: 'Viejo', phone: '5512345678' } })).data;
+    await g.call('POST', '/api/appointments/' + Y.id + '/status', { as: 'ownerA', ...A, body: { status: 'cancelled' } });
+    for (const m of ['find', 'findOne', 'count', 'insert', 'update', 'delete']) {
+      const o = g.db[m].bind(g.db);
+      g.db[m] = async (...a) => { await sleep(Math.random() * 4); return o(...a); };
+    }
+    const rs = await Promise.all([
+      g.call('POST', '/api/appointments/' + Y.id + '/status', { as: 'ownerA', ...A, body: { status: 'confirmed' } }),
+      bookAt(g, { name: 'Ana López', phone: '5598765499' }, '9.9.9.' + i)
+    ]);
+    assert.equal(oneWinner(rs), '200,409', 'intento ' + i + ': ' + rs.map((x) => x.body).join(' | '));
+    assert.equal((await occupying(g, 900, 40)).length, 1, 'intento ' + i);
+  }
+});
+
+test('crear con force: nunca cruza la medianoche (force solo salta el choque de agenda)', async () => {
+  const f = await setup();
+  let r = await f.newAppt({ start_min: 1430, services: ['sv_corte', 'sv_barba'], force: true, client: { name: 'Noche' } });
+  assert.equal(r.status, 400, r.body);
+  assert.ok(r.error.fields.start_min);
+  r = await f.newAppt({ staff_id: 'any', start_min: 1430, services: ['sv_corte'], force: true, client: { name: 'Noche' } });
+  assert.equal(r.status, 400, r.body);
+  r = await f.newAppt({ start_min: 1400, services: ['sv_corte'], force: true, client: { name: 'Justo' } });
+  assert.equal(r.status, 200, 'termina a las 24:00 exactas');
+  assert.equal(r.data.end_min, 1440);
+  assert.equal(await f.db.count('appointments', { end_min: { gt: 1440 } }), 0);
+});
+
+test('editar: una cita atendida o no asistida no se mueve a un horario que aún no empieza', async () => {
+  const f = await setup();
+  const done = (await f.newAppt({ date: f.past, status: 'completed', source: 'walkin' })).data;
+  const patch = (id, body) => f.call('PATCH', '/api/appointments/' + id, { as: 'ownerA', ...A, body });
+  let r = await patch(done.id, { date: addDays(f.day, 7) });
+  assert.equal(r.status, 400, r.body);
+  assert.ok(r.error.fields.date);
+  r = await patch(done.id, { date: addDays(f.day, 7), force: true });
+  assert.equal(r.status, 400, 'force no salta la regla de estados');
+  const ns = (await f.newAppt({ date: f.past, start_min: 800, client: { name: 'Faltó' } })).data;
+  assert.equal((await f.call('POST', '/api/appointments/' + ns.id + '/status', { as: 'ownerA', ...A, body: { status: 'no_show' } })).status, 200);
+  r = await patch(ns.id, { date: addDays(f.day, 3) });
+  assert.equal(r.status, 400);
+  // Corregir la hora hacia otro momento pasado sí se permite.
+  r = await patch(done.id, { start_min: 700 });
+  assert.equal(r.status, 200, r.body);
+  assert.equal((await f.db.findOne('appointments', { id: done.id })).status, 'completed');
+});
+
+test('reagendar reinicia reminder_sent_at (la cita movida vuelve a necesitar recordatorio)', async () => {
+  const f = await setup();
+  const a = (await f.newAppt({ start_min: 600 })).data;
+  const stamp = '2026-01-01T00:00:00.000Z';
+  await f.db.update('appointments', { id: a.id }, { reminder_sent_at: stamp });
+  // Cambiar solo notas o barbero no reinicia.
+  let r = await f.call('PATCH', '/api/appointments/' + a.id, { as: 'ownerA', ...A, body: { internal_note: 'VIP', staff_id: 'st_barberA2' } });
+  assert.equal(r.status, 200, r.body);
+  assert.equal((await f.db.findOne('appointments', { id: a.id })).reminder_sent_at, stamp);
+  const to = addDays(f.day, 3);
+  r = await f.call('PATCH', '/api/appointments/' + a.id, { as: 'ownerA', ...A, body: { date: to } });
+  assert.equal(r.status, 200, r.body);
+  assert.equal((await f.db.findOne('appointments', { id: a.id })).reminder_sent_at, null);
+  const rem = await f.call('GET', '/api/reminders?date=' + to, { as: 'ownerA', ...A });
+  assert.equal(rem.status, 200, rem.body);
+  assert.equal(rem.data.items.find((i) => i.appointment.id === a.id).reminded, false);
+  // Reagenda del cliente por enlace también.
+  const b = await bookAt(f, { start_min: 700, name: 'Web', phone: '5577777777' }, '4.4.4.4');
+  await f.db.update('appointments', { id: b.data.appointment.id }, { reminder_sent_at: stamp });
+  r = await f.call('POST', '/api/public/appointments/' + b.data.manage_token + '/reschedule', { body: { date: f.day, start_min: 1000 } });
+  assert.equal(r.status, 200, r.body);
+  assert.equal((await f.db.findOne('appointments', { id: b.data.appointment.id })).reminder_sent_at, null);
+});
+
+test("'any' + force: sobreagenda solo con quien trabaja ese día (no con quien está de vacaciones)", async () => {
+  const f = await setup();
+  await f.db.insert('time_off', { id: 'to_vac', shop_id: 'shop_a', staff_id: 'st_barberA2', date_from: f.day, date_to: f.day, reason: 'Vacaciones', created_at: '2026-01-01T00:00:00.000Z' });
+  assert.equal((await f.newAppt({ staff_id: 'st_ownerA', start_min: 900 })).status, 200);
+  assert.equal((await f.newAppt({ staff_id: 'st_barberA', start_min: 900, client: { name: 'Otro' } })).status, 200);
+  let r = await f.newAppt({ staff_id: 'any', start_min: 900, client: { name: 'Sin lugar' } });
+  assert.equal(r.status, 409, 'sin force: nadie libre');
+  r = await f.newAppt({ staff_id: 'any', start_min: 900, force: true, client: { name: 'Sobrecupo' } });
+  assert.equal(r.status, 200, r.body);
+  assert.notEqual(r.data.staff_id, 'st_barberA2', 'nunca al barbero de vacaciones');
+  assert.ok(['st_ownerA', 'st_barberA'].includes(r.data.staff_id));
+  // Toda la barbería cerrada ese día: con force tampoco hay a quién asignar.
+  await f.db.insert('time_off', { id: 'to_all', shop_id: 'shop_a', staff_id: null, date_from: f.day, date_to: f.day, reason: 'Feriado', created_at: '2026-01-01T00:00:00.000Z' });
+  r = await f.newAppt({ staff_id: 'any', start_min: 1000, force: true, client: { name: 'Feriado' } });
+  assert.equal(r.status, 409, r.body);
+});
+
+test('reagendas del equipo no cuentan para el límite de reagendas del cliente', async () => {
+  const f = await setup();
+  const b = await bookAt(f, { start_min: 600, name: 'Cliente Web', phone: '5566666666' }, '5.5.5.5');
+  assert.equal(b.status, 200, b.body);
+  const id = b.data.appointment.id, tk = b.data.manage_token;
+  for (let i = 1; i <= 5; i++) {
+    const r = await f.call('PATCH', '/api/appointments/' + id, { as: 'ownerA', ...A, body: { start_min: 600 + i * 40 } });
+    assert.equal(r.status, 200, r.body);
+  }
+  assert.equal((await f.db.findOne('appointments', { id })).reschedule_count, 5, 'reschedule_count sigue contando todos los cambios');
+  let v = await f.call('GET', '/api/public/appointments/' + tk);
+  assert.equal(v.data.can_reschedule, true, v.body);
+  // El cliente sí tiene su propio límite (5).
+  for (let i = 0; i < 5; i++) {
+    const r = await f.call('POST', '/api/public/appointments/' + tk + '/reschedule', { body: { date: f.day, start_min: 1000 + (i % 2) * 40 } });
+    assert.equal(r.status, 200, 'reagenda del cliente ' + i + ': ' + r.body);
+  }
+  v = await f.call('GET', '/api/public/appointments/' + tk);
+  assert.equal(v.data.can_reschedule, false);
+  const r = await f.call('POST', '/api/public/appointments/' + tk + '/reschedule', { body: { date: f.day, start_min: 1100 } });
+  assert.equal(r.status, 409);
+  assert.match(r.error.message, /varias veces/);
+});
+
+test('reglas puras: "ya empezó" respeta la ventana de 60 min después de medianoche; texto del límite sin doble punto', () => {
+  const now = { date: '2026-10-05', minutes: 1410 }; // 23:30
+  assert.ok(hasStarted({ date: '2026-10-06', start_min: 15 }, now), 'faltan 45 min');
+  assert.ok(hasStarted({ date: '2026-10-06', start_min: 30 }, now), 'faltan 60 min');
+  assert.ok(!hasStarted({ date: '2026-10-06', start_min: 31 }, now));
+  const shop = { name: 'X', phone: '5500000000', settings: { booking: { cancel_hours: 2 } } };
+  const p = managePolicy({ date: '2026-10-05', start_min: 600, end_min: 640, status: 'confirmed' }, shop, { date: '2026-10-04', minutes: 600 });
+  assert.equal(p.deadline_text, 'Puedes cancelar o reagendar hasta el lunes 5 de octubre a las 8:00 a.m.');
 });

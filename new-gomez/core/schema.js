@@ -75,7 +75,7 @@ export const SCHEMA = {
   login_attempts: {
     scoped: false,
     columns: {
-      id: T('text', { pk: true }),          // clave: 'pw:<email>' | 'pin:<shop>:<ip>' | 'ip:<ip>'
+      id: T('text', { pk: true }),          // '<clave>#<id>' (una fila por intento); clave: 'pw:<email>' | 'pin:<shop>:<ip>' | 'ip:<ip>' | 'book:<ip>'…
       count: T('int', { notNull: true, default: 0 }),
       first_at: T('text', { notNull: true }),
       locked_until: T('text')

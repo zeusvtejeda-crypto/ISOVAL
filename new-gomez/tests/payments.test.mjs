@@ -10,6 +10,7 @@ const B = { shop: 'shop_b' };
 async function setup() {
   const f = await makeFixture();
   for (const k of ['ownerA', 'barberA', 'ownerB', 'clientA', 'super']) f.tokens[k] = await createSession(f.db, { kind: 'password', user_id: 'u_' + k });
+  await f.db.update('staff', { id: 'st_barberA2' }, { pin_hash: 'pbkdf2$1000$prueba$prueba' }); // una sesión PIN exige PIN configurado
   f.tokens.barberA2 = await createSession(f.db, { kind: 'pin', staff_id: 'st_barberA2', shop_id: 'shop_a' });
   f.today = nowInTz('America/Mexico_City').date;
   let past = addDays(f.today, -2);
@@ -299,4 +300,38 @@ test('aislamiento: otra barbería no ve ni toca cobros ajenos (ni adivinando ids
   assert.equal(r.data.shop_id, 'shop_b', 'shop_id del cuerpo se ignora');
   r = await f.call('GET', '/api/payments' + f.range, { as: 'ownerA', ...A });
   assert.equal(r.data.items.length, 1);
+});
+
+// ── Regresiones de la revisión ──
+test('reasignar barbero o cliente de una cita ya cobrada mueve sus cobros (comisiones, tablero y fichas)', async () => {
+  const f = await setup();
+  const a = await f.appt({ status: 'completed' });
+  const r = await f.pay({ appointment_id: a.id, amount: 200, tip: 30, method: 'card' });
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.staff_id, 'st_barberA');
+  // Un cobro ya reembolsado de la misma cita no se toca.
+  const old = await f.pay({ appointment_id: a.id, amount: 50, method: 'card' });
+  assert.equal((await f.call('POST', '/api/payments/' + old.data.id + '/refund', { as: 'ownerA', ...A, body: {} })).status, 200);
+  let x = await f.call('PATCH', '/api/appointments/' + a.id, { as: 'ownerA', ...A, body: { staff_id: 'st_barberA2' } });
+  assert.equal(x.status, 200, x.body);
+  assert.equal((await f.db.findOne('payments', { id: r.data.id })).staff_id, 'st_barberA2');
+  assert.equal((await f.db.findOne('payments', { id: old.data.id })).staff_id, 'st_barberA', 'el reembolsado se queda igual');
+  const q = '?from=' + f.today + '&to=' + f.today;
+  const com = await f.call('GET', '/api/commissions' + q, { as: 'ownerA', ...A });
+  const by = Object.fromEntries(com.data.items.map((i) => [i.staff_id, i]));
+  assert.deepEqual([by.st_barberA2.revenue, by.st_barberA2.tips, by.st_barberA2.commission], [200, 30, 80]);
+  assert.deepEqual([by.st_barberA.revenue, by.st_barberA.tips, by.st_barberA.commission], [0, 0, 0]);
+  const dash = await f.call('GET', '/api/reports/dashboard?from=' + f.past + '&to=' + f.today, { as: 'ownerA', ...A });
+  const ds = Object.fromEntries(dash.data.by_staff.map((s) => [s.staff_id, s]));
+  assert.deepEqual([ds.st_barberA2.completed, ds.st_barberA2.revenue], [1, 200]);
+  assert.equal(ds.st_barberA.revenue, 0);
+  // Cliente corregido: el cobro pasa a la ficha correcta.
+  await f.db.insert('clients', { id: 'cl_otro', shop_id: 'shop_a', name: 'Otro Cliente', phone: '3110000009', tags: [], source: 'manual', created_at: nowIso() });
+  x = await f.call('PATCH', '/api/appointments/' + a.id, { as: 'ownerA', ...A, body: { client_id: 'cl_otro' } });
+  assert.equal(x.status, 200, x.body);
+  assert.equal((await f.db.findOne('payments', { id: r.data.id })).client_id, 'cl_otro');
+  const c1 = await f.call('GET', '/api/clients/cl_clientA', { as: 'ownerA', ...A });
+  const c2 = await f.call('GET', '/api/clients/cl_otro', { as: 'ownerA', ...A });
+  assert.equal(c1.data.client.stats.total_spent, 0);
+  assert.equal(c2.data.client.stats.total_spent, 200);
 });

@@ -24,7 +24,7 @@ import { api, LS } from '../lib/api.js';
 import { state, bus, can, canAny, shop, today, nowMin, me, getStaff } from '../lib/state.js';
 import { setQuery } from '../lib/router.js';
 import { toast, modal, avatar, emptyState, errorState, animateNumber, statusBadge } from '../lib/ui.js';
-import { money, number, time, dateLongCap, addDays, diffDays, startOfWeek, startOfMonth, endOfMonth, addMonths, firstName, plural, MONTHS_SHORT, WEEKDAYS_SHORT, METHOD, colorFor } from '../lib/fmt.js';
+import { money, number, time, dateLongCap, addDays, diffDays, startOfWeek, startOfMonth, endOfMonth, addMonths, firstName, plural, MONTHS_SHORT, WEEKDAYS_SHORT, METHOD, colorFor, statusLabel } from '../lib/fmt.js';
 import { lineChart, barChart, donutChart, sparkline } from '../lib/charts.js';
 
 // ═════════════════════════════════════════════════════════════════════
@@ -34,7 +34,7 @@ export const PRESETS = { hoy: 'Hoy', '7d': '7 días', '30d': '30 días', mes: 'E
 export const MAX_DAYS = 400;
 const isKey = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
 const r1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
-const dec = (n) => String(r1(n)).replace('.', ',');
+const dec = (n) => r1(n).toLocaleString('es-MX', { maximumFractionDigits: 1 }); // es-MX: punto decimal (igual que las gráficas)
 export const pctText = (n) => dec(n) + '%';
 const sheet = () => import('../lib/appointment-sheet.js');
 const ACTIVE = ['pending', 'confirmed'];
@@ -69,7 +69,7 @@ export function rangeText(from, to) {
   if (a.y === b.y) return a.d + ' ' + M[a.m - 1] + ' – ' + b.d + ' ' + M[b.m - 1] + ' ' + b.y;
   return a.d + ' ' + M[a.m - 1] + ' ' + a.y + ' – ' + b.d + ' ' + M[b.m - 1] + ' ' + b.y;
 }
-const shortDay = (k) => { const p = dm(k); return p.d + ' ' + MONTHS_SHORT[p.m - 1]; };
+export const shortDay = (k) => { const p = dm(k); return p.d + ' ' + MONTHS_SHORT[p.m - 1]; };
 
 // Preferencias por barbería en este dispositivo (periodo y barbero elegidos).
 const prefKey = (k) => 'tb:' + k + ':' + (state.shopId || '');
@@ -208,7 +208,7 @@ export function kpiTile(def, k, prevK, series, prevText) {
   const val = def.val ? def.val(k) : k[def.k];
   const pv = prevK == null ? null : (def.prev ? def.prev(prevK) : (def.val ? def.val(prevK) : prevK[def.k]));
   const d = prevK === false ? null : deltaInfo(val, pv, def);
-  const spark = def.spark && series && series.length > 2 ? sparkline(series.map((s) => s[def.spark]), { width: 64, height: 22, label: def.label + ' por día' }) : '';
+  const spark = def.spark && series && series.length > 2 && series.some((s) => Number(s[def.spark]) > 0) ? sparkline(series.map((s) => s[def.spark]), { width: 64, height: 22, label: def.label + ' por día' }) : '';
   return html`<div class="card kpi db-kpi" data-k="${def.k}">
     <div class="label">${raw(icon(def.icon))}${def.label}</div>
     <div class="value" data-to="${val}" data-kpi="${def.k}">${def.fmt(val)}</div>
@@ -330,6 +330,7 @@ const CSS = `
 .db-card .card-head .sub{display:block;margin-top:2px;line-height:1.4}
 .db-card .card-body{flex:1;min-width:0}
 .db-card .seg button{min-height:32px;font-size:12.5px;padding:0 11px}
+@media (pointer:coarse){.db .btn-sm,.db .db-appt .acts .btn-sm{--h:44px}.db .db-card .seg button{min-height:44px;padding:0 14px}.db .link-btn{min-height:44px}}
 .db-a{transition:opacity .25s var(--ease)}
 .db-busy{opacity:.5;pointer-events:none}
 .db-skel-card{border:0;box-shadow:none}
@@ -347,7 +348,10 @@ const CSS = `
 .db-top-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-top:16px;border-top:1px solid rgba(242,237,227,.1)}
 .db-top-stats span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9E968A}
 .db-top-stats b{display:block;font-size:21px;font-weight:700;color:#F2EDE3;font-variant-numeric:tabular-nums;margin-top:3px;white-space:nowrap}
-.db-share{display:grid;gap:7px;font-size:12.5px;color:#BDB5A5;margin-top:auto}
+.db-share{display:grid;gap:12px;font-size:12.5px;color:#BDB5A5;margin-top:auto}
+.db-share>div{display:grid;gap:6px}
+.db-lead{display:flex;align-items:center;gap:6px;padding-top:12px;border-top:1px solid rgba(242,237,227,.1);color:#BDB5A5;font-size:12.5px}
+.db-lead .ic{color:#D9B25A;width:14px;height:14px}
 .db-share .bar{height:6px;border-radius:999px;background:rgba(242,237,227,.1);overflow:hidden}
 .db-share .bar span{display:block;height:100%;border-radius:inherit;background:#D9B25A;transform-origin:left;animation:growX .9s var(--ease-out) both}
 .db-share b{color:#F2EDE3}
@@ -376,7 +380,7 @@ const CSS = `
 .db-tprog .progress-bar>span{background:var(--ok)}
 .db-alist{display:grid;border-top:1px solid var(--border)}
 .db-alist-t{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px 4px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
-.db-appt{display:flex;align-items:center;gap:6px;padding-right:12px;position:relative}
+.db-appt{display:flex;align-items:center;gap:6px;padding-right:16px;position:relative}
 .db-appt+.db-appt{border-top:1px solid var(--border)}
 .db-appt-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:11px 6px 11px 18px;text-align:left;min-height:64px;transition:background .12s}
 .db-appt-main:hover{background:var(--surface-2)}
@@ -391,7 +395,8 @@ const CSS = `
 .db-appt .acts{display:flex;gap:6px;align-items:center;flex:none}
 .db-appt .acts .btn-sm{--h:36px}
 .db-appt.done .db-appt-main{opacity:.6}
-@media (max-width:519px){.db-appt.has-act .badge{display:none}.db-appt-time{width:54px}}
+@media (max-width:519px){.db-appt.has-act .badge{display:none}.db-appt-time{width:60px}.db-appt-main{gap:10px;padding-left:16px}}
+.db-today .card-head .db-to-agenda{flex:none;margin:-4px -8px 0 0}
 .db-tmore{display:flex;justify-content:center;border-top:1px solid var(--border)}
 .db-tmore button{min-height:46px;font-size:13.5px;font-weight:600;color:var(--brand-strong);width:100%}
 .db-tmore button:hover{background:var(--surface-2)}
@@ -400,6 +405,7 @@ const CSS = `
 .db-tempty b{display:block;font-size:14.5px}
 .db-tempty span{font-size:13px;color:var(--text-2)}
 .db-shorts{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:600px) and (max-width:1023px){.db-shorts .db-short-link{display:none}}
 @media (min-width:600px) and (max-width:1023px){.db-shorts{grid-template-columns:repeat(2,minmax(0,1fr))}.db-shorts>.btn{grid-column:1/-1}}
 .db-short{display:flex;align-items:center;gap:12px;padding:14px 14px 14px 16px;text-decoration:none;color:inherit;min-height:74px}
 .db-short .ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-strong);flex:none}
@@ -476,6 +482,8 @@ const CSS = `
 .db-tl-row .bd span{font-size:12.5px;color:var(--text-2)}
 .db-tl-row .act{display:flex;gap:6px;align-items:center;flex:none}
 .db-tl-row.past .t,.db-tl-row.past .bd>button{opacity:.6}
+.db-tl-row .db-stt{display:none;font-style:normal;font-weight:600;color:var(--st)}
+@media (max-width:519px){.db-tl-row .act>.badge{display:none}.db-tl-row .db-stt{display:inline}.db-tl{padding-right:4px}.db-tl-row{grid-template-columns:52px 18px minmax(0,1fr)}.db-nowline{grid-template-columns:52px 18px minmax(0,1fr)}}
 .db-tl-row.cur .bd>button b::after{content:"En curso";margin-left:8px;font-size:11px;font-weight:700;color:var(--ok);background:var(--ok-soft);padding:2px 7px;border-radius:999px;vertical-align:2px}
 .db-nowline{grid-column:1/-1;display:grid;grid-template-columns:62px 18px minmax(0,1fr);column-gap:10px;align-items:center;margin:2px 0}
 .db-nowline span{text-align:right;font-size:11px;font-weight:700;color:var(--err);letter-spacing:.04em}
@@ -505,6 +513,15 @@ export function injectDashStyle() { if (!document.getElementById('st-dash')) doc
 // ═════════════════════════════════════════════════════════════════════
 export function greeting() { const m = nowMin(); return m >= 300 && m < 720 ? 'Buenos días' : m >= 720 && m < 1140 ? 'Buenas tardes' : 'Buenas noches'; }
 function myName() { return firstName((me() && me().name) || (state.user && state.user.name) || (state.staff && state.staff.name) || ''); }
+// Versión corta para renglones: "en 25 min", "en 1 h 20 m", "en 8 h".
+function untilShort(a, now) {
+  if (a.start_min <= now && now < a.end_min) return 'En curso';
+  const d = a.start_min - now;
+  if (d <= 0) return 'Ya pasó';
+  if (d < 60) return 'en ' + d + ' min';
+  const h = Math.floor(d / 60), m = d % 60;
+  return 'en ' + h + ' h' + (h < 3 && m ? ' ' + m + ' m' : '');
+}
 function untilText(a, now) {
   if (a.start_min <= now && now < a.end_min) return 'En curso';
   const d = a.start_min - now;
@@ -564,7 +581,7 @@ const OWNER_KPIS = [
   { k: 'avg_ticket', label: 'Ticket promedio', icon: 'receipt', fmt: (n) => money(Math.round(n)), foot: () => 'Por cada venta cobrada' },
   { k: 'new_clients', label: 'Clientes nuevos', icon: 'user-plus', fmt: (n) => number(n), foot: (k) => plural(k.returning_clients, 'cliente recurrente', 'clientes recurrentes') },
   { k: 'occupancy_pct', label: 'Ocupación', icon: 'clock', pts: true, fmt: (n) => pctText(n), bar: (k) => k.occupancy_pct, foot: () => 'De las horas disponibles del equipo' },
-  { k: 'lost', label: 'Cancelaciones y faltas', icon: 'calendar-x', invert: true, fmt: (n) => number(n), val: (k) => (k.cancelled || 0) + (k.no_show || 0), foot: (k) => number(k.cancelled) + ' canceladas · ' + number(k.no_show) + ' no llegaron' }
+  { k: 'lost', label: 'Citas perdidas', icon: 'calendar-x', invert: true, fmt: (n) => number(n), val: (k) => (k.cancelled || 0) + (k.no_show || 0), foot: (k) => plural(k.cancelled, 'cancelada') + ' · ' + number(k.no_show) + ' no ' + (k.no_show === 1 ? 'llegó' : 'llegaron') }
 ];
 
 async function renderOwner(el, { query }) {
@@ -579,7 +596,6 @@ async function renderOwner(el, { query }) {
   el.innerHTML = String(html`
     <div class="page-head db-head">
       <div><span class="eyebrow">${dateLongCap(t0)}</span><h2>${greeting()}${myName() ? ', ' + myName() : ''}</h2><p>${sh.name ? 'Así va ' + sh.name + '.' : 'Así va tu barbería.'}</p></div>
-      <div class="actions">${canWrite() ? html`<button type="button" class="btn btn-primary" data-act="new">${raw(icon('plus'))}Nueva cita</button>` : ''}</div>
     </div>
     <div id="dbWelcome"></div>
     <section class="db-today-grid" aria-label="Hoy">
@@ -683,8 +699,8 @@ async function renderOwner(el, { query }) {
     const rem = side.rem && side.rem.items ? side.rem.items : null;
     const pct = all.length ? Math.round((done / all.length) * 100) : 0;
     host.innerHTML = String(html`
-      <div class="card-head"><div><span class="eyebrow">Hoy · ${dateLongCap(td.date || today())}</span><h3>${all.length ? plural(all.length, 'cita') + ' en la agenda' : 'Sin citas en la agenda'}</h3></div>
-        <a class="btn btn-ghost btn-sm" href="#/agenda">Ver agenda${raw(icon('chevron-right', 'ic-sm'))}</a></div>
+      <div class="card-head"><div><span class="eyebrow">Hoy</span><h3>${all.length ? plural(all.length, 'cita') + ' en la agenda' : 'Sin citas en la agenda'}</h3></div>
+        <a class="btn btn-ghost btn-sm db-to-agenda" href="#/agenda" aria-label="Ver la agenda de hoy">Agenda${raw(icon('chevron-right', 'ic-sm'))}</a></div>
       <div class="db-tstats">
         <div><span>Citas</span><b class="num">${number(all.length)}</b></div>
         <div><span>Atendidas</span><b class="num">${number(done)}</b></div>
@@ -733,7 +749,7 @@ async function renderOwner(el, { query }) {
             ${filtered ? '' : html`<div class="card db-card" id="dbRank"></div>`}
             <div class="card db-card" id="dbSvc"></div>
             <div class="card db-card" id="dbPay"></div>
-            <div class="card db-card ${filtered ? '' : 'wide-if-odd'}" id="dbPeak"></div>
+            <div class="card db-card ${filtered ? 'wide' : ''}" id="dbPeak"></div>
           </div>`}`);
     }
     paintKpis(isFirst || rebuild);
@@ -810,6 +826,9 @@ async function renderOwner(el, { query }) {
       return;
     }
     const share = k.appointments ? Math.round((row.appointments / k.appointments) * 100) : 0;
+    const revShare = k.revenue ? Math.min(100, Math.round((row.revenue / k.revenue) * 100)) : 0;
+    const second = filtered ? null : (D.by_staff || []).find((s) => s.staff_id !== row.staff_id && s.appointments > 0);
+    const lead = second ? row.appointments - second.appointments : 0;
     const col = staffColor(row);
     host.innerHTML = String(html`<article class="db-top" style="height:100%" aria-label="${filtered ? 'Resumen del barbero' : 'Barbero más activo'}">
       <span class="eyebrow">${raw(icon(filtered ? 'user' : 'crown'))}${filtered ? 'Resumen del barbero' : 'Barbero más activo'}</span>
@@ -819,8 +838,16 @@ async function renderOwner(el, { query }) {
         <div><span>Ingresos</span><b>${money(Math.round(row.revenue))}</b></div>
         <div><span>${filtered ? 'Ticket' : 'Del total'}</span><b>${filtered ? money(Math.round(k.avg_ticket)) : share + '%'}</b></div>
       </div>
-      ${filtered ? html`<a class="btn btn-sm db-dark-btn" href="${'#/agenda?barbero=' + encodeURIComponent(row.staff_id)}">${raw(icon('calendar', 'ic-sm'))}Ver su agenda</a>`
-        : html`<div class="db-share"><span><b>${share}%</b> de las citas del equipo en el periodo</span><div class="bar"><span style="width:${share}%"></span></div></div>`}
+      ${filtered ? html`<div class="db-share">
+            <div><span><b>${row.appointments ? Math.round((row.completed / row.appointments) * 100) : 0}%</b> de sus citas ya se atendieron</span><div class="bar" aria-hidden="true"><span style="width:${row.appointments ? Math.round((row.completed / row.appointments) * 100) : 0}%"></span></div></div>
+            <div><span><b>${pctText(row.occupancy_pct || 0)}</b> de ocupación de su horario</span><div class="bar" aria-hidden="true"><span style="width:${Math.min(100, row.occupancy_pct || 0)}%;animation-delay:120ms"></span></div></div>
+            <a class="btn btn-sm db-dark-btn" style="justify-self:start" href="${'#/agenda?barbero=' + encodeURIComponent(row.staff_id)}">${raw(icon('calendar', 'ic-sm'))}Ver su agenda</a>
+          </div>`
+        : html`<div class="db-share">
+            <div><span><b>${share}%</b> de las citas del equipo</span><div class="bar" aria-hidden="true"><span style="width:${share}%"></span></div></div>
+            <div><span><b>${revShare}%</b> de los ingresos</span><div class="bar" aria-hidden="true"><span style="width:${revShare}%;animation-delay:120ms"></span></div></div>
+            ${second ? html`<p class="db-lead">${raw(icon(lead > 0 ? 'arrow-up' : 'minus', 'ic-sm'))}${lead > 0 ? plural(lead, 'cita') + ' más que ' + firstName(second.name) + ', el 2.º lugar' : 'Empatado en citas con ' + firstName(second.name)}</p>` : ''}
+          </div>`}
     </article>`);
   }
 
@@ -954,7 +981,7 @@ function apptRow(a, now) {
   const owner = can('appointments.read.all');
   return html`<div class="db-appt ${past ? 'done' : ''} ${q ? 'has-act' : ''}">
     <button type="button" class="db-appt-main" data-open="${a.id}" aria-label="${'Abrir cita de ' + (a.client_name || 'cliente') + ' a las ' + time(a.start_min)}">
-      <span class="db-appt-time"><b>${time(a.start_min)}</b><small class="${live ? 'now' : ''}">${tomorrow ? 'mañana' : past ? time(a.end_min) : untilText(a, now)}</small></span>
+      <span class="db-appt-time"><b>${time(a.start_min)}</b><small class="${live ? 'now' : ''}">${tomorrow ? 'mañana' : past ? 'hasta ' + time(a.end_min) : untilShort(a, now)}</small></span>
       <span class="stripe" style="--c:${staffColor(a)}"></span>
       <span class="who"><b class="truncate">${a.client_name || 'Cliente sin nombre'}</b><span class="truncate">${svcText(a)}${owner && a.staff_name ? ' · ' + firstName(a.staff_name) : ''}</span></span>
     </button>
@@ -978,11 +1005,12 @@ function shortcutsHtml(rem, cash) {
     else if (cash) sub = 'Cerrada · ábrela al iniciar el día';
     items.push(html`<a class="card interactive db-short" href="#/caja"><span class="ico ${cls}">${raw(icon('wallet'))}</span><span class="txt"><b>Caja</b><span>${sub}</span></span>${raw(icon('chevron-right', 'chev'))}</a>`);
   }
+  if (can('shop.update')) items.push(html`<a class="card interactive db-short db-short-link" href="#/enlace"><span class="ico">${raw(icon('qr'))}</span><span class="txt"><b>Tu enlace de reservas</b><span>Compártelo por WhatsApp o con tu QR</span></span>${raw(icon('chevron-right', 'chev'))}</a>`);
   if (canWrite()) items.push(html`<button type="button" class="btn btn-primary btn-lg btn-block" data-act="new">${raw(icon('calendar-plus'))}Nueva cita</button>`);
   return html`${items}`;
 }
 
-function statusBars(by) {
+export function statusBars(by) {
   const rows = [['completed', 'Atendidas'], ['confirmed', 'Confirmadas'], ['pending', 'Pendientes'], ['no_show', 'No asistieron'], ['cancelled', 'Canceladas']];
   const tot = rows.reduce((a, [k]) => a + ((by || {})[k] || 0), 0);
   if (!tot) return emptyState({ icon: 'calendar', title: 'Sin citas', compact: true });
@@ -995,10 +1023,10 @@ function todaySkeleton() {
     '<div class="db-tprog"><div class="skel" style="height:6px"></div></div>' +
     '<div class="db-alist">' + '<div class="skel-row" style="min-height:64px;padding-left:18px"><div class="skel" style="width:48px;height:30px"></div><div style="flex:1"><div class="skel skel-line" style="width:45%"></div><div class="skel skel-line" style="width:30%;height:10px"></div></div><div class="skel" style="width:80px;height:24px;border-radius:999px"></div></div>'.repeat(3) + '</div></div>';
 }
-function kpiSkeleton(n, cls) {
+export function kpiSkeleton(n, cls) {
   return '<div class="db-kpis ' + (cls || '') + '" aria-hidden="true">' + ('<div class="card kpi db-kpi"><div class="skel" style="width:55%;height:12px"></div><div class="skel" style="width:70%;height:30px;margin-top:6px"></div><div class="skel" style="width:40%;height:12px;margin-top:6px"></div><div class="skel" style="width:80%;height:10px;margin-top:4px"></div></div>').repeat(n) + '</div>';
 }
-function cardSkeleton(h, extra) { return '<div class="card db-card ' + (extra || '') + '"><div class="card-head"><div style="flex:1"><div class="skel" style="width:40%;height:14px"></div><div class="skel" style="width:60%;height:10px;margin-top:8px"></div></div></div><div class="card-body"><div class="skel" style="height:' + h + 'px;border-radius:12px"></div></div></div>'; }
+export function cardSkeleton(h, extra) { return '<div class="card db-card ' + (extra || '') + '"><div class="card-head"><div style="flex:1"><div class="skel" style="width:40%;height:14px"></div><div class="skel" style="width:60%;height:10px;margin-top:8px"></div></div></div><div class="card-body"><div class="skel" style="height:' + h + 'px;border-radius:12px"></div></div></div>'; }
 function ownerSkeleton() {
   return '<div aria-busy="true" aria-label="Cargando tablero">' + kpiSkeleton(6, 'six') +
     '<div class="db-grid lead">' + cardSkeleton(240) + '<div class="card skel db-skel-card" style="min-height:300px;border-radius:var(--r-lg)"></div></div>' +
@@ -1011,17 +1039,16 @@ function ownerSkeleton() {
 const BARBER_KPIS = [
   { k: 'today', label: 'Citas hoy', icon: 'calendar', fmt: (n) => number(n) },
   { k: 'done', label: 'Atendidas', icon: 'check-circle', fmt: (n) => number(n) },
-  { k: 'week', label: 'Ingresos de la semana', icon: 'wallet', fmt: (n) => money(Math.round(n)) },
+  { k: 'week', label: 'Ingresos semana', icon: 'wallet', fmt: (n) => money(Math.round(n)) },
   { k: 'commission', label: 'Comisión del mes', icon: 'percent', fmt: (n) => money(Math.round(n)) }
 ];
 
 async function renderBarber(el) {
-  let W = null, C = null, R = null, seq = 0, gone = false, lastLoad = 0, first = true;
+  let W = null, C = null, R = null, PW = null, seq = 0, gone = false, lastLoad = 0, first = true;
   const t0 = today();
   el.innerHTML = String(html`
     <div class="page-head db-head">
       <div><span class="eyebrow">${dateLongCap(t0)}</span><h2>${greeting()}${myName() ? ', ' + myName() : ''}</h2><p id="dbSub">Tu día de un vistazo.</p></div>
-      <div class="actions">${canWrite() ? html`<button type="button" class="btn btn-primary" data-act="new">${raw(icon('plus'))}Nueva cita</button>` : ''}</div>
     </div>
     <div id="dbB">${raw(barberSkeleton())}</div>`);
 
@@ -1033,13 +1060,15 @@ async function renderBarber(el) {
     if (silent && W) { box.classList.add('db-busy'); box.setAttribute('aria-busy', 'true'); }
     const staffId = me() ? me().id : undefined;
     try {
-      const [w, c, r] = await Promise.all([
+      const [w, pw, c, r] = await Promise.all([
         api.get('/reports/dashboard', { from: ws, to: we, staff_id: staffId }),
+        // Mismo corte de la semana pasada (lunes → mismo día) para comparar parejo.
+        api.get('/reports/dashboard', { from: addDays(ws, -7), to: addDays(t, -7), staff_id: staffId }).catch(() => null),
         canAny(['commissions.read.all', 'commissions.read.own']) ? api.get('/commissions', { from: startOfMonth(t), to: t, staff_id: staffId }).catch(() => null) : Promise.resolve(null),
         can('messages.send') ? api.get('/reminders').catch(() => null) : Promise.resolve(null)
       ]);
       if (my !== seq || gone) return;
-      W = w; C = c; R = r;
+      W = w; C = c; R = r; PW = pw;
     } catch (err) {
       if (my !== seq || gone) return;
       box.classList.remove('db-busy'); box.removeAttribute('aria-busy');
@@ -1064,15 +1093,18 @@ async function renderBarber(el) {
     const mine = C && C.items ? (C.items.find((x) => me() && x.staff_id === me().id) || C.items[0]) : null;
     $('#dbSub', el).textContent = !all.length ? 'Hoy no tienes citas en tu agenda.' : left ? 'Te ' + (left === 1 ? 'queda 1 cita' : 'quedan ' + left + ' citas') + ' por atender hoy.' : '¡Terminaste las citas de hoy!';
     const k = { today: all.length, done: done.length, week: W.kpis.revenue, commission: mine ? mine.commission : 0 };
-    const weekDelta = deltaInfo(W.kpis.revenue, W.kpis.revenue_prev);
+    const pwFrom = addDays(W.range.from, -7), pwTo = addDays(t, -7);
+    const weekDelta = PW ? deltaInfo(W.kpis.revenue, PW.kpis.revenue) : null;
+    const pwText = pwFrom === pwTo ? shortDay(pwFrom) : rangeText(pwFrom, pwTo).replace(/ \d{4}$/, '');
     box.innerHTML = String(html`
       ${nextHero(next, live, now, all, done, tom)}
       <div class="db-kpis four" id="dbKpis" style="margin-top:16px">
         <div class="card kpi db-kpi"><div class="label">${raw(icon('calendar'))}Citas hoy</div><div class="value" data-kpi="today" data-to="${k.today}">${number(k.today)}</div><div class="foot">${all.length ? (next ? 'Siguiente a las ' + time(next.start_min) : 'Ya no tienes pendientes') : 'Día libre en tu agenda'}</div></div>
         <div class="card kpi db-kpi"><div class="label">${raw(icon('check-circle'))}Atendidas</div><div class="value" data-kpi="done" data-to="${k.done}">${number(k.done)}</div>
           <div class="progress-bar" aria-hidden="true"><span style="width:${all.length ? Math.round((done.length / all.length) * 100) : 0}%;background:var(--ok)"></span></div><div class="foot">de ${plural(all.length, 'cita')} de hoy</div></div>
-        <div class="card kpi db-kpi"><div class="label">${raw(icon('wallet'))}Ingresos de la semana</div><div class="value" data-kpi="week" data-to="${k.week}">${money(Math.round(k.week))}</div>
-          <div class="db-kpi-row">${deltaHtml(weekDelta, 'la semana pasada')}<span class="faint" style="font-size:12px">vs. semana pasada</span></div></div>
+        <div class="card kpi db-kpi"><div class="label">${raw(icon('wallet'))}Ingresos semana</div><div class="value" data-kpi="week" data-to="${k.week}">${money(Math.round(k.week))}</div>
+          <div class="db-kpi-row">${PW ? deltaHtml(weekDelta, pwText) : html`<span class="delta flat">${raw(icon('minus'))}Sin comparación</span>`}</div>
+          <div class="foot">${PW ? 'vs. ' + pwText + ' (' + money(Math.round(PW.kpis.revenue)) + ')' : 'Desde el lunes'}</div></div>
         <div class="card kpi db-kpi"><div class="label">${raw(icon('percent'))}Comisión del mes</div><div class="value" data-kpi="commission" data-to="${k.commission}">${money(Math.round(k.commission))}</div>
           <div class="foot">${mine ? (mine.commission_pct ? mine.commission_pct + '% de ' + money(Math.round(mine.revenue)) : 'Sin comisión configurada') + (mine.tips ? ' · + ' + money(Math.round(mine.tips)) + ' de propinas' : '') : 'Estimada con tus cobros del mes'}</div></div>
       </div>
@@ -1080,14 +1112,22 @@ async function renderBarber(el) {
         <section class="card db-card" aria-labelledby="dbTlT">
           <div class="card-head"><div><h3 id="dbTlT">Tu día</h3><span class="sub">${all.length ? plural(all.length, 'cita') + ' · ' + plural(done.length, 'atendida') : dateLongCap(t)}</span></div><a class="btn btn-ghost btn-sm" href="#/agenda">Agenda${raw(icon('chevron-right', 'ic-sm'))}</a></div>
           <div class="card-body" style="padding-top:6px">${all.length ? timeline(all, now) : html`${emptyState({ icon: 'calendar', title: 'Hoy no tienes citas', text: tom.length ? 'Mañana tienes ' + plural(tom.length, 'cita') + '. Aprovecha para compartir tu enlace de reservas.' : 'Cuando te agenden una cita aparecerá aquí, en orden.', compact: true })}`}</div>
-          ${all.length && !left && tom.length ? html`<div class="db-alist"><div class="db-alist-t"><span>Mañana · ${plural(tom.length, 'cita')}</span>${can('messages.send') ? html`<a class="link-btn" href="#/mensajes" style="text-transform:none;letter-spacing:0;font-size:13px">Recordatorios</a>` : ''}</div>${tom.slice(0, 3).map((a) => apptRow(a, -1))}</div>` : ''}
         </section>
+        <div class="stack" style="gap:16px">
         <section class="card db-card" aria-labelledby="dbWkT">
           <div class="card-head"><div><h3 id="dbWkT">Tu semana</h3><span class="sub">${rangeText(W.range.from, W.range.to)}</span></div></div>
           <div class="card-body">${weekCal(W.series, t)}
             <div class="db-wsum"><span><b>${number(W.kpis.appointments)}</b> citas</span><span><b>${number(W.kpis.completed)}</b> atendidas</span><span><b>${money(Math.round(W.kpis.revenue))}</b> cobrado</span></div>
           </div>
         </section>
+        ${R ? html`<section class="card db-card db-today" aria-labelledby="dbTmT">
+          <div class="card-head"><div><h3 id="dbTmT" style="font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:0">Mañana</h3><span class="sub">${tom.length ? plural(tom.length, 'cita') + ' · la primera a las ' + time(tom[0].start_min) : 'Sin citas por ahora'}</span></div>
+            ${tom.length && can('messages.send') ? html`<a class="btn btn-ghost btn-sm db-to-agenda" href="#/mensajes?tab=recordatorios">${raw(icon('whatsapp', 'ic-sm'))}Recordar</a>` : ''}</div>
+          ${tom.length ? html`<div class="db-alist" style="margin-top:12px">${tom.slice(0, 3).map((a) => apptRow(a, -1))}</div>
+            ${tom.length > 3 ? html`<div class="db-tmore"><a class="link-btn" style="min-height:46px;justify-content:center;width:100%" href="${'#/agenda?fecha=' + addDays(t, 1)}">Ver las ${tom.length} de mañana</a></div>` : ''}`
+            : html`<div class="db-tempty"><span class="art">${raw(icon('calendar'))}</span><div class="grow"><b>Mañana tienes la agenda libre</b><span>Comparte tu enlace para que te reserven.</span></div></div>`}
+        </section>` : ''}
+        </div>
       </div>`);
     animateKpis($('#dbKpis', box), BARBER_KPIS, first);
   }
@@ -1154,7 +1194,7 @@ function timeline(all, now) {
       <div class="t">${time(a.start_min)}<small>${a.duration_min} min</small></div>
       <div class="rail"><i></i></div>
       <div class="bd">
-        <button type="button" data-open="${a.id}" aria-label="${'Abrir cita de ' + (a.client_name || 'cliente') + ' a las ' + time(a.start_min)}"><b class="truncate">${a.client_name || 'Cliente sin nombre'}</b><span class="truncate">${svcText(a)} · ${money(a.total)}</span></button>
+        <button type="button" data-open="${a.id}" aria-label="${'Abrir cita de ' + (a.client_name || 'cliente') + ' a las ' + time(a.start_min) + ', ' + statusLabel(a.status)}"><b class="truncate">${a.client_name || 'Cliente sin nombre'}</b><span class="truncate"><em class="db-stt">${statusLabel(a.status)} · </em>${svcText(a)} · ${money(a.total)}</span></button>
         <span class="act">${q ? html`<button type="button" class="btn btn-sm ${q.cls}" data-quick="${q.act}" data-id="${a.id}">${raw(icon(q.icon, 'ic-sm'))}${q.label}</button>` : statusBadge(a.status)}</span>
       </div>
     </div>`);

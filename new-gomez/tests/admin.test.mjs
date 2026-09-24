@@ -252,3 +252,27 @@ test('admin PATCH usuario: desactivar cierra sus sesiones; no puede desactivarse
   await f.call('PATCH', '/api/admin/users/u_super', { as: 'super', body: { password: 'superclave99' } });
   assert.equal((await f.call('GET', '/api/admin/stats', { as: 'super' })).status, 200);
 });
+
+test('admin PATCH usuario: desactivar o cambiar la contraseña también cierra las sesiones PIN de su staff', async () => {
+  const f = await withSuper();
+  const pin = () => f.call('POST', '/api/auth/pin', { body: { shop_slug: 'alfa', pin: '2222' } });
+  const alive = async (tk) => (await f.call('GET', '/api/appointments?from=' + f.day + '&to=' + f.day, { token: tk, shop: 'shop_a' })).status;
+  // Desactivar la cuenta.
+  const s1 = await pin();
+  assert.equal(s1.status, 200, s1.body);
+  assert.equal(await alive(s1.data.token), 200);
+  assert.equal((await f.call('PATCH', '/api/admin/users/u_barberA', { as: 'super', body: { status: 'disabled' } })).status, 200);
+  assert.equal(await alive(s1.data.token), 401);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: s1.data.token })).status, 401);
+  assert.equal(await f.db.count('sessions', { kind: 'pin', staff_id: 'st_barberA' }), 0);
+  // Reactivar y restablecer la contraseña.
+  assert.equal((await f.call('PATCH', '/api/admin/users/u_barberA', { as: 'super', body: { status: 'active' } })).status, 200);
+  const s2 = await pin();
+  assert.equal(s2.status, 200, s2.body);
+  const other = await f.call('POST', '/api/auth/pin', { body: { shop_slug: 'beta', pin: '2222' } }); // otra barbería: nada que ver
+  assert.equal(other.status, 401);
+  assert.equal((await f.call('PATCH', '/api/admin/users/u_barberA', { as: 'super', body: { password: 'restablecida1' } })).status, 200);
+  assert.equal(await alive(s2.data.token), 401);
+  // La sesión del superadmin que hizo el cambio sigue viva.
+  assert.equal((await f.call('GET', '/api/admin/stats', { as: 'super' })).status, 200);
+});

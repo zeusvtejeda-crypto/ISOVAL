@@ -192,3 +192,28 @@ test('importación: nombre corto casa con el nombre completo si es único', asyn
   assert.equal(r.data.staff_created, 0);
   assert.equal((await f.db.findOne('appointments', { folio: 'NG-ANGEL1' })).staff_id, 'st_barberA2');
 });
+
+test('importación: barbero que solo aparece en citas viejas (exempleado) no queda reservable en línea', async () => {
+  const f = await setup();
+  const old = cita({ id: 'NG-OLD001', fecha: '2024-05-10', barbero: 'x9', barberoNombre: 'Beto', estado: 'atendida' });
+  // Rafa tampoco viene en la lista del equipo, pero tiene una cita próxima: activo para atenderla, no reservable.
+  const next = cita({ id: 'NG-NEXT01', fecha: f.day, barbero: 'x10', barberoNombre: 'Rafa', estado: 'registrada', inicio: 1000 });
+  const r = await f.imp('ownerA', { citas: [old, next, cita({ id: 'NG-ALEX01', barbero: 'alexis', barberoNombre: 'Alexis' })], staff: [LEGACY_STAFF[2]] });
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.imported, 3);
+  const staff = Object.fromEntries((await f.db.find('staff', { shop_id: 'shop_a' })).map((s) => [s.name, s]));
+  assert.deepEqual([staff.Beto.active, staff.Beto.bookable], [false, false], 'exempleado: solo historial');
+  assert.deepEqual([staff.Rafa.active, staff.Rafa.bookable], [true, false], 'con citas próximas: activo, sin reserva en línea');
+  assert.deepEqual([staff.Alexis.active, staff.Alexis.bookable], [true, true], 'en la lista del respaldo: se respeta activo/barbero');
+  assert.equal((await f.db.findOne('appointments', { folio: 'NG-OLD001' })).staff_id, staff.Beto.id, 'el historial sí queda a su nombre');
+  // La página pública y los horarios no los ofrecen.
+  const pub = await f.call('GET', '/api/public/shops/alfa');
+  assert.equal(pub.status, 200, pub.body);
+  const names = pub.data.staff.map((s) => s.name);
+  assert.ok(!names.includes('Beto') && !names.includes('Rafa'), names.join(', '));
+  assert.ok(names.includes('Alexis'));
+  const sl = await f.call('GET', '/api/public/shops/alfa/slots?date=' + f.day + '&services=sv_corte&staff=any');
+  assert.equal(sl.status, 200, sl.body);
+  const offered = new Set(sl.data.slots.flatMap((s) => s.staff_ids));
+  assert.ok(!offered.has(staff.Beto.id) && !offered.has(staff.Rafa.id));
+});

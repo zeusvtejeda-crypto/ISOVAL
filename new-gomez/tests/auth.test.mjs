@@ -6,6 +6,7 @@ import { scopedDb } from '../core/db.js';
 import { hashSecret } from '../core/crypto.js';
 import { DEFAULT_HOURS } from '../core/domain/settings.js';
 import { createShopWithOwner, uniqueSlug, TEMPLATE_SERVICES } from '../core/api/auth.js';
+import { attemptsWhere } from '../core/session.js';
 
 // Ruta GET de barbería (auth 'shop') que un dueño puede usar, para probar acceso/aislamiento a nivel router.
 // Las implementan otros módulos; si aún no existe ninguna, esas aserciones se omiten.
@@ -82,11 +83,12 @@ test('bloqueo tras 5 fallos por correo (15 min); otro correo desde la misma IP s
   assert.match(locked.error.message, /Intenta de nuevo en 1[45] min/);
   const other = await f.call('POST', '/api/auth/login', { body: { email: 'barber.a@t.mx', password: PW } });
   assert.equal(other.status, 200);
-  // Pasado el bloqueo, vuelve a entrar y el contador se reinicia.
-  await f.db.update('login_attempts', { id: 'pw:owner.a@t.mx' }, { locked_until: new Date(Date.now() - 1000).toISOString(), first_at: new Date(Date.now() - 20 * 60000).toISOString() });
+  // Pasado el bloqueo (los intentos ya tienen más de 15 min), vuelve a entrar y el contador se reinicia.
+  assert.equal(await f.db.count('login_attempts', attemptsWhere('pw:owner.a@t.mx')), 5);
+  await f.db.update('login_attempts', attemptsWhere('pw:owner.a@t.mx'), { first_at: new Date(Date.now() - 16 * 60000).toISOString() });
   const ok = await f.call('POST', '/api/auth/login', { body: { email: 'owner.a@t.mx', password: PW } });
   assert.equal(ok.status, 200);
-  assert.equal(await f.db.findOne('login_attempts', { id: 'pw:owner.a@t.mx' }), null);
+  assert.equal(await f.db.count('login_attempts', attemptsWhere('pw:owner.a@t.mx')), 0);
 });
 
 test('bloqueo por IP tras 30 fallos con correos distintos; otra IP no se afecta', async () => {
@@ -290,7 +292,9 @@ test('registro: validaciones, correo duplicado y barbería inexistente', async (
   assert.match(r.error.fields.password, /al menos 8/);
   const dup = await f.call('POST', '/api/auth/register', { body: { name: 'Otro', email: 'OWNER.A@t.mx', password: 'clave1234' } });
   assert.equal(dup.status, 409);
-  assert.equal(dup.error.message, 'Ya existe una cuenta con ese correo. Inicia sesión.');
+  assert.equal(dup.error.code, 'duplicate'); // el panel ofrece "Inicia sesión" con este código
+  assert.match(dup.error.message, /inicia sesión/i);
+  assert.doesNotMatch(dup.error.message, /Ya existe/);
   const nf = await f.call('POST', '/api/auth/register', { body: { name: 'Eva', email: 'eva@correo.mx', password: 'clave1234', shop_slug: 'zzz' } });
   assert.equal(nf.status, 404);
   assert.equal(await f.db.findOne('users', { email: 'eva@correo.mx' }), null);
@@ -496,4 +500,47 @@ test('usuario sin contraseña (p. ej. staff sin cuenta completa) no puede entrar
   await f.db.update('users', { id: 'u_nopw' }, { password_hash: await hashSecret('clave-propia', 1000) });
   assert.equal((await f.call('POST', '/api/auth/login', { body: { email: 'nopw@t.mx', password: PW } })).status, 401);
   assert.equal((await f.call('POST', '/api/auth/login', { body: { email: 'nopw@t.mx', password: 'clave-propia' } })).status, 200);
+});
+
+// ── Regresiones de la revisión de seguridad ──
+test('cambio de contraseña: cierra también las sesiones PIN de sus fichas de staff (otros dispositivos)', async () => {
+  const f = await makeFixture();
+  await f.login('barberA', 'barber.a@t.mx');
+  const p = await f.call('POST', '/api/auth/pin', { body: { shop_slug: 'alfa', pin: '2222' } });
+  assert.equal(p.status, 200);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: p.data.token })).status, 200);
+  const r = await f.call('POST', '/api/auth/password', { as: 'barberA', body: { current: PW, next: 'nuevaclave99' } });
+  assert.equal(r.status, 200, r.body);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: p.data.token })).status, 401);
+  assert.equal((await f.call('GET', '/api/auth/me', { as: 'barberA' })).status, 200, 'la sesión actual sigue');
+});
+
+test('sesión PIN: deja de servir si la cuenta vinculada se desactiva o si al miembro le quitan el PIN (aunque la fila siga)', async () => {
+  const f = await makeFixture();
+  const p = await f.call('POST', '/api/auth/pin', { body: { shop_slug: 'alfa', pin: '2222' } });
+  const appts = () => f.call('GET', '/api/appointments?from=' + f.day + '&to=' + f.day, { token: p.data.token, shop: 'shop_a' });
+  assert.equal((await appts()).status, 200);
+  await f.db.update('users', { id: 'u_barberA' }, { status: 'disabled' }); // directo en la base: sin revocar filas
+  assert.equal((await appts()).status, 403);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: p.data.token })).status, 401);
+  await f.db.update('users', { id: 'u_barberA' }, { status: 'active' });
+  const q = await f.call('POST', '/api/auth/pin', { body: { shop_slug: 'alfa', pin: '2222' } });
+  await f.db.update('staff', { id: 'st_barberA' }, { pin_hash: null });
+  assert.equal((await f.call('GET', '/api/appointments?from=' + f.day + '&to=' + f.day, { token: q.data.token, shop: 'shop_a' })).status, 403);
+  assert.equal((await f.call('GET', '/api/auth/me', { token: q.data.token })).status, 401);
+});
+
+test('registro/alta con correo existente: 409 duplicate sin afirmar de más, y los sondeos cuentan para el límite por IP', async () => {
+  const f = await makeFixture();
+  const probe = (email, ip) => f.call('POST', '/api/auth/register', { ip, body: { name: 'Sonda', email, password: 'clave1234' } });
+  for (let i = 0; i < 10; i++) {
+    const r = await probe(i % 2 ? 'owner.a@t.mx' : 'x' + i + '@correo.mx', '4.4.4.4');
+    assert.equal(r.status, i % 2 ? 409 : 200, r.body);
+    if (i % 2) { assert.equal(r.error.code, 'duplicate'); assert.doesNotMatch(r.error.message, /Ya existe/); }
+  }
+  assert.equal((await probe('owner.b@t.mx', '4.4.4.4')).status, 429, 'el 11.º sondeo de la hora se bloquea');
+  const s = await f.call('POST', '/api/auth/signup', { ip: '4.4.4.5', body: signupBody({ email: 'owner.a@t.mx' }) });
+  assert.equal(s.status, 409);
+  assert.equal(s.error.code, 'duplicate');
+  assert.doesNotMatch(s.error.message, /Ya existe/);
 });

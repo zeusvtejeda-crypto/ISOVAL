@@ -1,7 +1,7 @@
 // Plataforma (superadmin): métricas globales, barberías y usuarios. Ver docs/API.md → "Plataforma".
 // Única zona que lee tablas por barbería con ctx.db SIN scope (permitido solo con auth 'platform').
 import { bad, notFound, conflict, normEmail, nowIso, nowInTz, addDays, money, int, clamp } from '../util.js';
-import { publicUser } from '../session.js';
+import { publicUser, revokeUserSessions } from '../session.js';
 import { createShopWithOwner, txt, failIf, passwordError, emailError, nameError, optionalPhone, isTimeZone, PLANS, DEFAULT_TIMEZONE } from './auth.js';
 import { hashSecret } from '../crypto.js';
 
@@ -260,8 +260,9 @@ async function updateUser(ctx) {
   failIf(fields);
   if (!Object.keys(patch).length) throw bad('No hay cambios que guardar.');
   await db.update('users', { id: u.id }, patch);
-  // Desactivar o cambiar la contraseña cierra sus sesiones (salvo la del propio superadmin que hace el cambio).
-  if (patch.status === 'disabled' || patch.password_hash) await db.delete('sessions', { user_id: u.id, id: { ne: ctx.session.id } });
+  // Desactivar o cambiar la contraseña cierra sus sesiones (salvo la del propio superadmin que hace el cambio),
+  // incluidas las sesiones PIN de sus fichas de staff (esas no llevan user_id, solo staff_id).
+  if (patch.status === 'disabled' || patch.password_hash) await revokeUserSessions(db, u.id, { exceptId: ctx.session.id });
   const [view] = await userViews(db, [Object.assign({}, u, patch)]);
   return { user: view };
 }

@@ -2,44 +2,51 @@
 //
 // Reglas (periodo from..to, fechas locales):
 //   services_count = citas `completed` del barbero con fecha en el periodo.
-//   revenue        = suma de `amount` de pagos `paid` del barbero con fecha en el periodo (sin propina).
+//   revenue        = suma de `amount` de los cobros del barbero con fecha en el periodo (sin propina), incluidos
+//                    los que después se reembolsaron, MENOS el `amount` de los reembolsos hechos en el periodo
+//                    (fecha local de refunded_at). Un reembolso no cambia el periodo del cobro (que pudo ya
+//                    liquidarse): lo pagado de más se descuenta en el periodo del reembolso (puede quedar negativo).
+//   refunds        = monto reembolsado en el periodo (ya restado de revenue).
 //   commission     = revenue × commission_pct / 100 (redondeo a centavos).
-//   tips           = propinas de esos pagos (100 % del barbero).
+//   tips           = propinas de esos cobros − propinas reembolsadas en el periodo (100 % del barbero).
 //   payouts        = pagos de comisión cuyo `period_to` cae en el periodo (el pago se asigna al periodo
 //                    que liquida, no al día en que se registró: así, tras pagar un periodo, su saldo queda en 0).
 //   balance        = commission + tips − payouts.
 // Se listan los barberos activos y los inactivos que tengan movimientos en el periodo.
 import { forbidden, notFound, conflict, bad, newId, nowIso, money, int, clamp, diffDays } from '../util.js';
 import { failIf, textField, cleanText } from '../domain/appointments.js';
-import { ownScope, body, dateKey, parseRange, moneyField, fmtMoney, truthy, openCashSession, MAX_RANGE_DAYS } from './payments.js';
+import { ownScope, body, dateKey, parseRange, moneyField, fmtMoney, truthy, openCashSession, refundsIn, MAX_RANGE_DAYS } from './payments.js';
 import { sessionDetail } from './cash.js';
 
 const MAX_PAYOUT = 1000000;
 
-export async function computeCommissions(sdb, { from, to, staffId }) {
+// tz: zona horaria de la barbería (fecha local de los reembolsos).
+export async function computeCommissions(sdb, { from, to, staffId, tz }) {
   const sw = staffId ? { staff_id: staffId } : {};
-  const [staff, appts, pays, payouts] = await Promise.all([
+  const [staff, appts, pays, refunds, payouts] = await Promise.all([
     sdb.find('staff', staffId ? { id: staffId } : {}, { order: ['sort asc', 'name asc'] }),
     sdb.find('appointments', Object.assign({ date: { gte: from, lte: to }, status: 'completed' }, sw)),
-    sdb.find('payments', Object.assign({ date: { gte: from, lte: to }, status: 'paid' }, sw)),
+    sdb.find('payments', Object.assign({ date: { gte: from, lte: to }, status: { in: ['paid', 'refunded'] } }, sw)),
+    refundsIn(sdb, tz, from, to, sw),
     sdb.find('commission_payouts', Object.assign({ period_to: { gte: from, lte: to } }, sw))
   ]);
   const acc = {};
-  const get = (id) => acc[id] || (acc[id] = { services_count: 0, revenue: 0, tips: 0, payouts: 0 });
+  const get = (id) => acc[id] || (acc[id] = { services_count: 0, revenue: 0, tips: 0, refunds: 0, payouts: 0 });
   for (const a of appts) get(a.staff_id).services_count++;
   for (const p of pays) if (p.staff_id) { const x = get(p.staff_id); x.revenue += Number(p.amount) || 0; x.tips += Number(p.tip) || 0; }
+  for (const p of refunds) if (p.staff_id) { const x = get(p.staff_id); x.revenue -= Number(p.amount) || 0; x.tips -= Number(p.tip) || 0; x.refunds += Number(p.amount) || 0; }
   for (const p of payouts) get(p.staff_id).payouts += Number(p.amount) || 0;
   const items = staff.filter((s) => s.active || acc[s.id] || s.id === staffId).map((s) => {
-    const x = acc[s.id] || { services_count: 0, revenue: 0, tips: 0, payouts: 0 };
+    const x = acc[s.id] || { services_count: 0, revenue: 0, tips: 0, refunds: 0, payouts: 0 };
     const pct = Number(s.commission_pct) || 0;
     const revenue = money(x.revenue), tips = money(x.tips), payouts = money(x.payouts);
     const commission = money(revenue * pct / 100);
     return {
       staff_id: s.id, staff_name: s.name, color: s.color || '', role: s.role, active: !!s.active, commission_pct: pct,
-      services_count: x.services_count, revenue, commission, tips, payouts, balance: money(commission + tips - payouts)
+      services_count: x.services_count, revenue, commission, tips, refunds: money(x.refunds), payouts, balance: money(commission + tips - payouts)
     };
   });
-  const totals = { services_count: 0, revenue: 0, commission: 0, tips: 0, payouts: 0, balance: 0 };
+  const totals = { services_count: 0, revenue: 0, commission: 0, tips: 0, refunds: 0, payouts: 0, balance: 0 };
   for (const it of items) for (const k of Object.keys(totals)) totals[k] += it[k];
   for (const k of Object.keys(totals)) if (k !== 'services_count') totals[k] = money(totals[k]);
   return { items, totals };
@@ -60,7 +67,7 @@ async function list(ctx) {
   const staffId = staffFilter(ctx, q.staff_id);
   failIf(errs);
   if (staffId && !(await ctx.sdb.findOne('staff', { id: staffId }))) throw notFound('No encontramos a ese barbero.');
-  const out = await computeCommissions(ctx.sdb, { from: r.from, to: r.to, staffId });
+  const out = await computeCommissions(ctx.sdb, { from: r.from, to: r.to, staffId, tz: ctx.shop.timezone });
   return Object.assign({ range: { from: r.from, to: r.to, days: r.days } }, out);
 }
 

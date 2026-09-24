@@ -7,7 +7,7 @@ import { shopSettings } from '../domain/settings.js';
 import { ACTIVE, failIf, parseIds } from '../domain/appointments.js';
 import {
   KINDS, APPT_KINDS, MESSAGE_STATUSES, MAX_BODY, composeMessage, recordMessage, messagePhone, validPhone, waLink,
-  publicBase, bookingUrl, initialStatus, templateFor, buildVars, renderTemplate
+  publicBase, bookingUrl, initialStatus, templateFor, buildVars, renderTemplate, fillLink
 } from '../domain/messages.js';
 
 const PERM = 'messages.send';
@@ -144,12 +144,19 @@ async function prepare(ctx) {
   if (!phone) throw bad(NO_PHONE, { phone: 'Agrega su teléfono en la ficha del cliente.' });
   if (!validPhone(phone)) throw bad('El teléfono de este cliente no es válido. Corrígelo en su ficha.', { phone: 'Teléfono no válido.' });
 
-  const text2 = text || await composeMessage({ sdb: ctx.sdb, shop: ctx.shop }, { kind, appt, client, base: publicBase(ctx.env, ctx.req.headers), withToken: true });
+  // Vista previa (opcional): arma el texto sin registrar el mensaje y SIN rotar el token de gestión (el enlace
+  // que el cliente ya tiene sigue sirviendo): el enlace de gestión queda como el marcador {enlace}.
+  // Al enviar (sin preview), un {enlace} en el texto se reemplaza por el enlace real (fillLink).
+  const preview = b.preview === true;
+  const base = publicBase(ctx.env, ctx.req.headers);
+  const c = { sdb: ctx.sdb, shop: ctx.shop };
+  let text2 = text;
+  if (!text2) text2 = await composeMessage(c, { kind, appt, client, base, withToken: !preview, preview });
+  else if (!preview) text2 = await fillLink(c, text2, { kind, appt, base });
   if (!text2) throw bad('No hay plantilla para ese tipo de mensaje. Escribe el texto.', { body: 'Escribe el mensaje.' });
   const cc = shopSettings(ctx.shop).whatsapp.country_code;
   const wa_link = waLink(phone, text2, cc);
-  // Vista previa (opcional): arma el texto (y rota el enlace de gestión) sin registrar el mensaje.
-  if (b.preview === true) return { message: null, body: text2, to_phone: phone, wa_link, preview: true };
+  if (preview) return { message: null, body: text2, to_phone: phone, wa_link, preview: true };
   const row = await recordMessage(ctx.sdb, {
     appointment_id: appt ? appt.id : null, client_id: client ? client.id : (appt ? appt.client_id : null),
     kind, to_phone: phone, body: text2, status: initialStatus(ctx.shop)

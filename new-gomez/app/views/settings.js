@@ -19,6 +19,7 @@ const DAY = (d) => WEEKDAYS[d].charAt(0).toUpperCase() + WEEKDAYS[d].slice(1);
 const DAY_S = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MAX_BLOCKS = 6;
 const SWATCHES = ['#C49A3C', '#15130F', '#8C4B3A', '#B3261E', '#D0457A', '#7A4B8C', '#3A5A8C', '#2F6F6B', '#4A6B3A'];
+const SWATCH_NAMES = ['Dorado', 'Negro', 'Terracota', 'Rojo', 'Rosa', 'Morado', 'Azul', 'Verde azulado', 'Verde olivo'];
 const TIMEZONES = [
   ['America/Mexico_City', 'Centro · CDMX, Guadalajara, Puebla'],
   ['America/Monterrey', 'Centro · Monterrey'],
@@ -52,6 +53,8 @@ const MAX_IMPORT = 5000;
 
 // Borradores que sobreviven a salir de la vista sin guardar (Atrás del navegador): id → valores del formulario.
 const drafts = {};
+// Guardar llama a refreshContext(), que vuelve a pintar toda la vista: se recupera la posición de scroll.
+let restoreScroll = null;
 
 // ── Utilidades ───────────────────────────────────────────────────────────
 const toHHMM = (m) => (m >= 1440 ? '23:59' : fmtTime(m));
@@ -192,7 +195,8 @@ function legacyStats(src) {
 // ── Estilos ──────────────────────────────────────────────────────────────
 const CSS = `
 .st-wrap{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
-@media (min-width:900px){.st-wrap{grid-template-columns:232px minmax(0,1fr);align-items:start}.st-navw{position:sticky;top:calc(var(--topbar-h) + 12px)}}
+@media (min-width:900px){.st-wrap{grid-template-columns:204px minmax(0,1fr);align-items:start}.st-navw{position:sticky;top:calc(var(--topbar-h) + 12px)}}
+@media (min-width:1280px){.st-wrap{grid-template-columns:232px minmax(0,1fr)}}
 .st-navg{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:14px 10px 6px}
 .st-navg:first-child{padding-top:4px}
 .st-nav{display:grid;gap:2px}
@@ -250,6 +254,7 @@ const CSS = `
 .st-logo .avatar{--s:76px;border-radius:22px;font-size:26px;box-shadow:0 0 0 1px var(--border),var(--shadow-2);transition:background .2s}
 .st-logo .avatar img{object-fit:contain;background:#fff}
 .st-logo .acts{display:flex;gap:8px;flex-wrap:wrap}
+.st-logo .stack-sm{flex:1;min-width:180px}
 .st-sw9{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .st-sw9 button,.st-sw9 label{width:40px;height:40px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff;box-shadow:inset 0 0 0 1px var(--border-strong);transition:transform .15s var(--ease),box-shadow .15s;position:relative;cursor:pointer}
 .st-sw9 button:hover,.st-sw9 label:hover{transform:scale(1.08)}
@@ -280,7 +285,7 @@ const CSS = `
 .st-derr{padding-left:54px;font-size:12.5px;color:var(--err);font-weight:500;display:flex;gap:6px;align-items:center}
 .st-derr .ic{width:15px;height:15px}
 @media (max-width:519px){.st-ranges,.st-closed,.st-derr{padding-left:0}.st-dname{min-width:0}.st-range .input{max-width:none}}
-@media (min-width:720px){.st-day{grid-template-columns:240px minmax(0,1fr);column-gap:16px;align-items:start}.st-dh{grid-column:1;grid-row:1 / span 2}.st-ranges,.st-closed,.st-derr{grid-column:2;padding-left:0}.st-closed{min-height:44px;display:flex;align-items:center}}
+@media (min-width:720px) and (max-width:1023px),(min-width:1180px){.st-day{grid-template-columns:230px minmax(0,1fr);column-gap:16px;align-items:start}.st-dh{grid-column:1;grid-row:1 / span 2}.st-ranges,.st-closed,.st-derr{grid-column:2;padding-left:0}.st-closed{min-height:44px;display:flex;align-items:center}}
 /* pagos */
 .st-pay{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (min-width:640px){.st-pay{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -296,7 +301,7 @@ const CSS = `
 .st-pay label.on .ck .ic{opacity:1}
 .st-pay label:focus-within{outline:2.5px solid var(--brand);outline-offset:2px}
 /* página pública */
-.st-rating{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-lg);background:var(--ink);color:var(--on-ink)}
+.st-rating{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-lg);background:var(--ink);color:var(--on-ink);border:1px solid rgba(242,237,227,.08)}
 .st-rating .big{font-family:var(--disp);font-size:40px;font-weight:800;line-height:1;color:#E6C173}
 .st-rating .stars{display:flex;gap:2px;color:#E6C173}
 .st-rating .stars .ic{width:16px;height:16px;fill:currentColor;stroke-width:1}
@@ -329,16 +334,18 @@ const CSS = `
 .st-prev .trail{display:grid;justify-items:end;gap:3px}
 .st-res{display:grid;gap:10px;padding:16px;border-radius:var(--r-lg);background:var(--ok-soft);border:1px solid color-mix(in srgb,var(--ok) 25%,transparent)}
 .st-res h4{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--ok)}
-.st-plan{position:relative;overflow:hidden;padding:22px;border-radius:var(--r-lg);background:var(--ink);color:var(--on-ink)}
+.st-plan{position:relative;overflow:hidden;padding:22px;border-radius:var(--r-lg);background:var(--ink);color:var(--on-ink);border:1px solid rgba(242,237,227,.08)}
 .st-plan::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(217,178,90,.35),transparent 70%)}
 .st-plan .eyebrow{color:#BDB5A5}
 .st-plan b{display:block;font-family:var(--disp);font-size:40px;font-weight:800;line-height:1.05;color:#E6C173;margin:4px 0}
 .st-plan p{color:#D9D3C6;font-size:14px;max-width:520px;position:relative;z-index:1}
 .st-kv{display:grid;gap:0}
-.st-kv>div{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border);min-height:52px}
+.st-kv>div{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:2px;align-items:center;padding:12px 0;border-top:1px solid var(--border);min-height:52px}
 .st-kv>div:first-child{border-top:0}
-.st-kv dt{font-size:13px;color:var(--text-2);min-width:130px}
-.st-kv dd{flex:1;min-width:0;font-weight:500;font-size:14px;overflow-wrap:anywhere}
+.st-kv dt{font-size:12.5px;color:var(--text-3);grid-column:1}
+.st-kv dd{grid-column:1;min-width:0;font-weight:500;font-size:14px;overflow-wrap:anywhere}
+.st-kv>div>.btn{grid-column:2;grid-row:1 / span 2}
+@media (min-width:640px){.st-kv>div{grid-template-columns:160px minmax(0,1fr) auto}.st-kv dt{font-size:13px;color:var(--text-2)}.st-kv dt,.st-kv dd{grid-column:auto}.st-kv>div>.btn{grid-column:3;grid-row:1}}
 `;
 function injectCss() { if (!document.getElementById('st-settings')) document.head.insertAdjacentHTML('beforeend', '<style id="st-settings">' + CSS + '</style>'); }
 
@@ -385,7 +392,7 @@ function sectionBody(id, sh) {
         <div class="field"><span class="label" id="stColorL">Color de tu marca</span>
           <input type="hidden" name="brand_color" value="${color}"/>
           <div class="st-sw9" role="group" aria-labelledby="stColorL">
-            ${SWATCHES.map((c) => html`<button type="button" data-color="${c.toLowerCase()}" style="--c:${c}" aria-label="${'Color ' + c}" aria-pressed="false">${raw(icon('check'))}</button>`)}
+            ${SWATCHES.map((c, i) => html`<button type="button" data-color="${c.toLowerCase()}" style="--c:${c}" aria-label="${'Color ' + SWATCH_NAMES[i].toLowerCase()}" title="${SWATCH_NAMES[i]}" aria-pressed="false">${raw(icon('check'))}</button>`)}
             <label style="--c:#888" title="Otro color" aria-label="Elegir otro color" aria-pressed="false" id="stColorCustom"><input type="color" id="stColorIn" value="${color || '#c49a3c'}" aria-label="Elegir otro color"/></label>
           </div>
           <div class="st-brandprev" id="stBrandPrev"></div><p class="error">Elige un color válido.</p></div>
@@ -521,7 +528,7 @@ export default {
 
     el.innerHTML = String(html`<div class="st-root" data-view="${sid ? 'detail' : 'list'}">
       <div class="page-head"><div><h2>Ajustes</h2><p>Configura tu barbería, tus reservas en línea y tu página pública.</p></div></div>
-      <div class="st-wrap"><div class="st-navw" id="stNav"></div><div class="st-panel" id="stPanel" aria-live="polite"></div></div></div>`);
+      <div class="st-wrap"><nav class="st-navw" id="stNav" aria-label="Secciones de ajustes"></nav><div class="st-panel" id="stPanel" aria-live="polite"></div></div></div>`);
     const root = el.firstElementChild, navEl = $('#stNav', el), panel = $('#stPanel', el);
     if (sid && !desk()) window.scrollTo(0, 0);
 
@@ -533,8 +540,8 @@ export default {
       const sh = shop();
       let g = null, out = '';
       for (const s of SECTIONS) {
-        if (s.group !== g) { if (g !== null) out += '</div>'; g = s.group; out += '<div class="st-navg">' + esc(g) + '</div><div class="st-nav" role="list">'; }
-        out += String(html`<button type="button" role="listitem" data-sec="${s.id}" aria-current="${String(s.id === sid && desk())}">
+        if (s.group !== g) { if (g !== null) out += '</div>'; g = s.group; out += '<div class="st-navg" aria-hidden="true">' + esc(g) + '</div><div class="st-nav" role="group" aria-label="' + esc(g) + '">'; }
+        out += String(html`<button type="button" data-sec="${s.id}" aria-current="${String(s.id === sid && desk())}">
           <span class="ico">${raw(icon(s.icon))}</span><span class="txt"><span class="ttl">${s.title}</span><span class="sum">${s.sum(sh)}</span></span>
           ${drafts[s.id] && s.id !== sid ? html`<span class="drf" title="Cambios sin guardar" aria-label="Cambios sin guardar"></span>` : ''}${raw(icon('chevron-right', 'chev'))}</button>`);
       }
@@ -684,7 +691,7 @@ export default {
             <input class="input ${chk.bad.has(i) ? 'err' : ''}" type="time" step="900" value="${r.e}" data-t="e" data-d="${d}" data-i="${i}" aria-label="${DAY(d) + ': cierra, horario ' + (i + 1)}"/>
             <button type="button" class="btn btn-ghost btn-icon" data-del="${d + ':' + i}" aria-label="${'Quitar el horario ' + r.s + ' a ' + r.e + ' del ' + WEEKDAYS[d]}" title="Quitar">${raw(icon('x'))}</button></div>`)}
           ${day.ranges.length < MAX_BLOCKS ? html`<button type="button" class="btn btn-ghost btn-sm st-add" data-add="${d}">${raw(icon('plus'))}${day.ranges.length ? 'Agregar otro horario' : 'Agregar horario'}</button>` : ''}</div>
-          ${chk.error ? html`<p class="st-derr" role="alert">${raw(icon('alert'))}${chk.error}</p>` : ''}` : html`<p class="st-closed">Cerrado todo el día.</p>`}
+          ${chk.error ? html`<p class="st-derr" role="alert">${raw(icon('alert'))}${chk.error}</p>` : ''}` : html`<p class="st-closed">Ese día no se pueden reservar citas.</p>`}
       </div>`;
     }
     function repaintDay(d) {
@@ -775,6 +782,7 @@ export default {
         paintBar();
         toast.success('Cambios guardados');
         bus.emit('shop:changed');
+        restoreScroll = { sid, y: window.scrollY };
         await window.TB.refreshContext();
       } catch (err) {
         if (err.fields && Object.keys(err.fields).some((k) => /^settings\.hours/.test(k))) { toast.error(err); return; }
@@ -822,6 +830,7 @@ export default {
       }
       if (act === 'logo-clear') { cur.form.elements.logo_url.value = ''; $('#stLogoUrl', cur.form).value = ''; syncSection('perfil'); onChange(); }
     }));
+    offs.push(on(el, 'click', '[data-copy-id]', (e, b) => copyText(b.dataset.copyId, 'ID de la barbería copiado')));
     offs.push(on(el, 'click', '[data-color]', (e, b) => { cur.form.elements.brand_color.value = b.dataset.color; syncSection('perfil'); onChange(); }));
     offs.push(on(el, 'submit', '#stForm', (e) => { e.preventDefault(); save(document.querySelector('.st-savebar [type=submit]') || null); }));
     offs.push(on(el, 'input', '#stForm', (e) => {
@@ -894,6 +903,11 @@ export default {
 
     paintNav();
     paintSection();
+    if (restoreScroll && restoreScroll.sid === sid) {
+      const y = restoreScroll.y;
+      requestAnimationFrame(() => window.scrollTo(0, y));
+    }
+    restoreScroll = null;
 
     return () => {
       offs.forEach((f) => f());
@@ -924,7 +938,7 @@ function planBody(sh) {
     <div class="card"><div class="card-head"><h3>Datos de la cuenta</h3></div>
       <dl class="card-body st-kv">
         <div><dt>ID de la barbería</dt><dd class="mono" style="font-size:13px">${sh.id}</dd><button type="button" class="btn btn-ghost btn-sm" data-copy-id="${sh.id}" aria-label="Copiar ID de la barbería">${raw(icon('copy', 'ic-sm'))}Copiar</button></div>
-        <div><dt>Enlace de reservas</dt><dd class="mono" style="font-size:13px">?b=${sh.slug}</dd><a class="btn btn-ghost btn-sm" href="#/enlace">${raw(icon('qr', 'ic-sm'))}Enlace y QR</a></div>
+        <div><dt>Enlace de reservas</dt><dd class="mono" style="font-size:13px">${SITE_BASE.replace(/^https?:\/\//, '')}?b=${sh.slug}</dd><a class="btn btn-ghost btn-sm" href="#/enlace">${raw(icon('qr', 'ic-sm'))}Enlace y QR</a></div>
         <div><dt>Dominio propio</dt><dd>${sh.domain || html`<span class="faint">Sin dominio propio</span>`}</dd></div>
         <div><dt>Moneda</dt><dd>${sh.currency === 'USD' ? 'Dólar (USD)' : 'Peso mexicano (MXN)'}</dd></div>
         <div><dt>Zona horaria</dt><dd>${(TIMEZONES.find(([t]) => t === sh.timezone) || [0, sh.timezone])[1]}</dd></div>
@@ -933,7 +947,6 @@ function planBody(sh) {
     <div class="banner info">${raw(icon('help'))}<div class="grow">Tu plan y tu dominio propio los administra el equipo de TuBarbería. Si necesitas un cambio, compártenos el ID de tu barbería.</div></div>
   </div>`;
 }
-document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-copy-id]'); if (b) copyText(b.dataset.copyId, 'ID copiado'); });
 
 // ── Importar datos anteriores ────────────────────────────────────────────
 function mountImport(box) {

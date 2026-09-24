@@ -292,3 +292,20 @@ test('D1 (SQLite): mensajes, outbox, recordatorios, notificaciones e importació
   r = await call('POST', '/api/import/legacy', Object.assign({ body: { citas } }, A));
   assert.deepEqual([r.data.imported, r.data.skipped], [0, 200]);
 });
+
+test('reminders/run: una cita reagendada después de su recordatorio recibe uno nuevo', async () => {
+  const { makeFixture } = await import('./helpers.mjs');
+  const { addDays, nowInTz, newId, nowIso } = await import('../core/util.js');
+  const f = await makeFixture();
+  f.env.AUTOMATION_KEY = 'llave-auto-123456';
+  await f.db.update('shops', { id: 'shop_a' }, { settings: { hours: { 0: [], 1: [[600, 1200]], 2: [[600, 1200]], 3: [[600, 1200]], 4: [[600, 1200]], 5: [[600, 1200]], 6: [[600, 1200]] }, booking: { lead_min: 0 }, whatsapp: { mode: 'auto' } } });
+  const tomorrow = addDays(nowInTz('America/Mexico_City').date, 1);
+  const ap = await f.db.insert('appointments', { id: 'ap_rm', shop_id: 'shop_a', folio: 'TB-RM', client_id: 'cl_clientA', staff_id: 'st_barberA', date: tomorrow, start_min: 660, end_min: 700, duration_min: 40, services: [], total: 200, status: 'confirmed', source: 'manual', client_name: 'Cliente A', client_phone: '3110000001', created_at: nowIso() });
+  // Recordatorio viejo (antes de la reagenda) y luego un evento de reagenda.
+  await f.db.insert('messages', { id: newId('ms'), shop_id: 'shop_a', appointment_id: ap.id, client_id: 'cl_clientA', kind: 'reminder', body: 'x', status: 'sent', channel: 'whatsapp', created_at: '2020-01-01T00:00:00.000Z' });
+  await f.db.insert('appointment_events', { id: newId('ev'), shop_id: 'shop_a', appointment_id: ap.id, type: 'rescheduled', data: {}, created_at: '2020-01-02T00:00:00.000Z' });
+  const r = await f.call('POST', '/api/automation/reminders/run', { token: 'llave-auto-123456' });
+  assert.equal(r.status, 200, r.body);
+  const msgs = await f.db.find('messages', { appointment_id: ap.id, kind: 'reminder', status: 'queued' });
+  assert.equal(msgs.length, 1, 'se encoló un recordatorio nuevo');
+});

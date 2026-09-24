@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeFixture } from './helpers.mjs';
 import { createSession } from '../core/session.js';
-import { nowInTz, newId, nowIso } from '../core/util.js';
+import { nowInTz, newId, nowIso, addDays } from '../core/util.js';
 
 const A = { shop: 'shop_a' };
 const B = { shop: 'shop_b' };
@@ -15,6 +15,7 @@ const BARBA = { id: 'sv_barba', name: 'Barba', price: 120, duration_min: 20 };
 async function setup() {
   const f = await makeFixture();
   for (const k of ['ownerA', 'barberA', 'ownerB', 'clientA', 'super']) f.tokens[k] = await createSession(f.db, { kind: 'password', user_id: 'u_' + k });
+  await f.db.update('staff', { id: 'st_barberA2' }, { pin_hash: 'pbkdf2$1000$prueba$prueba' }); // una sesión PIN exige PIN configurado
   f.tokens.barberA2 = await createSession(f.db, { kind: 'pin', staff_id: 'st_barberA2', shop_id: 'shop_a' });
   f.today = nowInTz('America/Mexico_City').date;
   const ap = (id, staff_id, date, start_min, status, client_id, services, extra) => f.db.insert('appointments', Object.assign({
@@ -72,7 +73,7 @@ test('dashboard del dueño: valores exactos con datos conocidos', async () => {
     avg_ticket: 242.5,       // 970 / (a1, a6, p4, a2)
     tips: 20,
     new_clients: 3, returning_clients: 1,  // nuevos c1, c4, c5 · recurrente c2
-    occupancy_pct: 2.8,      // 280 min / (3×6×600 − 600 − 3×60) = 280/10020
+    occupancy_pct: 2.4,      // 240 min (sin el no-show a5) / (3×6×600 − 600 − 3×60) = 240/10020
     cancel_rate: 14.3,       // 1/7
     no_show_rate: 20         // 1/(4+1)
   });
@@ -86,7 +87,7 @@ test('dashboard del dueño: valores exactos con datos conocidos', async () => {
     { date: '2026-03-08', revenue: 0, appointments: 0, completed: 0 }
   ]);
   assert.deepEqual(d.by_staff, [
-    { staff_id: 'st_barberA', name: 'Barbero A', color: '', appointments: 4, completed: 3, revenue: 520, occupancy_pct: 5.1 },   // 180/3540
+    { staff_id: 'st_barberA', name: 'Barbero A', color: '', appointments: 4, completed: 3, revenue: 520, occupancy_pct: 4 },     // 140/3540 (no-show no ocupa)
     { staff_id: 'st_ownerA', name: 'Dueño A', color: '', appointments: 1, completed: 1, revenue: 300, occupancy_pct: 1.7 },      // 60/3540
     { staff_id: 'st_barberA2', name: 'Barbero A2', color: '', appointments: 1, completed: 0, revenue: 0, occupancy_pct: 1.4 }    // 40/2940
   ]);
@@ -122,7 +123,7 @@ test('dashboard: el barbero ve solo su versión; el dueño puede filtrar por bar
   assert.equal(d.kpis.revenue_prev, 200);   // b1 (p6 no tiene barbero)
   assert.equal(d.kpis.appointments, 4);
   assert.equal(d.kpis.tips, 20);
-  assert.equal(d.kpis.occupancy_pct, 5.1);
+  assert.equal(d.kpis.occupancy_pct, 4);
   assert.equal(d.kpis.new_clients, 2);      // c1, c4
   assert.equal(d.kpis.returning_clients, 1); // c2 (historial con otro barbero)
   assert.deepEqual(d.by_staff.map((s) => s.staff_id), ['st_barberA']);
@@ -231,4 +232,85 @@ test('export CSV: BOM, encabezados en español, nombre de archivo y protección 
   assert.equal(r.status, 200);
   assert.equal(r.body.slice(1).split('\r\n').length, 2, 'B solo exporta lo suyo');
   assert.ok(!r.body.includes('Cliente c1'));
+});
+
+// ── Regresiones de la revisión ──
+// Barbería A limpia (sin los datos de setup) para escenarios puntuales.
+async function fresh() {
+  const f = await makeFixture();
+  f.tokens.ownerA = await createSession(f.db, { kind: 'password', user_id: 'u_ownerA' });
+  f.today = nowInTz('America/Mexico_City').date;
+  f.ap = (id, o) => f.db.insert('appointments', Object.assign({
+    id, shop_id: 'shop_a', folio: 'TB-' + id.toUpperCase(), client_id: null, staff_id: 'st_barberA', date: f.today, start_min: 600, end_min: 640, duration_min: 40,
+    services: [CORTE], total: 200, status: 'completed', source: 'manual', client_name: 'X', created_at: nowIso()
+  }, o));
+  f.pay = (id, o) => f.db.insert('payments', Object.assign({ id, shop_id: 'shop_a', staff_id: 'st_barberA', tip: 0, method: 'card', status: 'paid', created_at: nowIso(), date: f.today }, o));
+  f.dashAt = (from, to, extra) => f.call('GET', '/api/reports/dashboard?from=' + from + '&to=' + to + (extra || ''), { as: 'ownerA', ...A });
+  return f;
+}
+
+test('dashboard: la ocupación no cuenta citas no_show (el hueco reutilizado no se cuenta dos veces)', async () => {
+  const f = await fresh();
+  let day = addDays(f.today, -1);
+  while (new Date(day + 'T12:00:00Z').getUTCDay() === 0) day = addDays(day, -1);
+  await f.ap('ns', { date: day, status: 'no_show' });
+  await f.ap('walk', { date: day, status: 'completed', source: 'walkin' });
+  const r = await f.dashAt(day, day, '&staff_id=st_barberA');
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.kpis.occupancy_pct, 6.7, '40 min de 600, no 80');
+  assert.equal(r.data.by_staff[0].occupancy_pct, 6.7);
+});
+
+test('dashboard: una cita atendida con anticipo pagado mucho antes no se cuenta dos veces', async () => {
+  const f = await fresh();
+  await f.ap('a1', {});
+  await f.pay('dep', { appointment_id: 'a1', amount: 200, date: addDays(f.today, -40) });
+  let r = await f.dashAt(f.today, f.today);
+  assert.equal(r.data.kpis.revenue, 0, 'ya se pagó (anticipo) en otra fecha');
+  r = await f.dashAt(addDays(f.today, -40), addDays(f.today, -40));
+  assert.equal(r.data.kpis.revenue, 200);
+  r = await f.dashAt(addDays(f.today, -40), f.today);
+  assert.equal(r.data.kpis.revenue, 200, 'rango completo: una sola vez');
+  // Cobro tardío (más de 62 días después de la cita): tampoco duplica.
+  await f.ap('a2', { date: addDays(f.today, -100), start_min: 700, end_min: 740 });
+  await f.pay('late', { appointment_id: 'a2', amount: 200, date: f.today });
+  r = await f.dashAt(addDays(f.today, -100), addDays(f.today, -100));
+  assert.equal(r.data.kpis.revenue, 0);
+});
+
+test('dashboard: un reembolso resta el día en que se hace, sin cambiar el día de la venta', async () => {
+  const f = await fresh();
+  const sale = addDays(f.today, -10);
+  await f.pay('pold', { amount: 400, tip: 40, date: sale });
+  const rf = await f.call('POST', '/api/payments/pold/refund', { as: 'ownerA', ...A, body: {} });
+  assert.equal(rf.status, 200, rf.body);
+  let r = await f.dashAt(sale, sale);
+  assert.equal(r.data.kpis.revenue, 400, 'el día de la venta no cambia');
+  assert.equal(r.data.kpis.tips, 40);
+  r = await f.dashAt(f.today, f.today);
+  assert.equal(r.data.kpis.revenue, -400);
+  assert.equal(r.data.kpis.tips, -40);
+  assert.equal(r.data.series[0].revenue, -400);
+  assert.equal(r.data.by_method.card, -400);
+  assert.equal(r.data.by_staff.find((s) => s.staff_id === 'st_barberA').revenue, -400);
+  r = await f.dashAt(sale, f.today);
+  assert.equal(r.data.kpis.revenue, 0, 'rango completo: neto cero');
+  assert.equal(r.data.kpis.avg_ticket, 0);
+});
+
+test('export clients: sin rango exporta todas las fichas con estadísticas de todo el historial', async () => {
+  const f = await setup();
+  let r = await f.call('GET', '/api/reports/export?type=clients', { as: 'ownerA', ...A });
+  assert.equal(r.status, 200, r.body);
+  assert.match(r.headers['content-disposition'], /filename="alfa-clients-\d{4}-\d{2}-\d{2}\.csv"/);
+  const lines = r.body.slice(1).split('\r\n');
+  assert.equal(lines[0], 'Nombre,Teléfono,Correo,Cumpleaños,Etiquetas,Origen,Acepta promociones,Fecha de alta,Citas,Atendidas,Pagado,Última visita,Notas');
+  // c2: a2 (sin pago), a7 (reembolsada), h1 (enero), t2 (hoy) → 4 citas, 4 atendidas, pagado 0, última hoy.
+  assert.equal(lines.find((l) => l.startsWith('Cliente c2,')), 'Cliente c2,5500000002,,,VIP,Panel,Sí,2026-01-05,4,4,0,' + f.today + ',');
+  // Solo una fecha: sigue siendo error; los demás tipos siguen exigiendo rango.
+  r = await f.call('GET', '/api/reports/export?type=clients&from=2026-03-02', { as: 'ownerA', ...A });
+  assert.equal(r.status, 400);
+  assert.ok(r.error.fields.to);
+  r = await f.call('GET', '/api/reports/export?type=appointments', { as: 'ownerA', ...A });
+  assert.equal(r.status, 400);
 });

@@ -232,3 +232,129 @@ test('PATCH /api/clients/:id: parcial, teléfono único y copia del nombre en su
   assert.equal(b.data.stats.visits, 2, 'stats del barbero: solo sus citas');
   assert.equal((await f.call('PATCH', '/api/clients/cl_juan', A('clientA', { body: { notes: 'x' } }))).status, 403);
 });
+
+// ── domain/clients.js → findOrCreateClient: reservas con sesión y "cliente sin registro" ──
+import { findOrCreateClient, WALKIN } from '../core/domain/clients.js';
+import { nowIso } from '../core/util.js';
+
+const bookOnline = (f, as, body, ip) => f.call('POST', '/api/public/shops/alfa/appointments', {
+  as, ip: ip || '8.8.8.8', body: Object.assign({ services: ['sv_barba'], staff_id: 'st_barberA2', date: f.day, start_min: 900 }, body)
+});
+
+test('reserva en línea con sesión: nunca se queda con la ficha de otra persona por teléfono o correo', async () => {
+  const f = await makeFixture();
+  await f.login('ownerA', 'owner.a@t.mx');
+  const sdb = scopedDb(f.db, 'shop_a');
+  // Ficha de la víctima (sin cuenta) y una cita suya con nota privada.
+  await sdb.insert('clients', { id: 'cl_victima', name: 'Víctima', phone: '5512345678', email: 'victima@correo.mx', tags: [], source: 'manual', created_at: nowIso() });
+  const ap = await f.call('POST', '/api/appointments', A('ownerA', { body: { client_id: 'cl_victima', staff_id: 'st_barberA', date: f.day, start_min: 700, services: ['sv_corte'], client_note: 'secreto' } }));
+  assert.equal(ap.status, 200, ap.body);
+  // Atacante: cuenta nueva, sin ficha en la barbería A.
+  const reg = await f.call('POST', '/api/auth/register', { ip: '9.9.9.9', body: { name: 'Atacante', email: 'evil@t.mx', password: 'secreto123' } });
+  assert.equal(reg.status, 200, reg.body);
+  f.tokens.evil = reg.data.token;
+  // Reserva con el teléfono de la víctima y otra con su correo.
+  const b1 = await bookOnline(f, 'evil', { name: 'Atacante', phone: '5512345678' });
+  assert.equal(b1.status, 200, b1.body);
+  const b2 = await bookOnline(f, 'evil', { name: 'Atacante', phone: '5500000009', email: 'victima@correo.mx', start_min: 960 });
+  assert.equal(b2.status, 200, b2.body);
+
+  const victim = await sdb.findOne('clients', { id: 'cl_victima' });
+  assert.equal(victim.user_id, null, 'la ficha de la víctima sigue sin cuenta');
+  const mine = await sdb.find('clients', { user_id: reg.data.user.id });
+  assert.equal(mine.length, 1, 'el atacante queda con UNA ficha propia');
+  assert.equal(mine[0].name, 'Atacante');
+  assert.equal(mine[0].phone, '5500000009', 'solo su propio teléfono (libre); el de la víctima no se duplica');
+  assert.equal(mine[0].email, null, 'el correo de otra ficha no se duplica');
+  assert.equal(await sdb.count('clients', { phone: '5512345678' }), 1);
+  const citas = await sdb.find('appointments', { id: { in: [b1.data.appointment.id, b2.data.appointment.id] } });
+  assert.ok(citas.every((a) => a.client_id === mine[0].id), 'sus reservas quedan en su ficha');
+
+  const ctxR = await f.call('GET', '/api/context', { as: 'evil', shop: 'shop_a' });
+  assert.equal(ctxR.status, 200, ctxR.body);
+  assert.equal(ctxR.data.client.id, mine[0].id);
+  const my = await f.call('GET', '/api/my/appointments', { as: 'evil', shop: 'shop_a' });
+  assert.equal(my.status, 200, my.body);
+  const seen = my.data.upcoming.concat(my.data.past).map((a) => a.id).sort();
+  assert.deepEqual(seen, [b1.data.appointment.id, b2.data.appointment.id].sort(), 'solo ve sus propias citas');
+  const cancel = await f.call('POST', '/api/my/appointments/' + ap.data.id + '/cancel', { as: 'evil', shop: 'shop_a', body: {} });
+  assert.notEqual(cancel.status, 200);
+  assert.equal((await sdb.findOne('appointments', { id: ap.data.id })).status, 'confirmed');
+});
+
+test('reserva en línea sin sesión: no agrega un correo a la ficha existente (no se puede reclamar después al registrarse)', async () => {
+  const f = await makeFixture();
+  const sdb = scopedDb(f.db, 'shop_a');
+  await sdb.insert('clients', { id: 'cl_victima', name: 'Víctima', phone: '5512345678', tags: [], source: 'manual', created_at: nowIso() });
+  const b = await bookOnline(f, undefined, { name: 'Quien sea', phone: '5512345678', email: 'evil@t.mx' });
+  assert.equal(b.status, 200, b.body);
+  assert.equal((await sdb.findOne('appointments', { id: b.data.appointment.id })).client_id, 'cl_victima', 'la cita sí queda en la ficha por teléfono');
+  assert.equal((await sdb.findOne('clients', { id: 'cl_victima' })).email, null);
+  const reg = await f.call('POST', '/api/auth/register', { ip: '9.9.9.9', body: { name: 'Atacante', email: 'evil@t.mx', password: 'secreto123', shop_slug: 'alfa' } });
+  assert.equal(reg.status, 200, reg.body);
+  assert.notEqual(reg.data.contexts[0].client_id, 'cl_victima');
+  assert.equal((await sdb.findOne('clients', { id: 'cl_victima' })).user_id, null);
+});
+
+test('findOrCreateClient: con user_id solo SU ficha; reclama una ficha sin cuenta solo por el correo de SU cuenta', async () => {
+  const f = await makeFixture();
+  const sdb = scopedDb(f.db, 'shop_a');
+  // Ya tiene ficha → esa, aunque escriba el teléfono de otra persona (que no se copia).
+  let r = await findOrCreateClient(sdb, { name: 'Otro Nombre', phone: '3110000009', user_id: 'u_clientA', source: 'online' });
+  assert.equal(r.client.id, 'cl_clientA');
+  assert.equal(r.created, false);
+  assert.equal(r.client.name, 'Cliente A');
+  await sdb.insert('clients', { id: 'cl_mail', name: 'Carla', email: 'carla@correo.mx', phone: '3117776666', tags: [], source: 'manual', created_at: nowIso() });
+  // El correo ESCRITO en el formulario no basta para reclamarla.
+  r = await findOrCreateClient(sdb, { name: 'Carla', email: 'carla@correo.mx', phone: '3117776666', user_id: 'u_otro', user_email: 'otro@correo.mx', source: 'online' });
+  assert.notEqual(r.client.id, 'cl_mail');
+  assert.equal(r.created, true);
+  assert.equal(r.client.user_id, 'u_otro');
+  assert.equal((await sdb.findOne('clients', { id: 'cl_mail' })).user_id, null);
+  // El correo de la cuenta (lo pone el servidor desde la sesión) sí.
+  r = await findOrCreateClient(sdb, { name: 'Carla M', user_id: 'u_carla', user_email: 'Carla@Correo.MX', source: 'online' });
+  assert.equal(r.client.id, 'cl_mail');
+  assert.equal((await sdb.findOne('clients', { id: 'cl_mail' })).user_id, 'u_carla');
+  // Sin user_id (panel): por teléfono como siempre, y completa el correo que falta.
+  r = await findOrCreateClient(sdb, { name: 'X', phone: '3110000001', email: 'nuevo@correo.mx', source: 'manual' });
+  assert.equal(r.client.id, 'cl_clientA');
+  assert.equal(r.client.email, 'nuevo@correo.mx');
+});
+
+test('cita con "cliente sin registro" (solo nombre): una sola ficha genérica por barbería y client_name con el nombre escrito', async () => {
+  const f = await makeFixture();
+  await f.login('ownerA', 'owner.a@t.mx');
+  await f.login('barberA', 'barber.a@t.mx');
+  const sdb = scopedDb(f.db, 'shop_a');
+  const before = await sdb.count('clients', {});
+  const mk = (as, body) => f.call('POST', '/api/appointments', A(as, { body: Object.assign({ staff_id: 'st_barberA', date: f.day, services: ['sv_corte'] }, body) }));
+  const r1 = await mk('ownerA', { start_min: 600, client: { name: 'Don Pepe' } });
+  const r2 = await mk('ownerA', { start_min: 700, client: { name: 'Señor del sombrero' }, source: 'walkin' });
+  const r3 = await mk('barberA', { start_min: 800, client: { name: 'Otro de paso' } });
+  for (const r of [r1, r2, r3]) assert.equal(r.status, 200, r.body);
+  assert.equal(await sdb.count('clients', {}), before + 1, 'una sola ficha nueva para todas');
+  const g = await sdb.findOne('clients', { id: r1.data.client_id });
+  assert.deepEqual([g.name, g.source, g.tags, g.phone, g.email, g.user_id, g.marketing_ok], [WALKIN.name, 'walkin', ['Sin registro'], null, null, null, false]);
+  assert.equal(r2.data.client_id, g.id);
+  assert.equal(r3.data.client_id, g.id);
+  assert.deepEqual([r1.data.client_name, r2.data.client_name, r3.data.client_name], ['Don Pepe', 'Señor del sombrero', 'Otro de paso']);
+  // Con teléfono se usa (o crea) la ficha real de la persona.
+  const r4 = await mk('ownerA', { start_min: 900, client: { name: 'Juan Real', phone: '5512345678' } });
+  assert.equal(r4.status, 200, r4.body);
+  assert.notEqual(r4.data.client_id, g.id);
+  assert.equal((await sdb.findOne('clients', { id: r4.data.client_id })).name, 'Juan Real');
+  // Otra barbería tiene su propia ficha genérica.
+  await f.login('ownerB', 'owner.b@t.mx');
+  const rb = await f.call('POST', '/api/appointments', { as: 'ownerB', shop: 'shop_b', body: { staff_id: 'st_ownerB', date: f.day, start_min: 600, services: ['sv_corteB'], client: { name: 'Paso B' } } });
+  assert.equal(rb.status, 200, rb.body);
+  assert.notEqual(rb.data.client_id, g.id);
+  assert.equal((await scopedDb(f.db, 'shop_b').findOne('clients', { id: rb.data.client_id })).name, WALKIN.name);
+  // La reserva en línea sin teléfono ni correo NO usa la ficha genérica (crea la del cliente).
+  const shop = await f.db.findOne('shops', { id: 'shop_a' });
+  await f.db.update('shops', { id: 'shop_a' }, { settings: Object.assign({}, shop.settings, { booking: { lead_min: 0, require_phone: false } }) });
+  const on = await bookOnline(f, undefined, { name: 'Rosa en línea' });
+  assert.equal(on.status, 200, on.body);
+  const onRow = await sdb.findOne('appointments', { id: on.data.appointment.id });
+  assert.notEqual(onRow.client_id, g.id);
+  assert.equal((await sdb.findOne('clients', { id: onRow.client_id })).name, 'Rosa en línea');
+});

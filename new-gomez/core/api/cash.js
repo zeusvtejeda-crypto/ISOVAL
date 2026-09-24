@@ -3,6 +3,7 @@
 // (payments.cash_session_id); tarjeta/transferencia se reportan por la ventana de tiempo de la caja.
 //
 // Efectivo esperado = fondo inicial + ventas en efectivo + propinas en efectivo + ingresos − gastos − retiros.
+// Propinas por forma de pago (cash_tips, card_tips, transfer_tips, other_tips) y su total (tips).
 import { bad, conflict, newId, nowIso, money, addDays } from '../util.js';
 import { notify } from '../domain/notify.js';
 import { failIf, textField } from '../domain/appointments.js';
@@ -14,7 +15,7 @@ const MAX_CASH = 1000000;
 const SESSIONS_LIMIT = 500;
 
 export function emptySummary() {
-  return { opening_float: 0, cash_sales: 0, cash_tips: 0, income: 0, expense: 0, withdrawal: 0, expected_cash: 0, card_sales: 0, transfer_sales: 0, other_sales: 0, card_tips: 0, transfer_tips: 0, payments_count: 0 };
+  return { opening_float: 0, cash_sales: 0, cash_tips: 0, income: 0, expense: 0, withdrawal: 0, expected_cash: 0, card_sales: 0, transfer_sales: 0, other_sales: 0, card_tips: 0, transfer_tips: 0, other_tips: 0, tips: 0, payments_count: 0 };
 }
 
 // Resumen puro de una caja a partir de sus movimientos y pagos (solo cuentan los `paid`).
@@ -29,7 +30,8 @@ export function summarize(session, movements, payments) {
     if (p.method === 'cash') { s.cash_sales += a; s.cash_tips += tip; }
     else if (p.method === 'card') { s.card_sales += a; s.card_tips += tip; }
     else if (p.method === 'transfer') { s.transfer_sales += a; s.transfer_tips += tip; }
-    else s.other_sales += a;
+    else { s.other_sales += a; s.other_tips += tip; }
+    s.tips += tip;
   }
   for (const k of Object.keys(s)) if (k !== 'payments_count') s[k] = money(s[k]);
   s.expected_cash = money(s.opening_float + s.cash_sales + s.cash_tips + s.income - s.expense - s.withdrawal);

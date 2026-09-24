@@ -104,6 +104,8 @@ const P = {
   'eye-off': '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   facebook: '<path d="M15 3.5h-2.2A4 4 0 0 0 8.8 7.5V10H6.5v3.6h2.3V21h3.7v-7.4h2.6l.5-3.6h-3.1V8c0-.6.5-1 1-1H15z"/>',
   tiktok: '<path d="M13.5 3v11.8a3.3 3.3 0 1 1-3.3-3.3"/><path d="M13.5 3c.5 2.7 2.4 4.6 5 4.9"/>',
+  printer: '<path d="M7 8.5v-5h10v5"/><path d="M7 17.5H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/>',
+  'file-down': '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5"/>',
   logo: '<path d="M7 3h10v2.5a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" fill="currentColor" stroke="none"/><path d="M7 21h10v-2.5a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3z" fill="currentColor" stroke="none"/><path d="M9 8.5 15 15.5M15 8.5 9 15.5" stroke-width="2.2"/>'
 };
 

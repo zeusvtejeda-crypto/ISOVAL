@@ -8,7 +8,7 @@ import { icon } from '../lib/icons.js';
 import { api, SITE_BASE, APP_BASE } from '../lib/api.js';
 import { state, shop, bus, today as todayKey, nowMin } from '../lib/state.js';
 import { toast, modal, promptDialog, menu, busy, emptyState, errorState, avatar, statusBadge, saveFile } from '../lib/ui.js';
-import { money, time as fmtTime, duration, dateLongCap, dateLong, relDay, diffDays, weekday, dayNum, firstName, plural, WEEKDAYS_SHORT, MONTHS_SHORT, phone as fmtPhone, colorFor } from '../lib/fmt.js';
+import { money, time as fmtTime, duration, dateLongCap, dateLong, dateShort, relDay, diffDays, weekday, dayNum, firstName, plural, WEEKDAYS_SHORT, MONTHS_SHORT, phone as fmtPhone, colorFor } from '../lib/fmt.js';
 import { dayStrip } from '../lib/pickers.js';
 
 const REASONS = ['Me surgió un imprevisto', 'No me siento bien', 'Prefiero otro día', 'Ya no lo necesito'];
@@ -18,7 +18,7 @@ const CSS = `
 .ma-sec:first-of-type{margin-top:0}
 .ma-sec>h3{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);margin:0 0 10px;display:flex;align-items:center;gap:8px}
 .ma-sec>h3 .n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--muted-soft);color:var(--text-2);display:inline-grid;place-items:center;font-size:11px;letter-spacing:0}
-.ma-next{position:relative;overflow:hidden;border-radius:var(--r-xl);background:var(--ink);color:var(--on-ink);box-shadow:var(--shadow-3)}
+.ma-next{position:relative;overflow:hidden;border-radius:var(--r-xl);background:var(--ink);color:var(--on-ink);box-shadow:var(--shadow-3);border:1px solid rgba(242,237,227,.08)}
 .ma-next::before{content:"";position:absolute;right:-80px;top:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(217,178,90,.28),transparent 68%);pointer-events:none}
 .ma-top{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;padding:20px 20px 16px;position:relative}
 .ma-date{display:grid;justify-items:center;align-content:center;min-width:86px;padding:10px 8px;border-radius:18px;background:rgba(242,237,227,.06);border:1px solid rgba(242,237,227,.1)}
@@ -55,7 +55,9 @@ const CSS = `
 .ma-next .btn-cancel:hover{background:rgba(242,139,130,.12)}
 .ma-locked{margin:14px 20px 20px;padding:12px 14px;border-radius:var(--r);background:rgba(242,237,227,.06);border:1px solid rgba(242,237,227,.1);font-size:13px;color:#D9D3C6;display:grid;gap:10px;position:relative}
 .ma-locked .row .btn{flex:1}
-@media (max-width:400px){.ma-acts .btn .lg{display:none}.ma-date{min-width:74px}.ma-date .dn{font-size:50px}.ma-when .rel{font-size:26px}}
+@media (max-width:519px){.ma-acts{padding:14px 16px 16px;gap:6px}.ma-acts .btn{flex-direction:column;gap:4px;min-height:62px;font-size:12.5px;border-radius:14px}.ma-acts .btn .ic{width:20px;height:20px}
+  .ma-top{padding:18px 16px 14px;gap:14px}.ma-det{margin:0 16px}.ma-pol{margin:4px 16px 0}.ma-locked{margin:14px 16px 16px}}
+@media (max-width:400px){.ma-date{min-width:74px}.ma-date .dn{font-size:50px}.ma-when .rel{font-size:26px}}
 @media (min-width:900px){.ma-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}.ma-grid>.ma-sec{margin-top:0}}
 .ma-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;padding:14px 16px;align-items:center}
 .ma-card+.ma-card{margin-top:10px}
@@ -77,10 +79,11 @@ const CSS = `
 .ma-hist .cancelled .title{color:var(--text-3)}
 .ma-cta{display:grid;gap:10px;justify-items:start;padding:20px;border-radius:var(--r-lg);border:1px dashed var(--brand);background:var(--brand-softer)}
 .ma-cta b{font-size:16px}
-.ma-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.ma-stats div{flex:1;min-width:100px;padding:12px 14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--border)}
+.ma-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.ma-stats div{min-width:0;padding:12px 14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--border)}
 .ma-stats b{display:block;font-family:var(--disp);font-size:26px;font-weight:800;line-height:1.1}
 .ma-stats span{font-size:12px;color:var(--text-3)}
+@media (max-width:519px){.ma-stats b{font-size:20px}.ma-stats div{padding:10px 12px}}
 /* hoja reagendar */
 .rs-cur{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);background:var(--surface-2);border:1px solid var(--border);font-size:13.5px;color:var(--text-2)}
 .rs-cur .ic{color:var(--text-3)}
@@ -196,7 +199,8 @@ function openReschedule(a, sh, onDone) {
   const strip = dayStrip($('#rsDays', m.body), { today: t0, value: t0, days: win, isOff: (d) => st.off.has(d), onChange: (d) => { st.date = d; st.start = null; loadSlots(); } });
   function paintSum() {
     okBtn.disabled = st.start == null;
-    sumEl.innerHTML = st.start == null ? '' : String(html`${raw(icon('arrow-right', 'ic-sm'))}<span>Nuevo: <b>${cap(relDay(st.date, t0))}, ${fmtTime(st.start)}</b></span>`);
+    sumEl.innerHTML = st.start == null ? String(html`<span class="faint">Elige un día y un horario libre.</span>`)
+      : String(html`${raw(icon('arrow-right', 'ic-sm'))}<span>Nuevo: <b>${cap(relDay(st.date, t0))}, ${fmtTime(st.start)}</b></span>`);
   }
   function paintSlots() {
     let body = '';
@@ -337,12 +341,12 @@ export default {
           <div class="ma-row">${raw(icon('scissors'))}<span class="grow"><span class="k">Servicios</span><span class="ma-svc">${svcNames(a).map((n) => html`<span>${n}</span>`)}</span></span><span class="ma-total num" aria-label="${'Total ' + money(a.total)}">${money(a.total)}</span></div>
           ${addr ? html`<div class="ma-row">${raw(icon('map'))}<span class="grow"><span class="k">${a.shop ? a.shop.name : sh.name}</span><span class="v">${addr}</span></span>${mapU ? html`<a class="lk" href="${mapU}" target="_blank" rel="noopener">Cómo llegar${raw(icon('external', 'ic-sm'))}</a>` : ''}</div>` : ''}
         </div>
-        ${a.deadline_text ? html`<p class="ma-pol">${raw(icon('info'))}<span>${tidy(a.deadline_text)}${a.folio ? html` <span style="white-space:nowrap">Folio ${a.folio}</span>` : ''}</span></p>` : ''}
+        ${a.deadline_text && (a.can_cancel || a.can_reschedule) ? html`<p class="ma-pol">${raw(icon('info'))}<span>${tidy(a.deadline_text)}${a.folio ? html` <span style="white-space:nowrap">Folio ${a.folio}</span>` : ''}</span></p>` : ''}
         ${a.can_cancel || a.can_reschedule ? html`<div class="ma-acts">
             <button type="button" class="btn btn-secondary" data-act="move">${raw(icon('calendar-clock'))}<span>Reagendar</span></button>
             <button type="button" class="btn btn-secondary" data-act="cal" aria-haspopup="menu">${raw(icon('calendar-plus'))}<span>Calendario</span></button>
             <button type="button" class="btn btn-ghost btn-cancel" data-act="cancel">${raw(icon('x-circle'))}<span>Cancelar</span></button></div>`
-          : html`<div class="ma-locked"><div class="row top">${raw(icon('lock'))}<span>Ya no es posible cambiarla en línea. Si necesitas algo, contacta a la barbería.</span></div>
+          : html`<div class="ma-locked"><div class="row top">${raw(icon('lock'))}<span>${tidy(a.deadline_text) || 'Ya no es posible cambiarla en línea. Si necesitas algo, contacta a la barbería.'}${a.folio ? html` <span style="white-space:nowrap;color:#8E8676">Folio ${a.folio}</span>` : ''}</span></div>
             <div class="row">${c.wa ? html`<a class="btn btn-wa btn-sm" href="${c.wa}" target="_blank" rel="noopener">${raw(icon('whatsapp', 'ic-sm'))}WhatsApp</a>` : ''}${c.tel ? html`<a class="btn btn-secondary btn-sm" href="${c.tel}">${raw(icon('phone', 'ic-sm'))}Llamar</a>` : ''}
               <button type="button" class="btn btn-secondary btn-sm" data-act="cal" aria-haspopup="menu">${raw(icon('calendar-plus', 'ic-sm'))}Calendario</button></div></div>`}
       </article>`;
@@ -363,7 +367,7 @@ export default {
       return html`<div class="list-item ${a.status}">
         <span class="ma-mini" aria-hidden="true"><b>${dayNum(a.date)}</b><small>${MONTHS_SHORT[+a.date.slice(5, 7) - 1]}</small></span>
         <span class="grow" style="min-width:0"><span class="title truncate">${svcNames(a).join(', ') || 'Servicio'}</span>
-          <span class="meta truncate">${cap(dateLong(a.date))} · ${fmtTime(a.start_min)}${a.staff_name ? ' · ' + a.staff_name : ''}</span></span>
+          <span class="meta truncate">${cap(dateShort(a.date))} · ${fmtTime(a.start_min)}${a.staff_name ? ' · ' + firstName(a.staff_name) : ''}</span></span>
         <span class="trail"><span class="num" style="font-weight:600;font-size:14px">${money(a.total)}</span>${a.status === 'completed' && again
           ? html`<a class="link-btn again" href="${bookUrl(sh.slug, again.id)}" target="_blank" rel="noopener">${raw(icon('repeat', 'ic-sm'))}Repetir</a>` : statusBadge(a.status)}</span>
       </div>`;
