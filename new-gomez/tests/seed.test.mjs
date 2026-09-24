@@ -16,7 +16,7 @@ import {
 } from '../core/seed-demo.js';
 
 const TODAY = '2026-09-24'; // jueves
-const NOW = 700;            // 11:40 a.m.
+const NOW = 700;            // 11:40
 
 // ── Utilidades de prueba ──
 const off = (date) => { const g = Date.parse(date + 'T12:00:00Z'); const n = nowInTz(DEMO_TZ, g); return (g - (Date.parse(n.date + 'T00:00:00Z') + n.minutes * 60000)) / 60000; };

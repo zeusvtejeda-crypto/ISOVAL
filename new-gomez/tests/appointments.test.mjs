@@ -46,9 +46,12 @@ test('reglas puras: tabla de transiciones y "ya empezó"', () => {
   assert.ok(!canCloseAs('no_show', { date: '2026-10-05', start_min: 620 }, now), 'empieza en 20 min');
   assert.ok(canCloseAs('no_show', { date: '2026-10-04', start_min: 1300 }, now));
   assert.equal(fmtDateEs('2026-10-05'), 'lunes 5 de octubre');
-  assert.equal(fmtTimeEs(630), '10:30 a.m.');
-  assert.equal(fmtTimeEs(780), '1:00 p.m.');
-  assert.equal(fmtTimeEs(0), '12:00 a.m.');
+  // 24 h, como el resto de la app (sin 'a.m.' / 'p.m.').
+  assert.equal(fmtTimeEs(630), '10:30');
+  assert.equal(fmtTimeEs(780), '13:00');
+  assert.equal(fmtTimeEs(0), '00:00');
+  assert.equal(fmtTimeEs(545), '09:05');
+  assert.equal(fmtTimeEs(1439), '23:59');
 });
 
 test('reglas puras: política de cancelación (cancel_hours)', () => {
@@ -57,14 +60,14 @@ test('reglas puras: política de cancelación (cancel_hours)', () => {
   const a = (date, start_min, status) => ({ date, start_min, end_min: start_min + 40, status: status || 'confirmed' });
   let p = managePolicy(a('2026-10-05', 720), shop, now);
   assert.equal(p.can_cancel, true);
-  assert.match(p.deadline_text, /hasta el lunes 5 de octubre a las 10:00 a\.m\./);
+  assert.match(p.deadline_text, /hasta el lunes 5 de octubre a las 10:00\.$/);
   p = managePolicy(a('2026-10-05', 719), shop, now);
   assert.equal(p.can_cancel, false);
   assert.match(p.deadline_text, /2 horas/);
   assert.match(p.deadline_text, /550 000 0000/, 'teléfono legible');
   p = managePolicy(a('2026-10-06', 60), shop, now);
   assert.equal(p.can_cancel, true);
-  assert.match(p.deadline_text, /lunes 5 de octubre a las 11:00 p\.m\./, 'el límite cae el día anterior');
+  assert.match(p.deadline_text, /lunes 5 de octubre a las 23:00\.$/, 'el límite cae el día anterior');
   assert.equal(managePolicy(a('2026-10-06', 700, 'cancelled'), shop, now).can_cancel, false);
   assert.equal(managePolicy(a('2026-10-04', 700), shop, now).deadline_text, 'La hora de esta cita ya pasó.');
 });
@@ -330,10 +333,10 @@ test('estados: «no asistió» solo desde la hora de inicio; «atendida» desde 
   const at = (date, minutes) => ({ sdb, shop, now: { date, minutes }, actor: { id: 'st_ownerA', name: 'Dueño A', kind: 'staff' }, env: f.env });
   const a = (await f.newAppt({ start_min: 740 })).data; // 12:20
   // 12:00 → faltan 20 min: todavía puede llegar.
-  await assert.rejects(changeStatus(at(a.date, 720), a, 'no_show'), (e) => e.status === 400 && e.message === 'Aún no es la hora de la cita: podrás marcarla como no asistió a partir de las 12:20 p.m.' && !!e.fields.status);
-  await assert.rejects(changeStatus(at(a.date, 739), a, 'no_show'), /12:20 p\.m\./);
+  await assert.rejects(changeStatus(at(a.date, 720), a, 'no_show'), (e) => e.status === 400 && e.message === 'Aún no es la hora de la cita: podrás marcarla como no asistió a partir de las 12:20.' && !!e.fields.status);
+  await assert.rejects(changeStatus(at(a.date, 739), a, 'no_show'), /a partir de las 12:20\.$/);
   // Desde otro día, el mensaje dice la fecha.
-  await assert.rejects(changeStatus(at(addDays(a.date, -1), 720), a, 'no_show'), /a partir de las 12:20 p\.m\. del /);
+  await assert.rejects(changeStatus(at(addDays(a.date, -1), 720), a, 'no_show'), /a partir de las 12:20 del /);
   assert.equal((await f.db.findOne('appointments', { id: a.id })).status, 'confirmed');
   // «Atendida» sí con margen (llegó antes).
   const b = (await f.newAppt({ start_min: 900, client: { name: 'Temprano' } })).data;
@@ -659,5 +662,5 @@ test('reglas puras: "ya empezó" respeta la ventana de 60 min después de median
   assert.ok(!hasStarted({ date: '2026-10-06', start_min: 31 }, now));
   const shop = { name: 'X', phone: '5500000000', settings: { booking: { cancel_hours: 2 } } };
   const p = managePolicy({ date: '2026-10-05', start_min: 600, end_min: 640, status: 'confirmed' }, shop, { date: '2026-10-04', minutes: 600 });
-  assert.equal(p.deadline_text, 'Puedes cancelar o reagendar hasta el lunes 5 de octubre a las 8:00 a.m.');
+  assert.equal(p.deadline_text, 'Puedes cancelar o reagendar hasta el lunes 5 de octubre a las 08:00.');
 });

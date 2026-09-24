@@ -14,19 +14,14 @@ const RESERVED = ['demo', 'app', 'api', 'admin', 'b', 'www', 'panel'];
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/;
 const DAY_S = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const ORDER = [1, 2, 3, 4, 5, 6, 0];
-const STOP = new Set(['la', 'el', 'los', 'las', 'de', 'del', 'y', 'e', 'the', 'barber', 'barbers', 'barberia', 'barbería', 'barbershop', 'club', 'shop', 'studio', 'estudio', 'salon', 'salón']);
 
 export const bookingUrl = (slug) => SITE_BASE + '?b=' + encodeURIComponent(slug);
 export const shortUrl = (slug) => SITE_BASE + 'b/' + encodeURIComponent(slug);
 const bare = (u) => String(u).replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-// Iniciales para el centro del QR: palabras con significado ("La Navaja Barber Club" → "N", "New Gómez" → "NG").
-export function qrInitials(name) {
-  const words = String(name || '').trim().split(/\s+/).filter(Boolean);
-  const sig = words.filter((w) => !STOP.has(w.toLowerCase()));
-  const src = sig.length ? sig : words;
-  return src.slice(0, 2).map((w) => Array.from(w)[0]).join('').toUpperCase() || 'TB';
-}
+// Iniciales para el centro del QR: el monograma de la barbería (fmt.shopMark), el mismo que ven sus clientes en la
+// página pública y su equipo en el panel ("La Navaja Barber Club" → "NB", "New Gómez" → "NG").
+export function qrInitials(name) { return shopMark(name); }
 
 // Horario agrupado por días consecutivos iguales → [{ days:'Lun–Vie', text:'10:00–20:00' }]
 export function hoursLines(hours) {
@@ -130,7 +125,7 @@ const CSS = `
 .bl-short .note{grid-column:2/-1;font-size:12px;color:var(--text-3)}
 .bl-qr{grid-area:qr}
 .bl-qrbox{margin:0 auto;width:100%;max-width:300px;aspect-ratio:1;background:#fff;border-radius:22px;padding:14px;box-shadow:0 1px 0 rgba(21,19,15,.04),0 10px 30px rgba(21,19,15,.10);border:1px solid rgba(21,19,15,.08);display:grid;place-items:center;transition:transform .3s var(--ease-out)}
-.bl-qrbox:hover{transform:scale(1.015)}
+@media (hover:hover) and (pointer:fine){.bl-qrbox:hover{transform:scale(1.015)}}
 .bl-qrbox svg{width:100%;height:auto}
 .bl-qrcap{text-align:center;margin-top:14px}
 .bl-qrcap b{display:block;font-family:var(--disp);font-size:22px;font-weight:800;letter-spacing:.01em;line-height:1.1}
@@ -165,8 +160,9 @@ const CSS = `
 .bl-qrhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 .bl-qrbox{cursor:zoom-in}
 :root[data-theme="dark"] .bl-dl .btn-dark{background:var(--on-ink);color:var(--ink)}
-:root[data-theme="dark"] .bl-dl .btn-dark:hover:not(:disabled){background:#fff}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bl-dl .btn-dark{background:var(--on-ink);color:var(--ink)}:root:not([data-theme="light"]) .bl-dl .btn-dark:hover:not(:disabled){background:#fff}}
+@media (hover:hover) and (pointer:fine){:root[data-theme="dark"] .bl-dl .btn-dark:hover:not(:disabled){background:#fff}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bl-dl .btn-dark{background:var(--on-ink);color:var(--ink)}}
+@media (prefers-color-scheme:dark) and (hover:hover) and (pointer:fine){:root:not([data-theme="light"]) .bl-dl .btn-dark:hover:not(:disabled){background:#fff}}
 @media (min-width:720px) and (max-width:999px){
   .bl-qr{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);column-gap:28px;align-content:start}
   .bl-qr>.bl-qrhead{grid-column:1/-1}
@@ -203,7 +199,9 @@ function posterHtml(sh, url, qr) {
   const contact = [sh.address, sh.phone ? 'Tel. ' + String(sh.phone).replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : ''].filter(Boolean).join(' · ');
   return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>Cartel de reservas — ' + esc(sh.name) + '</title>' +
-    '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">' +
+    // Tipografías del propio sitio (las mismas del panel y la página pública), con ruta absoluta: el cartel se abre en
+    // una ventana nueva o se descarga como archivo, y en los dos casos debe encontrarlas.
+    '<link rel="stylesheet" href="' + esc(SITE_BASE + 'fonts/fonts.css') + '">' +
     '<style>' +
     '@page{size:letter;margin:0}*{box-sizing:border-box;margin:0;padding:0}' +
     'html,body{background:#DCD7CC;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
@@ -214,10 +212,10 @@ function posterHtml(sh, url, qr) {
     '.top{background:#15130F;color:#F2EDE3;padding:.5in .6in .42in;text-align:center;position:relative;flex:none}' +
     '.top:after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:' + brand + '}' +
     '.eyebrow{font-size:12pt;letter-spacing:.32em;text-transform:uppercase;color:' + brand + ';font-weight:600}' +
-    '.name{font-family:"Big Shoulders Display","Oswald","Arial Narrow",Impact,sans-serif;font-weight:800;font-size:' + (sh.name.length <= 16 ? 52 : sh.name.length <= 26 ? 40 : 32) + 'pt;line-height:.95;margin-top:10px;letter-spacing:.01em}' +
+    '.name{font-family:"Big Shoulders Display","TB Display Fallback","Arial Narrow",Impact,sans-serif;font-weight:800;font-size:' + (sh.name.length <= 16 ? 52 : sh.name.length <= 26 ? 40 : 32) + 'pt;line-height:.95;margin-top:10px;letter-spacing:.01em}' +
     '.tag{margin-top:10px;font-size:13pt;color:#BDB5A5}' +
     '.mid{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.22in .6in .1in;text-align:center}' +
-    'h1{font-family:"Big Shoulders Display","Oswald","Arial Narrow",Impact,sans-serif;font-weight:800;font-size:38pt;line-height:1;letter-spacing:.01em}' +
+    'h1{font-family:"Big Shoulders Display","TB Display Fallback","Arial Narrow",Impact,sans-serif;font-weight:800;font-size:38pt;line-height:1;letter-spacing:.01em}' +
     'h1 em{font-style:normal;color:' + brand + '}' +
     '.sub{font-size:14pt;color:#5B554A;margin-top:8px}' +
     '.qr{flex:none;margin-top:.24in;width:var(--q,4in);height:var(--q,4in);background:#fff;border-radius:.28in;padding:.2in;box-shadow:0 0 0 1.5pt ' + brand + ',0 18px 40px rgba(21,19,15,.12)}' +

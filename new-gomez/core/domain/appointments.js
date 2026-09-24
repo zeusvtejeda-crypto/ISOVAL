@@ -41,7 +41,8 @@ export function canCloseAs(status, a, now) { return status === 'no_show' ? start
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 export function fmtDateEs(k) { const d = parseDateKey(k); return DIAS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' de ' + MESES[d.getUTCMonth()]; }
-export function fmtTimeEs(m) { const h = Math.floor(m / 60) % 24; return (h % 12 || 12) + ':' + pad2(m % 60) + (h < 12 ? ' a.m.' : ' p.m.'); }
+// Hora en 24 h, como el resto de la app (panel: fmt.time; mensajes: util.fmtMin): 630 → '10:30', 1215 → '20:15'.
+export function fmtTimeEs(m) { return pad2(Math.floor(m / 60) % 24) + ':' + pad2(m % 60); }
 
 // ── Entrada ──
 // Junta errores por campo: un solo error → su mensaje; varios → mensaje general.
@@ -230,10 +231,9 @@ export async function changeStatus(c, a, next, opts) {
   if (a.status === next) return a;
   if (!canTransition(a.status, next)) throw bad('No se puede pasar una cita ' + STATUS_LABEL[a.status] + ' a ' + STATUS_LABEL[next] + '.', { status: 'Cambio no permitido.' });
   if ((next === 'completed' || next === 'no_show') && !canCloseAs(next, a, c.now)) {
-    // fmtTimeEs ya termina en 'a.m.' / 'p.m.': sin punto final extra.
     const when = fmtTimeEs(a.start_min) + (a.date !== c.now.date ? ' del ' + fmtDateEs(a.date) : '');
     throw bad(next === 'no_show'
-      ? 'Aún no es la hora de la cita: podrás marcarla como no asistió a partir de las ' + when + (when.endsWith('.') ? '' : '.')
+      ? 'Aún no es la hora de la cita: podrás marcarla como no asistió a partir de las ' + when + '.'
       : 'Solo puedes marcar como atendida una cita que ya empezó o empieza en menos de una hora.', { status: 'La cita aún no empieza.' });
   }
   // Restaurar (cancelada / no asistió → activa) exige que el horario siga libre (antes y después de escribir).
@@ -375,7 +375,7 @@ function summary(a, staffName) {
   return (a.client_name || 'Cliente') + ' · ' + (a.services || []).map((s) => s.name).join(', ') + ' · ' + fmtDateEs(a.date) + ', ' + fmtTimeEs(a.start_min) + (staffName ? ' con ' + staffName : '');
 }
 async function staffName(c, id) { const s = id ? await c.sdb.findOne('staff', { id }) : null; return s ? s.name : ''; }
-// Horario que dejó una cita movida: " · Antes: viernes 25, 11:00 a.m." (mismo día → solo la hora; otro mes → con el
+// Horario que dejó una cita movida: " · Antes: viernes 25, 11:00" (mismo día → solo la hora; otro mes → con el
 // mes; otro barbero → "con …"). Así quien recibe el aviso sabe qué hueco se liberó.
 function beforeText(prev, a, prevStaffName) {
   if (!prev || !prev.date) return '';
@@ -464,9 +464,7 @@ export function managePolicy(a, shop, now, clientMoves) {
   else if (ok) {
     let m = a.start_min - hours * 60, d = a.date;
     while (m < 0) { m += 1440; d = addDays(d, -1); }
-    // fmtTimeEs ya termina en 'a.m.' / 'p.m.': sin punto final extra.
-    text = hours > 0 ? 'Puedes cancelar o reagendar hasta el ' + fmtDateEs(d) + ' a las ' + fmtTimeEs(m) : 'Puedes cancelar o reagendar antes de tu cita.';
-    if (!text.endsWith('.')) text += '.';
+    text = hours > 0 ? 'Puedes cancelar o reagendar hasta el ' + fmtDateEs(d) + ' a las ' + fmtTimeEs(m) + '.' : 'Puedes cancelar o reagendar antes de tu cita.';
   } else {
     text = 'Ya no es posible cancelar ni reagendar en línea: se requiere hacerlo con ' + (hours === 1 ? '1 hora' : hours + ' horas') + ' de anticipación. Comunícate con la barbería' + (phone ? ' al ' + String(phone).replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3') : '') + '.';
   }

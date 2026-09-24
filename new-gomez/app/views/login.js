@@ -45,8 +45,9 @@ export default {
             <button class="btn btn-primary btn-lg btn-block" type="submit">Entrar</button>
           </form>
           <div id="fPin" ${tab === 'pin' ? '' : 'hidden'}>
-            <div class="field" style="margin-bottom:10px"><label for="pinShop">Código de la barbería</label>
-              <input class="input" id="pinShop" autocomplete="off" autocapitalize="none" placeholder="p. ej. new-gomez" value=""/>
+            <div class="field" id="pinShopF" style="margin-bottom:10px"><label for="pinShop">Código de la barbería</label>
+              <input class="input" id="pinShop" autocomplete="off" autocapitalize="none" placeholder="p. ej. new-gomez" value="" aria-describedby="pinShopErr"/>
+              <p class="error" id="pinShopErr" role="alert"></p>
               <p class="hint">Es el final de tu enlace de reservas. Se recuerda en este dispositivo. En la demo: <b>demo</b> y PIN 1111–4444.</p></div>
             <p class="faint" style="text-align:center;font-size:12.5px;margin-top:6px">Tu PIN de 4 a 6 números</p>
             <div class="pin-dots" id="pinDots" aria-hidden="true"></div>
@@ -126,9 +127,19 @@ export default {
     };
     $('#pinPad', el).innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map((k) => k === '' ? '<span></span>' : '<button type="button" data-k="' + k + '" aria-label="' + (k === '⌫' ? 'Borrar' : k) + '">' + k + '</button>').join('');
     dots();
+    // Código que no existe (404): lo más probable es que el dueño haya cambiado el enlace de reservas (y con él el
+    // código). Se marca el campo, se olvida el código guardado y se pide el nuevo; el PIN no tuvo la culpa.
+    const shopField = $('#pinShopF', el);
+    const shopErr = (msg) => {
+      shopField.classList.toggle('invalid', !!msg);
+      shopIn.setAttribute('aria-invalid', String(!!msg));
+      $('#pinShopErr', el).textContent = msg || '';
+    };
+    shopIn.addEventListener('input', () => shopErr(''));
     const submitPin = async () => {
       if (sending || pin.length < PIN_MIN) return;
       const slug = shopIn.value.trim().toLowerCase();
+      shopErr('');
       if (!slug) { $('#pinMsg', el).textContent = 'Escribe el código de tu barbería.'; shopIn.focus(); pin = ''; dots(); return; }
       sending = true;
       const go = $('#pinGo', el);
@@ -141,7 +152,12 @@ export default {
         LS.set('tb:pinShop', slug);
         await afterLogin();
       } catch (err) {
-        $('#pinMsg', el).textContent = err.message;
+        if (err.status === 404 && err.code === 'not_found') {
+          if (LS.get('tb:pinShop') === slug) LS.del('tb:pinShop');
+          shopErr('No encontramos la barbería «' + slug + '». Si el dueño cambió el enlace de reservas, el código también cambió: pídele el nuevo (es el final del enlace) y escríbelo aquí.');
+          $('#pinMsg', el).textContent = '';
+          shopIn.focus(); shopIn.select();
+        } else $('#pinMsg', el).textContent = err.message;
         const d = $('#pinDots', el); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake');
         pin = ''; setTimeout(dots, 150);
       } finally {

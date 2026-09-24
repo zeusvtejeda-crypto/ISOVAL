@@ -8,8 +8,11 @@ Todas las respuestas JSON: `{ ok: true, data }` o `{ ok: false, error: { code, m
 - Dinero: números (MXN por defecto, `shop.currency`).
 - Autenticación: cookie HttpOnly `tb_sid` (navegador) o `Authorization: Bearer <token>` (demo/apps).
   Escrituras con cookie requieren cabecera `x-requested-with: tb` (CSRF).
-- Barbería activa: cabecera `x-shop-id: <shop.id>` en rutas `auth: shop`.
-- Errores comunes: 400 `bad_request` (con `fields`), 401 `unauthorized`, 403 `forbidden`, 404 `not_found`,
+- Barbería activa: cabecera `x-shop-id: <shop.id>` en rutas `auth: shop`. Si esa barbería está suspendida
+  (`shops.status = 'suspended'`), toda ruta `auth: shop` responde 403 `shop_suspended` ("Esta barbería está suspendida.
+  Contacta a soporte.") a todos menos al superadmin; el panel usa el código (no el texto) para mostrar su pantalla de
+  barbería suspendida en lugar de "Sin acceso". Sus contextos siguen en `/auth/me` con `shop_status: 'suspended'`.
+- Errores comunes: 400 `bad_request` (con `fields`), 401 `unauthorized`, 403 `forbidden` / `shop_suspended`, 404 `not_found`,
   409 `slot_taken` / `duplicate` / `conflict`, 429 `too_many_requests`, 503 `backend_not_configured`.
 
 ## Estados de cita
@@ -64,6 +67,9 @@ Citas `cancelled` y `no_show` no ocupan agenda; `no_show` no cuenta como ingreso
 `staff_name`, `staff_color`, `paid` (suma de pagos `paid`), `balance` (= total − paid, mínimo 0).
 
 **PublicAppointment**: `{ id, folio, date, start_min, end_min, duration_min, services, total, status, staff_id, staff_name, client_name, client_note, shop: { name, slug, address, phone, whatsapp, timezone } }`
+
+**MyAppointment** (portal del cliente, `/api/my/*`): PublicAppointment + `staff_color` (color del barbero en el panel,
+`''` si no tiene; el avatar del barbero en «Mis citas» usa el mismo color que en la agenda).
 
 **Staff** (vista): columnas de `staff` sin `pin_hash`, más `has_pin` (bool), `email` (del usuario vinculado o ''),
 `has_account` (bool). Siempre las mismas claves. Para el rol **barbero** (`GET /api/staff` sin `staff.manage`), en
@@ -230,9 +236,9 @@ fichas de staff). `GET /api/auth/me` con una sesión PIN inválida → 401.
 | PATCH | /api/messages/:id | messages.send | `{ status: opened\|sent\|failed }` | `Message` |
 | GET | /api/reminders | messages.send | `date` (por defecto mañana) | `{ date, items:[{ appointment, body, wa_link, reminded }] }` |
 | POST | /api/import/legacy | import.legacy | `{ citas:[...], staff:[...] }` (formato localStorage anterior) | `{ imported, skipped, staff_created, clients_created, errors }`⁴ |
-| GET | /api/my/appointments | my.appointments | – | `{ upcoming:[PublicAppointment + can_cancel, can_reschedule, deadline_text], past:[PublicAppointment], elsewhere:[{ shop_id, shop_slug, shop_name, shop_logo, count, next: PublicAppointment }] }` (`elsewhere`: otras barberías activas donde la misma cuenta es cliente y tiene citas próximas; `next` es la más cercana) |
-| POST | /api/my/appointments/:id/cancel | my.appointments | `{ reason? }` | `{ appointment: PublicAppointment + can_cancel, can_reschedule, deadline_text }` |
-| POST | /api/my/appointments/:id/reschedule | my.appointments | `{ date, start_min, staff_id? }` | `{ appointment: PublicAppointment + can_cancel, can_reschedule, deadline_text }` |
+| GET | /api/my/appointments | my.appointments | – | `{ upcoming:[MyAppointment + can_cancel, can_reschedule, deadline_text], past:[MyAppointment], elsewhere:[{ shop_id, shop_slug, shop_name, shop_logo, count, next: MyAppointment }] }` (`elsewhere`: otras barberías activas donde la misma cuenta es cliente y tiene citas próximas; `next` es la más cercana) |
+| POST | /api/my/appointments/:id/cancel | my.appointments | `{ reason? }` | `{ appointment: MyAppointment + can_cancel, can_reschedule, deadline_text }` |
+| POST | /api/my/appointments/:id/reschedule | my.appointments | `{ date, start_min, staff_id? }` | `{ appointment: MyAppointment + can_cancel, can_reschedule, deadline_text }` |
 | PATCH | /api/my/profile | my.appointments | `{ name?, phone?, marketing_ok? }` | `{ client }` |
 
 ³ **Acceso por correo del equipo**: `account` = `'created'` (cuenta nueva con la contraseña escrita), `'linked'`,

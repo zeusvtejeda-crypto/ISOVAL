@@ -1,5 +1,7 @@
 // #/registro — Cuenta de CLIENTE (POST /api/auth/register). Con ?b=<slug> la cuenta queda ligada a esa barbería
 // (se muestra su nombre con GET /api/public/shops/:slug); sin ?b se usa la barbería del dominio (/api/public/home).
+// Manda también los enlaces de gestión de las citas que reservó sin cuenta en esa barbería desde este dispositivo
+// (`claim`, ver claimTokens) para que su ficha quede ligada y las vea en «Mis citas».
 // Validación en vivo, mostrar/ocultar contraseña y, al terminar, entra (loadMe + selectShop) y va a #/mis-citas.
 //
 // También exporta piezas de formulario que comparten signup.js y profile.js:
@@ -11,7 +13,7 @@ import { api, getMode, setMode, health, SITE_BASE } from '../lib/api.js';
 import { state, loadMe, selectShop, clearSession } from '../lib/state.js';
 import { toast, busy, showFieldErrors, clearFieldErrors, avatar } from '../lib/ui.js';
 import { navigate } from '../lib/router.js';
-import { phone as fmtPhone, firstName } from '../lib/fmt.js';
+import { phone as fmtPhone, firstName, shopMark } from '../lib/fmt.js';
 
 export const DEMO_SLUGS = ['demo', 'demo-norte'];
 const MIN_PW = 8;
@@ -21,7 +23,7 @@ const FORM_CSS = `
 .fx{position:relative}
 .fx>.input{padding-right:44px}
 .fx-btn{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:44px;height:44px;display:grid;place-items:center;border-radius:10px;color:var(--text-3);transition:color .15s,background .15s}
-.fx-btn:hover{color:var(--text);background:var(--muted-soft)}
+@media (hover:hover) and (pointer:fine){.fx-btn:hover{color:var(--text);background:var(--muted-soft)}}
 .fx-btn .ic{width:19px;height:19px}
 .fx-ok{position:absolute;right:13px;top:50%;width:18px;height:18px;margin-top:-9px;color:var(--ok);opacity:0;transform:scale(.5);transition:opacity .2s var(--ease),transform .3s var(--ease-out);pointer-events:none}
 .fx-ok .ic{width:18px;height:18px;stroke-width:2.4}
@@ -216,6 +218,25 @@ export function useDemoIfNeeded(slug) {
   if (getMode() !== want) { setMode(want); state.mode = want; }
 }
 
+// Enlaces de gestión (tokens de /?cita=…) de las citas que se reservaron sin cuenta en esa barbería desde este
+// dispositivo. La página pública los guarda en localStorage 'tb:pub:citas' (index.html → saveMine: [{ token, slug,
+// … }], los 20 más recientes); el servidor acepta hasta 20 (core/domain/clients.js → MAX_CLAIM_TOKENS).
+const PUB_CITAS = 'tb:pub:citas';
+const MAX_CLAIM = 20;
+function claimTokens(slug) {
+  let list = null;
+  try { list = JSON.parse(localStorage.getItem(PUB_CITAS) || 'null'); } catch (e) { /* almacenamiento bloqueado o dañado */ }
+  if (!Array.isArray(list)) return [];
+  const want = String(slug || '').toLowerCase();
+  const out = [];
+  for (const x of list) {
+    if (!x || typeof x.token !== 'string' || !x.token || String(x.slug || '').toLowerCase() !== want || out.includes(x.token)) continue;
+    out.push(x.token);
+    if (out.length >= MAX_CLAIM) break;
+  }
+  return out;
+}
+
 // Tras registro/alta (ya con loadMe hecho): elige la barbería y muestra la ruta de destino SIN pasar por el
 // inicio (se fija el hash antes de que el shell reaccione al evento 'context').
 export async function afterAuth({ shopId, path, query }) {
@@ -310,7 +331,9 @@ export default {
       if (!box) return;
       if (!shopInfo) { box.hidden = true; return; }
       const s = shopInfo.shop;
-      const av = avatar(s.name, { src: s.logo_url || '', color: s.brand_color || '#15130F' });
+      // Logo o monograma de la barbería (shopMark: el mismo que el cliente acaba de ver en su página de reservas).
+      const av = s.logo_url ? avatar(s.name, { src: s.logo_url, color: s.brand_color || '#15130F' })
+        : raw('<span class="avatar" style="--c:' + esc(s.brand_color || '#15130F') + '" aria-hidden="true">' + esc(shopMark(s.name)) + '</span>');
       box.hidden = false;
       box.innerHTML = String(html`${av}<div class="grow"><small>Tu cuenta en</small><b class="truncate" style="display:block">${s.name}</b>${s.city || s.address ? html`<small class="truncate">${s.city || s.address}</small>` : ''}</div>
         ${demo ? html`<span class="badge brand plain">DEMO</span>` : raw(icon('check-circle', 'ok-t'))}`);
@@ -354,7 +377,12 @@ export default {
       const d = formData(form);
       const body = { name: d.name.trim(), email: d.email.trim(), password: d.password };
       if (digits(d.phone)) body.phone = digits(d.phone);
-      if (slug) body.shop_slug = slug;
+      if (slug) {
+        body.shop_slug = slug;
+        // Prueba de sus citas sin cuenta: el servidor le liga esa ficha (core/api/auth.js → linkClientAccount).
+        const claim = claimTokens(slug);
+        if (claim.length) body.claim = claim;
+      }
       const btn = form.querySelector('[type=submit]');
       try {
         await busy(btn, async () => {

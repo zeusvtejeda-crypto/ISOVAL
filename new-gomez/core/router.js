@@ -169,7 +169,8 @@ async function resolveShop(ctx) {
     if (!wanted) throw bad('Elige una barbería.', { shop: 'required' });
     throw forbidden('No tienes acceso a esa barbería.');
   }
-  if (shop.status === 'suspended' && !isSuper) throw forbidden('Esta barbería está suspendida. Contacta a soporte.');
+  // Código propio: el panel distingue «suspendida» de «sin acceso» sin depender del texto del mensaje.
+  if (shop.status === 'suspended' && !isSuper) throw new HttpError(403, 'shop_suspended', 'Esta barbería está suspendida. Contacta a soporte.');
   ctx.shop = shop;
   ctx.sdb = scopedDb(ctx.db, shop.id);
   if (isSuper) { ctx.role = 'superadmin'; }

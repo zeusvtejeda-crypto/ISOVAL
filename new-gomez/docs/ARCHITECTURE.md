@@ -4,6 +4,12 @@
 new-gomez/                  ← raíz del proyecto de Cloudflare Pages (salida = ".")
   index.html                ← página pública de reservas (barbería por dominio, predeterminada o ?b=<slug>)
   app/                      ← panel SaaS (PWA): dueño, barbero, cliente, superadmin
+  fonts/                    ← tipografías del propio sitio (sin Google Fonts), compartidas por index.html y app/
+    fonts.css               ← @font-face (Big Shoulders Display, IBM Plex Sans/Mono, subconjunto latino) +
+                              'TB Display Fallback' (Arial Bold ajustada a las medidas de Big Shoulders)
+    *.woff2  OFL.txt        ← archivos de fuente y su licencia; _headers: caché de un año, inmutables
+  sw.js                     ← service worker (raíz): precache del shell, fuentes y core/ de la demo; subir VERSION
+  _headers                  ← cabeceras de los estáticos en Cloudflare Pages (caché, seguridad)
   core/                     ← lógica de negocio ISOMÓRFICA (servidor + demo en el navegador)
     schema.js               ← tablas/columnas (única fuente) → migración D1 y adaptadores
     db.js / db-d1.js        ← misma interfaz: memoria (demo/tests) y D1 (producción); scopedDb = aislamiento

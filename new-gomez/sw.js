@@ -2,16 +2,16 @@
  *
  * Lo registran app/main.js (scope = raíz) y la página pública (index.html). Estrategias:
  *   · Navegación a /app/…          → red primero (con tiempo límite) y, sin red, el shell cacheado.
+ *   · Fuentes del sitio (fonts/)    → caché primero (precacheadas; inmutables según _headers).
  *   · Estáticos del mismo origen    → stale-while-revalidate (JS, CSS, íconos, imágenes, página pública).
  *   · /api/*                        → siempre red; nunca se cachea (no se intercepta).
- *   · Google Fonts                  → caché primero (las URLs de gstatic son inmutables).
+ *   · Otros orígenes                → no se interceptan (las fuentes ya no vienen de Google Fonts).
  *
  * Para publicar cambios del shell sube VERSION: se vuelve a precachear y se borran las cachés viejas.
  * La versión nueva espera hasta que la página mande {type:'SKIP_WAITING'} (o se cierren las pestañas).
  */
-const VERSION = '2026.09.24-1';
-const SHELL_CACHE = 'tb-shell-' + VERSION;
-const FONT_CACHE = 'tb-fonts-v1';
+const VERSION = '2026.09.24-2';
+const SHELL_CACHE = 'tb-shell-' + VERSION; // al activar se borra cualquier otra caché (también la vieja 'tb-fonts-v1')
 const BASE = new URL('./', self.location).pathname; // '/' (o '/sub/' si el sitio vive en una subcarpeta)
 const APP = BASE + 'app/';
 const NAV_TIMEOUT = 4000; // ms antes de servir el shell cacheado si la red está lenta
@@ -26,6 +26,11 @@ const PRECACHE = [
   'app/app.css',
   'app/main.js',
   'app/manifest.webmanifest',
+  // Tipografías del sitio (panel y página pública): fonts/fonts.css y sus archivos
+  'fonts/fonts.css',
+  'fonts/big-shoulders-display-latin.woff2',
+  'fonts/ibm-plex-sans-latin.woff2',
+  'fonts/ibm-plex-mono-500-latin.woff2',
   // Librerías del panel
   'app/lib/api.js',
   'app/lib/appointment-sheet.js',
@@ -35,9 +40,12 @@ const PRECACHE = [
   'app/lib/icons.js',
   'app/lib/notif-panel.js',
   'app/lib/payment-sheet.js',
+  'app/lib/period.js',
+  'app/lib/pickers.js',
   'app/lib/qr.js',
   'app/lib/router.js',
   'app/lib/state.js',
+  'app/lib/timefield.js',
   'app/lib/ui.js',
   'app/lib/whatsapp.js',
   // Vistas (una por ruta de main.js)
@@ -96,6 +104,7 @@ const PRECACHE = [
   'core/domain/clients.js',
   'core/domain/email.js',
   'core/domain/events.js',
+  'core/domain/messages.js',
   'core/domain/notify.js',
   'core/domain/settings.js',
   'core/domain/slots.js',
@@ -122,13 +131,12 @@ self.addEventListener('install', (event) => {
       if (!res.ok) throw new Error(res.status + ' ' + url);
       await cache.put(url, await clean(res));
     }));
-    try { await warmFonts(cache); } catch (e) { /* sin red o sin fuentes: el shell usa las del sistema */ }
   })());
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const keep = [SHELL_CACHE, FONT_CACHE];
+    const keep = [SHELL_CACHE];
     const keys = await caches.keys();
     await Promise.all(keys.filter((k) => !keep.includes(k)).map((k) => caches.delete(k)));
     await self.clients.claim();
@@ -156,12 +164,8 @@ self.addEventListener('fetch', (event) => {
       event.respondWith(staleWhileRevalidate(event, navKey(url), true)); // página pública, /panel/, etc.
       return;
     }
+    if (p.startsWith(BASE + 'fonts/')) { event.respondWith(cacheFirst(event, req)); return; }
     event.respondWith(staleWhileRevalidate(event, req, false));
-    return;
-  }
-
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    event.respondWith(fontsCacheFirst(req, url));
   }
 });
 
@@ -218,40 +222,15 @@ async function staleWhileRevalidate(event, key, isNavigation) {
   }
 }
 
-// Google Fonts: CSS y archivos de fuente, caché primero. Sin red ni copia → CSS vacío (sin errores en consola).
-async function fontsCacheFirst(req, url) {
-  const cache = await caches.open(FONT_CACHE);
+// Fuentes del sitio: no cambian sin cambiar de VERSION (el precache las vuelve a bajar con cache:'reload'), así que
+// la copia guardada se sirve sin ir a la red. Sin copia (p. ej. se borró la caché) → red, y se guarda.
+async function cacheFirst(event, req) {
+  const cache = await caches.open(SHELL_CACHE);
   const hit = await cache.match(req, { ignoreVary: true });
   if (hit) return hit;
-  try {
-    const res = await fetch(req);
-    if (res.ok || res.type === 'opaque') cache.put(req, res.clone()).catch(() => {});
-    return res;
-  } catch (e) {
-    if (url.hostname === 'fonts.googleapis.com') return new Response('', { status: 200, headers: { 'content-type': 'text/css; charset=utf-8' } });
-    throw e;
-  }
-}
-
-// Precarga las fuentes del shell (subconjunto latino, que cubre el español) para que la app instalada
-// se vea igual la primera vez que se abre sin conexión. Toma la URL del <link> de app/index.html.
-async function warmFonts(shellCache) {
-  const shell = await shellCache.match(APP + 'index.html') || await shellCache.match(APP);
-  if (!shell) return;
-  const m = /https:\/\/fonts\.googleapis\.com\/css2\?[^"'\s>]+/.exec(await shell.text());
-  if (!m) return;
-  const cssUrl = m[0].replace(/&amp;/g, '&');
-  const fonts = await caches.open(FONT_CACHE);
-  if (await fonts.match(cssUrl, { ignoreVary: true })) return;
-  const res = await fetch(cssUrl, { mode: 'cors', credentials: 'omit' });
-  if (!res.ok) return;
-  const css = await res.clone().text();
-  await fonts.put(cssUrl, res);
-  const files = Array.from(css.matchAll(/\/\*\s*latin\s*\*\/\s*@font-face\s*\{[^}]*?url\((https:\/\/fonts\.gstatic\.com\/[^)\s]+)\)/g), (x) => x[1]);
-  await Promise.allSettled(files.map(async (f) => {
-    const r = await fetch(f, { mode: 'cors', credentials: 'omit' });
-    if (r.ok) await fonts.put(f, r);
-  }));
+  const res = await fetch(req);
+  if (cacheable(res)) event.waitUntil(putClean(cache, req.url, res.clone()));
+  return res;
 }
 
 // ── Utilidades ─────────────────────────────────────────────────────────────

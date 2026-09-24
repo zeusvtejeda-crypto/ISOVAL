@@ -273,7 +273,7 @@ test('enlace de gestión: ver, reagendar, cancelar y notificaciones', async () =
   const rn = await f.db.find('notifications', { shop_id: 'shop_a', type: 'booking_rescheduled' });
   assert.deepEqual(rn.map((n) => n.staff_id).sort(), ['st_barberA', 'st_barberA2', 'st_ownerA'], 'dueño + barbero nuevo + anterior');
   // El aviso dice qué horario se liberó (mismo día → solo la hora; cambió de barbero → con quién era).
-  assert.ok(rn.every((n) => n.body.endsWith(', 1:20 p.m. con Barbero A2 · Antes: 10:00 a.m. con Barbero A')), rn[0].body);
+  assert.ok(rn.every((n) => n.body.endsWith(', 13:20 con Barbero A2 · Antes: 10:00 con Barbero A')), rn[0].body);
   // El horario anterior quedó libre.
   r = await f.book({ phone: '5522222222', start_min: 600 });
   assert.equal(r.status, 200);
@@ -309,7 +309,7 @@ test('reagendar a otro día: el aviso al equipo incluye el día y la hora anteri
   const day = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'][d.getUTCDay()] + ' ' + d.getUTCDate();
   const antes = d.getUTCMonth() === t.getUTCMonth() ? day : fmtDateEs(f.day);
   assert.equal(n.title, 'Cita reagendada por el cliente');
-  assert.equal(n.body, 'Laura Gómez · Corte · ' + fmtDateEs(to) + ', 11:20 a.m. con Barbero A · Antes: ' + antes + ', 11:00 a.m.');
+  assert.equal(n.body, 'Laura Gómez · Corte · ' + fmtDateEs(to) + ', 11:20 con Barbero A · Antes: ' + antes + ', 11:00');
 });
 
 test('reagendar: /slots y /days no cuentan la propia cita si se prueba que es suya (token del enlace o sesión)', async () => {

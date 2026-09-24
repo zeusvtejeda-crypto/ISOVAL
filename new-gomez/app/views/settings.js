@@ -1,6 +1,7 @@
 // Ajustes (#/ajustes?s=<sección>, dueño). Escritorio: menú lateral de secciones + panel. Móvil: lista → detalle.
 // Secciones con formulario (perfil, horario, reservas, pagos, página pública, avisos) guardan con
-// PATCH /api/shop (settings parcial, merge profundo) → toast + window.TB.refreshContext(). Cambios sin guardar:
+// PATCH /api/shop (settings parcial, merge profundo) → toast + window.TB.refreshContext() (solo repinta el shell) y la
+// vista vuelve a pintar el menú y la sección con la barbería guardada. Cambios sin guardar:
 // barra fija con Guardar/Descartar, confirmación al salir por un enlace del panel, aviso del navegador al
 // cerrar la pestaña y borrador en memoria si se sale con el botón Atrás (se recupera al volver).
 // Además: Importar datos anteriores (localStorage 'nb:<slug>:citas' / 'nb:<slug>:staff' → POST /api/import/legacy)
@@ -11,7 +12,7 @@ import { api, SITE_BASE } from '../lib/api.js';
 import { state, shop, bus, can } from '../lib/state.js';
 import { navigate, setQuery } from '../lib/router.js';
 import { toast, confirmDialog, menu, busy, emptyState, avatar, showFieldErrors, clearFieldErrors, copyText } from '../lib/ui.js';
-import { time as fmtTime, money, number, plural, dateNum, WEEKDAYS, MONTHS_SHORT, ROLE } from '../lib/fmt.js';
+import { time as fmtTime, money, number, plural, dateNum, shopMark, WEEKDAYS, MONTHS_SHORT, ROLE } from '../lib/fmt.js';
 import { timeSelect } from '../lib/timefield.js';
 
 // ── Catálogos ─────────────────────────────────────────────────────────────
@@ -54,8 +55,6 @@ const MAX_IMPORT = 5000;
 
 // Borradores que sobreviven a salir de la vista sin guardar (Atrás del navegador): id → valores del formulario.
 const drafts = {};
-// Guardar llama a refreshContext(), que vuelve a pintar toda la vista: se recupera la posición de scroll.
-let restoreScroll = null;
 
 // ── Utilidades ───────────────────────────────────────────────────────────
 const toHHMM = (m) => (m >= 1440 ? '23:59' : fmtTime(m));
@@ -67,6 +66,12 @@ function toMin(v, isEnd) {
   return n >= 0 && n <= 1440 ? n : null;
 }
 const hoursText = (min) => { const h = Math.floor(min / 60), r = min % 60; return r ? h + ' h ' + r : h + ' h'; };
+// Avatar de la barbería: su logo o su monograma (shopMark: el mismo de la página pública y del menú del panel).
+function shopAvatar(name, o) {
+  o = o || {};
+  if (o.src) return avatar(name, o);
+  return raw('<span class="avatar' + (o.size ? ' ' + o.size : '') + '" style="--c:' + esc(o.color || '#15130F') + '" aria-hidden="true">' + esc(shopMark(name)) + '</span>');
+}
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 const isUrl = (s) => /^https?:\/\/[^\s<>"']+\.[^\s<>"']+/i.test(s);
 const digits = (s) => String(s || '').replace(/\D/g, '').replace(/^52(1)?(?=\d{10}$)/, '');
@@ -202,7 +207,7 @@ const CSS = `
 .st-navg:first-child{padding-top:4px}
 .st-nav{display:grid;gap:2px}
 .st-nav button{display:flex;align-items:center;gap:11px;width:100%;min-height:44px;padding:6px 10px;border-radius:11px;text-align:left;color:var(--text-2);font-size:14px;font-weight:500;transition:background .12s,color .12s}
-.st-nav button:hover{background:var(--muted-soft);color:var(--text)}
+@media (hover:hover) and (pointer:fine){.st-nav button:hover{background:var(--muted-soft);color:var(--text)}}
 .st-nav button[aria-current="true"]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:var(--shadow-1);outline:1px solid var(--border)}
 .st-nav .ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--surface-3);color:var(--text-2);flex:none;transition:background .15s,color .15s}
 .st-nav .ico .ic{width:17px;height:17px}
@@ -258,7 +263,7 @@ const CSS = `
 .st-logo .stack-sm{flex:1;min-width:180px}
 .st-sw9{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .st-sw9 button,.st-sw9 label{width:40px;height:40px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff;box-shadow:inset 0 0 0 1px var(--border-strong);transition:transform .15s var(--ease),box-shadow .15s;position:relative;cursor:pointer}
-.st-sw9 button:hover,.st-sw9 label:hover{transform:scale(1.08)}
+@media (hover:hover) and (pointer:fine){.st-sw9 button:hover,.st-sw9 label:hover{transform:scale(1.08)}}
 .st-sw9 [aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--border-strong),0 0 0 3px var(--surface),0 0 0 5px var(--c)}
 .st-sw9 [data-color="#15130f"][aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--border-strong),0 0 0 3px var(--surface),0 0 0 5px var(--text-2)}
 .st-sw9 button .ic{width:18px;height:18px;stroke-width:2.6;opacity:0}
@@ -315,7 +320,7 @@ const CSS = `
 .st-savebar .grow{font-size:13.5px;font-weight:500;min-width:0;display:flex;align-items:center;gap:8px}
 .st-savebar .grow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--warn);flex:none;box-shadow:0 0 0 4px rgba(229,168,75,.18)}
 .st-savebar .btn-ghost{color:var(--on-ink)}
-.st-savebar .btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+@media (hover:hover) and (pointer:fine){.st-savebar .btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}}
 .st-savebar .lg{display:none}
 @media (min-width:480px){.st-savebar .lg{display:inline}}
 /* importar */
@@ -563,7 +568,8 @@ export default {
     }
 
     // ── Pintar sección ──
-    function paintSection(restoreDraft) {
+    // opts.quiet: se vuelve a pintar tras guardar (sin la animación de entrada).
+    function paintSection(restoreDraft, opts) {
       cur.form = null; cur.hours = null;
       if (cur.imp) { cur.imp(); cur.imp = null; }
       if (!sid) { panel.innerHTML = ''; return; }
@@ -573,7 +579,7 @@ export default {
         <div class="st-ph"><h3>${s.title}</h3><p>${s.desc}</p></div>`;
       if (FORM_SECTIONS.includes(sid)) {
         panel.innerHTML = String(html`${head}
-          <form id="stForm" class="card st-card fade-up" novalidate autocomplete="off" data-form="${sid}">${sectionBody(sid, sh)}</form>
+          <form id="stForm" class="card st-card ${opts && opts.quiet ? '' : 'fade-up'}" novalidate autocomplete="off" data-form="${sid}">${sectionBody(sid, sh)}</form>
           <div id="stDraft"></div><div id="stBar"></div>`);
         cur.form = $('#stForm', panel);
         mountSection(sid, sh);
@@ -631,7 +637,7 @@ export default {
         const logo = f.elements.logo_url.value.trim();
         const color = f.elements.brand_color.value || '';
         const name = f.elements.name.value.trim() || shop().name;
-        $('#stLogoPrev', f).innerHTML = String(avatar(name, { src: logo && (/^data:image\//.test(logo) || isUrl(logo) || logo.startsWith('/')) ? logo : '', color: color || '#15130F', size: 'xl' }));
+        $('#stLogoPrev', f).innerHTML = String(shopAvatar(name, { src: logo && (/^data:image\//.test(logo) || isUrl(logo) || logo.startsWith('/')) ? logo : '', color: color || '#15130F', size: 'xl' }));
         $('#stLogoClear', f).hidden = !logo;
         const urlIn = $('#stLogoUrl', f), hint = $('#stLogoHint', f);
         if (/^data:/.test(logo)) { urlIn.value = ''; urlIn.placeholder = 'Imagen subida desde tu dispositivo'; hint.textContent = 'Usando la imagen que subiste (' + Math.round(logo.length * 0.75 / 1024) + ' KB).'; }
@@ -776,15 +782,22 @@ export default {
         showFieldErrors(f, { fields: errs, message: 'Revisa los datos marcados.' });
         return;
       }
+      const saved = sid;
       try {
-        await busy(btn, api.patch('/shop', payload(sid, v)));
+        const r = await busy(btn, api.patch('/shop', payload(sid, v)));
         cur.orig = JSON.stringify(values());
         delete drafts[sid];
         paintBar();
         toast.success('Cambios guardados');
         bus.emit('shop:changed');
-        restoreScroll = { sid, y: window.scrollY };
-        await window.TB.refreshContext();
+        // refreshContext() relee el contexto y repinta solo el shell (la vista y su scroll se conservan). Si no se pudo
+        // releer, se usa la barbería que devolvió el guardado.
+        try { await window.TB.refreshContext(); } catch (e) { if (state.ctx && r && r.shop) state.ctx.shop = r.shop; }
+        if (!el.isConnected) return;
+        // Menú con los resúmenes nuevos y la sección con lo que quedó guardado (p. ej. teléfonos y redes normalizados),
+        // salvo que ya se esté editando otra vez.
+        paintNav();
+        if (sid === saved && !isDirty()) paintSection(false, { quiet: true });
       } catch (err) {
         if (err.fields && Object.keys(err.fields).some((k) => /^settings\.hours/.test(k))) { toast.error(err); return; }
         showFieldErrors(f, err);
@@ -904,11 +917,6 @@ export default {
 
     paintNav();
     paintSection();
-    if (restoreScroll && restoreScroll.sid === sid) {
-      const y = restoreScroll.y;
-      requestAnimationFrame(() => window.scrollTo(0, y));
-    }
-    restoreScroll = null;
 
     return () => {
       offs.forEach((f) => f());

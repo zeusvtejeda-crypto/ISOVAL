@@ -44,9 +44,26 @@ test('mis citas: próximas y pasadas solo de mi ficha, con política de cambios'
   assert.equal(u.can_reschedule, true);
   assert.ok(u.deadline_text);
   assert.equal(u.staff_name, 'Barbero A');
+  assert.equal(u.staff_color, '', 'sin color → cadena vacía');
   assert.equal(u.shop.slug, 'alfa');
   assert.equal(u.internal_note, undefined, 'vista pública, sin notas internas');
   assert.equal(u.manage_token_hash, undefined);
+});
+
+test('mis citas: staff_color del barbero en la lista, en otras barberías y al cancelar', async () => {
+  const f = await setup();
+  await f.db.update('staff', { id: 'st_barberA' }, { color: '#3B82F6' });
+  let r = await f.call('GET', '/api/my/appointments', me);
+  assert.equal(r.status, 200, r.body);
+  assert.ok([...r.data.upcoming, ...r.data.past].every((a) => a.staff_color === '#3B82F6'));
+  r = await f.call('POST', '/api/my/appointments/' + f.up.id + '/cancel', { ...me, body: {} });
+  assert.equal(r.data.appointment.staff_color, '#3B82F6');
+  // En otra barbería (Beta) la próxima cita de Alfa trae el color de su barbero.
+  const b = await f.call('POST', '/api/public/shops/beta/appointments', { as: 'clientA', body: { services: ['sv_corteB'], staff_id: 'st_ownerB', date: addDays(f.day, 1), start_min: 660, name: 'Cliente A', phone: '3110000001' } });
+  assert.equal(b.status, 200, b.body);
+  r = await f.call('GET', '/api/my/appointments', { as: 'clientA', shop: 'shop_b' });
+  assert.equal(r.status, 200, r.body);
+  assert.equal(r.data.elsewhere[0].next.staff_color, '#3B82F6');
 });
 
 test('mis citas: permisos — solo rol cliente y solo en su barbería', async () => {

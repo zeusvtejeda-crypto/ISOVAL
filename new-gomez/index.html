@@ -1617,7 +1617,28 @@ function validate(show) {
   if (show) { ['fName', 'fPhone', 'fEmail', 'fNote'].forEach((k) => setFieldErr(k, e[k])); }
   return Object.keys(e).length ? e : null;
 }
+// Datos del cliente precargados: 1) su cuenta, si tiene sesión (la consulta llega después de pintar), 2) el respaldo
+// de este dispositivo ('tb:pub:me', lo último que escribió al reservar). Lo que la persona escribe en esta visita
+// nunca se pisa: cada campo que toca queda fuera del precargado.
+const typedMe = new Set();
+function fillMe(me) {
+  if (!me || typeof me !== 'object') return;
+  const vals = { name: String(me.name || '').trim(), phone: me.phone ? phoneFmt(me.phone) : '', email: String(me.email || '').trim() };
+  for (const k of Object.keys(vals)) if (vals[k] && !typedMe.has(k)) $('#' + k).value = vals[k];
+  if (S.step === 4) renderTicket();
+}
+// Sesión de cliente en TuBarbería (panel o registro): su nombre, teléfono y correo. Con sesión del equipo de esta
+// barbería (o de superadmin) no se precarga: suele reservar para otra persona.
+async function fillFromAccount() {
+  if (!C.api || C.mode !== 'live') return;
+  let r = null;
+  try { r = await C.api.get('/auth/session', null, { silent401: true }); } catch (e) { return; } // sin sesión o sin red: queda el respaldo
+  const u = r && r.user;
+  if (!u || u.is_superadmin || (r.contexts || []).some((c) => c.shop_id === C.shop.id && c.role !== 'client')) return;
+  fillMe({ name: u.name, phone: u.phone, email: u.email });
+}
 $('#form').addEventListener('input', (e) => {
+  if (['name', 'phone', 'email'].includes(e.target.id)) typedMe.add(e.target.id);
   const f = e.target.closest('.field'); if (f && f.classList.contains('invalid')) setFieldErr(f.id, '');
   renderTicket();
 });
@@ -2170,8 +2191,8 @@ function applyShop(data, mode, why) {
   paintShop();
   paintNotice();
   renderServices();
-  const me = store.get(LSK.me, null);
-  if (me && typeof me === 'object') { $('#name').value = me.name || ''; $('#phone').value = me.phone ? phoneFmt(me.phone) : ''; $('#email').value = me.email || ''; }
+  fillMe(store.get(LSK.me, null)); // respaldo local primero (inmediato); la cuenta, si hay sesión, lo reemplaza al llegar
+  fillFromAccount();
   S.staff = defaultStaff();
   go(1, true);
   // "Reserva de nuevo" desde otra página: ?servicio=<id> preselecciona.

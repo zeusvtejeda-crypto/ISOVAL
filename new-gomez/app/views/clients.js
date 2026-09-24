@@ -44,7 +44,7 @@ const CSS = `
 .cl-tags .chip .n{font-size:11.5px;opacity:.7}
 .cl-head{display:none}
 .cl-row{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr) auto 40px;gap:4px 12px;align-items:center;padding:12px 8px 12px 14px;border-top:1px solid var(--border);transition:background .12s}
-.cl-row:hover{background:var(--surface-2)}
+@media (hover:hover) and (pointer:fine){.cl-row:hover{background:var(--surface-2)}}
 .cl-row .avatar{--s:40px}
 .cl-main{min-width:0;display:grid;gap:3px}
 .cl-name{font-weight:600;font-size:15px;text-decoration:none;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -90,7 +90,7 @@ const CSS = `
 @media (min-width:768px){.tag-box input{font-size:15px}}
 .tag-pill{display:inline-flex;align-items:center;gap:2px;height:30px;padding:0 4px 0 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand-strong);font-size:13px;font-weight:600;animation:pop .25s var(--ease-out)}
 .tag-pill button{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:inherit}
-.tag-pill button:hover{background:rgba(0,0,0,.06)}
+@media (hover:hover) and (pointer:fine){.tag-pill button:hover{background:rgba(0,0,0,.06)}}
 .tag-pill .ic{width:13px;height:13px;stroke-width:2.4}
 .tag-sugg{margin-top:8px}
 .tag-sugg .chip{min-height:34px}
@@ -341,7 +341,7 @@ export default {
       const vipOn = fold(st.tag) === fold(k.vipTag);
       const freqOn = st.sort === 'visits' && !st.tag;
       $('#clKpis', el).innerHTML = String(html`
-        <div class="card kpi"><span class="label">${raw(icon('users'))}${barber ? 'Mis clientes' : 'Clientes'}</span><span class="value" data-n="${k.total}">0</span><span class="foot">${k.upcoming ? plural(k.upcoming, 'con cita próxima', 'con cita próxima') : 'En tu cartera'}</span></div>
+        <div class="card kpi"><span class="label">${raw(icon('users'))}En total</span><span class="value" data-n="${k.total}">0</span><span class="foot">${k.upcoming ? plural(k.upcoming, 'con cita próxima', 'con cita próxima') : 'En tu cartera'}</span></div>
         <div class="card kpi"><span class="label">${raw(icon('sparkles'))}Nuevos este mes</span><span class="value" data-n="${k.fresh}">0</span><span class="foot">Altas desde el 1 de ${MONTHS_SHORT[Number(month.slice(5, 7)) - 1]}${approx ? ' (aprox.)' : ''}</span></div>
         <button type="button" class="card kpi interactive" data-kpi="frequent" aria-pressed="${String(freqOn)}"><span class="label">${raw(icon('repeat'))}Frecuentes</span><span class="value" data-n="${k.frequent}">0</span><span class="foot">${FREQUENT} visitas o más · ver</span></button>
         <button type="button" class="card kpi interactive" data-kpi="vip" aria-pressed="${String(vipOn)}"><span class="label">${raw(icon('crown'))}VIP</span><span class="value" data-n="${k.vip}">0</span><span class="foot">${k.vip ? 'Con etiqueta ' + k.vipTag + ' · ver' : 'Etiqueta a tus mejores clientes'}</span></button>`);

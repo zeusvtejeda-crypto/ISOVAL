@@ -47,6 +47,8 @@ const NAV = [
     { path: '/clientes', label: () => (role() === 'barber' ? 'Mis clientes' : 'Clientes'), short: 'Clientes', icon: 'users', perm: ['clients.read.all', 'clients.read.own'] },
     { path: '/mensajes', label: 'WhatsApp', icon: 'whatsapp', perm: 'messages.send' },
     { path: '/mis-citas', label: 'Mis citas', icon: 'calendar-check', roles: ['client'] },
+    // Enlaces con href (página pública): misma pestaña en la barra lateral, «Más» y la barra inferior; con _blank la
+    // app instalada (PWA) mandaría al cliente al navegador.
     { href: bookingUrl, label: 'Reservar cita', short: 'Reservar', icon: 'calendar-plus', roles: ['client'] },
     { path: '/notificaciones', label: 'Notificaciones', short: 'Avisos', icon: 'bell', perm: 'notifications.read', count: true }
   ] },
@@ -123,7 +125,7 @@ const root = document.getElementById('app');
 let current = { cleanup: null, key: '' };
 let shellEl = null;
 let netError = null;   // no se pudo comprobar la sesión por falta de red (la cookie puede seguir siendo válida)
-let shopError = null;  // /api/context rechazó la barbería (p. ej. suspendida): { kind: 'suspended', name }
+let shopError = null;  // /api/context rechazó la barbería por suspendida: { kind: 'suspended', name, role }
 
 async function boot() {
   state.mode = getMode();
@@ -148,7 +150,10 @@ async function checkSession() {
   netError = null;
   try {
     // Entrar directo a #/demo sin sesión de demo: no hace falta consultar al servidor (evita un 404 en hosting estático).
-    if (getMode() !== 'demo' && parseHash().path === '/demo') throw Object.assign(new Error('skip'), { code: 'skip' });
+    // Entrar directo a la demo (o registrarse en una barbería de la demo) no necesita al servidor.
+    const h0 = parseHash();
+    const demoEntry = h0.path === '/demo' || (h0.path === '/registro' && /^demo(-norte)?$/.test(h0.query.b || ''));
+    if (getMode() !== 'demo' && demoEntry) throw Object.assign(new Error('skip'), { code: 'skip' });
     await loadMe();
   } catch (e) {
     clearSession();
@@ -166,9 +171,10 @@ async function retrySession(btn) {
   shellEl = null;
   if (!state.ctx) route(); // con barbería, selectShop ya emitió 'context' (shell + ruta)
 }
-const isSuspendedError = (e) => !!e && e.status === 403 && /suspendid/i.test(e.message || '');
+// 403 con código propio (core/router.js → resolveShop): no se depende del texto del mensaje.
+const isSuspendedError = (e) => !!e && e.status === 403 && e.code === 'shop_suspended';
 // Barbería activa al entrar. Si la preferida está suspendida se prueba con las demás del usuario; si ninguna
-// sirve, la vista explica por qué (en lugar de «aún no perteneces a ninguna barbería»).
+// sirve, renderSuspended lo explica (en lugar de «aún no perteneces a ninguna barbería» o «Sin acceso»).
 async function ensureShop() {
   shopError = null;
   const id = preferredShopId();
@@ -183,22 +189,29 @@ async function ensureShop() {
     } catch (e) {
       state.ctx = null;
       if (!isSuspendedError(e)) { toast.error(e); return; }
-      if (!shopError) { const c = (state.contexts || []).find((x) => x.shop_id === sid); shopError = { kind: 'suspended', name: c ? c.shop_name : '' }; }
+      if (!shopError) { const c = (state.contexts || []).find((x) => x.shop_id === sid); shopError = { kind: 'suspended', name: c ? c.shop_name : '', role: c ? c.role : '' }; }
     }
   }
 }
+// Con sesión, sin superadmin y sin barbería activa porque las suyas están suspendidas → { name, role, count }
+// (count: cuántas barberías distintas suyas están suspendidas). Si no, null.
 function suspendedInfo() {
-  if (state.ctx || isSuper()) return null;
-  if (shopError && shopError.kind === 'suspended') return shopError;
+  if (state.ctx || isSuper() || !(state.user || state.staff)) return null;
   const ctxs = state.contexts || [];
-  if (ctxs.length && ctxs.every((c) => c.shop_status === 'suspended')) return { kind: 'suspended', name: ctxs[0].shop_name };
+  const count = Math.max(1, new Set(ctxs.filter((c) => c.shop_status === 'suspended').map((c) => c.shop_id)).size);
+  if (shopError && shopError.kind === 'suspended') return Object.assign({}, shopError, { count });
+  if (ctxs.length && ctxs.every((c) => c.shop_status === 'suspended')) return { kind: 'suspended', name: ctxs[0].shop_name, role: ctxs[0].role, count };
   return null;
 }
 function hideSplash() { const s = document.getElementById('splash'); if (s) { s.classList.add('out'); setTimeout(() => s.remove(), 400); } }
 
 function homePath() {
   if (!state.user && !state.staff) return netError ? '/inicio' : '/login';
-  if (!state.ctx) return isSuper() ? '/plataforma' : (suspendedInfo() ? '/inicio' : '/perfil');
+  if (!state.ctx) {
+    if (isSuper()) return '/plataforma';
+    const sus = suspendedInfo(); // su pantalla sale en cualquier ruta; la de su rol sirve al reactivarse
+    return sus ? (sus.role === 'client' ? '/mis-citas' : '/inicio') : '/perfil';
+  }
   return role() === 'client' ? '/mis-citas' : '/inicio';
 }
 
@@ -242,9 +255,11 @@ async function route(e) {
   const m = match(path);
   const authed = !!(state.user || state.staff);
   if (authed) netError = null;
-  if (!m) return renderPage(null, { notFound: true });
+  // Solo barberías suspendidas: pantalla propia, sin navegación del panel (ni «Sin acceso» ni «no encontrada»).
+  const sus = authed ? suspendedInfo() : null;
+  if (!m) return sus ? renderSuspended(sus) : renderPage(null, { notFound: true });
   const r = m.route;
-  if (r.public && !(r.shellIfAuthed && authed)) {
+  if (r.public && !(r.shellIfAuthed && authed && !sus)) {
     if (authed && ['/login', '/registro', '/crear-barberia'].includes(path) && !query.next) return navigate(homePath(), { replace: true });
     return renderBare(r, m.params, query);
   }
@@ -252,12 +267,10 @@ async function route(e) {
     if (netError) return renderOffline();
     return navigate('/login', { replace: true, query: { next: location.hash.slice(1) } });
   }
+  if (sus) return renderSuspended(sus);
   if (!r.public && !state.ctx && r.path !== '/perfil') {
     if (isSuper()) { if (!r.noShop) return navigate('/plataforma', { replace: true }); }
-    else {
-      const sus = suspendedInfo();
-      return renderPage(r, sus ? { suspended: sus } : r.noShop ? { forbidden: true } : { noShop: true });
-    }
+    else return renderPage(r, r.noShop ? { forbidden: true } : { noShop: true });
   }
   if (!allowed(r)) return renderPage(r, { forbidden: true });
   return renderPage(r, { params: m.params, query });
@@ -307,11 +320,56 @@ function renderOffline() {
   if (b) b.addEventListener('click', () => retrySession(b));
 }
 
+// Todas sus barberías suspendidas (y no es superadmin): una pantalla propia, sin barra lateral ni inferior. Dice qué
+// pasa y con quién hablar, y deja reintentar (tras hablar con soporte) o cerrar sesión. En la demo conserva su cinta.
+function renderSuspended(info) {
+  ++renderSeq;
+  runCleanup();
+  shellEl = null;
+  current.key = '';
+  document.body.classList.remove('has-shell');
+  wireShell(); // la cinta de la demo usa los listeners delegados del shell
+  const many = info.count > 1;
+  const client = info.role === 'client';
+  const title = many ? 'Tus barberías están suspendidas' : 'Tu barbería está suspendida';
+  const it = many ? 'reactivarlas' : 'reactivarla';
+  const lead = client
+    ? 'Por ahora no ' + (many ? 'reciben' : 'recibe') + ' reservas ni cambios en línea.'
+    : '<b>Contacta a soporte de TuBarbería</b> para ' + it + '.';
+  const text = client
+    ? 'Si ya tienes una cita, comunícate directamente con la barbería. Para cualquier duda, contacta a soporte de TuBarbería.'
+    : 'Mientras ' + (many ? 'estén suspendidas' : 'esté suspendida') + ' no puedes ver la agenda, los clientes ni la caja, y ' + (many ? 'sus páginas no reciben' : 'su página no recibe') + ' reservas. Tus datos se conservan.';
+  const name = (state.user && state.user.name) || (state.staff && state.staff.name) || '';
+  const sub = [state.user ? state.user.email : '', ROLE[info.role] || ''].filter(Boolean).join(' · ');
+  document.title = title + ' · TuBarbería';
+  root.innerHTML = '<div class="blocked-wrap">' + demoRibbon() +
+    '<main class="blocked" aria-labelledby="susTitle"><div class="blocked-card">' +
+      '<div class="blocked-brand"><span class="logo-mark">' + icon('logo') + '</span><span class="brandname">Tu<b>Barbería</b></span></div>' +
+      '<div class="art">' + icon('ban') + '</div>' +
+      (info.name && !many ? '<p class="eyebrow">' + esc(info.name) + '</p>' : '') +
+      '<h1 id="susTitle">' + esc(title) + '</h1>' +
+      '<p class="lead">' + lead + '</p>' +
+      '<p>' + esc(text) + '</p>' +
+      '<div class="actions"><button type="button" class="btn btn-primary" id="susRetry">' + icon('refresh') + 'Reintentar</button>' +
+      '<button type="button" class="btn btn-secondary" id="susLogout">' + icon('logout') + 'Cerrar sesión</button></div>' +
+      '<div class="who">' + avatar(name, { size: 'sm' }) + '<span class="grow"><span class="name truncate">' + esc(name) + '</span>' + (sub ? '<span class="sub truncate">' + esc(sub) + '</span>' : '') + '</span></div>' +
+    '</div></main></div>';
+  const retry = $('#susRetry');
+  retry.addEventListener('click', async () => {
+    retry.setAttribute('aria-busy', 'true');
+    await checkSession(); // contextos frescos (shop_status) y otra vez la barbería
+    if (state.ctx) return navigate(homePath(), { replace: true, force: true }); // reactivada: a su inicio por rol
+    if (!retry.isConnected) return;
+    retry.removeAttribute('aria-busy');
+    if (netError) toast.error(netError);
+    else if (suspendedInfo()) toast.info(many ? 'Siguen suspendidas.' : 'Sigue suspendida.', { duration: 6000 });
+    else route();
+  });
+  $('#susLogout').addEventListener('click', (e) => logout({ ask: false, btn: e.currentTarget }));
+}
+
 function blockedState(r, opts) {
   if (opts.notFound) return { icon: 'help', title: 'Página no encontrada', text: 'El enlace que abriste no existe o cambió.', action: { label: 'Ir al inicio', href: '#' + homePath() } };
-  if (opts.suspended) return { icon: 'ban', title: opts.suspended.name ? '«' + opts.suspended.name + '» está suspendida' : 'Tu barbería está suspendida',
-    text: 'Mientras esté suspendida no puedes ver la agenda, los clientes ni la caja, y su página no recibe reservas. Tus datos se conservan: contacta a soporte de TuBarbería para reactivarla.',
-    action: { label: 'Reintentar', id: 'susRetry', icon: 'refresh' } };
   if (opts.forbidden && role() === 'client') return { icon: 'lock', title: 'Esta sección es para el equipo', text: 'Aquí entran el dueño y los barberos de la barbería. Tus citas, cambios y cancelaciones están en Mis citas.', action: { label: 'Ir a Mis citas', href: '#/mis-citas', icon: 'calendar-check' } };
   if (opts.forbidden) return { icon: 'lock', title: 'Sin acceso a esta sección', text: 'Tu rol no tiene permiso para ver esto. Si crees que es un error, pídele acceso al dueño.', action: { label: 'Ir al inicio', href: '#' + homePath() } };
   return { icon: 'store', title: 'Aún no perteneces a ninguna barbería', text: 'Pide al dueño que te agregue a su equipo, o crea tu propia barbería.', action: { label: 'Crear mi barbería', href: '#/crear-barberia' } };
@@ -325,22 +383,12 @@ async function renderPage(r, opts) {
   highlightNav(r ? (r.nav || r.path) : '');
   if (current.key !== location.hash.split('?')[0]) window.scrollTo(0, 0);
   current.key = location.hash.split('?')[0];
-  if (opts.notFound || opts.forbidden || opts.noShop || opts.suspended) {
+  if (opts.notFound || opts.forbidden || opts.noShop) {
     const cfg = blockedState(r, opts);
     page.innerHTML = '<div class="page">' + String(emptyState(cfg)) + '</div>';
     // La barra dice dónde estás (la sección); el estado ya lleva su propio título grande.
     setTitle(cfg.title, r && !(r.superOnly && !isSuper()) ? r.title : '');
     watchLargeTitle(true);
-    const retry = $('#susRetry', page);
-    if (retry) retry.addEventListener('click', async () => {
-      retry.setAttribute('aria-busy', 'true');
-      await ensureShop();
-      if (!retry.isConnected) return;
-      retry.removeAttribute('aria-busy');
-      if (state.ctx) navigate(homePath(), { replace: true, force: true });
-      else if (suspendedInfo()) toast.info('Sigue suspendida. Si ya hablaste con soporte, intenta en unos minutos.');
-      else route();
-    });
     return;
   }
   // Mientras carga, el título de la barra no aparece y desaparece (si la vista trae su h2, se queda oculto).
@@ -414,6 +462,7 @@ function shopAvatar(name, o) {
   return '<span class="avatar' + (o.size ? ' ' + o.size : '') + '" style="--c:' + esc(o.color || '#15130F') + '" aria-hidden="true">' + esc(shopMark(name)) + '</span>';
 }
 const myColor = () => (state.ctx && state.ctx.staff && state.ctx.staff.color) || undefined;
+const demoRibbon = () => (getMode() === 'demo' ? '<div class="demo-ribbon">' + icon('sparkles', 'ic-sm') + '<span>Demo con datos ficticios</span> · <button type="button" id="dmRole">Cambiar rol</button> · <button type="button" id="dmGuide">Guía</button> · <button type="button" id="dmExit">Salir</button></div>' : '');
 const themeLabel = () => 'Tema: ' + ({ auto: 'automático', light: 'claro', dark: 'oscuro' }[getTheme()]);
 function renderShell() {
   const authed = !!(state.user || state.staff);
@@ -432,7 +481,7 @@ function renderShell() {
   const roleName = isSuper() && r !== 'superadmin' ? 'Superadmin' : (ROLE[r] || '');
 
   root.innerHTML =
-    (demoOn ? '<div class="demo-ribbon">' + icon('sparkles', 'ic-sm') + '<span>Demo con datos ficticios</span> · <button type="button" id="dmRole">Cambiar rol</button> · <button type="button" id="dmGuide">Guía</button> · <button type="button" id="dmExit">Salir</button></div>' : '') +
+    demoRibbon() +
     '<div class="shell has-sidebar">' +
     '<aside class="sidebar" id="sidebar" aria-label="Menú principal">' +
       '<div class="sb-brand"><span class="logo-mark">' + icon('logo') + '</span><span class="brandname">Tu<b>Barbería</b></span></div>' +
@@ -480,7 +529,7 @@ function bottomNavHtml(canCreate) {
     profile;
   if (!state.ctx) {
     if (isSuper()) return it('/plataforma', 'Barberías', 'shield') + it('/plataforma?tab=usuarios', 'Usuarios', 'users', ' data-q="tab=usuarios"') + profile + more;
-    // Sin barbería activa (ninguna todavía, o suspendida): su estado, el perfil y «Más».
+    // Sin barbería activa todavía (las suspendidas tienen su propia pantalla, sin barra): su estado, el perfil y «Más».
     return it('/inicio', 'Inicio', 'home') + profile + more;
   }
   return it('/inicio', r === 'barber' ? 'Mi día' : 'Inicio', 'home') + it('/agenda', 'Agenda', 'calendar') +
@@ -493,7 +542,7 @@ function wireShell() {
   if (shellWired) return;
   shellWired = true;
   on(root, 'click', '#themeBtn', () => { const n = { auto: 'light', light: 'dark', dark: 'auto' }[getTheme()]; setTheme(n); repaintShell(); toast.info(themeLabel()); });
-  on(root, 'click', '#logoutBtn', logout);
+  on(root, 'click', '#logoutBtn', () => logout());
   on(root, 'click', '#shopSwitch', () => openShopSwitcher());
   on(root, 'click', '#bellBtn', (e, el) => openBell(el));
   on(root, 'click', '#newApptTop,[data-newappt]', () => newAppointment());
@@ -594,9 +643,11 @@ export async function enterShop(id) {
   navigate(homePath(), { force: true });
 }
 
-async function logout() {
-  const ok = await confirmDialog({ title: '¿Cerrar sesión?', message: 'Tendrás que volver a entrar con tu correo o PIN.', confirmText: 'Cerrar sesión', icon: 'logout' });
-  if (!ok) return;
+// o.ask:false → sin confirmar (p. ej. desde la pantalla de barbería suspendida, donde es la salida esperada).
+async function logout(o) {
+  o = o || {};
+  if (o.ask !== false && !(await confirmDialog({ title: '¿Cerrar sesión?', message: 'Tendrás que volver a entrar con tu correo o PIN.', confirmText: 'Cerrar sesión', icon: 'logout' }))) return;
+  if (o.btn) o.btn.setAttribute('aria-busy', 'true');
   try { await api.post('/auth/logout'); } catch (e) { /* igual se limpia */ }
   clearSession();
   shellEl = null;

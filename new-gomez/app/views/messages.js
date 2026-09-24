@@ -7,7 +7,7 @@
 import { html, raw, on, $, $$ } from '../lib/html.js';
 import { icon } from '../lib/icons.js';
 import { api, SITE_BASE } from '../lib/api.js';
-import { bus, can, shop, today, role, tz } from '../lib/state.js';
+import { state, bus, can, shop, today, role, tz } from '../lib/state.js';
 import { setQuery, navigate } from '../lib/router.js';
 import { toast, modal, confirmDialog, busy, menu, emptyState, errorState, skeletonRows } from '../lib/ui.js';
 import { time, clock, dateLong, dateLongCap, addDays, ago, dateTimeIso, phone as fmtPhone, plural, number } from '../lib/fmt.js';
@@ -43,7 +43,20 @@ function renderTemplate(tpl, vars) {
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
+// Tras guardar en /api/shop: refreshContext() vuelve a leer el contexto (state.ctx) y repinta solo el shell; la vista
+// se conserva y pinta ella misma lo que cambió. Si no se pudo releer, se usa la barbería que devolvió el guardado.
+async function refreshShop(res) {
+  try { await window.TB.refreshContext(); } catch (e) { if (state.ctx && res && res.shop) state.ctx.shop = res.shop; }
+}
+
 const CSS = `
+/* --msg-gx = padding lateral de .page (app.css: 16px teléfono, 24px riel de tablet, 32px escritorio). Las pestañas y
+   las plantillas se desplazan de lado a lado de la pantalla (no se cortan en seco en el margen) y quedan alineadas
+   con el contenido; la línea de las pestañas sigue al ancho del contenido. */
+.v-msg{--msg-gx:16px}
+@media (min-width:720px) and (max-width:1023px) and (min-height:600px){.v-msg{--msg-gx:24px}}
+@media (min-width:1024px){.v-msg{--msg-gx:32px}}
+.msg-tabs{margin-left:calc(-1 * var(--msg-gx));margin-right:calc(-1 * var(--msg-gx));padding:0 var(--msg-gx);scroll-padding:0 var(--msg-gx);border-bottom:0;background:linear-gradient(var(--border),var(--border)) center bottom / calc(100% - 2 * var(--msg-gx)) 1px no-repeat}
 .v-msg .grid-2,.v-msg .stack,.v-msg .stack-lg,.v-msg .tpl-grid,.v-msg .list{grid-template-columns:minmax(0,1fr)}
 .v-msg .grid-2>*,.v-msg .tpl-grid>*{min-width:0}
 @media (min-width:900px){.v-msg .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -103,7 +116,7 @@ const CSS = `
 .msg-det dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;margin:0}
 .msg-det dt{color:var(--text-3)}
 .msg-det dd{margin:0;min-width:0;overflow-wrap:anywhere}
-.tpl-kinds{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:14px}
+.tpl-kinds{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px var(--msg-gx) 4px;margin:0 calc(-1 * var(--msg-gx)) 14px;scroll-padding:0 var(--msg-gx);-webkit-overflow-scrolling:touch}
 .tpl-kinds::-webkit-scrollbar{display:none}
 .tpl-kinds .chip{flex:none;min-height:38px}
 .tpl-kinds .chip .dot{width:6px;height:6px}
@@ -115,7 +128,7 @@ const CSS = `
 .tpl-ta{min-height:210px;font-size:15px;line-height:1.5}
 .tpl-vars .chip{min-height:36px;gap:5px}
 .tpl-vars .chip code{font-family:var(--mono);font-size:11.5px;color:var(--text-3)}
-.tpl-vars .chip:hover code{color:inherit}
+@media (hover:hover) and (pointer:fine){.tpl-vars .chip:hover code{color:inherit}}
 .tpl-actions{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:14px}
 .tpl-actions .row{gap:10px}
 .tpl-dirty{font-size:12.5px;color:var(--warn);font-weight:600;display:inline-flex;align-items:center;gap:6px}
@@ -128,7 +141,7 @@ const CSS = `
 .tpl-prev .wa-chat{min-height:220px;align-items:flex-start;border-radius:16px}
 .au-modes{display:grid;gap:10px;margin-top:12px}
 .au-mode{display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;padding:16px;border-radius:var(--r-lg);border:1.5px solid var(--border-strong);background:var(--surface);transition:border-color .15s,background .15s,box-shadow .15s}
-.au-mode:hover{border-color:var(--text-3)}
+@media (hover:hover) and (pointer:fine){.au-mode:hover{border-color:var(--text-3)}}
 .au-mode[aria-checked="true"]{border-color:var(--brand);background:var(--brand-softer);box-shadow:0 0 0 3px var(--brand-soft)}
 .au-mode .ai{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;background:var(--surface-3);color:var(--text-2)}
 .au-mode[aria-checked="true"] .ai{background:var(--ink);color:var(--brand)}
@@ -177,9 +190,9 @@ export default {
     el.innerHTML = String(html`
       <div class="page-head">
         <div><h2>WhatsApp</h2><p>${role() === 'barber' ? 'Recordatorios y mensajes de tus citas.' : 'Recordatorios, historial y plantillas de los mensajes a tus clientes.'}</p></div>
-        <div class="actions">${modeBadge()}</div>
+        <div class="actions" id="msgMode">${modeBadge()}</div>
       </div>
-      <div class="tabs" role="tablist" aria-label="Secciones de WhatsApp">${TABS.map(([k, l]) => html`<button type="button" role="tab" id="mt-${k}" aria-controls="msgTab" data-tab="${k}" aria-selected="${String(k === tab)}">${l}</button>`)}</div>
+      <div class="tabs msg-tabs" role="tablist" aria-label="Secciones de WhatsApp">${TABS.map(([k, l]) => html`<button type="button" role="tab" id="mt-${k}" aria-controls="msgTab" data-tab="${k}" aria-selected="${String(k === tab)}">${l}</button>`)}</div>
       <div id="msgTab" role="tabpanel"></div>`);
     const box = $('#msgTab', el);
 
@@ -476,10 +489,12 @@ export default {
     }
     async function saveTpl(btn, value, okMsg) {
       try {
-        await busy(btn, api.patch('/shop', { settings: { whatsapp: { templates: { [tplKind]: value } } } }));
+        const r = await busy(btn, api.patch('/shop', { settings: { whatsapp: { templates: { [tplKind]: value } } } }));
         tplDirty = false;
         toast.success(okMsg);
-        await window.TB.refreshContext(); // vuelve a pintar la vista con el contexto nuevo (la pestaña queda en la URL)
+        await refreshShop(r);
+        // La plantilla guardada (o la predeterminada al restaurar), «Personalizada», el punto del chip y «Restaurar».
+        if (tab === 'plantillas' && box.isConnected) renderTemplates();
       } catch (err) {
         const f = $('#tplText', box);
         if (f && err.fields) { const fld = f.closest('.field'); fld.classList.add('invalid'); fld.querySelector('.error').textContent = Object.values(err.fields)[0]; }
@@ -544,9 +559,14 @@ export default {
         : { title: '¿Volver al envío manual?', icon: 'smartphone', confirmText: 'Usar modo manual', message: 'Al tocar "Enviar" se abrirá WhatsApp con el mensaje listo para que tú lo mandes. Los mensajes que ya están en la cola se quedan ahí.' });
       if (!ok) return;
       try {
-        await busy(btn, api.patch('/shop', { settings: { whatsapp: { mode } } }));
+        const r = await busy(btn, api.patch('/shop', { settings: { whatsapp: { mode } } }));
         toast.success(mode === 'auto' ? 'Envío automático activado' : 'Envío manual activado');
-        await window.TB.refreshContext();
+        await refreshShop(r);
+        if (!box.isConnected) return;
+        // El modo guardado: la insignia de la cabecera y la opción marcada.
+        const now = waMode();
+        $('#msgMode', el).innerHTML = String(modeBadge());
+        $$('[data-mode]', box).forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mode === now)));
       } catch (err) { toast.error(err); }
     }
 

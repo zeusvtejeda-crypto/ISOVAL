@@ -51,10 +51,10 @@ const CSS = `
 .ma-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:16px 20px 20px;position:relative}
 .ma-acts .btn{min-height:48px;padding:0 8px}
 .ma-next .btn-secondary{background:rgba(242,237,227,.08);border-color:rgba(242,237,227,.14);color:#F2EDE3;box-shadow:none}
-.ma-next .btn-secondary:hover:not(:disabled){background:rgba(242,237,227,.14);border-color:rgba(242,237,227,.24)}
+@media (hover:hover) and (pointer:fine){.ma-next .btn-secondary:hover:not(:disabled){background:rgba(242,237,227,.14);border-color:rgba(242,237,227,.24)}}
 .ma-next .btn-secondary[aria-busy="true"]{--spin-c:#F2EDE3}
 .ma-next .btn-cancel{color:#F6A39C;border:1px solid rgba(242,139,130,.25)}
-.ma-next .btn-cancel:hover{background:rgba(242,139,130,.12)}
+@media (hover:hover) and (pointer:fine){.ma-next .btn-cancel:hover{background:rgba(242,139,130,.12)}}
 .ma-locked{margin:14px 20px 20px;padding:12px 14px;border-radius:var(--r);background:rgba(242,237,227,.06);border:1px solid rgba(242,237,227,.1);font-size:13px;color:#D9D3C6;display:grid;gap:10px;position:relative}
 .ma-locked .row .btn{flex:1}
 @media (max-width:519px){.ma-acts{padding:14px 16px 16px;gap:6px}.ma-acts .btn{flex-direction:column;gap:4px;min-height:62px;font-size:12.5px;border-radius:14px}.ma-acts .btn .ic{width:20px;height:20px}
@@ -100,7 +100,7 @@ const CSS = `
 .rs-grp .sc-h .ic{width:14px;height:14px}
 .rs-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px}
 .rs-chip{min-height:46px;border-radius:12px;border:1px solid var(--border-strong);background:var(--surface);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;transition:background .15s,border-color .15s,color .15s,box-shadow .2s,transform .12s var(--ease)}
-.rs-chip:hover{border-color:var(--brand)}
+@media (hover:hover) and (pointer:fine){.rs-chip:hover{border-color:var(--brand)}}
 .rs-chip:active{transform:scale(.95)}
 .rs-chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);box-shadow:0 4px 14px rgba(196,154,60,.32)}
 .rs-msg{display:flex;gap:10px;align-items:flex-start;padding:14px;border-radius:var(--r);background:var(--surface-2);border:1px solid var(--border);font-size:13.5px;color:var(--text-2)}
@@ -115,6 +115,8 @@ function injectCss() { if (!document.getElementById('st-my-appointments')) docum
 // El texto de la política puede traer "a.m.." (hora con punto + punto final): se deja un solo punto.
 const tidy = (t) => String(t || '').replace(/\.{2,}/g, '.');
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+// La página de reservas se abre en la misma pestaña: en la app instalada (PWA), target="_blank" la sacaría al
+// navegador.
 const bookUrl = (slug, serviceId) => SITE_BASE + '?b=' + encodeURIComponent(slug) + (serviceId ? '&servicio=' + encodeURIComponent(serviceId) : '');
 const svcNames = (a) => (a.services || []).map((s) => s.name).filter(Boolean);
 const waDigits = (p) => { const d = String(p || '').replace(/\D/g, ''); return d.length === 10 ? '52' + d : d; };
@@ -326,7 +328,7 @@ export default {
     el.innerHTML = String(html`
       <div class="page-head">
         <div><h2>Mis citas</h2><p>${name ? 'Hola, ' + name + '. ' : ''}Tus citas en ${sh.name}.${(state.contexts || []).length > 1 ? html` <button type="button" class="link-btn" data-switch-shop>Cambiar de barbería</button>` : ''}</p></div>
-        <div class="actions"><a class="btn btn-primary" href="${bookUrl(sh.slug)}" target="_blank" rel="noopener">${raw(icon('calendar-plus'))}Reservar otra cita</a></div>
+        <div class="actions"><a class="btn btn-primary" href="${bookUrl(sh.slug)}">${raw(icon('calendar-plus'))}Reservar otra cita</a></div>
       </div>
       <div id="maBody"><div class="ma-grid"><div class="stack"><div class="skel" style="height:340px;border-radius:var(--r-xl)"></div></div><div class="stack">${raw('<div class="card skel" style="height:72px;border:0"></div>'.repeat(4))}</div></div></div>`);
     const body = $('#maBody', el);
@@ -344,7 +346,7 @@ export default {
             ${statusBadge(a.status)}</div>
         </div>
         <div class="ma-det">
-          <div class="ma-row">${avatar(a.staff_name || 'Barbero', { color: colorFor(a.staff_name), size: 'sm' })}<span class="grow"><span class="k">Te atiende</span><span class="v">${a.staff_name || 'Por asignar'}</span></span></div>
+          <div class="ma-row">${avatar(a.staff_name || 'Barbero', { color: a.staff_color || colorFor(a.staff_name), size: 'sm' })}<span class="grow"><span class="k">Te atiende</span><span class="v">${a.staff_name || 'Por asignar'}</span></span></div>
           <div class="ma-row">${raw(icon('scissors'))}<span class="grow"><span class="k">Servicios</span><span class="ma-svc">${svcNames(a).map((n) => html`<span>${n}</span>`)}</span></span><span class="ma-total num" aria-label="${'Total ' + money(a.total)}">${money(a.total)}</span></div>
           ${addr ? html`<div class="ma-row">${raw(icon('map'))}<span class="grow"><span class="k">${a.shop ? a.shop.name : sh.name}</span><span class="v">${addr}</span></span>${mapU ? html`<a class="lk" href="${mapU}" target="_blank" rel="noopener">Cómo llegar${raw(icon('external', 'ic-sm'))}</a>` : ''}</div>` : ''}
         </div>
@@ -387,7 +389,7 @@ export default {
         <span class="grow" style="min-width:0"><span class="title truncate">${svcNames(a).join(', ') || 'Servicio'}</span>
           <span class="meta truncate">${cap(dateShort(a.date))} · ${fmtTime(a.start_min)}${a.staff_name ? ' · ' + firstName(a.staff_name) : ''}</span></span>
         <span class="trail"><span class="num" style="font-weight:600;font-size:14px">${money(a.total)}</span>${a.status === 'completed' && again
-          ? html`<a class="link-btn again" href="${bookUrl(sh.slug, again.id)}" target="_blank" rel="noopener">${raw(icon('repeat', 'ic-sm'))}Repetir</a>` : statusBadge(a.status)}</span>
+          ? html`<a class="link-btn again" href="${bookUrl(sh.slug, again.id)}">${raw(icon('repeat', 'ic-sm'))}Repetir</a>` : statusBadge(a.status)}</span>
       </div>`;
     }
     function paint() {
@@ -407,7 +409,7 @@ export default {
           ${visits.length ? html`<div class="ma-stats"><div><b>${visits.length}</b><span>${visits.length === 1 ? 'visita' : 'visitas'}</span></div><div><b>${money(spent)}</b><span>en servicios</span></div>${first ? html`<div><b>${cap(MONTHS_SHORT[+first.slice(5, 7) - 1])} ${first.slice(0, 4)}</b><span>primera visita</span></div>` : ''}</div>` : ''}
           ${past.length ? html`<div class="card ma-hist"><div class="list">${past.slice(0, 30).map(histItem)}</div></div>`
             : html`<div class="card">${emptyState({ icon: 'clock', title: 'Sin visitas todavía', text: 'Cuando te atiendan, aquí verás tu historial para repetir tu servicio favorito.', compact: true })}</div>`}
-          ${up.length || past.length ? html`<div class="ma-cta" style="margin-top:14px"><b>¿Listo para tu siguiente corte?</b><span class="muted" style="font-size:13.5px">Elige día, hora y barbero en segundos.</span><a class="btn btn-dark" href="${bookUrl(sh.slug)}" target="_blank" rel="noopener">${raw(icon('calendar-plus'))}Reservar otra cita</a></div>` : ''}
+          ${up.length || past.length ? html`<div class="ma-cta" style="margin-top:14px"><b>¿Listo para tu siguiente corte?</b><span class="muted" style="font-size:13.5px">Elige día, hora y barbero en segundos.</span><a class="btn btn-dark" href="${bookUrl(sh.slug)}">${raw(icon('calendar-plus'))}Reservar otra cita</a></div>` : ''}
         </section></div>`);
     }
     async function load() {

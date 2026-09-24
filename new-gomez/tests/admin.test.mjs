@@ -182,6 +182,7 @@ test('admin suspende una barbería: su equipo recibe 403 en rutas de barbería y
   if (path) {
     const blocked = await f.call('GET', path, { as: 'ownerA', shop: 'shop_a' });
     assert.equal(blocked.status, 403);
+    assert.equal(blocked.error.code, 'shop_suspended', 'código propio (el panel no depende del texto)');
     assert.match(blocked.error.message, /suspendida/);
     // La otra barbería sigue funcionando.
     assert.notEqual((await f.call('GET', path, { as: 'ownerB', shop: 'shop_b' })).status, 403);

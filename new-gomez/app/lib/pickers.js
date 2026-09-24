@@ -21,7 +21,8 @@
 //
 //  slotChips(host, { date, services: [ids], staffId, exclude, value, onChange, allowCustom = true,
 //                    original: { date, staff_id, start_min } })
-//    Horarios libres desde GET /api/slots, agrupados (mañana / tarde / noche) + "Otra hora" (input time).
+//    Horarios libres desde GET /api/slots, agrupados (mañana / tarde / noche) + "Otra hora" (selector de 24 h de
+//    timefield.js, de 5 en 5 min; una hora guardada fuera de esa cuadrícula se conserva).
 //    → { get() → { start_min, custom, free } | null, set(min), load({ date, services, staffId }), isFree(min) }
 //
 //  Utilidades: hexRgb('#c8a24a') → '200,162,74' (para rgba(var(--c-rgb), .15)).
@@ -31,6 +32,7 @@ import { api } from './api.js';
 import { today as todayKey, nowMin } from './state.js';
 import { avatar } from './ui.js';
 import { money, time, duration, addDays, weekday, diffDays, WEEKDAYS_SHORT, MONTHS_SHORT, dayNum, dateLongCap, phone as fmtPhone, plural } from './fmt.js';
+import { timeSelect } from './timefield.js';
 
 let uidN = 0;
 const uid = (p) => p + (++uidN) + Math.random().toString(36).slice(2, 5);
@@ -606,7 +608,8 @@ export function slotChips(host, opts) {
     }
     const cust = opts.allowCustom && p.services && p.services.length && p.staffId ? '<div class="sc-custom">' +
       '<button type="button" class="chip sc-other" data-sc-other aria-pressed="' + String(custom) + '">' + icon('edit', 'ic-sm') + 'Otra hora</button>' +
-      '<input class="input" type="time" step="300" id="' + id + 't" aria-label="Hora de la cita" ' + (custom ? '' : 'hidden') + ' value="' + (custom && value != null ? time(value) : '') + '"/>' +
+      // 24 h de 5 en 5 min (el <input type="time"> nativo se pinta en 12 h según el idioma del navegador).
+      timeSelect(custom && value != null ? time(value) : '', { id: id + 't', 'aria-label': 'Hora de la cita', hidden: custom ? null : 'hidden' }, { step: 5 }) +
       note() + '</div>' : '';
     host.innerHTML = '<div class="sc">' + body + cust + '</div>';
   }
@@ -653,7 +656,9 @@ export function slotChips(host, opts) {
     if (e.target.id !== id + 't') return;
     const v = e.target.value;
     const mm = /^(\d{1,2}):(\d{2})/.exec(v || '');
-    value = mm ? (+mm[1]) * 60 + (+mm[2]) : null;
+    const next = mm ? (+mm[1]) * 60 + (+mm[2]) : null;
+    if (e.type === 'change' && next === value) return; // el <select> dispara 'input' y 'change' con el mismo valor
+    value = next;
     const wrap = host.querySelector('.sc-custom');
     const old = wrap && wrap.querySelector('.sc-note'); if (old) old.remove();
     if (wrap) wrap.insertAdjacentHTML('beforeend', note());

@@ -27,9 +27,11 @@ async function myAppt(ctx) {
 }
 // Reagendas hechas por el cliente (el límite no cuenta los movimientos del equipo).
 const movesOf = async (ctx, a) => (await clientReschedules(ctx.sdb, [a.id]))[a.id];
+// Vista pública + staff_color (el color del barbero en el panel, para su avatar en «Mis citas»).
+const apptView = (a, shop, st) => Object.assign(publicApptView(a, shop, st ? st.name : ''), { staff_color: (st && st.color) || '' });
 async function view(ctx, a, withPolicy) {
   const st = await ctx.sdb.findOne('staff', { id: a.staff_id });
-  const v = publicApptView(a, ctx.shop, st ? st.name : '');
+  const v = apptView(a, ctx.shop, st);
   return withPolicy ? Object.assign(v, managePolicy(a, ctx.shop, ctx.now(), await movesOf(ctx, a))) : v;
 }
 
@@ -44,11 +46,11 @@ async function list(ctx) {
     ctx.sdb.find('staff', {}),
     upcomingElsewhere(ctx)
   ]);
-  const names = Object.fromEntries(staff.map((s) => [s.id, s.name]));
+  const byId = new Map(staff.map((s) => [s.id, s]));
   const moves = await clientReschedules(ctx.sdb, rows.filter((a) => isUpcoming(a, now)).map((a) => a.id));
   const upcoming = [], past = [];
   for (const a of rows) {
-    const v = publicApptView(a, ctx.shop, names[a.staff_id] || '');
+    const v = apptView(a, ctx.shop, byId.get(a.staff_id));
     if (isUpcoming(a, now)) upcoming.push(Object.assign(v, managePolicy(a, ctx.shop, now, moves[a.id])));
     else past.push(v);
   }
@@ -56,7 +58,7 @@ async function list(ctx) {
 }
 
 // Otras barberías donde esta cuenta también es cliente y tiene citas próximas:
-// [{ shop_id, shop_slug, shop_name, shop_logo, count, next }] (next = su cita más cercana, vista pública).
+// [{ shop_id, shop_slug, shop_name, shop_logo, count, next }] (next = su cita más cercana, vista pública + staff_color).
 // Cada barbería se lee con SU scopedDb y la ficha de cliente de SU contexto; las suspendidas no se muestran.
 async function upcomingElsewhere(ctx) {
   const out = [];
@@ -70,7 +72,7 @@ async function upcomingElsewhere(ctx) {
     const up = rows.filter((a) => isUpcoming(a, now));
     if (!up.length) continue;
     const st = await sdb.findOne('staff', { id: up[0].staff_id });
-    out.push({ shop_id: shop.id, shop_slug: shop.slug, shop_name: shop.name, shop_logo: shop.logo_url || '', count: up.length, next: publicApptView(up[0], shop, st ? st.name : '') });
+    out.push({ shop_id: shop.id, shop_slug: shop.slug, shop_name: shop.name, shop_logo: shop.logo_url || '', count: up.length, next: apptView(up[0], shop, st) });
   }
   return out.sort((a, b) => (a.next.date + String(a.next.start_min).padStart(4, '0')).localeCompare(b.next.date + String(b.next.start_min).padStart(4, '0')));
 }

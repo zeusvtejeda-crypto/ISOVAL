@@ -23,6 +23,16 @@ const signed = (n, m) => (n > 0 ? '+' : n < 0 ? '−' : '') + (m || money)(Math.
 const payTotal = (p) => (p.total != null ? p.total : r2(p.amount + (p.tip || 0)));
 
 const CSS = `
+/* --cash-gx = padding lateral de .page (app.css: 16px teléfono, 24px riel de tablet, 32px escritorio). Las pestañas
+   y el periodo de Cierres se desplazan de lado a lado de la pantalla (no se cortan en seco en el margen) y quedan
+   alineados con el contenido; la línea de las pestañas sigue al ancho del contenido. */
+.v-cash{--cash-gx:16px}
+@media (min-width:720px) and (max-width:1023px) and (min-height:600px){.v-cash{--cash-gx:24px}}
+@media (min-width:1024px){.v-cash{--cash-gx:32px}}
+.cash-tabs{margin-left:calc(-1 * var(--cash-gx));margin-right:calc(-1 * var(--cash-gx));padding:0 var(--cash-gx);scroll-padding:0 var(--cash-gx);border-bottom:0;background:linear-gradient(var(--border),var(--border)) center bottom / calc(100% - 2 * var(--cash-gx)) 1px no-repeat}
+.cash-segx{display:flex;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * var(--cash-gx)) 14px;padding:2px var(--cash-gx);scroll-padding:0 var(--cash-gx);-webkit-overflow-scrolling:touch}
+.cash-segx::-webkit-scrollbar{display:none}
+.cash-segx .seg{flex:none;max-width:none;overflow:visible}
 .v-cash .grid-main-side,.v-cash .stack-lg,.v-cash .stack,.v-cash .list,.v-cash .pf{grid-template-columns:minmax(0,1fr)}
 .v-cash .grid-main-side>*{min-width:0}
 @media (min-width:900px){.v-cash .grid-main-side{grid-template-columns:minmax(0,1fr) 340px}}
@@ -44,7 +54,7 @@ const CSS = `
 .ch-actions .btn{flex:1 1 calc(50% - 4px)}
 .ch-actions .btn-primary{flex-basis:100%}
 .ch-ghost{background:rgba(242,237,227,.08);color:#F2EDE3;border-color:rgba(242,237,227,.14);--spin-c:#F2EDE3}
-.ch-ghost:hover:not(:disabled){background:rgba(242,237,227,.15)}
+@media (hover:hover) and (pointer:fine){.ch-ghost:hover:not(:disabled){background:rgba(242,237,227,.15)}}
 @media (min-width:720px){.cash-hero{padding:24px 28px 22px}.ch-big{font-size:74px}.ch-actions .btn,.ch-actions .btn-primary{flex:0 0 auto}}
 @keyframes chPulse{0%{box-shadow:0 0 0 0 rgba(111,191,138,.55)}70%{box-shadow:0 0 0 8px rgba(111,191,138,0)}100%{box-shadow:0 0 0 0 rgba(111,191,138,0)}}
 .cash-closed{padding:24px 20px;display:grid;gap:18px;text-align:center;justify-items:center;background:linear-gradient(180deg,var(--brand-softer),var(--surface) 55%)}
@@ -66,7 +76,7 @@ const CSS = `
 .pay-row.is-refunded .pm-ic{opacity:.5}
 .card-foot-link{display:flex;justify-content:center;border-top:1px solid var(--border);padding:6px}
 .card-foot-link button{min-height:40px;padding:0 12px;border-radius:10px;font-weight:600;font-size:13.5px;color:var(--brand-strong);display:inline-flex;align-items:center;gap:6px}
-.card-foot-link button:hover{background:var(--brand-softer)}
+@media (hover:hover) and (pointer:fine){.card-foot-link button:hover{background:var(--brand-softer)}}
 .mb-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--surface-3);gap:2px}
 .mb-bar span{display:block;height:100%;background:var(--mc);transform-origin:left;animation:mbGrow .7s var(--ease-out) both}
 .mb-bar span:first-child{border-radius:999px 0 0 999px}.mb-bar span:last-child{border-radius:0 999px 999px 0}.mb-bar span:only-child{border-radius:999px}
@@ -201,7 +211,7 @@ export default {
         <div><h2>Caja y pagos</h2><p id="cashSub">${dateLongCap(today())}</p></div>
         <div class="actions">${can('payments.write') ? html`<button type="button" class="btn btn-primary" data-act="charge" id="headCharge" hidden>${raw(icon('plus'))}Registrar cobro</button>` : ''}</div>
       </div>
-      <div class="tabs" role="tablist" aria-label="Secciones de caja">${TABS.map(([k, l]) => html`<button type="button" role="tab" id="tab-${k}" aria-controls="cashTab" data-tab="${k}" aria-selected="${String(k === tab)}">${l}</button>`)}</div>
+      <div class="tabs cash-tabs" role="tablist" aria-label="Secciones de caja">${TABS.map(([k, l]) => html`<button type="button" role="tab" id="tab-${k}" aria-controls="cashTab" data-tab="${k}" aria-selected="${String(k === tab)}">${l}</button>`)}</div>
       <div id="cashTab" role="tabpanel"></div>`);
     const box = $('#cashTab', el);
     const setHeadCharge = (show) => { const b = $('#headCharge', el); if (b) b.hidden = !show; };
@@ -595,7 +605,7 @@ export default {
       const t = today();
       const from = addDays(t, -(Number(sesRange) - 1));
       if (!soft) {
-        box.innerHTML = String(html`<div class="toolbar"><div class="seg" role="group" aria-label="Periodo">${[['30', '30 días'], ['90', '90 días'], ['365', '12 meses']].map(([k, l]) => html`<button type="button" data-ses="${k}" aria-pressed="${String(k === sesRange)}">${l}</button>`)}</div></div>
+        box.innerHTML = String(html`<div class="cash-segx"><div class="seg" role="group" aria-label="Periodo">${[['30', '30 días'], ['90', '90 días'], ['365', '12 meses']].map(([k, l]) => html`<button type="button" data-ses="${k}" aria-pressed="${String(k === sesRange)}">${l}</button>`)}</div></div>
           <div id="sesRes"><div class="kpis" style="margin-bottom:16px">${skeletonCards(4, 104)}</div><div class="card">${skeletonRows(5)}</div></div>`);
       }
       let list;

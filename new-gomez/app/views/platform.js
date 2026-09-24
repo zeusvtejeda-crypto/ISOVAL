@@ -1,14 +1,14 @@
 // Plataforma (#/plataforma, superadmin): KPIs globales (GET /api/admin/stats), barberías con búsqueda, estado,
 // plan, dueño y métricas de 30 días (GET /api/admin/shops?q), acciones (Entrar → window.TB.enterShop, Suspender /
 // Reactivar, Cambiar plan, Editar dominio), alta de barbería con su dueño (POST /api/admin/shops) y pestaña de
-// usuarios (GET /api/admin/users?q, activar/desactivar con PATCH /api/admin/users/:id).
+// usuarios (GET /api/admin/users?q; restablecer contraseña y desactivar/reactivar con PATCH /api/admin/users/:id).
 import { html, raw, esc, $, on, formData } from '../lib/html.js';
 import { icon } from '../lib/icons.js';
 import { api, SITE_BASE } from '../lib/api.js';
 import { state } from '../lib/state.js';
 import { setQuery } from '../lib/router.js';
 import { toast, modal, confirmDialog, menu, busy, emptyState, errorState, avatar, showFieldErrors, clearFieldErrors, copyText, animateNumber } from '../lib/ui.js';
-import { money, compactMoney, number, plural, ago, dateNum, phone as fmtPhone, ROLE } from '../lib/fmt.js';
+import { money, compactMoney, number, plural, ago, dateNum, shopMark, phone as fmtPhone, ROLE } from '../lib/fmt.js';
 
 const PLAN = { demo: 'Demo', basic: 'Básico', pro: 'Pro' };
 const PLAN_TXT = { basic: 'Agenda, reservas en línea, clientes, caja y WhatsApp.', pro: 'Todo lo de Básico, soporte prioritario y dominio propio.', demo: 'Para pruebas y presentaciones. Sin cobro.' };
@@ -21,6 +21,11 @@ function genPassword() {
   const A = 'abcdefghjkmnpqrstuvwxyz', N = '23456789', U = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
   const r = (s) => s[Math.floor((crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 : Math.random()) * s.length)];
   return r(U) + r(A) + r(A) + r(A) + r(N) + r(N) + r(A) + r(A) + r(U) + r(N);
+}
+// Avatar de la barbería: su logo o su monograma (shopMark: el mismo de su página pública y del menú del panel).
+function shopAvatar(s, color) {
+  if (s.logo_url) return avatar(s.name, { src: s.logo_url, color });
+  return raw('<span class="avatar" style="--c:' + esc(color || '#15130F') + '" aria-hidden="true">' + esc(shopMark(s.name)) + '</span>');
 }
 
 const CSS = `
@@ -39,7 +44,7 @@ const CSS = `
 .pf-head .r,.pf-row .r{text-align:right}
 .pf-row{border-bottom:1px solid var(--border);transition:background .12s;min-height:72px}
 .pf-row:last-child{border-bottom:0}
-.pf-row:hover{background:var(--surface-2)}
+@media (hover:hover) and (pointer:fine){.pf-row:hover{background:var(--surface-2)}}
 .pf-row.susp{background:repeating-linear-gradient(135deg,transparent 0 10px,var(--muted-soft) 10px 20px)}
 .pf-row.susp .avatar{filter:grayscale(1);opacity:.7}
 .pf-shop{display:flex;align-items:center;gap:12px;min-width:0}
@@ -118,6 +123,10 @@ const CSS = `
 .pf-done dt{font-size:12px;color:var(--text-3)}
 .pf-done dd{font-weight:600;overflow-wrap:anywhere}
 .pf-done .mono{font-weight:500}
+.pf-effects{display:grid;gap:10px;margin:14px 0 2px;padding:0;list-style:none;font-size:13.5px;color:var(--text-2);text-align:left}
+.pf-effects li{display:flex;gap:10px;align-items:flex-start}
+.pf-effects .ic{width:18px;height:18px;flex:none;margin-top:1px;color:var(--text-3)}
+.pf-effects b{color:var(--text);font-weight:600}
 `;
 function injectCss() { if (!document.getElementById('st-platform')) document.head.insertAdjacentHTML('beforeend', '<style id="st-platform">' + CSS + '</style>'); }
 
@@ -258,6 +267,60 @@ function openDomain(s, onDone) {
   });
 }
 
+// ── Restablecer contraseña de un usuario (PATCH /api/admin/users/:id { password }) ──
+// El servidor cierra todas sus sesiones (también las de PIN de sus fichas de barbero), salvo la del superadmin.
+function openResetPassword(u) {
+  const who = u.name || u.email;
+  const m = modal({
+    title: 'Restablecer contraseña', subtitle: u.name ? u.name + ' · ' + u.email : u.email, size: 'sm',
+    body: html`<form id="pfReset" class="stack" novalidate autocomplete="off">
+      <div class="banner warn">${raw(icon('lock'))}<div class="grow">Se cerrarán <b>todas sus sesiones abiertas</b>, en cualquier dispositivo (también las de PIN con su ficha de barbero): tendrá que entrar con la contraseña nueva.${u.status === 'disabled' ? ' Su cuenta sigue desactivada; podrá usarla cuando la reactives.' : ''}</div></div>
+      <div class="field"><label for="pfRPw">Contraseña nueva</label>
+        <div class="pf-pw"><input class="input" id="pfRPw" name="password" type="text" value="${genPassword()}" autocomplete="new-password" autocapitalize="none" spellcheck="false" maxlength="128"/>
+          <span class="btns"><button type="button" class="btn btn-ghost btn-icon btn-sm" data-pw="gen" aria-label="Generar otra contraseña" title="Generar otra">${raw(icon('refresh', 'ic-sm'))}</button>
+          <button type="button" class="btn btn-ghost btn-icon btn-sm" data-pw="copy" aria-label="Copiar contraseña" title="Copiar">${raw(icon('copy', 'ic-sm'))}</button></span></div>
+        <p class="hint">Generada al azar; puedes escribir otra (mínimo 8 caracteres). Compártela por un medio privado: podrá cambiarla en «Mi perfil».</p>
+        <p class="error">La contraseña debe tener al menos 8 caracteres.</p></div>
+    </form>`,
+    actions: [{ label: 'Cancelar', variant: 'secondary', value: null }, { label: 'Restablecer', variant: 'danger', type: 'submit', form: 'pfReset', icon: 'key' }]
+  });
+  const form = $('#pfReset', m.body), inp = form.elements.password;
+  m.body.addEventListener('input', () => inp.closest('.field').classList.remove('invalid'));
+  m.body.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pw]'); if (!b) return;
+    if (b.dataset.pw === 'gen') { inp.value = genPassword(); inp.closest('.field').classList.remove('invalid'); }
+    else copyText(inp.value, 'Contraseña copiada');
+  });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearFieldErrors(form);
+    const pw = inp.value;
+    if (pw.trim().length < 8) { showFieldErrors(form, { fields: { password: 'La contraseña debe tener al menos 8 caracteres.' } }); inp.focus(); return; }
+    try {
+      await busy(m.foot.querySelector('[type=submit]'), api.patch('/admin/users/' + encodeURIComponent(u.id), { password: pw }));
+      m.close(true);
+      toast.success('Contraseña de ' + who + ' restablecida');
+      openResetDone(u, pw);
+    } catch (err) { showFieldErrors(form, err); }
+  });
+}
+function openResetDone(u, pw) {
+  const access = 'Tu contraseña de TuBarbería cambió.\n\nEntra en: ' + SITE_BASE + 'app/\nCorreo: ' + u.email + '\nContraseña nueva: ' + pw + '\n\nPuedes cambiarla en «Mi perfil».';
+  modal({
+    title: 'Contraseña restablecida', size: 'sm',
+    body: html`<div class="confirm-icon" style="background:var(--ok-soft);color:var(--ok)">${raw(icon('check-circle'))}</div>
+      <p class="muted" style="font-size:14px;margin-bottom:12px">Se cerraron sus sesiones abiertas. Comparte la contraseña nueva con ${u.name || 'la persona'}; no la volverás a ver aquí.</p>
+      <dl class="pf-done">
+        <div><dt>Correo</dt><dd>${u.email}</dd></div>
+        <div><dt>Contraseña nueva</dt><dd class="mono">${pw}</dd></div>
+      </dl>`,
+    actions: [
+      { label: 'Copiar accesos', variant: 'secondary', icon: 'copy', close: false, onClick: () => { copyText(access, 'Datos de acceso copiados'); return false; } },
+      { label: 'Listo', variant: 'primary', value: true }
+    ]
+  });
+}
+
 export default {
   title: 'Plataforma',
   async render(el, { query }) {
@@ -319,7 +382,7 @@ export default {
       const brand = /^#[0-9a-f]{6}$/i.test(s.brand_color || '') ? s.brand_color : undefined;
       const susp = s.status === 'suspended';
       return html`<div class="pf-row ${susp ? 'susp' : ''}" data-shop="${s.id}">
-        <div class="pf-shop">${avatar(s.name, { src: s.logo_url || '', color: brand })}
+        <div class="pf-shop">${shopAvatar(s, brand)}
           <div style="min-width:0"><div class="pf-name"><span>${s.name}</span></div>
             <div class="pf-sub"><span class="mono">?b=${s.slug}</span>${s.city ? ' · ' + s.city : ''}${s.domain ? html` · ${raw(icon('globe', 'ic-sm'))} ${s.domain}` : ''}</div>
             <div class="pf-badges">${statusBadgeShop(s)}${planBadge(s.plan)}${s.created_at ? html`<span class="pf-since">Desde ${dateNum(s.created_at.slice(0, 10))}</span>` : ''}</div></div></div>
@@ -371,10 +434,17 @@ export default {
     }
     async function setStatus(s) {
       const suspend = s.status !== 'suspended';
+      // Lo que verá cada quien mientras esté suspendida (core/router.js, api/auth.js, api/public.js, api/my.js y
+      // api/automation.js rechazan u omiten las barberías suspendidas).
       const ok = await confirmDialog(suspend
-        ? { title: '¿Suspender «' + s.name + '»?', danger: true, icon: 'ban', confirmText: 'Suspender',
-          message: 'Su equipo y sus clientes no podrán entrar y su página dejará de recibir reservas hasta que la reactives. No se borra ningún dato.' }
-        : { title: '¿Reactivar «' + s.name + '»?', icon: 'check-circle', confirmText: 'Reactivar', message: 'Su equipo podrá entrar de nuevo y su página volverá a recibir reservas.' });
+        ? { title: '¿Suspender «' + s.name + '»?', danger: true, icon: 'ban', confirmText: 'Suspender barbería',
+          message: 'Mientras esté suspendida:',
+          html: html`<ul class="pf-effects">
+            <li>${raw(icon('scissors'))}<span><b>Su equipo</b> verá «${s.name} está suspendida» al entrar al panel, sin agenda, clientes ni caja, y no podrá entrar con PIN.</span></li>
+            <li>${raw(icon('globe'))}<span><b>Sus clientes</b> verán «Esta barbería no está disponible» en su página: no podrán reservar ni abrir los enlaces de sus citas, y esas citas no aparecerán en «Mis citas».</span></li>
+            <li>${raw(icon('whatsapp'))}<span><b>WhatsApp automático:</b> los mensajes en cola no se envían.</span></li>
+            <li>${raw(icon('shield'))}<span><b>No se borra ningún dato.</b> Al reactivarla, todo vuelve como estaba.</span></li></ul>` }
+        : { title: '¿Reactivar «' + s.name + '»?', icon: 'check-circle', confirmText: 'Reactivar', message: 'Su equipo podrá entrar de nuevo al panel (también con PIN), su página volverá a recibir reservas y sus clientes verán otra vez sus citas.' });
       if (!ok) return;
       try {
         const r = await api.patch('/admin/shops/' + encodeURIComponent(s.id), { status: suspend ? 'suspended' : 'active' });
@@ -486,6 +556,7 @@ export default {
         { label: 'Copiar correo', icon: 'mail', onClick: () => copyText(u.email, 'Correo copiado') },
         ...(u.shops || []).filter((x) => x.role !== 'client').slice(0, 3).map((x) => ({ label: 'Entrar a ' + x.shop_name, icon: 'door', onClick: async () => { try { await window.TB.enterShop(x.shop_id); toast.success('Entraste a ' + x.shop_name); } catch (err) { toast.error(err); } } })),
         { sep: true },
+        { label: 'Restablecer contraseña', icon: 'key', onClick: () => openResetPassword(u) },
         u.status === 'disabled' ? { label: 'Reactivar cuenta', icon: 'user-check', onClick: () => setUserStatus(u) } : { label: 'Desactivar cuenta', icon: 'user-x', danger: true, onClick: () => setUserStatus(u) }
       ]);
     }));

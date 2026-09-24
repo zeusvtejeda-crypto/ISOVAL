@@ -33,6 +33,11 @@
 /core/*
   Cache-Control: no-cache
 
+# Tipografías del sitio (fonts/fonts.css y sus .woff2): un año, inmutables. No se editan en su lugar: si cambia
+# una fuente o fonts.css, cambia su URL (otro nombre, o ?v=N en el <link> de index.html y app/index.html) y sw.js.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # Imágenes e íconos: una semana.
 /img/*
   Cache-Control: public, max-age=604800

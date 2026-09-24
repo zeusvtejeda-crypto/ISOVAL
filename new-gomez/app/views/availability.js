@@ -17,7 +17,13 @@ const MAX_BLOCKS = 8;
 const REASONS = ['Vacaciones', 'Día festivo', 'Cita médica', 'Curso', 'Asunto personal'];
 
 const CSS = `
-.av-staff{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;margin:0 -2px 14px;-webkit-overflow-scrolling:touch}
+/* --av-gx = padding lateral de .page (app.css: 16px teléfono, 24px riel de tablet, 32px escritorio). El carrusel de
+   barberos sangra hasta el borde de la pantalla para no cortarse en seco en el margen, y al desplazarse el primero y
+   el último quedan alineados con el contenido (scroll-padding). */
+.v-avail{--av-gx:16px}
+@media (min-width:720px) and (max-width:1023px) and (min-height:600px){.v-avail{--av-gx:24px}}
+@media (min-width:1024px){.v-avail{--av-gx:32px}}
+.av-staff{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px var(--av-gx) 4px;margin:0 calc(-1 * var(--av-gx)) 14px;scroll-padding:0 var(--av-gx);-webkit-overflow-scrolling:touch}
 .av-staff::-webkit-scrollbar{display:none}
 .av-staff .chip{flex:none;min-height:44px;padding:0 14px 0 6px;gap:8px;font-size:14px}
 .av-staff .chip .avatar{--s:30px;font-size:11px}
@@ -58,7 +64,7 @@ const CSS = `
 .av-savebar .lg{display:none}
 @media (min-width:520px){.av-savebar .lg{display:inline}}
 .av-savebar .btn-ghost{color:var(--on-ink)}
-.av-savebar .btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+@media (hover:hover) and (pointer:fine){.av-savebar .btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}}
 .av-sum .card-body{padding-top:6px}
 .av-tot{display:flex;gap:18px;margin-bottom:12px}
 .av-tot div{display:grid}
@@ -217,6 +223,7 @@ export default {
   title: () => (role() === 'barber' ? 'Mi horario' : 'Horarios'),
   async render(el, { query }) {
     injectCss();
+    el.classList.add('v-avail');
     const isOwner = can('availability.manage.all');
     const canAllOff = can('timeoff.manage.all');
     const self = me();

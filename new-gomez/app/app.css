@@ -20,7 +20,9 @@
   --shadow-2:0 6px 20px rgba(21,19,15,.07),0 1px 3px rgba(21,19,15,.05);
   --shadow-3:0 22px 60px rgba(21,19,15,.18),0 4px 14px rgba(21,19,15,.08);
   --r-sm:8px;--r:12px;--r-lg:16px;--r-xl:22px;
-  --disp:'Big Shoulders Display','Oswald','Arial Narrow',Impact,sans-serif;
+  /* Fuentes del propio sitio (../fonts/fonts.css). 'TB Display Fallback' = Arial Bold escalada a las medidas de Big
+     Shoulders: mientras llega la fuente real, títulos y cifras no cambian de ancho ni de renglón (igual que index.html). */
+  --disp:'Big Shoulders Display','TB Display Fallback','Arial Narrow',sans-serif;
   --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   --mono:'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace;
   --ease:cubic-bezier(.2,.8,.2,1);--ease-out:cubic-bezier(.16,1,.3,1);
@@ -534,6 +536,25 @@ a.list-item:active,button.list-item:active,.list-item.clickable:active{backgroun
 .demo-ribbon{display:flex;align-items:center;gap:8px;justify-content:center;padding:7px 12px;padding-top:calc(7px + var(--safe-t));background:var(--ink);color:#E6C173;font-size:12.5px;font-weight:600;text-align:center;position:relative;z-index:31}
 .demo-ribbon button{color:#F2EDE3;text-decoration:underline;text-underline-offset:2px;font-weight:600;font-size:12.5px}
 .demo-ribbon + .shell .topbar{padding-top:0;height:var(--topbar-h)}
+/* Barbería suspendida (main.js → renderSuspended): pantalla propia, sin navegación; la cinta de la demo arriba. */
+.blocked-wrap{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.blocked{flex:1;display:grid;place-items:center;padding:calc(24px + var(--safe-t)) 16px calc(24px + var(--safe-b))}
+.demo-ribbon + .blocked{padding-top:24px}
+.blocked-card{width:100%;max-width:460px;display:grid;justify-items:center;text-align:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow-2);padding:28px 22px 22px;animation:fadeUp .4s var(--ease-out)}
+.blocked-brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.blocked-brand .logo-mark{width:36px;height:36px;border-radius:11px;box-shadow:var(--shadow-1),inset 0 0 0 1px var(--border-strong)}
+.blocked .art{width:68px;height:68px;border-radius:20px;background:var(--warn-soft);color:var(--warn);display:grid;place-items:center;margin-bottom:4px}
+.blocked .art .ic{width:32px;height:32px;stroke-width:1.6}
+.blocked h1{font-family:var(--disp);font-size:34px;font-weight:800;line-height:1.02;letter-spacing:.01em;text-wrap:balance}
+.blocked .eyebrow{max-width:100%;overflow-wrap:anywhere}
+.blocked p{color:var(--text-2);font-size:14.5px;max-width:380px;text-wrap:pretty}
+.blocked p.lead{color:var(--text);font-size:16px}
+.blocked .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;width:100%;margin-top:10px}
+.blocked .actions .btn{flex:1 1 150px}
+.blocked .who{display:flex;align-items:center;gap:10px;width:100%;margin-top:12px;padding:12px 2px 0;border-top:1px solid var(--border);text-align:left}
+.blocked .who .name{display:block;font-weight:600;font-size:14px}
+.blocked .who .sub{display:block;font-size:12.5px;color:var(--text-3)}
+@media (min-width:720px){.blocked-card{padding:36px 36px 26px}.blocked h1{font-size:40px}}
 .offline-bar{position:fixed;top:0;left:0;right:0;z-index:160;background:var(--warn);color:#fff;text-align:center;font-size:12.5px;font-weight:600;padding:calc(4px + var(--safe-t)) 10px 4px;animation:fadeIn .2s}
 
 /* ── Impresión: solo el contenido, sin navegación ── */
