@@ -24,6 +24,11 @@
 <link rel="stylesheet" href="app.css"/>
 <script>
   // Tema antes de pintar (evita parpadeo claro→oscuro).
+  // Sitio de demostración (demo.<dominio>): todo corre en el navegador y se abre en la guía.
+  if (/^demo\./i.test(location.hostname)) {
+    try { if (!localStorage.getItem('tb:mode')) localStorage.setItem('tb:mode', 'demo'); } catch (e) {}
+    if (!location.hash || location.hash === '#' || location.hash === '#/') history.replaceState(null, '', location.pathname + location.search + '#/guia');
+  }
   try { var t = localStorage.getItem('tb:theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
 </head>

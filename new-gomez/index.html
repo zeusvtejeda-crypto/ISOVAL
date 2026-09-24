@@ -60,6 +60,8 @@
 (function(){
   var d=document.documentElement;
   if(/^#\/?panel/.test(location.hash)){location.replace('app/');return}
+  // Sitio de demostración (demo.<dominio>): la raíz lleva a la guía para presentar la app.
+  if(/^demo\./i.test(location.hostname)&&!/[?&](b|cita)=/.test(location.search)){location.replace('app/#/guia');return}
   d.className+=' js';
   var p;try{p=new URLSearchParams(location.search)}catch(e){return}
   var b=(p.get('b')||'').trim().toLowerCase(),hint='';

@@ -66,7 +66,7 @@ export default {
       </div>`);
 
     // Si este sitio no tiene backend, se dice claro y se ofrece la demo.
-    if (getMode() === 'demo') {
+    if (getMode() === 'demo' && !/^demo\./i.test(location.hostname)) {
       setMode('server');
       state.mode = 'server';
     }
