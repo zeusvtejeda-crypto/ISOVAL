@@ -31,8 +31,8 @@ export default {
           <p class="lead">Entra para ver tu agenda de hoy.</p>
           <div id="downBanner"></div>
           <div class="seg" role="tablist" style="margin-bottom:18px;width:100%">
-            <button type="button" role="tab" data-tab="email" aria-selected="${tab === 'email'}" style="flex:1">Correo</button>
-            <button type="button" role="tab" data-tab="pin" aria-selected="${tab === 'pin'}" style="flex:1">PIN del equipo</button>
+            <button type="button" role="tab" data-tab="email" aria-selected="${String(tab === 'email')}" style="flex:1">Correo</button>
+            <button type="button" role="tab" data-tab="pin" aria-selected="${String(tab === 'pin')}" style="flex:1">PIN del equipo</button>
           </div>
           <form id="fEmail" class="stack" novalidate ${tab === 'pin' ? 'hidden' : ''}>
             <div class="field"><label for="lgEmail">Correo</label>
@@ -68,7 +68,10 @@ export default {
       state.mode = 'server';
     }
     health().catch((e) => {
-      $('#downBanner', el).innerHTML = String(html`<div class="banner warn" style="margin-bottom:16px">${raw(icon('alert'))}<div class="grow"><b>Servidor no disponible.</b> Este sitio aún no tiene la base de datos conectada. Puedes explorar todo en la demo.</div></div>`);
+      const offline = e.code === 'network' || navigator.onLine === false;
+      $('#downBanner', el).innerHTML = String(offline
+        ? html`<div class="banner warn" style="margin-bottom:16px">${raw(icon('alert'))}<div class="grow"><b>Sin conexión.</b> Revisa tu internet para entrar. La demo funciona sin conexión si ya la abriste antes.</div></div>`
+        : html`<div class="banner warn" style="margin-bottom:16px">${raw(icon('alert'))}<div class="grow"><b>Servidor no disponible.</b> Este sitio aún no tiene la base de datos conectada. Puedes explorar todo en la demo.</div></div>`);
     });
 
     const offs = [];

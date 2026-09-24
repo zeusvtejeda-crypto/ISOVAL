@@ -53,9 +53,9 @@ function mock(kind) {
   const it = (ic, hot) => '<span class="it' + (hot ? ' hot' : '') + '">' + icon(ic) + '</span>';
   const url = (extra) => '<span class="url">' + icon('lock', 'ic-sm') + '<span class="truncate">' + host + '</span>' + (extra || '') + '</span>';
   const bars = {
-    'ios-safari': ['<div class="ins-bar">' + it('chevron-left') + it('chevron-right') + it('share-ios', true) + it('book') + it('copy') + '</div>', 'Barra de Safari en iPhone (en iPad está arriba, a la derecha)'],
+    'ios-safari': ['<div class="ins-bar spread">' + it('chevron-left') + it('chevron-right') + it('share-ios', true) + it('book') + it('copy') + '</div>', 'Barra de Safari en iPhone (en iPad está arriba, a la derecha)'],
     'android-chrome': ['<div class="ins-bar">' + it('home') + url() + '<span class="it"><span class="tabs-n">2</span></span>' + it('more-v', true) + '</div>', 'Barra de Chrome en Android'],
-    'android-samsung': ['<div class="ins-bar">' + it('chevron-left') + it('chevron-right') + it('home') + it('copy') + it('menu', true) + '</div>', 'Barra inferior de Samsung Internet'],
+    'android-samsung': ['<div class="ins-bar spread">' + it('chevron-left') + it('chevron-right') + it('home') + it('copy') + it('menu', true) + '</div>', 'Barra inferior de Samsung Internet'],
     'android-firefox': ['<div class="ins-bar">' + url() + '<span class="it"><span class="tabs-n">2</span></span>' + it('more-v', true) + '</div>', 'Barra de Firefox en Android'],
     'desktop-chromium': ['<div class="ins-bar"><span class="dots"><i></i><i></i><i></i></span>' + url('<span class="it hot in-url">' + icon('monitor-down') + '</span>') + it('more-v') + '</div>', 'Barra de direcciones de Chrome o Edge'],
     'desktop-safari': ['<div class="ins-bar menu"><span class="m b"></span><span class="m">Safari</span><span class="m hot">Archivo</span><span class="m">Edición</span><span class="m">Visualización</span></div>', 'Barra de menús de la Mac']
@@ -165,7 +165,8 @@ const CSS = `
 .ins-top{margin-bottom:6px}
 .ins-top .logo-mark{width:34px;height:34px;border-radius:10px}.ins-top .logo-mark svg{width:19px;height:19px}
 .ins-top .brandname{font-size:19px}
-.ins-layout{display:grid;gap:16px}
+.ins-layout{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.ins-layout>*{min-width:0}.ins-layout>aside{grid-template-columns:minmax(0,1fr)}
 @media (min-width:1024px){.ins-layout{grid-template-columns:minmax(0,1fr) 340px;align-items:start;gap:20px}.ins-hero{grid-column:1/-1}}
 .ins-hero{position:relative;overflow:hidden;isolation:isolate;display:grid;gap:22px;padding:22px 20px;border-radius:var(--r-xl);background:var(--ink);color:#F2EDE3;border:1px solid rgba(217,178,90,.2);box-shadow:var(--shadow-2)}
 .ins-hero::before{content:"";position:absolute;inset:-30%;z-index:-1;background:radial-gradient(circle at 18% 12%,rgba(217,178,90,.24),transparent 42%),radial-gradient(circle at 92% 100%,rgba(217,178,90,.13),transparent 40%);pointer-events:none}
@@ -194,18 +195,20 @@ const CSS = `
 @media (min-width:760px){.ins-phone{display:block;width:216px;height:330px;padding:9px;border-radius:38px;background:#050504;border:1px solid rgba(242,237,227,.14);box-shadow:0 30px 60px rgba(0,0,0,.5),inset 0 0 0 2px rgba(255,255,255,.03);transform:rotate(3deg)}}
 .ins-phone .scr{position:relative;height:100%;border-radius:30px;overflow:hidden;padding:36px 14px 0;background:radial-gradient(circle at 30% 20%,#4a3c22,transparent 55%),linear-gradient(160deg,#2c251a,#15130F 60%,#2a2216)}
 .ins-phone .scr::before{content:"";position:absolute;top:9px;left:50%;width:62px;height:18px;margin-left:-31px;border-radius:999px;background:#050504}
-.ins-phone .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 11px}
+.ins-phone .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 11px}
+.ins-phone .grid>*,.ins-phone .dock>*{min-width:0}
 .ins-phone .a{aspect-ratio:1;border-radius:10px;background:rgba(242,237,227,.1)}
 .ins-phone .me{position:relative;display:grid;justify-items:center;gap:4px;margin-bottom:-12px}
 .ins-phone .me img{width:100%;border-radius:10px;box-shadow:0 0 0 2px #D9B25A,0 0 18px rgba(217,178,90,.55);animation:insGlow 2.4s var(--ease) infinite}
 .ins-phone .me span{font-size:8.5px;color:#F2EDE3;white-space:nowrap;letter-spacing:.01em}
 .ins-phone .me i{position:absolute;top:-6px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#E5484D;color:#fff;font:700 10px/17px var(--sans);font-style:normal;text-align:center;box-shadow:0 0 0 2px #1d1913}
-.ins-phone .dock{position:absolute;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:9px;border-radius:20px;background:rgba(242,237,227,.1);backdrop-filter:blur(6px)}
+.ins-phone .dock{position:absolute;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;padding:9px;border-radius:20px;background:rgba(242,237,227,.1);backdrop-filter:blur(6px)}
 @keyframes insGlow{0%,100%{box-shadow:0 0 0 2px #D9B25A,0 0 10px rgba(217,178,90,.35)}50%{box-shadow:0 0 0 2px #D9B25A,0 0 22px rgba(217,178,90,.7)}}
 #insGuide{scroll-margin-top:calc(var(--topbar-h) + var(--safe-t) + 12px)}
 .ins-dev{display:flex;width:100%}.ins-dev button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .ins-dev .ic{width:16px;height:16px}
-.ins-br .chip .dot{width:7px;height:7px}
+@media (max-width:440px){.ins-dev .ic{display:none}.ins-dev button{padding:0 8px}}
+.ins-br .chip .dot{width:7px;height:7px}.ins-br .chip[aria-pressed="true"] .dot{background:currentColor}
 .ins-mock{margin:2px 0 4px}
 .ins-mock figcaption{font-size:12px;color:var(--text-3);margin-top:6px}
 .ins-bar{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-3);max-width:460px}
@@ -218,6 +221,7 @@ const CSS = `
 .ins-bar .tabs-n{width:18px;height:18px;border:1.8px solid currentColor;border-radius:5px;font-size:10px;font-weight:700;display:grid;place-items:center}
 .ins-bar .hot{color:var(--brand-strong);background:var(--brand-soft);animation:insPulse 1.9s var(--ease) infinite}
 .ins-bar .dots{display:flex;gap:6px;padding:0 6px 0 4px}.ins-bar .dots i{width:10px;height:10px;border-radius:50%;background:var(--border-strong)}
+.ins-bar.spread{justify-content:space-around}
 .ins-bar.menu{gap:2px;padding:5px 8px;font-size:13px;color:var(--text)}
 .ins-bar.menu .m{padding:5px 9px;border-radius:7px;white-space:nowrap}
 .ins-bar.menu .m.b{width:12px;height:14px;padding:0;margin:0 6px 0 2px;border-radius:50% 50% 45% 45%;background:var(--text)}
@@ -313,6 +317,7 @@ export default {
       : String(head) + String(body);
 
     // ── Área de acción (se repinta cuando llega beforeinstallprompt o se instala) ──
+    let accepted = false; // el usuario aceptó el diálogo; falta que el navegador confirme con 'appinstalled'
     const paintAction = () => {
       const box = $('#insAction', el);
       if (!box) return;
@@ -321,8 +326,10 @@ export default {
       let out;
       if (d.standalone) {
         out = state('ok', 'check-circle', 'Ya estás usando la app', 'Ábrela siempre desde el ícono de TuBarbería en tu pantalla de inicio.');
-      } else if (p.installed) {
-        out = state('ok', 'check-circle', 'Ya está instalada en este equipo', 'Búscala en tu pantalla de inicio o en tus apps. Puedes cerrar esta pestaña.');
+      } else if (p.installed || accepted) {
+        out = p.installed
+          ? state('ok', 'check-circle', 'Ya está instalada en este equipo', 'Búscala en tu pantalla de inicio o en tus apps. Puedes cerrar esta pestaña.')
+          : state('ok', 'check-circle', 'Instalando TuBarbería…', 'En unos segundos aparecerá en tu pantalla de inicio o en tus apps.');
       } else if (p.prompt) {
         out = '<button type="button" class="btn btn-primary btn-lg" data-act="install">' + icon('download') + 'Instalar ahora</button>' +
           '<span class="hint">Tu navegador la instala en un paso. No ocupa casi espacio.</span>';
@@ -377,7 +384,7 @@ export default {
         await p.prompt();
         const choice = await p.userChoice;
         if (window.TB && window.TB.pwa) window.TB.pwa.prompt = null; // el evento solo se puede usar una vez
-        if (choice && choice.outcome === 'accepted') toast.success('Instalando TuBarbería…');
+        if (choice && choice.outcome === 'accepted') { accepted = true; toast.success('Instalando TuBarbería…'); }
         else toast.info('Instalación cancelada. Puedes instalarla cuando quieras.');
       } catch (e) {
         toast.error('No se pudo abrir la instalación. Sigue los pasos de abajo.');

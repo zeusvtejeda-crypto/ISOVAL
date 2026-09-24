@@ -51,6 +51,7 @@ test('POST /api/staff: valida entradas y solo el dueño', async () => {
     [{ name: 'Beto', commission_pct: 'mucho' }, 'commission_pct'], [{ name: 'Beto', pin: '12' }, 'pin'],
     [{ name: 'Beto', pin: '12a4' }, 'pin'], [{ name: 'Beto', bio: 'x'.repeat(301) }, 'bio'],
     [{ name: 'Beto', phone: '123' }, 'phone'], [{ name: 'Beto', avatar_url: 'javascript:alert(1)' }, 'avatar_url'],
+    [{ name: 'Beto', avatar_url: 'data:image/jpeg;base64,' + 'A'.repeat(80000) }, 'avatar_url'],
     [{ name: 'Beto', bookable: 'tal vez' }, 'bookable'], [{ name: 'Beto', email: 'malo' }, 'email'],
     [{ name: 'Beto', email: 'beto@t.mx' }, 'password'], [{ name: 'Beto', email: 'beto@t.mx', password: 'corta' }, 'password'],
     [{ name: 'Beto', password: 'secreto123' }, 'email']
@@ -67,7 +68,7 @@ test('POST /api/staff: valida entradas y solo el dueño', async () => {
 test('POST /api/staff: defaults, color libre, orden y disponibilidad = horario de la barbería', async () => {
   const f = await setup();
   await f.db.update('staff', { id: 'st_ownerA' }, { color: '#c8a24a' });
-  const r = await f.call('POST', '/api/staff', as('ownerA', { body: { name: '  Beto   Ruiz ', phone: '311-222-3333', bio: 'Fades y diseño.' } }));
+  const r = await f.call('POST', '/api/staff', as('ownerA', { body: { name: '  Beto   Ruiz ', phone: '311-222-3333', bio: 'Fades y diseño.', avatar_url: 'data:image/png;base64,iVBORw0KGgo=' } }));
   assert.equal(r.status, 200, r.body);
   const st = r.data;
   assert.equal(st.name, 'Beto Ruiz');
@@ -76,6 +77,7 @@ test('POST /api/staff: defaults, color libre, orden y disponibilidad = horario d
   assert.equal(st.bookable, true);
   assert.equal(st.commission_pct, 50);
   assert.equal(st.phone, '3112223333');
+  assert.equal(st.avatar_url, 'data:image/png;base64,iVBORw0KGgo=');
   assert.equal(st.has_pin, false);
   assert.equal(st.has_account, false);
   assert.equal(st.email, '');
@@ -153,7 +155,7 @@ test('PATCH /api/staff/:id: barbero solo edita su perfil permitido', async () =>
   assert.equal(self.data.color, '#223344');
   assert.ok(await verifySecret('9876', (await f.db.findOne('staff', { id: 'st_barberA' })).pin_hash));
   // Cambios de dueño → 403 y nada cambia.
-  for (const body of [{ commission_pct: 90 }, { role: 'owner' }, { bookable: false }, { active: false }, { email: 'otro@t.mx' }, { password: 'nuevaclave1' }, { name: 'X Y', sort: 0 }]) {
+  for (const body of [{ commission_pct: 90 }, { role: 'owner' }, { bookable: false }, { active: false }, { email: 'otro@t.mx' }, { password: 'nuevaclave1' }, { name: 'X Y', sort: 3 }]) {
     const r = await f.call('PATCH', '/api/staff/st_barberA', as('barberA', { body }));
     assert.equal(r.status, 403, JSON.stringify(body) + ' → ' + r.body);
   }

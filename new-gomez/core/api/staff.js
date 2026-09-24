@@ -7,7 +7,7 @@ import { rateCheck, rateFail } from '../session.js';
 import { staffView } from '../domain/views.js';
 import { shopSettings } from '../domain/settings.js';
 import { passwordError } from './auth.js';
-import { body, failIf, dupError, textIn, phoneIn, colorIn, boolIn, boolOf, numIn, intIn, urlIn } from './shop.js';
+import { body, failIf, dupError, textIn, phoneIn, colorIn, boolIn, boolOf, numIn, intIn, urlIn, IMAGE_KB } from './shop.js';
 
 export const STAFF_ROLES = ['owner', 'barber'];
 // Paleta sobria para distinguir barberos en la agenda (se asigna la primera libre).
@@ -57,7 +57,7 @@ function parseInput(errs, b, { create }) {
   put('commission_pct', numIn(errs, 'commission_pct', b.commission_pct, 0, 100, 'La comisión'));
   put('phone', phoneIn(errs, 'phone', b.phone));
   put('bio', textIn(errs, 'bio', b.bio, { max: 300, label: 'La presentación', multiline: true }));
-  put('avatar_url', urlIn(errs, 'avatar_url', b.avatar_url, { label: 'La foto', image: true }));
+  put('avatar_url', urlIn(errs, 'avatar_url', b.avatar_url, { label: 'La foto', image: true, dataKB: IMAGE_KB.avatar }));
   put('sort', intIn(errs, 'sort', b.sort, 0, 10000, 'El orden'));
   if (b.pin !== undefined) {
     const p = typeof b.pin === 'string' || typeof b.pin === 'number' ? String(b.pin).trim() : null;
@@ -243,6 +243,7 @@ async function update(ctx) {
     if (!v.active) patch.bookable = false;
     else if (!st.active && v.bookable === undefined) patch.bookable = true; // al reactivar vuelve a la reserva en línea
   }
+  if (!active && patch.bookable) patch.bookable = false; // inactivo nunca aparece en la reserva
   if (v.pin !== undefined) {
     if (v.pin) { await assertPinFree(ctx, v.pin, st.id); patch.pin_hash = await hashSecret(v.pin); } else patch.pin_hash = null;
   }

@@ -1,6 +1,6 @@
 // Contexto de la barbería activa (GET /api/context) y datos/ajustes de la barbería (PATCH /api/shop).
 // También exporta los validadores de entrada que comparten staff.js, services.js y clients.js.
-import { HttpError, bad, nowIso, normEmail, isEmail, normPhone, isPhone } from '../util.js';
+import { HttpError, bad, nowIso, normEmail, isEmail, normPhone, isPhone, isDateKey, parseDateKey, dateKeyUTC, omit } from '../util.js';
 import { permissionsFor } from '../permissions.js';
 import { publicUser } from '../session.js';
 import { staffView } from '../domain/views.js';
@@ -17,6 +17,8 @@ export function failIf(errs) {
   const keys = Object.keys(errs);
   if (keys.length) throw bad(errs[keys[0]], errs);
 }
+// Fecha AAAA-MM-DD que existe en el calendario (util.isDateKey acepta, p. ej., 2026-02-30).
+export const isRealDate = (k) => isDateKey(k) && dateKeyUTC(parseDateKey(k)) === k;
 export function dupError(message, field) { return new HttpError(409, 'duplicate', message, field ? { [field]: message } : null); }
 
 // o: { max, min, label, empty, multiline }
@@ -75,8 +77,10 @@ export function numIn(errs, field, v, min, max, label) {
   if (!Number.isFinite(n) || n < min || n > max) { errs[field] = (label || 'El valor') + ' debe ser un número entre ' + min + ' y ' + max + '.'; return undefined; }
   return Math.round(n * 100) / 100;
 }
-// Enlaces: http(s)://…; con image:true también rutas del mismo sitio ('/img/x.png') e imágenes data: pequeñas.
-export const MAX_DATA_URL = 400000; // ≈ 300 KB de imagen en base64
+// Enlaces: http(s)://…; con image:true también rutas del mismo sitio ('/img/x.png'), y con dataKB:n imágenes
+// data: de hasta n KB (sin almacenamiento de archivos: la fila viaja en cada petición, así que se mantienen chicas;
+// el panel debe reducir la imagen antes de enviarla).
+export const IMAGE_KB = { logo: 100, cover: 200, avatar: 50 };
 const DATA_IMG = /^data:image\/(png|jpe?g|webp|gif);base64,[a-z0-9+/=]+$/i;
 export function isHttpUrl(s) {
   if (typeof s !== 'string' || s.length > 500 || !/^https?:\/\/[^\s<>"'\\`]+$/i.test(s)) return false;
@@ -91,7 +95,8 @@ export function urlIn(errs, field, v, o) {
   const s = v.trim();
   if (!s) return '';
   if (o.image && /^data:/i.test(s)) {
-    if (s.length > MAX_DATA_URL) { errs[field] = 'La imagen es muy pesada (máximo 300 KB).'; return undefined; }
+    if (!o.dataKB) { errs[field] = label + ' debe ser una dirección web completa (https://…).'; return undefined; }
+    if (s.length * 0.75 > o.dataKB * 1024) { errs[field] = 'La imagen es muy pesada (máximo ' + o.dataKB + ' KB). Usa una más pequeña.'; return undefined; }
     if (!DATA_IMG.test(s)) { errs[field] = 'La imagen debe ser PNG, JPG, WEBP o GIF.'; return undefined; }
     return s;
   }
@@ -290,8 +295,10 @@ async function context(ctx) {
   } else if (ctx.client) {
     unread = await ctx.sdb.count('notifications', { client_id: ctx.client.id, read_at: null });
   }
+  // Ficha propia del cliente sin las notas ni etiquetas internas del equipo.
+  const client = ctx.client ? omit(ctx.client, ['notes', 'tags', 'source', 'shop_id']) : null;
   return {
-    shop, role: ctx.role, permissions: permissionsFor(ctx.role), staff, client: ctx.client || null, unread,
+    shop, role: ctx.role, permissions: permissionsFor(ctx.role), staff, client, unread,
     user: publicUser(ctx.user), session_kind: ctx.session ? ctx.session.kind : null
   };
 }
@@ -314,7 +321,7 @@ async function updateShop(ctx) {
   put('phone', phoneIn(errs, 'phone', b.phone));
   put('whatsapp', phoneIn(errs, 'whatsapp', b.whatsapp));
   put('email', emailIn(errs, 'email', b.email));
-  for (const [k, o] of [['maps_url', { label: 'El enlace del mapa' }], ['logo_url', { label: 'El logo', image: true }], ['cover_url', { label: 'La portada', image: true }]]) {
+  for (const [k, o] of [['maps_url', { label: 'El enlace del mapa' }], ['logo_url', { label: 'El logo', image: true, dataKB: IMAGE_KB.logo }], ['cover_url', { label: 'La portada', image: true, dataKB: IMAGE_KB.cover }]]) {
     const v = urlIn(errs, k, b[k], o);
     if (v !== undefined) patch[k] = v || null;
   }

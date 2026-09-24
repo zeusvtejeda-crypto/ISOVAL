@@ -1,9 +1,9 @@
 // CRM de clientes: listado con estadísticas, ficha con historial, alta, edición y borrado lógico.
 // Barbero (clients.read.own): solo clientes con al menos una cita con él; en la ficha y en las
 // estadísticas solo cuentan SUS citas y SUS cobros. Dueño/superadmin: toda la barbería.
-import { bad, forbidden, notFound, newId, nowIso, int, clamp, isDateKey, money, normPhone } from '../util.js';
+import { bad, forbidden, notFound, newId, nowIso, int, clamp, money, normPhone } from '../util.js';
 import { apptView } from '../domain/views.js';
-import { body, failIf, dupError, textIn, phoneIn, emailIn, boolIn } from './shop.js';
+import { body, failIf, dupError, textIn, phoneIn, emailIn, boolIn, isRealDate } from './shop.js';
 
 const READ = ['clients.read.all', 'clients.read.own'];
 export const CLIENT_SORTS = ['recent', 'name', 'visits', 'spent'];
@@ -21,7 +21,7 @@ function ownScope(ctx) {
   return ctx.staff.id;
 }
 // Minúsculas sin acentos (búsqueda y orden estables en servidor y navegador).
-export const fold = (s) => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+export const fold = (s) => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const newestFirst = (a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0);
 const uniqById = (rows) => { const m = new Map(); for (const r of rows) m.set(r.id, r); return [...m.values()]; };
 
@@ -161,7 +161,7 @@ function parseInput(b, { create, today }) {
   put('email', emailIn(errs, 'email', b.email));
   if (b.birthday !== undefined) {
     if (b.birthday === null || b.birthday === '') v.birthday = null;
-    else if (!isDateKey(b.birthday) || b.birthday < '1900-01-01') errs.birthday = 'Escribe la fecha de nacimiento como AAAA-MM-DD.';
+    else if (!isRealDate(b.birthday) || b.birthday < '1900-01-01') errs.birthday = 'Escribe la fecha de nacimiento como AAAA-MM-DD.';
     else if (b.birthday > today) errs.birthday = 'La fecha de nacimiento no puede ser futura.';
     else v.birthday = b.birthday;
   }
@@ -201,6 +201,8 @@ async function list(ctx) {
     const ids = [...new Set(act.appts.map((a) => a.client_id))];
     clients = await findByIds(ctx.sdb, 'clients', 'id', ids, { deleted_at: null });
   } else clients = await ctx.sdb.find('clients', { deleted_at: null });
+  // Orden base estable (el más antiguo primero): define la escritura de cada etiqueta y los empates.
+  clients.sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : a.id < b.id ? -1 : 1));
   const tags = collectTags(clients);
   const text = String(q.q == null ? '' : q.q).trim().slice(0, 80);
   const tag = fold(String(q.tag == null ? '' : q.tag).trim());

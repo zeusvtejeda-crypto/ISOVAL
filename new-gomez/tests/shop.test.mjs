@@ -55,11 +55,15 @@ test('context: barbero por PIN, cliente y superadmin', async () => {
   assert.equal(b.data.unread, 1);
 
   await f.db.update('shops', { id: 'shop_a' }, { settings: { hours: {}, notify_email: 'dueno@alfa.mx' } });
+  await f.db.update('clients', { id: 'cl_clientA' }, { notes: 'Llega tarde', tags: ['Difícil'] });
   await note(f.db, 'shop_a', { client_id: 'cl_clientA' });
   const c = await f.call('GET', '/api/context', { as: 'clientA' });
   assert.equal(c.status, 200, c.body);
   assert.equal(c.data.role, 'client');
   assert.equal(c.data.client.id, 'cl_clientA');
+  assert.equal(c.data.client.name, 'Cliente A');
+  assert.equal(c.data.client.notes, undefined, 'el cliente no ve las notas internas');
+  assert.equal(c.data.client.tags, undefined);
   assert.equal(c.data.staff, null);
   assert.equal(c.data.unread, 1);
   assert.equal(c.data.shop.settings.notify_email, '');   // el cliente no ve el correo interno
@@ -135,7 +139,8 @@ test('PATCH /api/shop: validaciones de campos', async () => {
     [{ currency: 'EUR' }, 'currency'], [{ timezone: 'Marte/Base' }, 'timezone'], [{ maps_url: 'javascript:alert(1)' }, 'maps_url'],
     [{ maps_url: '/relativo' }, 'maps_url'], [{ logo_url: 'javascript:alert(1)' }, 'logo_url'],
     [{ cover_url: 'data:image/svg+xml;base64,PHN2Zz4=' }, 'cover_url'], [{ description: 'x'.repeat(1001) }, 'description'],
-    [{ tagline: { a: 1 } }, 'tagline'], [{ settings: 'x' }, 'settings']
+    [{ tagline: { a: 1 } }, 'tagline'], [{ settings: 'x' }, 'settings'], [{ logo_url: '//evil.com/logo.png' }, 'logo_url'],
+    [{ logo_url: 'data:image/png;base64,' + 'A'.repeat(140000) }, 'logo_url']
   ];
   for (const [body, field] of cases) {
     const r = await patch(f, 'ownerA', body);
@@ -240,6 +245,7 @@ test('PATCH /api/shop: validación estricta de settings', async () => {
     [{ public: { policies: 'x'.repeat(501) } }, 'settings.public.policies'],
     [{ public: { gallery: ['https://ok.mx/a.jpg', 'javascript:1'] } }, 'settings.public.gallery.1'],
     [{ public: { gallery: new Array(13).fill('https://ok.mx/a.jpg') } }, 'settings.public.gallery'],
+    [{ public: { gallery: ['data:image/png;base64,iVBORw0KGgo='] } }, 'settings.public.gallery.0'],
     [{ notify_email: 'no' }, 'settings.notify_email']
   ];
   for (const [settings, field] of cases) {

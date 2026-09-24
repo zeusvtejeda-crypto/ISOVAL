@@ -89,7 +89,18 @@ export const pwa = { prompt: null, installed: window.matchMedia('(display-mode: 
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); pwa.prompt = e; bus.emit('pwa:installable', e); });
 window.addEventListener('appinstalled', () => { pwa.prompt = null; pwa.installed = true; toast.success('¡App instalada! Ábrela desde tu pantalla de inicio.'); bus.emit('pwa:installed'); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => { navigator.serviceWorker.register(SITE_BASE + 'sw.js', { scope: SITE_BASE }).catch(() => { /* sin SW: la app funciona igual */ }); });
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register(SITE_BASE + 'sw.js', { scope: SITE_BASE });
+      // Nueva versión lista → se ofrece actualizar sin esperar a cerrar todas las pestañas.
+      const offer = (w) => { if (!w || !navigator.serviceWorker.controller) return; toast.info('Hay una versión nueva de la app.', { duration: 15000, action: { label: 'Actualizar', onClick: () => w.postMessage({ type: 'SKIP_WAITING' }) } }); };
+      if (reg.waiting) offer(reg.waiting);
+      reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed') offer(w); }); });
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded) return; reloaded = true; location.reload(); });
+      setInterval(() => reg.update().catch(() => {}), 30 * 60000);
+    } catch (e) { /* sin SW: la app funciona igual */ }
+  });
 }
 function offlineBar() {
   let bar = $('.offline-bar');
@@ -99,6 +110,7 @@ function offlineBar() {
 }
 window.addEventListener('online', offlineBar);
 window.addEventListener('offline', offlineBar);
+if (navigator.onLine === false) window.addEventListener('DOMContentLoaded', offlineBar);
 
 // ── Arranque ──
 const root = document.getElementById('app');

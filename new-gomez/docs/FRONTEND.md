@@ -40,6 +40,7 @@ export default {
 ```
 - `el` ya es `<div class="page">`. Empieza con `.page-head` (h2 + p + .actions). En móvil el título también
   aparece en la barra superior; en escritorio también. Mantén el h2 corto.
+- `html` omite booleanos (para permitir `${cond && html`…`}`): en atributos usa `String(bool)`, p. ej. `aria-selected="${String(x)}"`.
 - Estados obligatorios en toda lista: cargando (skeleton), vacío (emptyState con CTA útil), error
   (errorState + Reintentar). Nunca una pantalla en blanco.
 - Toda acción: botón con `busy(btn, promesa)` → toast.success con mensaje concreto ("Cita confirmada") o
