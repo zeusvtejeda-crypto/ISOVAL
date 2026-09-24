@@ -1,0 +1,40 @@
+# Cloudflare Pages — cabeceras de los archivos estáticos. No aplican a /api/* (las pone la Pages Function).
+# Si dos reglas definen la misma cabecera, Pages une los valores con coma: por eso las reglas de caché
+# no se traslapan (/app/icons/* no cae en las reglas de /app/ de abajo).
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-Frame-Options: SAMEORIGIN
+
+# Service worker: siempre la versión más reciente y alcance en todo el sitio.
+/sw.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
+
+# Página pública y panel (PWA): sin caché del navegador; el service worker gestiona el modo sin conexión.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
+/app/
+  Cache-Control: no-cache
+/app/*.html
+  Cache-Control: no-cache
+/app/*.js
+  Cache-Control: no-cache
+/app/*.css
+  Cache-Control: no-cache
+/app/*.webmanifest
+  Cache-Control: no-cache
+/core/*
+  Cache-Control: no-cache
+
+# Imágenes e íconos: una semana.
+/img/*
+  Cache-Control: public, max-age=604800
+/app/icons/*
+  Cache-Control: public, max-age=604800

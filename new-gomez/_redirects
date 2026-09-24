@@ -1,0 +1,15 @@
+# Cloudflare Pages — redirecciones (formato: origen destino [código]). Se evalúan antes que los archivos
+# estáticos y no aplican a /api/* (Pages Functions). Gana la primera regla que coincide; las reglas fijas
+# van antes que las que tienen marcadores (:slug) o comodines (*).
+
+# Demo del panel y panel anterior
+/demo          /app/#/demo    302
+/panel         /app/          301
+/panel/        /app/          301
+
+# Nunca servir archivos locales de desarrollo aunque se suban por error (wrangler pages deploy .)
+/.dev.vars     /              302
+
+# Enlace corto de reservas por barbería: /b/new-gomez → /?b=new-gomez
+/b/:slug       /?b=:slug      302
+/.wrangler/*   /              302

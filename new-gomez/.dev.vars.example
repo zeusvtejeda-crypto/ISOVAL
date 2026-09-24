@@ -1,0 +1,26 @@
+# Variables para desarrollo local con `npm run dev` (wrangler pages dev).
+# Copia este archivo como .dev.vars (está en .gitignore; NUNCA lo subas) y descomenta lo que uses.
+# En producción se definen en Cloudflare: Workers & Pages → tu proyecto → Settings → Variables and Secrets.
+
+# Llave del primer arranque (POST /api/setup). Usa una cadena larga y aleatoria; bórrala después si quieres.
+# SETUP_KEY=cambia-esta-llave-por-una-larga-y-aleatoria
+
+# Correo de aviso de nuevas reservas (Resend: https://resend.com). Sin RESEND_API_KEY no se envían correos.
+# RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
+# DEST_EMAIL=dueno@tubarberia.mx
+# FROM_EMAIL=TuBarbería <reservas@tubarberia.mx>
+
+# Llave para integraciones (proveedor de WhatsApp, cron externo): Authorization: Bearer <AUTOMATION_KEY>
+# AUTOMATION_KEY=otra-llave-larga-y-aleatoria
+
+# Alta de barberías nuevas desde la app (POST /api/auth/signup). '0' la desactiva.
+# ALLOW_SIGNUP=1
+
+# URL pública del sitio para los enlaces de WhatsApp/correo (por defecto, el dominio de cada petición).
+# PUBLIC_URL=https://gomez.tubarberia.mx
+
+# Barbería que muestra la página pública cuando el dominio no corresponde a ninguna (por defecto new-gomez).
+# DEFAULT_SHOP_SLUG=new-gomez
+
+# Solo local: cookies sin 'Secure' para probar desde el celular por http://<IP-de-tu-compu>:8788
+# INSECURE_COOKIES=1
