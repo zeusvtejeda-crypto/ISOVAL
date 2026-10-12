@@ -6,30 +6,47 @@
 <title>Cuaderno — Lari's Bakehouse</title>
 <meta name="description" content="Notas de la casa: cómo se bate el matcha, cómo salen las galletas, cómo se cubre un pastel en Lari's Bakehouse, Tepic.">
 <meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://laris-odette.vercel.app/cuaderno.html">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="Cuaderno — Lari's Bakehouse">
+<meta property="og:description" content="Notas de la casa: cómo se bate el matcha, cómo salen las galletas, cómo se cubre un pastel en Lari's Bakehouse, Tepic.">
+<meta property="og:image" content="https://laris-odette.vercel.app/assets/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Croissant recién horneado sobre un vaso de café para llevar">
+<meta property="og:url" content="https://laris-odette.vercel.app/cuaderno.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta property="og:site_name" content="Lari's Bakehouse">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/bolsa.css">
 </head>
 <body>
+<a class="skip" href="#main">saltar al contenido</a>
 
 <header class="site-head">
+  <a class="bag-link" href="carta.html#bolsa" hidden aria-label="Ver tu pedido">pedido <span class="bag-count">0</span></a>
   <a class="wordmark" href="./">Lari's Bakehouse</a>
-  <button class="burger" aria-label="Menú" aria-expanded="false"><span></span><span></span><span></span></button>
+  <button class="burger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
 </header>
 
-<div class="nav-panel">
-  <nav>
+<div class="nav-panel" id="menu">
+  <nav aria-label="Principal">
     <a href="carta.html">carta</a>
     <a href="cuaderno.html" aria-current="page">cuaderno</a>
     <a href="visitanos.html">visítanos</a>
     <a href="https://wa.me/523113436860" target="_blank" rel="noopener">pedir</a>
   </nav>
-  <p class="nav-foot">La Paz 34, Centro · Tepic, Nayarit · lunes a sábado 9:30–18:30 · <a href="https://www.instagram.com/laris_bakehouse/" target="_blank" rel="noopener">@laris_bakehouse</a></p>
+  <p class="nav-foot"><span data-status></span><br>La Paz 34, Centro · Tepic, Nayarit · lunes a sábado 9:30–18:30 · <a href="https://www.instagram.com/laris_bakehouse/" target="_blank" rel="noopener">@laris_bakehouse</a></p>
 </div>
 
-<main class="page">
+<main class="page" id="main">
 
   <div class="page-head">
     <h1>Cuaderno</h1>
@@ -39,11 +56,12 @@
   <div class="entries">
 
     <article class="entry rv">
-      <figure><img src="assets/img/cuaderno-01.webp" alt="Matcha batido a mano con chasen en un bol de cerámica" width="1000" height="1250" loading="lazy"></figure>
+      <figure><img src="assets/img/cuaderno-01.webp" alt="Matcha batido a mano con chasen en un bol de cerámica" width="1000" height="1250" fetchpriority="high"></figure>
       <div>
         <span class="date">De la barra</span>
         <h2>El matcha se bate a mano</h2>
-        <p>Uno por uno, con chasen, hasta que la espuma queda pareja. Es más tardado que hacerlo con máquina y esa es exactamente la razón por la que lo seguimos haciendo así.</p>
+        <p>Uno por uno, con chasen, hasta que la espuma queda pareja. Es más tardado que hacerlo con máquina, y esa es exactamente la razón por la que lo seguimos haciendo así.</p>
+        <p class="cta-row"><a class="link-cta" href="carta.html#para-tomar">pedir un matcha</a></p>
       </div>
     </article>
 
@@ -53,6 +71,7 @@
         <span class="date">De la vitrina</span>
         <h2>Las galletas salen por lotes</h2>
         <p>No horneamos todo de una vez. Van saliendo a lo largo del día, y por eso la vitrina de la mañana casi nunca es la misma que la de la tarde. Si buscas una en particular, pregunta antes de venir.</p>
+        <p class="cta-row"><a class="link-cta" href="carta.html#galletas">ver las galletas</a></p>
       </div>
     </article>
 
@@ -62,6 +81,7 @@
         <span class="date">Del obrador</span>
         <h2>La masa necesita su tiempo</h2>
         <p>El hojaldre se lamina, descansa, se vuelve a doblar y vuelve a descansar. Cuando por fin entra al horno, el trabajo ya está hecho: lo único que falta es que abra.</p>
+        <p class="cta-row"><a class="link-cta" href="carta.html#hojaldres">ver los hojaldres</a></p>
       </div>
     </article>
 
@@ -71,6 +91,7 @@
         <span class="date">Por encargo</span>
         <h2>Cubrir un pastel</h2>
         <p>Capa, espátula, vuelta. Los pasteles enteros se hacen sobre pedido porque cada uno se termina a mano el día que lo vas a recoger.</p>
+        <p class="cta-row"><a class="link-cta" href="carta.html#por-encargo">encargar un pastel</a></p>
       </div>
     </article>
 
@@ -95,6 +116,7 @@
   <small>La Paz 34, Centro · Tepic, Nayarit · Sitio por LYM Villeda</small>
 </footer>
 
-<script src="assets/app.js"></script>
+<script src="assets/app.js" defer></script>
+<script src="assets/bolsa.js" defer></script>
 </body>
 </html>

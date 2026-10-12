@@ -1,0 +1,3 @@
+# fotos originales sin procesar: nunca al repo (pueden traer EXIF/GPS)
+fotos-nuevas/*
+!fotos-nuevas/.gitkeep

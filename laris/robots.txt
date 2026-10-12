@@ -1,0 +1,5 @@
+# preview: cambiar a Allow al lanzar
+User-agent: *
+Disallow: /
+
+Sitemap: https://laris-odette.vercel.app/sitemap.xml

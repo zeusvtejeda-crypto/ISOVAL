@@ -4,170 +4,199 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Carta — Lari's Bakehouse</title>
-<meta name="description" content="Lo que horneamos en Lari's Bakehouse: hojaldres, galletas, pasteles, panqués y matcha. La Paz 34, Centro de Tepic.">
+<meta name="description" content="Lo que horneamos en Lari's Bakehouse: hojaldres, galletas, pasteles, panqués y matcha. Arma tu pedido y mándalo por WhatsApp. La Paz 34, Centro de Tepic.">
 <meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://laris-odette.vercel.app/carta.html">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="Carta — Lari's Bakehouse">
+<meta property="og:description" content="Hojaldres, galletas, pasteles, panqués y matcha. Arma tu pedido y mándalo por WhatsApp. La Paz 34, Centro de Tepic.">
+<meta property="og:image" content="https://laris-odette.vercel.app/assets/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Croissant recién horneado sobre un vaso de café para llevar">
+<meta property="og:url" content="https://laris-odette.vercel.app/carta.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta property="og:site_name" content="Lari's Bakehouse">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="manifest" href="site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/bolsa.css">
 </head>
 <body>
+<a class="skip" href="#main">saltar al contenido</a>
 
 <header class="site-head">
+  <a class="bag-link" href="carta.html#bolsa" hidden aria-label="Ver tu pedido">pedido <span class="bag-count">0</span></a>
   <a class="wordmark" href="./">Lari's Bakehouse</a>
-  <button class="burger" aria-label="Menú" aria-expanded="false"><span></span><span></span><span></span></button>
+  <button class="burger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
 </header>
 
-<div class="nav-panel">
-  <nav>
+<div class="nav-panel" id="menu">
+  <nav aria-label="Principal">
     <a href="carta.html" aria-current="page">carta</a>
     <a href="cuaderno.html">cuaderno</a>
     <a href="visitanos.html">visítanos</a>
     <a href="https://wa.me/523113436860" target="_blank" rel="noopener">pedir</a>
   </nav>
-  <p class="nav-foot">La Paz 34, Centro · Tepic, Nayarit · lunes a sábado 9:30–18:30 · <a href="https://www.instagram.com/laris_bakehouse/" target="_blank" rel="noopener">@laris_bakehouse</a></p>
+  <p class="nav-foot"><span data-status></span><br>La Paz 34, Centro · Tepic, Nayarit · lunes a sábado 9:30–18:30 · <a href="https://www.instagram.com/laris_bakehouse/" target="_blank" rel="noopener">@laris_bakehouse</a></p>
 </div>
 
-<main class="page">
+<main class="page" id="main">
 
   <div class="page-head">
     <h1>La carta</h1>
     <p>La vitrina cambia todos los días. Esto es lo que sale del horno de manera habitual; para saber qué hay hoy, pregúntanos.</p>
   </div>
 
-  <h2 class="section-label eyebrow">Hojaldres</h2>
+  <nav class="cat-index" aria-label="Categorías de la carta">
+    <ul>
+      <li><a href="#hojaldres">hojaldres</a></li>
+      <li><a href="#galletas">galletas</a></li>
+      <li><a href="#pasteles">pasteles</a></li>
+      <li><a href="#panques">panqués</a></li>
+      <li><a href="#para-tomar">para tomar</a></li>
+      <li><a href="#para-llevar">para llevar</a></li>
+      <li><a href="#por-encargo">por encargo</a></li>
+    </ul>
+  </nav>
+
+  <h2 class="section-label eyebrow" id="hojaldres">Hojaldres</h2>
   <div class="grid">
-    <article class="item rv">
-      <figure><img src="assets/img/pan-02.webp" alt="Canasta con croissants recién horneados" width="900" height="900" loading="lazy"></figure>
+    <article class="item rv" data-id="croissant-de-mantequilla" data-name="croissant de mantequilla" data-cat="hojaldres">
+      <figure><img src="assets/img/pan-02.webp" alt="Canasta con croissants recién horneados" width="900" height="900" fetchpriority="high"></figure>
       <div class="item-row"><h3>croissant de mantequilla</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFhay%20croissant%20hoy%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Laminado en casa, horneado por la mañana.</p>
     </article>
-    <article class="item rv">
-      <figure><img src="assets/img/pan-01.webp" alt="Bandeja con hojaldres glaseados y croissants" width="900" height="900" loading="lazy"></figure>
+    <article class="item rv" data-id="hojaldre-glaseado" data-name="hojaldre glaseado" data-cat="hojaldres">
+      <figure><img src="assets/img/pan-01.webp" alt="Bandeja con hojaldres glaseados y croissants" width="900" height="900"></figure>
       <div class="item-row"><h3>hojaldre glaseado</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFqu%C3%A9%20hojaldres%20hay%20hoy%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Del lote del día, en la charola de junto.</p>
     </article>
-    <article class="item rv">
-      <figure><img src="assets/img/pan-03.webp" alt="Danés de la casa sostenido en las manos" width="900" height="900" loading="lazy"></figure>
+    <article class="item rv" data-id="croissant-partido" data-name="croissant partido" data-cat="hojaldres" data-ask-only>
+      <figure><img src="assets/img/pan-03.webp" alt="Croissant partido a la mitad, sostenido en la mano, con la miga a la vista" width="900" height="900"></figure>
       <div class="item-row"><h3>croissant partido</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFhay%20croissant%20hoy%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Abierto, para que se vea la miga.</p>
     </article>
-    <article class="item rv">
-      <figure><img src="assets/img/pan-04.webp" alt="Croissant y café para llevar" width="900" height="900" loading="lazy"></figure>
+    <article class="item rv" data-id="croissant-y-cafe" data-name="croissant y café" data-cat="hojaldres">
+      <figure><img src="assets/img/pan-04.webp" alt="Croissant y café para llevar" width="900" height="900"></figure>
       <div class="item-row"><h3>croissant y café</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20un%20croissant%20con%20caf%C3%A9." target="_blank" rel="noopener">preguntar</a></div>
       <p>El desayuno de siempre, para llevar.</p>
     </article>
   </div>
 
-  <h2 class="section-label eyebrow">Galletas</h2>
+  <h2 class="section-label eyebrow" id="galletas">Galletas</h2>
   <div class="grid">
-    <article class="item rv">
+    <article class="item rv" data-id="galletas-de-la-casa" data-name="galletas de la casa" data-cat="galletas">
       <figure><img src="assets/img/gal-01.webp" alt="Rejilla con galletas variadas enfriándose" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>galletas de la casa</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFqu%C3%A9%20galletas%20hay%20hoy%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Salen por lotes; los sabores rotan.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="galleta-de-chocolate" data-name="galleta de chocolate" data-cat="galletas">
       <figure><img src="assets/img/gal-04.webp" alt="Galleta de chocolate en la mano" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>galleta de chocolate</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFhay%20galleta%20de%20chocolate%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Orilla crujiente, centro suave.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="alfajores" data-name="alfajores" data-cat="galletas">
       <figure><img src="assets/img/gal-03.webp" alt="Alfajores servidos con pinzas sobre tabla de madera" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>alfajores</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFtienen%20alfajores%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>De los que se acaban temprano.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="galletas-para-llevar" data-name="galletas para llevar" data-cat="galletas">
       <figure><img src="assets/img/gal-02.webp" alt="Galletas recién empacadas" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>galletas para llevar</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20galletas%20para%20llevar." target="_blank" rel="noopener">preguntar</a></div>
       <p>Empacadas para el camino o para regalar.</p>
     </article>
   </div>
 
-  <h2 class="section-label eyebrow">Pasteles y tartas</h2>
+  <h2 class="section-label eyebrow" id="pasteles">Pasteles y tartas</h2>
   <div class="grid">
-    <article class="item rv">
+    <article class="item rv" data-id="cheesecake-de-fresa" data-name="cheesecake de fresa" data-cat="pasteles" data-ask-only>
       <figure><img src="assets/img/past-01.webp" alt="Cheesecake cubierto de fresas" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>cheesecake de fresa</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20cotizar%20un%20cheesecake%20de%20fresa." target="_blank" rel="noopener">preguntar</a></div>
       <p>Entero por encargo; rebanada, según el día.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="pastel-de-chocolate" data-name="pastel de chocolate" data-cat="pasteles" data-ask-only>
       <figure><img src="assets/img/past-02.webp" alt="Rebanada de pastel de chocolate servida con espátula" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>pastel de chocolate</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20cotizar%20un%20pastel%20de%20chocolate." target="_blank" rel="noopener">preguntar</a></div>
       <p>Cubierto a mano, capa por capa.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="tarta-de-manzana" data-name="tarta de manzana" data-cat="pasteles">
       <figure><img src="assets/img/past-04.webp" alt="Tartaletas y tarta de manzana en bandeja" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>tarta de manzana</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFhay%20tarta%20de%20manzana%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Masa quebrada, manzana encima.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="postre-individual" data-name="postre individual" data-cat="pasteles">
       <figure><img src="assets/img/past-03.webp" alt="Postres individuales enfriándose en rejilla" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>postre individual</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFqu%C3%A9%20postres%20individuales%20hay%20hoy%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Porción de una sola persona.</p>
     </article>
   </div>
 
-  <h2 class="section-label eyebrow">Panqués</h2>
+  <h2 class="section-label eyebrow" id="panques">Panqués</h2>
   <div class="grid cols-3">
-    <article class="item rv">
+    <article class="item rv" data-id="panque-con-crumble" data-name="panqué con crumble" data-cat="panques">
       <figure><img src="assets/img/panq-01.webp" alt="Panqués con cubierta de crumble" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>panqué con crumble</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFhay%20panqu%C3%A9%20hoy%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Miga densa, cubierta crocante.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="panque-del-dia" data-name="panqué del día" data-cat="panques">
       <figure><img src="assets/img/panq-02.webp" alt="Tres panqués en charola" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>panqué del día</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFcu%C3%A1l%20es%20el%20panqu%C3%A9%20del%20d%C3%ADa%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Cambia según lo que haya en temporada.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="rebanada-para-el-cafe" data-name="rebanada para el café" data-cat="panques">
       <figure><img src="assets/img/panq-03.webp" alt="Panqué y postre individual sobre la barra" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>rebanada para el café</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFqu%C3%A9%20tienen%20para%20acompa%C3%B1ar%20el%20caf%C3%A9%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Lo que mejor acompaña la tarde.</p>
     </article>
   </div>
 
-  <h2 class="section-label eyebrow">Para tomar</h2>
+  <h2 class="section-label eyebrow" id="para-tomar">Para tomar</h2>
   <div class="grid cols-3">
-    <article class="item rv">
+    <article class="item rv" data-id="matcha" data-name="matcha" data-cat="para-tomar">
       <figure><img src="assets/img/beb-01.webp" alt="Matcha batido a mano con chasen" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>matcha</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20un%20matcha." target="_blank" rel="noopener">preguntar</a></div>
       <p>Batido a mano, uno por uno.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="matcha-helado" data-name="matcha helado" data-cat="para-tomar">
       <figure><img src="assets/img/beb-02.webp" alt="Matcha helado servido en vaso" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>matcha helado</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20un%20matcha%20helado." target="_blank" rel="noopener">preguntar</a></div>
       <p>Con leche fría, para el calor de Tepic.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="matcha-y-croissant" data-name="matcha y croissant" data-cat="para-tomar">
       <figure><img src="assets/img/beb-04.webp" alt="Matcha acompañado de un croissant" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>matcha y croissant</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20un%20matcha%20con%20croissant." target="_blank" rel="noopener">preguntar</a></div>
       <p>La combinación que más sale de aquí.</p>
     </article>
   </div>
 
-  <h2 class="section-label eyebrow">Para llevar</h2>
+  <h2 class="section-label eyebrow" id="para-llevar">Para llevar</h2>
   <div class="grid cols-3">
-    <article class="item rv">
+    <article class="item rv" data-id="bolsa-surtida" data-name="bolsa surtida" data-cat="para-llevar">
       <figure><img src="assets/img/llevar-01.webp" alt="Bolsa de papel con el sello de Lari's Bakehouse" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>bolsa surtida</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20una%20bolsa%20surtida." target="_blank" rel="noopener">preguntar</a></div>
       <p>Nosotros elegimos lo mejor del día.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="desayuno-para-dos" data-name="desayuno para dos" data-cat="para-llevar">
       <figure><img src="assets/img/llevar-03.webp" alt="Dos bebidas para llevar con bolsa de pan" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>desayuno para dos</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20quiero%20un%20desayuno%20para%20dos." target="_blank" rel="noopener">preguntar</a></div>
       <p>Pan y bebida, listo para el camino.</p>
     </article>
-    <article class="item rv">
+    <article class="item rv" data-id="pedido-a-domicilio" data-name="pedido a domicilio" data-cat="para-llevar" data-ask-only>
       <figure><img src="assets/img/llevar-02.webp" alt="Pan recién empacado con pinzas" width="900" height="900" loading="lazy"></figure>
       <div class="item-row"><h3>pedido a domicilio</h3><a class="ask" href="https://wa.me/523113436860?text=Hola%2C%20%C2%BFhacen%20env%C3%ADo%20a%20domicilio%3F" target="_blank" rel="noopener">preguntar</a></div>
       <p>Hacemos envíos dentro de Tepic.</p>
     </article>
   </div>
 
-  <section class="quote rv">
-    <blockquote>¿Buscas algo para una fecha?</blockquote>
-    <figcaption>Pasteles y charolas por encargo — cuéntanos qué necesitas</figcaption>
+  <section class="quote rv" id="por-encargo" aria-labelledby="por-encargo-t">
+    <h2 class="quote-t" id="por-encargo-t">¿Buscas algo para una fecha?</h2>
+    <p class="quote-cap">Pasteles y charolas por encargo — cuéntanos qué necesitas</p>
   </section>
 
   <div class="encargo rv" id="encargo">
@@ -182,7 +211,7 @@
     </div>
     <div class="field wide">
       <label class="check"><input id="e-regalo" type="checkbox"> Es un regalo</label>
-      <input id="e-dedic" type="text" placeholder="dedicatoria para el pastel" autocomplete="off" hidden>
+      <input id="e-dedic" type="text" placeholder="dedicatoria para el pastel" aria-label="Dedicatoria para el pastel" autocomplete="off" hidden>
     </div>
     <div class="field wide">
       <label for="e-notas">Notas especiales</label>
@@ -208,10 +237,13 @@
 </footer>
 
 <div class="orderbar">
-  <p>lunes a sábado de 9:30 a 18:30 · la vitrina cambia todos los días · hacemos envíos en Tepic</p>
-  <a href="https://wa.me/523113436860" target="_blank" rel="noopener">pedir por WhatsApp</a>
+  <p><span data-status>lunes a sábado de 9:30 a 18:30</span><span class="ob-long"> · la vitrina cambia todos los días · envíos en Tepic</span></p>
+  <a class="ob-wa" href="https://wa.me/523113436860" target="_blank" rel="noopener">pedir por WhatsApp</a>
+  <button class="ob-bag" type="button" aria-haspopup="dialog" aria-controls="bolsa" hidden>ver pedido · <span class="bag-count">0</span></button>
 </div>
 
-<script src="assets/app.js"></script>
+<script src="assets/app.js" defer></script>
+<script src="assets/bolsa.js" defer></script>
+<script src="assets/carta.js" defer></script>
 </body>
 </html>

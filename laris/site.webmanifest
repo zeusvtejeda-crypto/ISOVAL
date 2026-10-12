@@ -1,0 +1,13 @@
+{
+  "name": "Lari's Bakehouse",
+  "short_name": "Lari's",
+  "description": "Casa de horneados en el Centro de Tepic. La Paz 34.",
+  "lang": "es-MX",
+  "start_url": "./",
+  "display": "browser",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "icons": [
+    { "src": "assets/favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+  ]
+}
