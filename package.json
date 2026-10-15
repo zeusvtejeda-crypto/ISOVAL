@@ -1,0 +1,21 @@
+{
+  "name": "labaa-website",
+  "version": "1.0.0",
+  "description": "LAB A+A - Appraiser & Architect website",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build step required'",
+    "preview": "npx serve ."
+  },
+  "keywords": [
+    "architecture",
+    "construction",
+    "real-estate-appraisal"
+  ],
+  "author": "LAB A+A",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
