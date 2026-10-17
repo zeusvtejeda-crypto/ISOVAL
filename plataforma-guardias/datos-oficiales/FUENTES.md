@@ -6,10 +6,12 @@ Catálogo de instalaciones para `plataforma-guardias`, construido solo con fuent
 
 | Archivo | Qué es |
 |---|---|
-| `instalaciones_nayarit_imss.csv` | **Conjunto de carga por defecto.** 396 unidades IMSS (123) e IMSS-Bienestar (273) en operación. |
+| `instalaciones_nayarit_imss_plantilla.csv` | **Para el importador de la plataforma.** Las 396 unidades IMSS + IMSS-Bienestar en el formato de `public/plantillas/instalaciones.csv` (21 columnas). |
+| `instalaciones_nayarit_imss.csv` | Mismas 396 unidades con todas las columnas de origen. |
 | `instalaciones_nayarit.csv` | Catálogo completo: 646 establecimientos en operación de todas las instituciones (incluye privados, SSA, ISSSTE, DIF, Cruz Roja…). Mismas columnas. |
 | `fuentes/clues_nayarit_202608_completo.csv` | Extracto íntegro de CLUES para Nayarit (1,149 filas: 646 en operación, 502 fuera de operación, 1 pendiente), 68 columnas originales. |
 | `fuentes/imss_directorio_nayarit_2026-10-17.csv` | Directorio público de instalaciones IMSS en Nayarit (135 entradas: 42 clínicas, 11 hospitales, 82 IMSS-Bienestar). |
+| `fuentes/inegi_municipios_nayarit_2026-10-17.json` | Nombres oficiales INEGI de los 20 municipios (para la columna `municipio` de la plantilla). |
 | `fuentes/inegi_localidades_nayarit_2026-10-17.csv` | Catálogo INEGI de localidades de Nayarit con coordenadas (4,800 localidades, 20 municipios). |
 | `imss_directorio_sin_clues.csv` | Unidades del directorio IMSS sin equivalente en CLUES. Hoy: 0. |
 
@@ -62,6 +64,27 @@ Reglas del script:
 `clues, nombre, nombre_corto, clave_institucion, institucion, tipo_establecimiento, tipologia, nivel_atencion, cve_municipio (INEGI 18XXX), municipio, cve_localidad (INEGI 18XXXYYYY), localidad, direccion, codigo_postal, telefono, lat, lng, coord_origen, estatus, fuente, fuente_fecha, validacion`
 
 Instituciones (`clave_institucion`): IMB IMSS-Bienestar 273 · SMP privados 158 · IMS IMSS 123 · SSA 29 · IST ISSSTE 23 · DIF 20 · CRO Cruz Roja 6 · otras 14.
+
+## Plantilla del importador (`instalaciones_nayarit_imss_plantilla.csv`)
+
+Columnas, en este orden: `identificador_interno, nombre_oficial, clave_unidad, categoria, descripcion, estado, municipio, direccion, latitud, longitud, telefono, horario, servicios, servicios_verificados, fuente, url_fuente, fecha_verificacion, estado_verificacion, observaciones, zona_horaria, tolerancia_minutos`.
+
+| Columna | Regla aplicada |
+|---|---|
+| `identificador_interno` | Vacío (lo genera la BD). |
+| `clave_unidad` | CLUES (única por fila). |
+| `categoria` | **hospitales**: tipo de establecimiento «DE HOSPITALIZACIÓN» (todos son 2.º o 3.er nivel). **umf**: IMSS con tipología «Unidad de Medicina Familiar». **delegaciones**: OOAD de Nayarit. **oficinas-administrativas**: otras oficinas (hoy ninguna). **otras-instalaciones**: tipo «DE APOYO» (almacenes) y «DE ASISTENCIA SOCIAL» (Centros de Seguridad Social). **otras-unidades-medicas**: el resto (UMR, rurales de IMSS-Bienestar, UNEMES, unidades móviles, caravanas, brigadas, CARO, UMAA). |
+| `descripcion` | Tipología · nivel de atención · institución. |
+| `municipio` | Nombre oficial INEGI (`mgem/18`), p. ej. «Bahía de Banderas», «Del Nayar», «Ruiz» (INEGI lo escribe sin acento). |
+| `horario` | Del directorio IMSS cuando existe (114 filas); vacío en el resto. |
+| `servicios` / `servicios_verificados` | Vacío / «no». |
+| `fuente` / `url_fuente` | «CLUES DGIS (corte 2026-08)» más directorio IMSS o INEGI cuando intervinieron; URLs de descarga separadas por « \| ». |
+| `estado_verificacion` | «verificado» con `fecha_verificacion = 2026-10-17` en las 116 filas cruzadas con el directorio IMSS (coinciden a ≤ 1 km o corregidas con él); «pendiente» en las demás. |
+| `observaciones` | `coord_origen`, institución, tipología, nivel, localidad y el texto de `validacion`. |
+| `zona_horaria` | America/Mazatlan; Bahía de Banderas → America/Bahia_Banderas. |
+| `tolerancia_minutos` | 10. |
+
+Resumen: 396 filas · hospitales 21 · umf 21 · otras-unidades-medicas 349 · otras-instalaciones 4 · delegaciones 1 · verificadas 116.
 
 ## Decisiones
 - **Conjunto de carga:** IMSS + IMSS-Bienestar (`CARGA_INSTITUCIONES` en el script). El catálogo completo queda disponible para ampliar a SSA/ISSSTE cambiando esa tupla.

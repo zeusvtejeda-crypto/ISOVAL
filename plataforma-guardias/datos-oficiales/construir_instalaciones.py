@@ -175,3 +175,76 @@ print("por institución:", collections.Counter(x["clave_institucion"] for x in s
 print("coord_origen:", collections.Counter(x["coord_origen"] for x in salida).most_common())
 print("stats:", dict(stats))
 print("directorio IMSS sin CLUES:", len(huerfanas))
+
+# ---------------------------------------------------------------------------
+# Plantilla del importador de plataforma-guardias (formato indicado por la sesión
+# que construye la plataforma): instalaciones_nayarit_imss_plantilla.csv
+# ---------------------------------------------------------------------------
+import json
+CLUES_URL = "http://gobi.salud.gob.mx/gobi/catalogos/catalogosmaestros/ESTABLECIMIENTO_SALUD_202608.xlsx"
+IMSS_URL = "https://www.imss.gob.mx/directorio?dom_estado=Nayarit"
+INEGI_URL = "https://gaia.inegi.org.mx/wscatgeo/v2/localidades/18/"
+FECHA_VERIFICACION = "2026-10-17"
+PLANTILLA_CAMPOS = ["identificador_interno", "nombre_oficial", "clave_unidad", "categoria", "descripcion", "estado",
+                    "municipio", "direccion", "latitud", "longitud", "telefono", "horario", "servicios",
+                    "servicios_verificados", "fuente", "url_fuente", "fecha_verificacion", "estado_verificacion",
+                    "observaciones", "zona_horaria", "tolerancia_minutos"]
+
+municipios_inegi = {m["cve_mun"]: m["nomgeo"] for m in
+                    json.load(open(BASE / "fuentes" / "inegi_municipios_nayarit_2026-10-17.json", encoding="utf-8"))["datos"]}
+horarios_imss = {}
+for d in imss:
+    h = (d.get("horario") or "").strip()
+    if h and h != "N/D":
+        horarios_imss.setdefault(norm(d["nombre"]), h)
+
+def categoria(x):
+    """Criterio documentado en FUENTES.md."""
+    if x["tipo_establecimiento"] == "DE HOSPITALIZACIÓN":
+        return "hospitales"
+    if x["clave_institucion"] == "IMS" and x["tipologia"] == "UNIDAD DE MEDICINA FAMILIAR":
+        return "umf"
+    if x["tipologia"] == "OFICINAS ADMINISTRATIVAS":
+        return "delegaciones" if "OOAD" in x["nombre"] else "oficinas-administrativas"
+    if x["tipo_establecimiento"] in ("DE APOYO", "DE ASISTENCIA SOCIAL"):
+        return "otras-instalaciones"
+    return "otras-unidades-medicas"
+
+plantilla = []
+for x in carga:
+    verificada = x["coord_origen"] == "Directorio IMSS" or x["validacion"].startswith("coincide")
+    urls = [CLUES_URL]
+    if IMSS_FUENTE in x["fuente"]: urls.append(IMSS_URL)
+    if INEGI_FUENTE in x["fuente"]: urls.append(INEGI_URL + x["cve_municipio"][2:])
+    obs = [f"coord_origen={x['coord_origen']}", f"institucion={x['institucion']}",
+           f"tipologia={x['tipologia']}", f"nivel_atencion={x['nivel_atencion']}", f"localidad={x['localidad']}"]
+    if x["validacion"]: obs.append(f"validacion={x['validacion']}")
+    plantilla.append({
+        "identificador_interno": "",
+        "nombre_oficial": x["nombre"],
+        "clave_unidad": x["clues"],
+        "categoria": categoria(x),
+        "descripcion": f"{x['tipologia'].title()} · {x['nivel_atencion'].title()} · {x['institucion'].title()}",
+        "estado": "Nayarit",
+        "municipio": municipios_inegi[x["cve_municipio"][2:]],
+        "direccion": ", ".join(p for p in (x["direccion"], f"C.P. {x['codigo_postal']}" if x["codigo_postal"] else "") if p),
+        "latitud": x["lat"],
+        "longitud": x["lng"],
+        "telefono": x["telefono"],
+        "horario": horarios_imss.get(norm(x["nombre_corto"]), "") if x["clave_institucion"] in ("IMS", "IMB") else "",
+        "servicios": "",
+        "servicios_verificados": "no",
+        "fuente": "CLUES DGIS (corte 2026-08)" + ("; Directorio IMSS (consulta 2026-10-17)" if IMSS_FUENTE in x["fuente"] else "")
+                  + ("; Localidades INEGI (consulta 2026-10-17)" if INEGI_FUENTE in x["fuente"] else ""),
+        "url_fuente": " | ".join(urls),
+        "fecha_verificacion": FECHA_VERIFICACION if verificada else "",
+        "estado_verificacion": "verificado" if verificada else "pendiente",
+        "observaciones": "; ".join(obs),
+        "zona_horaria": "America/Bahia_Banderas" if x["cve_municipio"] == "18020" else "America/Mazatlan",
+        "tolerancia_minutos": "10",
+    })
+with open(BASE / "instalaciones_nayarit_imss_plantilla.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.DictWriter(f, fieldnames=PLANTILLA_CAMPOS); w.writeheader(); w.writerows(plantilla)
+print("plantilla:", len(plantilla), "| categorías:", collections.Counter(p["categoria"] for p in plantilla).most_common(),
+      "| verificadas:", sum(1 for p in plantilla if p["estado_verificacion"] == "verificado"),
+      "| con horario:", sum(1 for p in plantilla if p["horario"]))
