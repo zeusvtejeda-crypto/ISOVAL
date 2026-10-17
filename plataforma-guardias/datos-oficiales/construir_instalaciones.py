@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Construye instalaciones_nayarit.csv a partir de fuentes oficiales.
+"""Construye instalaciones_nayarit.csv (y el subconjunto IMSS) a partir de fuentes oficiales.
 
 Fuentes (ver FUENTES.md):
   1. CLUES (DGIS, Secretaría de Salud), versión 202608 — fuentes/clues_nayarit_202608_completo.csv
   2. Directorio de instalaciones IMSS (imss.gob.mx/directorio) — fuentes/imss_directorio_nayarit_2026-10-17.csv
+  3. Catálogo de localidades INEGI (gaia.inegi.org.mx/wscatgeo) — fuentes/inegi_localidades_nayarit_2026-10-17.csv
 
 Uso: python3 construir_instalaciones.py
 """
@@ -14,7 +15,10 @@ BASE = Path(__file__).parent
 CLUES_VERSION = "202608"
 CLUES_FUENTE = f"CLUES DGIS/SSA ESTABLECIMIENTO_SALUD_{CLUES_VERSION} (dgis.salud.gob.mx)"
 IMSS_FUENTE = "Directorio IMSS imss.gob.mx/directorio (consulta 2026-10-17)"
-UMBRAL_KM = 1.0
+INEGI_FUENTE = "Localidades INEGI gaia.inegi.org.mx/wscatgeo (consulta 2026-10-17)"
+UMBRAL_COINCIDE_KM = 1.0     # CLUES y directorio IMSS se consideran la misma ubicación
+UMBRAL_LOCALIDAD_KM = 10.0   # distancia máxima razonable entre la unidad y el centro de su localidad INEGI
+CARGA_INSTITUCIONES = ("IMS", "IMB")  # subconjunto que carga la plataforma por defecto
 
 def norm(s):
     s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode()
@@ -36,8 +40,12 @@ def direccion(r):
     if asent: partes.append(asent)
     return ", ".join(partes)
 
+def fmt(x):
+    return f"{x:.7f}".rstrip("0").rstrip(".")
+
 clues = list(csv.DictReader(open(BASE / "fuentes" / f"clues_nayarit_{CLUES_VERSION}_completo.csv", encoding="utf-8")))
 imss = list(csv.DictReader(open(BASE / "fuentes" / "imss_directorio_nayarit_2026-10-17.csv", encoding="utf-8")))
+inegi = list(csv.DictReader(open(BASE / "fuentes" / "inegi_localidades_nayarit_2026-10-17.csv", encoding="utf-8")))
 
 # Directorio IMSS: puede repetir una unidad (por servicio) con coordenadas distintas
 dir_imss = collections.defaultdict(list)
@@ -45,23 +53,15 @@ for d in imss:
     if d["lat"] and d["lng"]:
         dir_imss[norm(d["nombre"])].append((float(d["lat"]), float(d["lng"])))
 
+# Localidades INEGI: (municipio, localidad) -> (lat, lng, nombre)
+localidades = {(l["cve_mun"], l["cve_loc"]): (float(l["latitud"]), float(l["longitud"]), l["nomgeo"]) for l in inegi}
+
 operacion = [r for r in clues if r["ESTATUS DE OPERACION"].startswith("EN OPERACION")]
 
-# Coordenadas "genéricas": la misma coordenada exacta en 3+ unidades (p. ej. domicilio de la OOAD)
-coord_count = collections.Counter((r["LATITUD"], r["LONGITUD"]) for r in operacion)
-# Caja envolvente por municipio (con todas las unidades menos la evaluada) para detectar ubicaciones fuera del municipio
-por_mun = collections.defaultdict(list)
+# Coordenada compartida con otra unidad que tiene domicilio distinto => dudosa (copiada)
+por_coord = collections.defaultdict(set)
 for r in operacion:
-    por_mun[r["CLAVE DEL MUNICIPIO"]].append((float(r["LATITUD"]), float(r["LONGITUD"]), r["CLUES"]))
-
-def dentro_municipio(lat, lng, mun, propio):
-    pts = [(a, b) for a, b, c in por_mun[mun] if c != propio]
-    if len(pts) < 3:
-        return True
-    lats = [a for a, b in pts]; lngs = [b for a, b in pts]
-    pad = 0.05
-    return min(lats) - pad <= lat <= max(lats) + pad and min(lngs) - pad <= lng <= max(lngs) + pad
-
+    por_coord[(r["LATITUD"], r["LONGITUD"])].add(norm(r["VIALIDAD"] + " " + r["NUMERO EXTERIOR"]))
 nombres_clues = collections.Counter(norm(r["NOMBRE COMERCIAL"]) for r in operacion if r["CLAVE DE LA INSTITUCION"] in ("IMS", "IMB"))
 
 salida = []
@@ -69,41 +69,69 @@ stats = collections.Counter()
 for r in operacion:
     lat, lng = float(r["LATITUD"]), float(r["LONGITUD"])
     mun = r["CLAVE DEL MUNICIPIO"]
-    fuente = CLUES_FUENTE
+    fuentes = [CLUES_FUENTE]
     avisos = []
-    generica = coord_count[(r["LATITUD"], r["LONGITUD"])] >= 3
-    if generica:
-        avisos.append(f"coordenada CLUES compartida por {coord_count[(r['LATITUD'], r['LONGITUD'])]} unidades (genérica)")
-    if not dentro_municipio(lat, lng, mun, r["CLUES"]):
-        avisos.append("posible ubicación fuera del municipio; revisar")
+    origen = "CLUES"
+    dudosa = False
+
+    compartida = len(por_coord[(r["LATITUD"], r["LONGITUD"])]) > 1
+    loc = localidades.get((mun, r["CLAVE DE LA LOCALIDAD"]))
+    d_loc = km(lat, lng, loc[0], loc[1]) if loc else None
+    lejos_localidad = d_loc is not None and d_loc > UMBRAL_LOCALIDAD_KM
+    # ¿La coordenada cae cerca de alguna localidad de Nayarit? Si no, está fuera del estado o es basura.
+    d_min = min(km(lat, lng, a, b) for a, b, _ in localidades.values())
+    fuera_estado = d_min > UMBRAL_LOCALIDAD_KM
+    if compartida:
+        avisos.append("coordenada CLUES repetida en unidades con otro domicilio")
+    if lejos_localidad:
+        avisos.append(f"coordenada CLUES a {d_loc:.0f} km de su localidad registrada ({loc[2]})")
+    if fuera_estado:
+        avisos.append(f"coordenada CLUES fuera de Nayarit (a {d_min:.0f} km de la localidad más cercana)")
+    if not loc:
+        avisos.append("localidad no encontrada en catálogo INEGI")
+        stats["sin_localidad_inegi"] += 1
+    dudosa = compartida or lejos_localidad or fuera_estado
+
+    def cerca_localidad(c):
+        return loc is None or km(c[0], c[1], loc[0], loc[1]) <= UMBRAL_LOCALIDAD_KM
+
     if r["CLAVE DE LA INSTITUCION"] in ("IMS", "IMB"):
         cands = dir_imss.get(norm(r["NOMBRE COMERCIAL"])) or dir_imss.get(norm(r["NOMBRE DE LA UNIDAD"])) or []
-        if avisos:
-            # La coordenada CLUES es dudosa: preferir candidatos distintos a ella y dentro del municipio
-            buenos = [c for c in cands if (c[0], c[1]) != (lat, lng) and dentro_municipio(c[0], c[1], mun, r["CLUES"])]
-            cands = buenos or cands
-        ambiguo = nombres_clues[norm(r["NOMBRE COMERCIAL"])] > 1
-        if cands and ambiguo and min(km(lat, lng, c[0], c[1]) for c in cands) > UMBRAL_KM:
-            cands = []  # nombre repetido en CLUES; sin coincidencia cercana no se puede asignar
+        if dudosa:
+            cands = [c for c in cands if (c[0], c[1]) != (lat, lng) and cerca_localidad(c)] or cands
+        if cands and nombres_clues[norm(r["NOMBRE COMERCIAL"])] > 1 and min(km(lat, lng, *c) for c in cands) > UMBRAL_COINCIDE_KM:
+            cands = []  # nombre repetido en CLUES: sin coincidencia cercana no se puede asignar
         if cands:
-            fuente += "; " + IMSS_FUENTE
-            mejor = min(cands, key=lambda c: km(lat, lng, c[0], c[1]))
-            dist = km(lat, lng, mejor[0], mejor[1])
-            if dist <= UMBRAL_KM and not avisos:
+            fuentes.append(IMSS_FUENTE)
+            mejor = min(cands, key=lambda c: km(lat, lng, *c))
+            dist = km(lat, lng, *mejor)
+            if dudosa and (mejor[0], mejor[1]) != (lat, lng) and cerca_localidad(mejor):
+                avisos.append(f"se usa la coordenada del directorio IMSS (CLUES: {fmt(lat)},{fmt(lng)}; {dist:.1f} km)")
+                lat, lng = mejor; origen = "Directorio IMSS"; dudosa = fuera_estado = lejos_localidad = compartida = False
+                stats["imss_corregido"] += 1
+            elif dist <= UMBRAL_COINCIDE_KM:
                 avisos.append(f"coincide con directorio IMSS ({dist:.2f} km)")
                 stats["imss_ok"] += 1
-            elif avisos and dentro_municipio(mejor[0], mejor[1], mun, r["CLUES"]):
-                avisos.append(f"se usa la coordenada del directorio IMSS (CLUES: {lat},{lng}; {dist:.1f} km)")
-                lat, lng = mejor
-                stats["imss_corregido"] += 1
-            elif dist > UMBRAL_KM:
+                if dudosa:
+                    avisos.append("revisar")
+            else:
                 avisos.append(f"directorio IMSS difiere {dist:.1f} km; se conserva CLUES; revisar")
                 stats["imss_revisar"] += 1
-            else:
-                avisos.append(f"coincide con directorio IMSS ({dist:.2f} km)")
-                stats["imss_ok"] += 1
         else:
             stats["imss_sin_directorio"] += 1
+
+    if fuera_estado and loc:
+        avisos.append(f"coordenada aproximada: centro de la localidad INEGI (CLUES: {fmt(lat)},{fmt(lng)})")
+        lat, lng = loc[0], loc[1]; origen = "Localidad INEGI (aprox.)"
+        fuentes.append(INEGI_FUENTE)
+        stats["inegi_aprox"] += 1
+    elif lejos_localidad:
+        avisos.append("la localidad registrada o la coordenada es incorrecta; se conserva CLUES; revisar")
+        stats["revisar"] += 1
+    elif compartida:
+        avisos.append("se conserva CLUES; revisar")
+        stats["revisar"] += 1
+
     salida.append({
         "clues": r["CLUES"],
         "nombre": r["NOMBRE DE LA UNIDAD"],
@@ -115,31 +143,35 @@ for r in operacion:
         "nivel_atencion": r["NIVEL ATENCION"],
         "cve_municipio": "18" + mun.zfill(3),
         "municipio": r["MUNICIPIO"],
+        "cve_localidad": "18" + mun.zfill(3) + r["CLAVE DE LA LOCALIDAD"].zfill(4),
         "localidad": r["LOCALIDAD"],
         "direccion": direccion(r),
         "codigo_postal": r["CODIGO POSTAL"],
         "telefono": r["TELEFONO 1 DEL ESTABLECIMIENTO"],
-        "lat": f"{lat:.7f}".rstrip("0").rstrip("."),
-        "lng": f"{lng:.7f}".rstrip("0").rstrip("."),
+        "lat": fmt(lat),
+        "lng": fmt(lng),
+        "coord_origen": origen,
         "estatus": r["ESTATUS DE OPERACION"],
-        "fuente": fuente,
+        "fuente": "; ".join(fuentes),
         "fuente_fecha": f"CLUES {CLUES_VERSION[:4]}-{CLUES_VERSION[4:]}",
         "validacion": "; ".join(avisos),
     })
 
 salida.sort(key=lambda x: (x["cve_municipio"], x["clave_institucion"], x["nombre"]))
+campos = list(salida[0].keys())
 with open(BASE / "instalaciones_nayarit.csv", "w", newline="", encoding="utf-8") as f:
-    w = csv.DictWriter(f, fieldnames=list(salida[0].keys()))
-    w.writeheader(); w.writerows(salida)
+    w = csv.DictWriter(f, fieldnames=campos); w.writeheader(); w.writerows(salida)
+carga = [x for x in salida if x["clave_institucion"] in CARGA_INSTITUCIONES]
+with open(BASE / "instalaciones_nayarit_imss.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.DictWriter(f, fieldnames=campos); w.writeheader(); w.writerows(carga)
 
-# Unidades del directorio IMSS sin CLUES (para revisión manual)
 usados = {norm(x["nombre_corto"]) for x in salida} | {norm(x["nombre"]) for x in salida}
-huerfanas = [d for k, d in dir_imss.items() if k not in usados]
+huerfanas = [d for d in imss if norm(d["nombre"]) not in usados]
 with open(BASE / "imss_directorio_sin_clues.csv", "w", newline="", encoding="utf-8") as f:
-    w = csv.DictWriter(f, fieldnames=list(imss[0].keys()))
-    w.writeheader(); w.writerows(huerfanas)
+    w = csv.DictWriter(f, fieldnames=list(imss[0].keys())); w.writeheader(); w.writerows(huerfanas)
 
-print("filas:", len(salida))
+print("filas:", len(salida), "| carga IMSS+IMSS-Bienestar:", len(carga))
 print("por institución:", collections.Counter(x["clave_institucion"] for x in salida).most_common())
-print("validación IMSS:", dict(stats))
+print("coord_origen:", collections.Counter(x["coord_origen"] for x in salida).most_common())
+print("stats:", dict(stats))
 print("directorio IMSS sin CLUES:", len(huerfanas))
