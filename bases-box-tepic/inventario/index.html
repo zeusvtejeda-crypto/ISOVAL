@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Inventario Bases Box</title>
+<style>
+:root{--graphite:#1A1A1A;--steel:#3E4A54;--paper:#F4F2ED;--card:#fff;--orange:#F2591F;--ok:#2E7D32;--warn:#C62828;--muted:#8C8C88;--border:rgba(26,26,26,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--paper);color:var(--graphite);font-size:15px}
+header{background:var(--graphite);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+header b{font-size:16px}
+header small{opacity:.7}
+main{padding:16px;max-width:720px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}
+.tabs button{flex:1;min-width:max-content}
+button{font:inherit;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;background:var(--steel);color:#fff}
+button.primary{background:var(--orange)}
+button.ghost{background:transparent;color:var(--graphite);border:1px solid var(--border)}
+button.active{background:var(--graphite)}
+button.danger{background:var(--warn)}
+input,select{font:inherit;width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
+label{font-size:13px;color:var(--steel);display:block;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.num{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--paper);color:var(--steel)}
+.low{color:var(--warn)}
+.ok{color:var(--ok)}
+.muted{color:var(--muted);font-size:13px}
+.item{border-top:1px solid var(--border);padding:10px 0}
+.item:first-child{border-top:0}
+.hidden{display:none!important}
+.roles{display:grid;gap:12px}
+.roles button{text-align:left;padding:18px;background:var(--card);color:var(--graphite);border:1px solid var(--border)}
+.roles button b{display:block;font-size:17px;margin-bottom:4px}
+.msg{margin-top:8px;font-size:13px}
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login" class="roles" style="max-width:480px;margin:40px auto;padding:16px">
+  <h2>Inventario Bases Box</h2>
+  <p class="muted">Elige tu rol para entrar.</p>
+  <button data-role="local"><b>Dueño del local</b>Bodega y fábrica: materiales, bases en producción y traspasos a tienda.</button>
+  <button data-role="tienda"><b>Dueño de la tienda</b>Venta: producto terminado, ventas y ajustes de tienda.</button>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div><b id="titulo"></b><br><small id="subtitulo"></small></div>
+    <button class="ghost" id="salir" style="color:#fff;border-color:#555">Salir</button>
+  </header>
+  <main>
+    <div class="tabs">
+      <button data-tab="stock" class="active">Inventario</button>
+      <button data-tab="mov">Movimiento</button>
+      <button data-tab="nuevo">+ Producto</button>
+      <button data-tab="hist">Historial</button>
+    </div>
+
+    <section id="tab-stock"></section>
+
+    <section id="tab-mov" class="hidden">
+      <div class="card">
+        <label>Producto
+          <select id="mov-item"></select>
+        </label>
+        <label>Tipo
+          <select id="mov-tipo"></select>
+        </label>
+        <div class="grid">
+          <label>Cantidad <input id="mov-cant" type="number" min="1" value="1"/></label>
+          <label>Nota <input id="mov-nota" placeholder="Ej. pedido #12"/></label>
+        </div>
+        <button class="primary" id="mov-guardar" style="width:100%">Registrar</button>
+        <div class="msg" id="mov-msg"></div>
+      </div>
+    </section>
+
+    <section id="tab-nuevo" class="hidden">
+      <div class="card">
+        <div class="grid">
+          <label>Nombre <input id="n-nombre" placeholder="Base box queen"/></label>
+          <label>Categoría
+            <select id="n-cat">
+              <option>Base terminada</option><option>Material</option><option>Accesorio</option>
+            </select>
+          </label>
+          <label>Unidad <input id="n-uni" value="pza"/></label>
+          <label>Precio venta ($) <input id="n-precio" type="number" min="0" value="0"/></label>
+          <label>Stock inicial en local <input id="n-local" type="number" min="0" value="0"/></label>
+          <label>Stock inicial en tienda <input id="n-tienda" type="number" min="0" value="0"/></label>
+          <label>Mínimo de alerta <input id="n-min" type="number" min="0" value="2"/></label>
+        </div>
+        <button class="primary" id="n-guardar" style="width:100%">Agregar producto</button>
+        <div class="msg" id="n-msg"></div>
+      </div>
+    </section>
+
+    <section id="tab-hist" class="hidden"></section>
+  </main>
+</div>
+
+<script>
+const KEY = 'inventario-bases-box-v1';
+const TIPOS = {
+  local: [
+    {v:'entrada', t:'Entrada al local (compra/producción)'},
+    {v:'salida', t:'Salida del local (merma/uso)'},
+    {v:'traspaso', t:'Traspaso local → tienda'}
+  ],
+  tienda: [
+    {v:'venta', t:'Venta en tienda'},
+    {v:'devolucion', t:'Devolución a tienda'},
+    {v:'merma', t:'Merma en tienda'}
+  ]
+};
+const TITULOS = {local:'Dueño del local', tienda:'Dueño de la tienda'};
+
+let rol = null, tab = 'stock';
+let data = cargar();
+
+function cargar(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if(d && d.items) return d;
+  }catch(e){}
+  return {
+    items:[
+      {id:1, nombre:'Base box individual', cat:'Base terminada', uni:'pza', precio:0, local:0, tienda:0, min:2},
+      {id:2, nombre:'Base box matrimonial', cat:'Base terminada', uni:'pza', precio:0, local:0, tienda:0, min:2},
+      {id:3, nombre:'Triplay 1.5 cm', cat:'Material', uni:'hoja', precio:0, local:0, tienda:0, min:3},
+      {id:4, nombre:'Patas cromadas', cat:'Accesorio', uni:'juego', precio:0, local:0, tienda:0, min:5}
+    ],
+    hist:[], sig:5
+  };
+}
+function guardar(){
+  try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){}
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = id => document.getElementById(id);
+const fecha = () => new Date().toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
+
+function registrar(item, tipo, cant, nota){
+  const delta = {entrada:[1,0], salida:[-1,0], traspaso:[-1,1], venta:[0,-1], devolucion:[0,1], merma:[0,-1]}[tipo];
+  if(!delta) return 'Movimiento no válido';
+  if(cant <= 0 || !Number.isFinite(cant)) return 'Cantidad inválida';
+  const dl = delta[0] * cant, dt = delta[1] * cant;
+  if(item.local + dl < 0) return `Stock insuficiente en local (hay ${item.local})`;
+  if(item.tienda + dt < 0) return `Stock insuficiente en tienda (hay ${item.tienda})`;
+  item.local += dl;
+  item.tienda += dt;
+  data.hist.unshift({fecha:fecha(), rol, item:item.nombre, tipo, cant, nota:nota||''});
+  data.hist = data.hist.slice(0,500);
+  guardar();
+  return null;
+}
+
+function renderLogin(){
+  $('login').classList.remove('hidden');
+  $('app').classList.add('hidden');
+}
+function renderApp(){
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('titulo').textContent = TITULOS[rol];
+  $('subtitulo').textContent = rol==='local' ? 'Controla bodega y traspasos' : 'Controla ventas y piso de tienda';
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab===tab));
+  ['stock','mov','nuevo','hist'].forEach(t => $('tab-'+t).classList.toggle('hidden', t!==tab));
+  renderStock(); renderMovForm(); renderHist();
+}
+
+function renderStock(){
+  const alertas = data.items.filter(i => i.local < i.min && rol==='local' || i.tienda < i.min && rol==='tienda');
+  const lista = data.items.map(i => {
+    const bajo = (rol==='local' ? i.local : i.tienda) < i.min;
+    return `<div class="item">
+      <div class="row"><b>${esc(i.nombre)}</b><span class="tag">${esc(i.cat)}</span></div>
+      <div class="row muted"><span>Mín. ${i.min} ${esc(i.uni)}</span>${i.precio ? `<span>$${i.precio}</span>` : ''}</div>
+      <div class="grid" style="margin-top:6px">
+        <div>Local <div class="num ${rol==='local' && bajo ? 'low':''}">${i.local}</div></div>
+        <div>Tienda <div class="num ${rol==='tienda' && bajo ? 'low':''}">${i.tienda}</div></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" data-del="${i.id}" style="color:var(--warn)">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+  $('tab-stock').innerHTML = `
+    <div class="card">
+      <div class="row"><b>${data.items.length} productos</b>
+      <span class="${alertas.length ? 'low' : 'ok'}">${alertas.length ? alertas.length+' con stock bajo' : 'Todo en orden'}</span></div>
+    </div>
+    <div class="card">${lista || '<p class="muted">Sin productos. Agrega uno en “+ Producto”.</p>'}</div>`;
+}
+
+function renderMovForm(){
+  $('mov-item').innerHTML = data.items.map(i => `<option value="${i.id}">${esc(i.nombre)}</option>`).join('');
+  $('mov-tipo').innerHTML = TIPOS[rol].map(t => `<option value="${t.v}">${t.t}</option>`).join('');
+}
+
+function renderHist(){
+  const h = data.hist.slice(0,100).map(m => `<div class="item">
+    <div class="row"><b>${esc(m.item)}</b><span class="muted">${esc(m.fecha)}</span></div>
+    <div class="muted">${esc(m.tipo)} · ${m.cant} · ${esc(m.rol)}${m.nota ? ' · '+esc(m.nota) : ''}</div>
+  </div>`).join('');
+  $('tab-hist').innerHTML = `<div class="card">${h || '<p class="muted">Sin movimientos aún.</p>'}</div>`;
+}
+
+// Eventos
+document.querySelectorAll('[data-role]').forEach(b => b.onclick = () => {
+  rol = b.dataset.role; tab = 'stock'; renderApp();
+});
+$('salir').onclick = () => { rol = null; renderLogin(); };
+document.querySelector('.tabs').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return;
+  tab = b.dataset.tab; renderApp();
+};
+$('mov-guardar').onclick = () => {
+  const item = data.items.find(i => i.id == $('mov-item').value);
+  const err = item ? registrar(item, $('mov-tipo').value, parseInt($('mov-cant').value,10), $('mov-nota').value.trim()) : 'Selecciona un producto';
+  $('mov-msg').innerHTML = err ? `<span class="low">${esc(err)}</span>` : '<span class="ok">Movimiento registrado</span>';
+  if(!err){ $('mov-cant').value = 1; $('mov-nota').value = ''; }
+  renderStock(); renderHist();
+};
+$('n-guardar').onclick = () => {
+  const nombre = $('n-nombre').value.trim();
+  if(!nombre){ $('n-msg').innerHTML = '<span class="low">Escribe un nombre</span>'; return; }
+  const n = v => Math.max(0, parseInt(v,10) || 0);
+  data.items.push({id:data.sig++, nombre, cat:$('n-cat').value, uni:$('n-uni').value.trim()||'pza',
+    precio:n($('n-precio').value), local:n($('n-local').value), tienda:n($('n-tienda').value), min:n($('n-min').value)});
+  guardar();
+  ['n-nombre','n-precio','n-local','n-tienda'].forEach(id => $(id).value = id==='n-nombre' ? '' : 0);
+  $('n-msg').innerHTML = '<span class="ok">Producto agregado</span>';
+  renderMovForm(); renderStock();
+};
+$('tab-stock').onclick = e => {
+  const id = e.target.dataset.del; if(!id) return;
+  if(!confirm('¿Eliminar este producto del inventario?')) return;
+  data.items = data.items.filter(i => i.id != id); guardar(); renderApp();
+};
+
+renderLogin();
+</script>
+</body>
+</html>
