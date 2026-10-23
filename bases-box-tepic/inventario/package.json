@@ -1,0 +1,11 @@
+{
+  "name": "inventario-bases-box",
+  "private": true,
+  "description": "Inventario de Bases Box Tepic para el dueño del local y el dueño de la tienda (Cloudflare Pages + D1)",
+  "scripts": {
+    "dev": "npx wrangler@4 pages dev",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "deploy": "npx wrangler@4 pages deploy"
+  },
+  "engines": { "node": ">=22.13" }
+}

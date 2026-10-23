@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Inventario Bases Box</title>
+<meta name="description" content="Inventario de Bases Box Tepic para el dueño del local y el dueño de la tienda.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1A1A1A">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Inventario">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Diseño: taller industrial. Grafito y naranja de la marca sobre papel cálido; Anton solo para el
+   nombre y los títulos de pantalla, Barlow Condensed para etiquetas y cifras grandes. En celular
+   la navegación va abajo; desde 900 px pasa a una barra lateral. */
+:root{
+  --bg:#F4F2ED;--surface:#FFFFFF;--surface-2:#ECE9E2;--ink:#1A1A1A;--ink-2:#444C53;--muted:#66696C;
+  --line:#DDD9D0;--line-2:#8E897D;
+  --accent:#F2591F;--accent-ink:#1A1A1A;--accent-soft:#FCE6DB;--accent-text:#B63F0E;
+  --rail:#1A1A1A;--rail-ink:#F4F2ED;--rail-muted:#A2A6A8;--rail-line:#333;
+  --ok:#1B7339;--ok-soft:#DDF1E3;--warn:#8A5700;--warn-soft:#FBEAC4;--bad:#B3261E;--bad-soft:#F9DEDB;--info:#2A56A8;--info-soft:#E0E8F7;
+  --bar:#4A5862;--bar-hi:#F2591F;--grid:#E4E1D9;--toast-link:#F2591F;
+  --sombra:0 1px 2px rgba(26,26,26,.07),0 8px 24px -10px rgba(26,26,26,.2);
+  --radio:8px;--radio-lg:12px;
+  --f-cuerpo:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-etiqueta:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-titulo:'Anton',Impact,'Arial Narrow Bold',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#131313;--surface:#1D1D1D;--surface-2:#282828;--ink:#F2F0EB;--ink-2:#C4C9CD;--muted:#9BA0A4;
+    --line:#333;--line-2:#6A6A6A;
+    --accent:#FF6A2E;--accent-ink:#141414;--accent-soft:#3B2217;--accent-text:#FF8A57;
+    --rail:#0D0D0D;--rail-ink:#F2F0EB;--rail-muted:#8E9296;--rail-line:#262626;
+    --ok:#62D18C;--ok-soft:#173222;--warn:#F2B84B;--warn-soft:#38290C;--bad:#FF8379;--bad-soft:#3E1B18;--info:#8DB2F2;--info-soft:#172439;
+    --bar:#8F9DA7;--bar-hi:#FF6A2E;--grid:#2D2D2D;--toast-link:#B63F0E;
+    --sombra:0 1px 2px rgba(0,0,0,.45),0 8px 24px -10px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131313;--surface:#1D1D1D;--surface-2:#282828;--ink:#F2F0EB;--ink-2:#C4C9CD;--muted:#9BA0A4;
+  --line:#333;--line-2:#6A6A6A;
+  --accent:#FF6A2E;--accent-ink:#141414;--accent-soft:#3B2217;--accent-text:#FF8A57;
+  --rail:#0D0D0D;--rail-ink:#F2F0EB;--rail-muted:#8E9296;--rail-line:#262626;
+  --ok:#62D18C;--ok-soft:#173222;--warn:#F2B84B;--warn-soft:#38290C;--bad:#FF8379;--bad-soft:#3E1B18;--info:#8DB2F2;--info-soft:#172439;
+  --bar:#8F9DA7;--bar-hi:#FF6A2E;--grid:#2D2D2D;--toast-link:#B63F0E;
+  --sombra:0 1px 2px rgba(0,0,0,.45),0 8px 24px -10px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+html.modal-open{overflow:hidden}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--f-cuerpo);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--rail);z-index:30}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,h4,p,figure{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+a{color:var(--accent-text)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.i{width:20px;height:20px;flex:none}
+.i.g{width:28px;height:28px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ───────── estructura */
+.app{min-height:100vh}
+.rail{display:none}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--rail);color:var(--rail-ink)}
+.top-in{display:flex;align-items:center;gap:10px;min-height:56px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.marca{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.logo{display:grid;place-items:center;width:38px;height:38px;border-radius:9px;background:#262626;flex:none}
+.logo svg{width:28px;height:28px}
+.marca-t{min-width:0;line-height:1}
+.marca-n{font:400 20px/1 var(--f-titulo);letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.marca-n b{color:var(--accent);font-weight:400}
+.marca-s{display:block;margin-top:3px;font:600 12px/1 var(--f-etiqueta);letter-spacing:.18em;text-transform:uppercase;color:var(--rail-muted)}
+.estado-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:99px;background:#2A2A2A;color:#E9E7E1;font:600 12px var(--f-etiqueta);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;border:0}
+.estado-chip::before{content:"";width:8px;height:8px;border-radius:50%;background:#62D18C}
+.estado-chip.off::before{background:#F2B84B}
+.estado-chip.loc::before{background:#8DB2F2}
+.estado-chip.act{cursor:pointer}
+.main{padding-block:16px 104px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.main-in{max-width:1040px;margin:0 auto}
+.main:focus{outline:none}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.tab{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:62px;padding:8px 2px 6px;background:none;border:0;color:var(--muted);font:600 12.5px/1 var(--f-etiqueta);letter-spacing:.07em;text-transform:uppercase}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"]::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+.badge{position:absolute;top:5px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font:700 11px/18px var(--f-cuerpo);text-align:center}
+@media (min-width:900px){
+  .app{display:grid;grid-template-columns:244px minmax(0,1fr)}
+  .rail{display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;padding:22px 14px 16px;background:var(--rail);color:var(--rail-ink)}
+  .rail .marca{flex:none;padding:0 6px 18px;margin-bottom:6px;border-bottom:1px solid var(--rail-line)}
+  .nav-it{position:relative;display:flex;align-items:center;gap:12px;min-height:46px;padding:0 12px;border:0;border-radius:var(--radio);background:none;color:var(--rail-muted);font:600 16px var(--f-etiqueta);letter-spacing:.07em;text-transform:uppercase;text-align:left}
+  .nav-it:hover{background:rgba(255,255,255,.06);color:var(--rail-ink)}
+  .nav-it[aria-current="page"]{background:rgba(255,255,255,.1);color:var(--rail-ink)}
+  .nav-it[aria-current="page"]::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--accent)}
+  .nav-it .badge{position:static;margin-left:auto}
+  .rail-pie{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:14px 6px 0;border-top:1px solid var(--rail-line)}
+  .rail-rol{font:600 15px var(--f-etiqueta);letter-spacing:.06em;text-transform:uppercase}
+  .rail-rol small{display:block;font:500 12px var(--f-cuerpo);letter-spacing:0;text-transform:none;color:var(--rail-muted)}
+  .top,.tabbar{display:none}
+  .main{padding-block:30px 56px}
+}
+
+/* ───────── texto y utilidades */
+.t-pant{font:400 30px/1.05 var(--f-titulo);letter-spacing:.02em;text-transform:uppercase}
+.t-sec{font:700 14px/1 var(--f-etiqueta);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.t-peq{font-size:14px;color:var(--muted)}
+.muted{color:var(--muted)}
+.cifras{font-variant-numeric:tabular-nums}
+.num-g{font:700 36px/1 var(--f-etiqueta);letter-spacing:.01em}
+.sep{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pila{display:flex;flex-direction:column;gap:14px}
+.fila{display:flex;align-items:center;gap:10px}
+.fila.w{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.cabecera{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.cabecera p{margin-top:6px}
+
+/* ───────── botones y campos */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:var(--radio);border:1px solid transparent;background:var(--surface-2);color:var(--ink);font-weight:600;line-height:1.1;text-decoration:none;text-align:center}
+.btn:hover{filter:brightness(.97)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.btn[aria-busy="true"]{position:relative;color:transparent;pointer-events:none}
+.btn[aria-busy="true"]::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;border:2px solid var(--ink);border-right-color:transparent;animation:gira .7s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.btn-p{background:var(--accent);color:var(--accent-ink)}
+.btn-p[aria-busy="true"]::after{border-color:var(--accent-ink);border-right-color:transparent}
+.btn-d{background:var(--ink);color:var(--bg)}
+.btn-d[aria-busy="true"]::after{border-color:var(--bg);border-right-color:transparent}
+.btn-g{background:transparent;border-color:var(--line-2)}
+.btn-r{background:var(--bad);color:var(--bg)}
+.btn-r[aria-busy="true"]::after{border-color:var(--bg);border-right-color:transparent}
+.btn-s{min-height:36px;padding:0 12px;font-size:14px}
+.btn-b{width:100%}
+.icon-btn{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:var(--radio);border:0;background:transparent;color:inherit}
+.icon-btn:hover{background:var(--surface-2)}
+.lbl{display:block;margin-bottom:6px;font:600 13px/1.2 var(--f-etiqueta);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.campo{display:block;margin-bottom:14px}
+.inp{display:block;width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line-2);border-radius:var(--radio);background:var(--surface);color:var(--ink);appearance:none;-webkit-appearance:none}
+.inp:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+textarea.inp{min-height:76px;resize:vertical}
+select.inp{background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+.inp.pin{letter-spacing:.5em;font:600 24px var(--f-etiqueta);text-align:center}
+.ayuda{margin-top:5px;font-size:13px;color:var(--muted)}
+.err{margin-top:10px;padding:10px 12px;border-radius:var(--radio);background:var(--bad-soft);color:var(--bad);font-weight:600;font-size:14px}
+.aviso{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--radio);background:var(--info-soft);color:var(--ink);font-size:14px}
+.aviso .i{color:var(--info);margin-top:1px}
+.aviso.warn{background:var(--warn-soft)}
+.aviso.warn .i{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-weight:600;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.pill{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:99px;background:var(--surface-2);color:var(--ink-2);font:700 12px/1 var(--f-etiqueta);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.info{background:var(--info-soft);color:var(--info)}
+.pill .i{width:13px;height:13px}
+
+/* ───────── tarjetas */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radio-lg);padding:16px}
+.card.flat{padding:0;overflow:hidden}
+.card-t{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.grid-kpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:640px){.grid-kpi{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radio-lg);padding:14px 14px 12px;min-width:0}
+.kpi .t-sec{display:block;margin-bottom:10px;font-size:13px}
+.kpi small{display:block;margin-top:6px;font-size:13px;color:var(--muted)}
+.kpi.dest{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.kpi.dest .t-sec,.kpi.dest small{color:color-mix(in srgb,var(--bg) 70%,transparent)}
+.dos-col{display:grid;gap:14px}
+@media (min-width:900px){.dos-col{grid-template-columns:minmax(0,3fr) minmax(0,2fr);align-items:start}}
+
+/* ───────── listas */
+.lista>li+li{border-top:1px solid var(--line)}
+.item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;min-height:56px}
+button.item:hover{background:var(--surface-2)}
+.item-t{font-weight:600;line-height:1.25}
+.item-s{font-size:13.5px;color:var(--muted);line-height:1.3}
+.ico-c{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:var(--surface-2);color:var(--ink-2);flex:none}
+.ico-c.ok{background:var(--ok-soft);color:var(--ok)}
+.ico-c.warn{background:var(--warn-soft);color:var(--warn)}
+.ico-c.bad{background:var(--bad-soft);color:var(--bad)}
+.ico-c.info{background:var(--info-soft);color:var(--info)}
+.ico-c.acc{background:var(--accent-soft);color:var(--accent-text)}
+.iso{display:block}
+.vacio{display:flex;flex-direction:column;align-items:center;gap:10px;padding:34px 20px;text-align:center;color:var(--muted)}
+.vacio .i{width:34px;height:34px;color:var(--line-2)}
+.vacio b{color:var(--ink);font-size:17px}
+
+/* ───────── inventario */
+.barra-filtros{position:sticky;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:10;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+@media (min-width:900px){.barra-filtros{top:0}}
+.buscar{position:relative}
+.buscar .i{position:absolute;left:12px;top:12px;color:var(--muted);pointer-events:none}
+.buscar .inp{padding-left:40px}
+.prods{display:grid;gap:10px;margin-top:14px}
+@media (min-width:760px){.prods{grid-template-columns:1fr 1fr}}
+.prod{display:flex;align-items:center;gap:12px;width:100%;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radio-lg);text-align:left}
+.prod:hover{border-color:var(--line-2);box-shadow:var(--sombra)}
+.prod.arch{opacity:.6}
+.prod-ico{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:var(--surface-2);flex:none}
+.prod-main{min-width:0;flex:1}
+.prod-n{display:block;font-weight:600;line-height:1.2}
+.prod-s{display:block;margin-top:2px;font-size:13px;color:var(--muted);line-height:1.25}
+.stocks{display:flex;gap:2px;flex:none}
+.st{display:flex;flex-direction:column;align-items:center;min-width:46px;padding:2px 4px}
+.st b{font:700 22px/1 var(--f-etiqueta);font-variant-numeric:tabular-nums}
+.st i{font:600 11px/1 var(--f-etiqueta);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.st.agotado b{color:var(--bad)}
+.st.bajo b{color:var(--warn)}
+.st.cero b{color:var(--muted);font-weight:500}
+.st.cam b{color:var(--info)}
+.grupo-t{margin:20px 2px 2px}
+@media (max-width:560px){
+  .prod{flex-wrap:wrap}
+  .stocks{flex:1 0 100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));margin-top:2px;padding-top:10px;border-top:1px solid var(--line);gap:0}
+  .st{flex-direction:row;justify-content:center;align-items:baseline;gap:7px;min-width:0}
+  .st i{margin-top:0}
+}
+.res-n{margin-top:12px;font-size:13px;color:var(--muted)}
+.acciones-fab{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ───────── mover */
+.atajos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:760px){.atajos{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.atajo{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:112px;padding:14px;border-radius:var(--radio-lg);border:1px solid var(--line);background:var(--surface);text-align:left}
+.atajo:hover{border-color:var(--line-2);box-shadow:var(--sombra)}
+.atajo b{font:700 18px/1.1 var(--f-etiqueta);letter-spacing:.04em;text-transform:uppercase}
+.atajo span{font-size:13px;color:var(--muted);line-height:1.3}
+.atajo.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.atajo.pri span{color:color-mix(in srgb,var(--accent-ink) 78%,transparent)}
+.atajo.pri .ico-c{background:rgba(26,26,26,.14);color:var(--accent-ink)}
+.carta{display:block;width:100%;text-align:left;background:none;border:0;padding:14px}
+button.carta:hover{background:var(--surface-2)}
+.carta-lin{margin-top:8px;font-size:14px;color:var(--ink-2)}
+.carta-lin span{display:block}
+
+/* ───────── gráfica y ranking */
+.graf{position:relative}
+.graf svg{display:block;width:100%;height:auto;overflow:visible}
+.graf text{font-family:var(--f-cuerpo);fill:var(--muted);font-size:12px}
+.graf .hoy-x{fill:var(--ink);font-weight:700}
+.graf .val{fill:var(--ink);font-weight:700;font-size:12.5px}
+.graf .gl{stroke:var(--grid);stroke-width:1}
+.graf .barra{fill:var(--bar);transition:filter .12s}
+.graf .barra.hi{fill:var(--bar-hi)}
+.graf .col:hover .barra,.graf .col:focus .barra,.graf .col.act .barra{filter:brightness(1.18)}
+.graf .col{outline:none}
+.graf .col:focus-visible .hit{stroke:var(--accent);stroke-width:2;fill:color-mix(in srgb,var(--accent) 8%,transparent)}
+.graf .hit{fill:transparent}
+.tip{position:absolute;z-index:3;pointer-events:none;min-width:130px;padding:8px 10px;border-radius:var(--radio);background:var(--ink);color:var(--bg);box-shadow:var(--sombra);font-size:13px;line-height:1.3;transform:translate(-50%,-100%)}
+.tip b{display:block;font:700 18px/1.1 var(--f-etiqueta);font-variant-numeric:tabular-nums}
+.tip span{opacity:.78}
+.tabla{width:100%;border-collapse:collapse;font-size:14px}
+.tabla th{font:700 12px var(--f-etiqueta);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.tabla td{padding:8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tabla .r{text-align:right}
+.rank{display:flex;flex-direction:column;gap:12px}
+.rank-i{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline}
+.rank-i .n{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-i .v{font:700 16px var(--f-etiqueta);font-variant-numeric:tabular-nums}
+.rank-i .b{grid-column:1/-1;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.rank-i .b i{display:block;height:100%;border-radius:3px;background:var(--bar)}
+
+/* ───────── hojas (diálogos) */
+dialog.sheet{border:0;padding:0;background:var(--surface);color:var(--ink);width:100%;max-width:100%;max-height:min(92vh,92dvh);margin:auto 0 0;border-radius:18px 18px 0 0;box-shadow:0 -10px 50px rgba(0,0,0,.4);overflow:hidden}
+dialog.sheet::backdrop{background:rgba(12,12,12,.62)}
+dialog.sheet[open]{animation:sube .2s ease-out}
+@keyframes sube{from{transform:translateY(28px);opacity:0}}
+.sheet-in{display:flex;flex-direction:column;max-height:min(92vh,92dvh)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 12px 12px 20px;border-bottom:1px solid var(--line)}
+.sheet-head h2{font:700 21px/1.15 var(--f-etiqueta);letter-spacing:.05em;text-transform:uppercase}
+.sheet-body{flex:1;overflow:auto;padding:18px 20px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.sheet-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface)}
+.sheet-foot .btn{flex:1 1 140px}
+.sheet-foot .btn-p,.sheet-foot .btn-r{flex:2 1 190px}
+@media (min-width:640px){
+  dialog.sheet{margin:auto;max-width:560px;border-radius:18px}
+  dialog.sheet.ancho{max-width:760px}
+  .sheet-foot .btn,.sheet-foot .btn-p,.sheet-foot .btn-r{flex:0 1 auto;min-width:140px}
+}
+
+/* ───────── editor de líneas */
+.lin-lista{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.lin{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radio);background:var(--surface)}
+.lin.mal{border-color:var(--bad);background:color-mix(in srgb,var(--bad-soft) 55%,var(--surface))}
+.lin-n{font-weight:600;line-height:1.2;min-width:0}
+.lin-s{font-size:13px;color:var(--muted)}
+.lin-s.mal{color:var(--bad);font-weight:600}
+.lin-ctl{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.paso{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:var(--radio);overflow:hidden;background:var(--surface)}
+.paso button{width:42px;height:42px;border:0;background:var(--surface-2);display:grid;place-items:center}
+.paso button:hover{filter:brightness(.95)}
+.paso input{width:62px;height:42px;border:0;border-inline:1px solid var(--line-2);text-align:center;font:700 18px var(--f-etiqueta);background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.paso input:focus{outline:2px solid var(--accent);outline-offset:-2px}
+.precio{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line-2);border-radius:var(--radio);padding:0 8px;background:var(--surface);height:44px}
+.precio input{width:84px;border:0;background:none;text-align:right;font:600 16px var(--f-cuerpo);font-variant-numeric:tabular-nums}
+.precio input:focus{outline:none}
+.precio:focus-within{outline:2px solid var(--accent)}
+.lin-sub{margin-left:auto;font:700 17px var(--f-etiqueta);font-variant-numeric:tabular-nums}
+.lin-add{position:relative;margin-bottom:16px}
+.lin-res{margin-top:6px;border:1px solid var(--line-2);border-radius:var(--radio);background:var(--surface);max-height:260px;overflow:auto}
+.lin-res li+li{border-top:1px solid var(--line)}
+.lin-res button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:none;border:0;text-align:left;min-height:48px}
+.lin-res button:hover,.lin-res button:focus-visible{background:var(--surface-2)}
+.lin-res .nada{padding:12px;font-size:14px;color:var(--muted)}
+.total-b{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:var(--radio);background:var(--ink);color:var(--bg);margin-bottom:14px}
+.total-b span{font:600 13px var(--f-etiqueta);letter-spacing:.1em;text-transform:uppercase;opacity:.8}
+.total-b b{font:700 28px/1 var(--f-etiqueta);font-variant-numeric:tabular-nums}
+.cnt-lista{border:1px solid var(--line);border-radius:var(--radio);overflow:hidden}
+.cnt{display:flex;align-items:center;gap:12px;padding:8px 10px;background:var(--surface)}
+.cnt+.cnt,.cnt-h+.cnt,.cnt+.cnt-h{border-top:1px solid var(--line)}
+.cnt.cambio{background:var(--info-soft)}
+.cnt-h{padding:8px 12px;background:var(--surface-2);font:700 12px var(--f-etiqueta);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.cnt-in{width:88px;height:46px;text-align:center;border:1px solid var(--line-2);border-radius:var(--radio);background:var(--surface);font:700 20px var(--f-etiqueta);font-variant-numeric:tabular-nums}
+.cnt-in:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.sheet-foot .resumen{flex:1 0 100%;font-size:14px;color:var(--ink-2);text-align:left}
+.opciones{display:flex;gap:8px;flex-wrap:wrap}
+.opciones.g4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:520px){.opciones.g4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.opcion{flex:1 1 auto;min-height:44px;padding:0 14px;border-radius:var(--radio);border:1px solid var(--line-2);background:var(--surface);font-weight:600;color:var(--ink-2)}
+.opcion[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+
+/* ───────── acceso (login e inicio) */
+.acceso{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.acceso-in{width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px}
+.acceso .marca-g{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.acceso .logo{width:68px;height:68px;border-radius:16px;background:var(--rail)}
+.acceso .logo svg{width:50px;height:50px}
+.acceso h1{font:400 40px/1 var(--f-titulo);letter-spacing:.03em;text-transform:uppercase}
+.acceso h1 b{color:var(--accent);font-weight:400}
+.acceso .sub{font:600 14px var(--f-etiqueta);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.tonos-fila{display:flex;justify-content:center;gap:6px}
+.tonos-fila i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 0 0 1px rgba(0,0,0,.08)}
+.rol-btn{display:flex;align-items:center;gap:14px;width:100%;padding:16px;border-radius:var(--radio-lg);border:1px solid var(--line);background:var(--surface);text-align:left}
+.rol-btn:hover{border-color:var(--ink);box-shadow:var(--sombra)}
+.rol-btn b{display:block;font:700 20px/1.1 var(--f-etiqueta);letter-spacing:.05em;text-transform:uppercase}
+.rol-btn span{font-size:14px;color:var(--muted)}
+.pasos{display:flex;gap:6px;justify-content:center}
+.pasos i{width:28px;height:4px;border-radius:2px;background:var(--line-2)}
+.pasos i.on{background:var(--accent)}
+.codigo{display:block;padding:16px;border-radius:var(--radio);background:var(--ink);color:var(--bg);text-align:center;font:700 34px/1 var(--f-etiqueta);letter-spacing:.18em;user-select:all}
+.check-fila{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:var(--radio);background:var(--surface);margin-bottom:10px}
+.check-fila input{width:22px;height:22px;margin-top:1px;accent-color:var(--accent);flex:none}
+.check-fila label{flex:1;line-height:1.3}
+.check-fila small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.demo-b{display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;padding:6px 16px;min-height:44px;background:var(--warn-soft);color:var(--warn);font-weight:600;font-size:14px;text-align:center}
+.demo-b .btn{min-height:30px;padding:0 10px;font-size:13px;color:inherit;border-color:currentColor;white-space:nowrap}
+
+/* ───────── avisos emergentes */
+#toasts{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:100;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 16px;pointer-events:none}
+@media (min-width:900px){#toasts{bottom:24px}}
+.toast{display:flex;align-items:center;gap:12px;max-width:min(520px,100%);padding:12px 14px;border-radius:var(--radio);background:var(--ink);color:var(--bg);box-shadow:var(--sombra);font-weight:500;pointer-events:auto;animation:sube .2s ease-out}
+.toast.mal{background:var(--bad);color:var(--bg)}
+.toast a,.toast button{flex:none;background:none;border:0;padding:4px 6px;margin:-4px -6px -4px 0;font-weight:700;color:var(--toast-link);text-decoration:underline;text-underline-offset:3px}
+.toast.mal a,.toast.mal button{color:var(--bg)}
+.toast .i{flex:none}
+
+/* ───────── varios */
+.cargando{display:grid;place-items:center;min-height:50vh;color:var(--muted)}
+.cargando i{width:28px;height:28px;border-radius:50%;border:3px solid var(--line-2);border-top-color:var(--accent);animation:gira .8s linear infinite}
+.sec-mas{margin-bottom:18px}
+.sec-mas .t-sec{display:block;margin:0 2px 8px}
+.item .i.der{color:var(--line-2);margin-left:auto}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:600;text-align:right}
+.hist-dia{margin:18px 2px 6px}
+.linea-det{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.linea-det:last-child{border-bottom:0}
+.tachado{text-decoration:line-through;opacity:.65}
+.pie-app{margin-top:26px;text-align:center;font-size:13px;color:var(--muted)}
+.mini-sw{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.fila-edit{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 92px auto;gap:8px;align-items:center;margin-bottom:8px}
+.fila-edit.tono{grid-template-columns:44px minmax(0,1fr) auto}
+.fila-edit input[type=color]{width:44px;height:44px;padding:2px;border:1px solid var(--line-2);border-radius:var(--radio);background:var(--surface)}
+@media (max-width:520px){.fila-edit:not(.tono){grid-template-columns:1fr 1fr;} .fila-edit:not(.tono) .inp:first-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol>
+    <symbol id="i-cubo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9L12 3z"/><path d="m4 7.5 8 4.5 8-4.5"/><path d="M12 12v9"/></symbol>
+    <symbol id="i-mover" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14"/><path d="m14 4 4 4-4 4"/><path d="M20 16H6"/><path d="m10 12-4 4 4 4"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-mas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-buscar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-camion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3z"/><path d="M14 9h4l3 3v4h-7"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-alerta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.8 20h18.4L12 4z"/><path d="M12 10v4.5M12 17.5v.1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-bajar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-candado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+    <symbol id="i-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></symbol>
+    <symbol id="i-luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+    <symbol id="i-recibo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-devolver" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+    <symbol id="i-basura" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="m6 7 1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-pedido" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h6M9 18h3"/></symbol>
+    <symbol id="i-conteo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 13 2.2 2.2L15.5 11"/></symbol>
+    <symbol id="i-entrada" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-salida" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5"/><path d="m7.5 9.5 4.5-4.5 4.5 4.5"/><path d="M5 20h14"/></symbol>
+    <symbol id="i-editar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/></symbol>
+    <symbol id="i-archivo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11h14V8"/><path d="M10 12h4"/></symbol>
+    <symbol id="i-mensaje" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4V5z"/></symbol>
+    <symbol id="i-refrescar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14-4.5L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4.5L20 15"/><path d="M20 20v-5h-5"/></symbol>
+    <symbol id="i-sinred" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.8a15 15 0 0 1 20 0"/><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5v.1"/><path d="M3 3l18 18"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.1"/></symbol>
+    <symbol id="i-der" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-usuario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6.5 8-6.5s8 2.5 8 6.5"/></symbol>
+    <symbol id="i-capas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 12.5 9 5 9-5"/><path d="m3 17 9 5 9-5"/></symbol>
+    <symbol id="i-tuerca" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 7.8 4.5v9L12 21l-7.8-4.5v-9L12 3z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-tienda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9z"/><path d="M5 14v6h14v-6"/></symbol>
+    <symbol id="i-fabrica" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9l6 3V9l6 3V5h3v15H3z"/><path d="M7 16h2M12 16h2"/></symbol>
+    <symbol id="i-copiar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+    <symbol id="i-ojo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-tabla" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M9.5 10v9.5"/></symbol>
+    <symbol id="i-logo" viewBox="-120 -20 240 300"><g fill="#F2591F"><polygon points="-103.9,190 -83.9,201.5 -83.9,214 -103.9,202.5"/><polygon points="103.9,190 83.9,201.5 83.9,214 103.9,202.5"/><rect x="-6" y="250" width="12" height="12"/></g><polygon points="103.9,60 0,120 0,250 103.9,190" fill="#3A3A3A"/><polygon points="-103.9,60 0,120 0,250 -103.9,190" fill="#2C2C2C"/><polygon points="0,0 103.9,60 0,120 -103.9,60" fill="#ECEAE4" stroke="#1A1A1A" stroke-width="4" stroke-linejoin="round"/><g fill="#1A1A1A" opacity=".55"><circle cx="0" cy="40" r="3"/><circle cx="-34" cy="60" r="3"/><circle cx="34" cy="60" r="3"/><circle cx="0" cy="80" r="3"/><circle cx="0" cy="60" r="3.5"/></g></symbol>
+  </defs>
+</svg>
+<div id="raiz"><div class="cargando" role="status" aria-label="Cargando"><i></i></div></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+<noscript><p style="padding:24px;font:16px system-ui">Esta app necesita JavaScript para funcionar.</p></noscript>
+<script src="core.js"></script>
+<script>
+(function () {
+'use strict';
+const Core = window.BBCore;
+
+/* ───────── claves y almacenamiento (si el navegador no deja guardar, se usa memoria) ───────── */
+const CLAVE_LOCAL = 'bb-inv:local:v1';
+const CLAVE_SESION = 'bb-inv:sesion';
+const CLAVE_TEMA = 'bb-inv:tema';
+const CLAVE_ROL = 'bb-inv:ultimo-rol';
+const CLAVE_CACHE = 'bb-inv:cache';
+const CLAVE_MODO = 'bb-inv:modo';
+const SYNC_MS = 9000;
+const memoria = {};
+const store = {
+  get(k) { try { const v = localStorage.getItem(k); return v === null ? (k in memoria ? memoria[k] : null) : v; } catch (e) { return k in memoria ? memoria[k] : null; } },
+  set(k, v) { try { localStorage.setItem(k, v); delete memoria[k]; } catch (e) { memoria[k] = String(v); } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* sin almacenamiento */ } delete memoria[k]; }
+};
+let avisoMemoria = false;
+const almacenCore = {
+  getItem: store.get,
+  setItem(k, v) {
+    store.set(k, v);
+    if (!avisoMemoria && k in memoria) { avisoMemoria = true; setTimeout(() => toast('Este navegador no deja guardar datos: lo que captures se perderá al cerrar la pestaña.', { tipo: 'error', ms: 10000 }), 0); }
+  },
+  removeItem: store.del
+};
+const sesionTmp = {
+  get(k) { try { return sessionStorage.getItem(k); } catch (e) { return memoria['s:' + k] || null; } },
+  set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { memoria['s:' + k] = v; } },
+  del(k) { try { sessionStorage.removeItem(k); } catch (e) { /* nada */ } delete memoria['s:' + k]; }
+};
+
+/* ───────── plantillas con escape automático ───────── */
+class Raw { constructor(s) { this.s = s; } }
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const val = (v) => (v instanceof Raw ? v.s : Array.isArray(v) ? v.map(val).join('') : v == null || v === false ? '' : esc(v));
+const html = (strs, ...vals) => new Raw(strs.reduce((a, s, i) => a + s + (i < vals.length ? val(vals[i]) : ''), ''));
+const raw = (s) => new Raw(s);
+const poner = (el, tpl) => { el.innerHTML = val(tpl); };
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const ico = (n, cls) => raw('<svg class="i' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + n + '"/></svg>');
+
+/* ───────── formatos ───────── */
+const nf = new Intl.NumberFormat('es-MX');
+const mf = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const dinero = (n) => mf.format(n || 0);
+const num = (n) => nf.format(n || 0);
+const plural = (n, uno, varios) => num(n) + ' ' + (n === 1 ? uno : varios);
+const DIA = 86400000;
+const tzMin = () => -new Date().getTimezoneOffset();
+const inicioDeDia = (ts) => { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const fmtHora = new Intl.DateTimeFormat('es-MX', { hour: 'numeric', minute: '2-digit' });
+const fmtDiaLargo = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+const fmtDiaCorto = new Intl.DateTimeFormat('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+const mayus = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+function etiquetaDia(ts) {
+  const hoy = inicioDeDia(Date.now()), d = inicioDeDia(ts);
+  if (d === hoy) return 'Hoy';
+  if (d === hoy - DIA) return 'Ayer';
+  return mayus(fmtDiaLargo.format(ts));
+}
+function hace(ts) {
+  const hoy = inicioDeDia(Date.now()), d = inicioDeDia(ts), h = fmtHora.format(ts);
+  if (d === hoy) return 'hoy ' + h;
+  if (d === hoy - DIA) return 'ayer ' + h;
+  return fmtDiaCorto.format(ts).replace(/\./g, '') + ', ' + h;
+}
+const norm = (s) => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+// busca varias palabras sin importar el orden ni los signos: “queen gris” encuentra “Base Queen · Gris”
+const coincide = (texto, q) => { const t = norm(q).split(/\s+/).filter(Boolean); const h = norm(texto); return t.every((x) => h.includes(x)); };
+const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 20) || 'x';
+const entero = (v) => Math.max(0, Math.min(99999, parseInt(String(v).replace(/\D/g, ''), 10) || 0));
+const decimal = (v) => { const n = parseFloat(String(v).replace(/[^\d.]/g, '')); return Number.isFinite(n) ? n : 0; };
+const nuevoCid = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+
+/* ───────── estado ───────── */
+class ErrorRed extends Error { constructor() { super('Sin conexión. Revisa tu internet e intenta de nuevo.'); } }
+class ErrorApi extends Error { constructor(er) { super(er.mensaje || 'No se pudo completar.'); this.code = er.code; this.extra = er; } }
+
+const S = {
+  modo: null, token: '', rol: '', est: null, idx: {}, camino: {}, enLinea: true,
+  tab: 'inicio', demo: false, recordar: true, instalar: null,
+  filtro: { q: '', cat: 'todo', bajo: false, archivados: false },
+  hist: { items: [], siguiente: null, cargando: false, tipo: 'todo', rango: '7', q: '', total: 0 },
+  verTabla: false
+};
+let repoLocal = null;
+let sincronizando = false;
+
+const ROLES = {
+  local: { nombre: 'Dueño del local', corto: 'Local', desc: 'Bodega y fábrica: materiales, bases en producción y envíos a la tienda.', ic: 'fabrica' },
+  tienda: { nombre: 'Dueño de la tienda', corto: 'Tienda', desc: 'Venta al público: ventas, devoluciones, pedidos y recibo de mercancía.', ic: 'tienda' }
+};
+const CATS = { base: 'Bases', material: 'Materiales', accesorio: 'Accesorios' };
+const TIPOS = {
+  entrada: { t: 'Entrada al local', ic: 'entrada', c: 'ok' },
+  salida: { t: 'Salida del local', ic: 'salida', c: 'warn' },
+  venta: { t: 'Venta', ic: 'recibo', c: 'acc' },
+  devolucion: { t: 'Devolución de cliente', ic: 'devolver', c: 'info' },
+  merma: { t: 'Merma en tienda', ic: 'basura', c: 'bad' },
+  ajuste: { t: 'Ajuste por conteo', ic: 'conteo', c: 'info' },
+  inicial: { t: 'Inventario inicial', ic: 'cubo', c: '' },
+  envio: { t: 'Envío a la tienda', ic: 'camion', c: 'info' },
+  recibo: { t: 'Recibido en tienda', ic: 'check', c: 'ok' },
+  envio_cancelado: { t: 'Envío cancelado', ic: 'x', c: 'bad' }
+};
+const MOTIVOS = { produccion: 'Producción', compra: 'Compra', uso: 'Uso en producción', merma: 'Merma', otro: 'Otro' };
+const PAGOS = { efectivo: 'Efectivo', transferencia: 'Transferencia', tarjeta: 'Tarjeta', otro: 'Otro' };
+
+/* ───────── tema ───────── */
+function aplicarTema() {
+  const t = store.get(CLAVE_TEMA) || 'auto';
+  const r = document.documentElement;
+  if (t === 'auto') r.removeAttribute('data-theme');
+  else r.setAttribute('data-theme', t === 'oscuro' ? 'dark' : 'light');
+}
+
+/* ───────── ventanas, avisos y confirmaciones ───────── */
+let dlgN = 0;
+function dialogo(o) {
+  const d = document.createElement('dialog');
+  d.className = 'sheet' + (o.clase ? ' ' + o.clase : '');
+  const tid = 'dt' + (++dlgN);
+  d.setAttribute('aria-labelledby', tid);
+  poner(d, html`<div class="sheet-in"><header class="sheet-head"><h2 id="${tid}">${o.titulo}</h2><button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">${ico('x')}</button></header><div class="sheet-body"></div>${o.pie ? html`<footer class="sheet-foot"></footer>` : ''}</div>`);
+  const cuerpo = $('.sheet-body', d), pie = $('.sheet-foot', d);
+  if (o.cuerpo) poner(cuerpo, o.cuerpo);
+  if (o.pie && pie) poner(pie, o.pie);
+  d.addEventListener('click', (e) => { if (e.target === d || e.target.closest('[data-cerrar]')) d.close(); });
+  d.addEventListener('close', () => {
+    d.remove();
+    if (!$('dialog.sheet')) document.documentElement.classList.remove('modal-open');
+    if (o.alCerrar) o.alCerrar();
+  });
+  document.body.appendChild(d);
+  document.documentElement.classList.add('modal-open');
+  d.showModal();
+  const f = $('[autofocus], input:not([type=hidden]):not([type=checkbox]), select, textarea', cuerpo);
+  if (f && o.enfocar !== false && !matchMedia('(pointer:coarse)').matches) f.focus({ preventScroll: true });
+  return { el: d, cuerpo, pie, cerrar: () => d.close() };
+}
+
+function toast(texto, o) {
+  o = o || {};
+  const cont = $('#toasts');
+  const t = document.createElement('div');
+  t.className = 'toast' + (o.tipo === 'error' ? ' mal' : '');
+  const nodo = html`<span style="flex:1">${texto}</span>`;
+  poner(t, nodo);
+  if (o.accion) {
+    const a = document.createElement(o.accion.href ? 'a' : 'button');
+    a.textContent = o.accion.texto;
+    if (o.accion.href) { a.href = o.accion.href; a.target = '_blank'; a.rel = 'noopener'; }
+    else a.type = 'button';
+    a.addEventListener('click', () => { if (o.accion.fn) o.accion.fn(); t.remove(); });
+    t.appendChild(a);
+  }
+  cont.appendChild(t);
+  while (cont.children.length > 3) cont.firstChild.remove();
+  setTimeout(() => t.remove(), o.ms || (o.accion ? 9000 : 4500));
+}
+
+// confirmar({titulo, texto, ok, peligro, campo:{etiqueta, min, area}}) → true/false, o el texto escrito si hay campo
+function confirmar(o) {
+  return new Promise((resolver) => {
+    let res = o.campo ? null : false;
+    const d = dialogo({
+      titulo: o.titulo,
+      clase: '',
+      cuerpo: html`${o.texto ? html`<p style="margin-bottom:14px">${o.texto}</p>` : ''}${o.campo ? html`<label class="campo"><span class="lbl">${o.campo.etiqueta}</span><textarea class="inp" id="cf-campo" rows="2" maxlength="140" placeholder="${o.campo.ayuda || ''}"></textarea></label><p class="err" id="cf-err" hidden></p>` : ''}`,
+      pie: html`<button type="button" class="btn btn-g" data-cerrar>${o.cancelar || 'Cancelar'}</button><button type="button" class="btn ${o.peligro ? 'btn-r' : 'btn-p'}" id="cf-ok">${o.ok || 'Aceptar'}</button>`,
+      alCerrar: () => resolver(res)
+    });
+    const campo = $('#cf-campo', d.el);
+    if (campo) campo.addEventListener('input', () => { $('#cf-err', d.el).hidden = true; });
+    $('#cf-ok', d.el).addEventListener('click', () => {
+      if (o.campo) {
+        const v = $('#cf-campo', d.el).value.trim();
+        if (v.length < (o.campo.min || 1)) { const e = $('#cf-err', d.el); e.hidden = false; e.textContent = o.campo.error || 'Escribe una explicación corta.'; return; }
+        res = v;
+      } else res = true;
+      d.cerrar();
+    });
+  });
+}
+
+// Ejecuta una acción de guardado dentro de una ventana: bloquea el botón, muestra el error en su lugar y devuelve true si salió bien
+async function guardando(btn, errEl, fn) {
+  btn.disabled = true;
+  btn.setAttribute('aria-busy', 'true');
+  if (errEl) errEl.hidden = true;
+  try { await fn(); return true; } catch (e) {
+    let msg = e && e.message;
+    if (!(e instanceof ErrorApi) && !(e instanceof ErrorRed)) { console.error(e); msg = 'Algo falló. Intenta de nuevo.'; }
+    if (errEl) { errEl.hidden = false; errEl.textContent = msg; errEl.scrollIntoView({ block: 'nearest' }); }
+    return false;
+  } finally { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+}
+
+/* ───────── comunicación con el servidor (o con el modo local) ───────── */
+function setEnLinea(v) {
+  if (S.enLinea === v) return;
+  S.enLinea = v;
+  pintarChips();
+}
+async function llamar(metodo, ruta, cuerpo, consulta) {
+  consulta = Object.assign({ tz: tzMin() }, consulta);
+  if (S.modo === 'local') {
+    return Core.handle(repoLocal, { method: metodo, path: ruta, body: cuerpo, query: consulta, token: S.token }, { servidor: false });
+  }
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 20000);
+  try {
+    const headers = { 'content-type': 'application/json' };
+    if (S.token) headers.authorization = 'Bearer ' + S.token;
+    const res = await fetch('api' + ruta + '?' + new URLSearchParams(consulta), { method: metodo, headers, cache: 'no-store', signal: ctl.signal, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+    const json = await res.json().catch(() => null);
+    if (!json) throw new Error('respuesta');
+    setEnLinea(true);
+    return { status: res.status, json };
+  } catch (e) {
+    setEnLinea(false);
+    throw new ErrorRed();
+  } finally { clearTimeout(t); }
+}
+
+function guardarSesion() {
+  const dato = JSON.stringify({ token: S.token, rol: S.rol, modo: S.modo });
+  if (S.recordar) { store.set(CLAVE_SESION, dato); sesionTmp.del(CLAVE_SESION); } else { sesionTmp.set(CLAVE_SESION, dato); store.del(CLAVE_SESION); }
+}
+function leerSesion() {
+  const a = store.get(CLAVE_SESION), b = sesionTmp.get(CLAVE_SESION);
+  try { const d = JSON.parse(a || b || 'null'); return d && d.token ? Object.assign(d, { recordar: !!a }) : null; } catch (e) { return null; }
+}
+
+function aplicarEstado(e) {
+  if (e.token) { S.token = e.token; guardarSesion(); }
+  S.est = e;
+  S.rol = e.rol;
+  S.idx = {};
+  e.productos.forEach((p) => { S.idx[p.id] = p; });
+  if (S.modo === 'servidor') store.set(CLAVE_CACHE, JSON.stringify({ ts: Date.now(), est: e }));
+  S.camino = {};
+  e.traspasos.filter((t) => t.estado === 'en_transito').forEach((t) => t.lineas.forEach((l) => { S.camino[l.id] = (S.camino[l.id] || 0) + l.cant; }));
+  pintar();
+}
+
+async function cargarEstado() {
+  const r = await llamar('GET', '/estado');
+  if (r.json.ok) { aplicarEstado(r.json); return true; }
+  if (r.status === 401) { salir(r.json.error.mensaje); return false; }
+  throw new ErrorApi(r.json.error);
+}
+
+// Mutaciones. Devuelve el resultado de la operación; lanza ErrorApi / ErrorRed.
+async function op(cuerpo) {
+  const r = await llamar('POST', '/op', Object.assign({ cid: nuevoCid() }, cuerpo));
+  if (r.json.ok) {
+    if (r.json.token) { S.token = r.json.token; guardarSesion(); }
+    aplicarEstado(r.json.estado);
+    return r.json.resultado || {};
+  }
+  const er = r.json.error;
+  if (r.status === 401) { salir(er.mensaje); throw new ErrorApi(er); }
+  if (er.code === 'conflicto' || er.code === 'duplicado') await cargarEstado().catch(() => {});
+  if (er.code === 'duplicado') return {};
+  throw new ErrorApi(er);
+}
+
+async function sincronizar(forzar) {
+  if (!S.token || !S.est || sincronizando || (document.hidden && !forzar)) return;
+  if (S.modo === 'local' && !forzar) return; // sin servidor solo puede cambiar otra pestaña del mismo equipo (evento storage)
+  sincronizando = true;
+  try {
+    if (S.modo === 'local') { repoLocal.recargar(); }
+    const r = await llamar('GET', '/rev');
+    if (r.json.ok) { if (r.json.rev !== S.est.rev) await cargarEstado(); }
+    else if (r.status === 401) salir(r.json.error.mensaje);
+  } catch (e) { /* sin red: el chip ya lo avisa */ } finally { sincronizando = false; }
+}
+
+/* ───────── piezas visuales del producto ───────── */
+const hexOk = (h) => (/^#[0-9a-f]{6}$/i.test(h) ? h : '#8A8D8F');
+function oscuro(hex, f) {
+  const n = parseInt(hexOk(hex).slice(1), 16);
+  const k = (v) => Math.max(0, Math.round(v * f)).toString(16).padStart(2, '0');
+  return '#' + k((n >> 16) & 255) + k((n >> 8) & 255) + k(n & 255);
+}
+function isoBase(hex, tam) {
+  const c = hexOk(hex);
+  return raw('<svg class="iso" width="' + tam + '" height="' + tam + '" viewBox="0 0 40 40" aria-hidden="true"><polygon points="4,13 20,21 20,33 4,25" fill="' + oscuro(c, 0.74) + '"/><polygon points="36,13 20,21 20,33 36,25" fill="' + c + '"/><polygon points="20,5 36,13 20,21 4,13" fill="#ECEAE4" stroke="rgba(26,26,26,.5)" stroke-width="1.2" stroke-linejoin="round"/></svg>');
+}
+const medidaDe = (id) => (S.est.medidas || []).find((m) => m.id === id);
+const tonoDe = (id) => (S.est.tonos || []).find((t) => t.id === id);
+function iconoProd(p, tam) {
+  tam = tam || 32;
+  if (p.cat === 'base') { const t = tonoDe(p.tono); return isoBase(t ? t.hex : '#8A8D8F', tam); }
+  return html`<span style="color:var(--ink-2)">${ico(p.cat === 'material' ? 'capas' : 'tuerca')}</span>`;
+}
+function subProd(p, corto) {
+  const m = p.cat === 'base' ? medidaDe(p.medida) : null;
+  const partes = [];
+  if (!corto) partes.push(m ? m.nombre + ' ' + m.dims : CATS[p.cat].replace(/s$/, ''));
+  if (p.precio) partes.push(dinero(p.precio));
+  else if (corto) partes.push('Sin precio');
+  return partes.join(' · ');
+}
+// nivel de existencias de un lugar frente a su mínimo
+function nivel(p, loc) {
+  const st = loc === 'local' ? p.stock_local : p.stock_tienda, mn = loc === 'local' ? p.min_local : p.min_tienda;
+  if (!(mn > 0) || !(loc === 'local' ? p.hubo_local : p.hubo_tienda)) return 'ok'; // sin mínimo, o nunca ha tenido existencias: no es alerta
+  if (st === 0) return 'agotado';
+  if (st < mn) return 'bajo';
+  return 'ok';
+}
+const bajosDe = (loc) => S.est.productos.filter((p) => p.activo && nivel(p, loc) !== 'ok');
+const sumar = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+function ordenProductos(a, b) {
+  const orden = { base: 0, material: 1, accesorio: 2 };
+  if (a.cat !== b.cat) return orden[a.cat] - orden[b.cat];
+  if (a.cat === 'base') {
+    const ma = S.est.medidas.findIndex((m) => m.id === a.medida), mb = S.est.medidas.findIndex((m) => m.id === b.medida);
+    if (ma !== mb) return ma - mb;
+    const ta = S.est.tonos.findIndex((t) => t.id === a.tono), tb = S.est.tonos.findIndex((t) => t.id === b.tono);
+    if (ta !== tb) return ta - tb;
+  }
+  return a.nombre.localeCompare(b.nombre, 'es');
+}
+
+/* agrupa los movimientos de una misma operación (venta de varias bases, entrada de varios productos…) */
+function agrupar(movs) {
+  const out = [], idx = {};
+  movs.forEach((m) => {
+    let g = idx[m.grupo];
+    if (!g) {
+      g = idx[m.grupo] = { grupo: m.grupo, ts: m.ts, tipo: m.tipo, rol: m.rol, nota: m.nota, motivo: m.motivo, cliente: m.cliente, pago: m.pago, ref: m.ref, anulado: !!m.anulado, anulado_ts: m.anulado_ts, anulado_por: m.anulado_por, anulado_nota: m.anulado_nota, lineas: [] };
+      out.push(g);
+    }
+    g.lineas.push(m);
+    if (m.ts < g.ts) g.ts = m.ts;
+  });
+  out.forEach((g) => {
+    g.piezas = sumar(g.lineas, (m) => Math.abs(m.delta));
+    g.total = (g.tipo === 'venta' || g.tipo === 'devolucion') ? sumar(g.lineas, (m) => Math.abs(m.delta) * (m.precio || 0)) : 0;
+  });
+  return out;
+}
+const nombreProd = (id) => (S.idx[id] ? S.idx[id].nombre : 'Producto eliminado');
+function tituloOp(g) {
+  const t = TIPOS[g.tipo] ? TIPOS[g.tipo].t : g.tipo;
+  if (g.tipo === 'entrada' || g.tipo === 'salida') return t + (g.motivo && g.motivo !== 'otro' ? ' · ' + MOTIVOS[g.motivo] : '');
+  return t;
+}
+const resumenOp = (g) => plural(g.lineas.length, 'producto', 'productos') + ' · ' + plural(g.piezas, 'pieza', 'piezas');
+const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'].includes(g.tipo) && (S.rol === 'local' || g.rol === S.rol);
+
+/* ───────── armazón de la app ───────── */
+const TABS = [
+  { id: 'inicio', t: 'Inicio', ic: 'home' },
+  { id: 'inventario', t: 'Inventario', ic: 'cubo' },
+  { id: 'mover', t: 'Mover', ic: 'mover' },
+  { id: 'historial', t: 'Historial', ic: 'reloj' },
+  { id: 'mas', t: 'Más', ic: 'mas' }
+];
+const marca = () => html`<div class="marca"><span class="logo"><svg width="28" height="28" aria-hidden="true"><use href="#i-logo"/></svg></span><span class="marca-t"><span class="marca-n">Bases Bo<b>x</b></span><span class="marca-s">Tepic · Inventario</span></span></div>`;
+
+function montarApp() {
+  poner($('#raiz'), html`
+    <div class="app">
+      <aside class="rail" aria-label="Menú principal">
+        ${marca()}
+        <nav style="display:flex;flex-direction:column;gap:4px" aria-label="Secciones">
+          ${TABS.map((t) => html`<button type="button" class="nav-it" data-tab="${t.id}">${ico(t.ic)}<span>${t.t}</span><span class="badge" hidden></span></button>`)}
+        </nav>
+        <div class="rail-pie">
+          <div class="rail-rol"><span data-rol-nombre></span><small data-negocio></small></div>
+          <button type="button" class="estado-chip act" data-act="sync" data-chip></button>
+          <button type="button" class="btn btn-s btn-g" style="color:inherit;border-color:var(--rail-line)" data-act="salir">Cerrar sesión</button>
+        </div>
+      </aside>
+      <div>
+        <header class="top"><div class="top-in">${marca()}<button type="button" class="estado-chip act" data-act="sync" data-chip></button></div></header>
+        <div class="demo-b" id="demo-b" hidden><span>Demostración · datos de ejemplo</span><button type="button" class="btn btn-s btn-g" data-act="salir-demo">Salir de la demo</button></div>
+        <main class="main" id="vista" tabindex="-1"><div class="main-in" id="vista-in"></div></main>
+      </div>
+      <nav class="tabbar" aria-label="Secciones">
+        ${TABS.map((t) => html`<button type="button" class="tab" data-tab="${t.id}">${ico(t.ic)}<span>${t.t}</span><span class="badge" hidden></span></button>`)}
+      </nav>
+    </div>`);
+}
+
+function pintarChips() {
+  const loc = S.modo === 'local';
+  const txt = loc ? 'Solo este equipo' : S.enLinea ? 'En línea' : 'Sin conexión';
+  $$('[data-chip]').forEach((c) => {
+    c.className = 'estado-chip act' + (loc ? ' loc' : S.enLinea ? '' : ' off');
+    c.textContent = txt;
+    c.title = loc ? 'Los datos viven solo en este equipo' : 'Toca para actualizar';
+  });
+}
+
+function conteoInsignias() {
+  const e = S.est;
+  const enT = e.traspasos.filter((t) => t.estado === 'en_transito').length;
+  const ped = e.pedidos.filter((p) => p.estado === 'pendiente').length;
+  return { inventario: bajosDe(S.rol).length, mover: S.rol === 'tienda' ? enT : ped };
+}
+function pintarNav() {
+  const ins = S.est ? conteoInsignias() : {};
+  $$('[data-tab]').forEach((b) => {
+    const on = b.dataset.tab === S.tab;
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    const bd = $('.badge', b), n = ins[b.dataset.tab] || 0;
+    if (bd) { bd.hidden = !n; bd.textContent = n > 99 ? '99+' : n; }
+  });
+  const rn = $('[data-rol-nombre]'), ng = $('[data-negocio]');
+  if (rn && S.rol) rn.textContent = ROLES[S.rol].nombre;
+  if (ng && S.est) ng.textContent = S.est.negocio.nombre;
+  const dm = $('#demo-b');
+  if (dm) dm.hidden = !S.demo;
+}
+
+const VISTAS = {};
+function irA(tab, o) {
+  o = o || {};
+  if (!VISTAS[tab]) tab = 'inicio';
+  const cambio = tab !== S.tab || !$('[data-vista]') || o.forzar;
+  S.tab = tab;
+  if (o.bajo !== undefined) S.filtro.bajo = o.bajo;
+  if (cambio) {
+    poner($('#vista-in'), VISTAS[tab].armar());
+    if (VISTAS[tab].montar) VISTAS[tab].montar();
+    window.scrollTo(0, 0);
+  }
+  VISTAS[tab].actualizar();
+  pintarNav();
+  try { history.replaceState(null, '', '#' + tab); } catch (e) { /* sin historial */ }
+}
+function pintar() {
+  if (!S.est) return;
+  if (!$('#vista-in')) { montarApp(); irA(S.tab, { forzar: true }); } else VISTAS[S.tab].actualizar();
+  pintarChips();
+  pintarNav();
+}
+
+/* ───────── INICIO ───────── */
+VISTAS.inicio = { armar: () => html`<div class="pila" data-vista="inicio" id="v-inicio"></div>`, actualizar: pintarInicio };
+
+function pendientesDeAtencion() {
+  const e = S.est, items = [];
+  const enT = e.traspasos.filter((t) => t.estado === 'en_transito');
+  const ped = e.pedidos.filter((p) => p.estado === 'pendiente');
+  const pzEnT = sumar(enT, (t) => sumar(t.lineas, (l) => l.cant));
+  const pzPed = sumar(ped, (p) => sumar(p.lineas, (l) => l.cant));
+  if (S.rol === 'tienda' && enT.length) items.push({ c: 'info', ic: 'camion', t: plural(enT.length, 'envío por recibir', 'envíos por recibir'), s: plural(pzEnT, 'pieza', 'piezas') + ' en camino desde el local', btn: 'Recibir', act: 'recibir-ya' });
+  if (S.rol === 'local' && ped.length) items.push({ c: 'acc', ic: 'pedido', t: plural(ped.length, 'pedido de la tienda', 'pedidos de la tienda'), s: plural(pzPed, 'pieza', 'piezas') + ' por surtir', btn: 'Ver pedidos', act: 'ir', tab: 'mover' });
+  if (S.rol === 'local' && enT.length) items.push({ c: 'info', ic: 'camion', t: plural(enT.length, 'envío en camino', 'envíos en camino'), s: 'Esperan a que la tienda confirme el recibo', btn: 'Ver', act: 'ir', tab: 'mover' });
+  if (S.rol === 'tienda' && ped.length) items.push({ c: 'info', ic: 'pedido', t: plural(ped.length, 'pedido esperando', 'pedidos esperando'), s: 'El local aún no los surte', btn: 'Ver', act: 'ir', tab: 'mover' });
+  const bajos = bajosDe(S.rol);
+  if (bajos.length) {
+    const agot = bajos.filter((p) => nivel(p, S.rol) === 'agotado').length;
+    items.push({ c: agot ? 'bad' : 'warn', ic: 'alerta', t: plural(bajos.length, 'producto con stock bajo', 'productos con stock bajo'), s: bajos.slice(0, 3).map((p) => p.nombre).join(' · ') + (bajos.length > 3 ? ' y ' + (bajos.length - 3) + ' más' : ''), btn: 'Revisar', act: 'ver-bajos' });
+  }
+  return items;
+}
+
+function pintarInicio() {
+  const cont = $('#v-inicio');
+  if (!cont) return;
+  const e = S.est, r = e.resumen, hoy = new Date();
+  const bases = e.productos.filter((p) => p.cat === 'base' && p.activo);
+  const bLocal = sumar(bases, (p) => p.stock_local), bTienda = sumar(bases, (p) => p.stock_tienda), bCamino = sumar(bases, (p) => S.camino[p.id] || 0);
+  const activos = e.productos.filter((p) => p.activo);
+  const valor = S.rol === 'local' ? sumar(activos, (p) => (p.stock_local + p.stock_tienda) * (p.costo || 0)) : sumar(activos, (p) => p.stock_tienda * (p.precio || 0));
+  const saludo = hoy.getHours() < 12 ? 'Buenos días' : hoy.getHours() < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const pend = pendientesDeAtencion();
+  const vacioTodo = activos.length > 0 && sumar(activos, (p) => p.stock_local + p.stock_tienda + (S.camino[p.id] || 0)) === 0;
+  const ops = agrupar(e.recientes).slice(0, 5);
+  const topMax = r.top.length ? r.top[0].pzas : 1;
+
+  poner(cont, html`
+    <div class="cabecera">
+      <div><h1 class="t-pant">${saludo}</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · ${ROLES[S.rol].nombre}</p></div>
+    </div>
+    ${vacioTodo ? html`<section class="card" aria-label="Empezar"><div class="fila" style="align-items:flex-start;gap:14px"><span class="ico-c acc">${ico('cubo')}</span><div class="grow"><div class="item-t">Empieza cargando tus existencias</div><div class="item-s" style="margin-bottom:12px">${S.rol === 'local' ? 'Aún no hay piezas registradas. Cuenta lo que tienes en el local y anótalo de un jalón, o registra una entrada cada vez que fabriques o compres.' : 'Aún no hay piezas registradas. Cuando el local envíe mercancía te aparecerá aquí para recibirla; si ya tienes bases en la tienda, cuéntalas.'}</div><div class="fila w"><button type="button" class="btn btn-p btn-s" data-act="forma" data-tipo="conteo">${ico('conteo')}Contar existencias</button>${S.rol === 'local' ? html`<button type="button" class="btn btn-g btn-s" data-act="forma" data-tipo="entrada">${ico('entrada')}Registrar entrada</button>` : ''}</div></div></div></section>` : ''}
+    ${pend.length ? html`<section class="card flat" aria-label="Por atender"><ul class="lista">${pend.map((p) => html`<li class="item">
+        <span class="ico-c ${p.c}">${ico(p.ic)}</span>
+        <div class="grow"><div class="item-t">${p.t}</div><div class="item-s">${p.s}</div></div>
+        <button type="button" class="btn btn-s ${p.c === 'bad' || p.c === 'acc' ? 'btn-p' : 'btn-d'}" data-act="${p.act}" ${p.tab ? raw('data-tab-ir="' + p.tab + '"') : ''}>${p.btn}</button></li>`)}</ul></section>`
+      : vacioTodo ? '' : html`<section class="card"><div class="fila"><span class="ico-c ok">${ico('check')}</span><div><div class="item-t">Todo al día</div><div class="item-s">No hay envíos, pedidos ni productos con stock bajo por atender.</div></div></div></section>`}
+    <section class="grid-kpi" aria-label="Resumen">
+      <div class="kpi"><span class="t-sec">Bases en el local</span><span class="num-g cifras">${num(bLocal)}</span><small>${plural(bases.filter((p) => p.stock_local > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
+      <div class="kpi"><span class="t-sec">Bases en tienda</span><span class="num-g cifras">${num(bTienda)}</span><small>${plural(bases.filter((p) => p.stock_tienda > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
+      <div class="kpi"><span class="t-sec">Bases en camino</span><span class="num-g cifras" style="color:${bCamino ? 'var(--info)' : 'inherit'}">${num(bCamino)}</span><small>${bCamino ? 'Sin confirmar en tienda' : 'Nada por llegar'}</small></div>
+      <div class="kpi dest"><span class="t-sec">Ventas de hoy</span><span class="num-g cifras">${dinero(r.hoy.total)}</span><small>${plural(r.hoy.n, 'venta', 'ventas')} · ${plural(r.hoy.pzas, 'pieza', 'piezas')}</small></div>
+      <div class="kpi"><span class="t-sec">Ventas del mes</span><span class="num-g cifras">${dinero(r.mes.total)}</span><small>${plural(r.mes.n, 'venta', 'ventas')} · ${plural(r.mes.pzas, 'pieza', 'piezas')}</small></div>
+      <div class="kpi"><span class="t-sec">${S.rol === 'local' ? 'Valor a costo' : 'Valor en tienda'}</span><span class="num-g cifras">${dinero(valor)}</span><small>${S.rol === 'local' ? 'Local y tienda, al costo' : 'Existencias a precio de venta'}</small></div>
+    </section>
+    <div class="dos-col">
+      <div class="pila">
+        <section class="card" aria-label="Ventas de los últimos 7 días">
+          <div class="card-t"><h2 class="t-sec">Ventas · últimos 7 días</h2><button type="button" class="btn btn-s btn-g" data-act="tabla-vtas" aria-pressed="${String(S.verTabla)}">${ico(S.verTabla ? 'cubo' : 'tabla')}${S.verTabla ? 'Ver gráfica' : 'Ver tabla'}</button></div>
+          <div class="graf" id="graf"></div>
+        </section>
+      </div>
+      <div class="pila">
+        <section class="card" aria-label="Lo más vendido">
+          <div class="card-t"><h2 class="t-sec">Más vendido · 30 días</h2></div>
+          ${r.top.length ? html`<ol class="rank">${r.top.map((t) => html`<li class="rank-i"><span class="n">${nombreProd(t.id)}</span><span class="v">${plural(t.pzas, 'pza', 'pzas')}</span><span class="b"><i style="width:${Math.max(4, Math.round(t.pzas / topMax * 100))}%"></i></span></li>`)}</ol>`
+            : html`<div class="vacio" style="padding:20px 8px"><b>Sin ventas todavía</b><span>Cuando la tienda registre ventas verás aquí lo que más sale.</span></div>`}
+        </section>
+        <section class="card flat" aria-label="Últimos movimientos">
+          <div class="card-t" style="padding:14px 16px 0;margin:0"><h2 class="t-sec">Últimos movimientos</h2><button type="button" class="btn btn-s btn-g" data-act="ir" data-tab-ir="historial">Ver todo</button></div>
+          ${ops.length ? html`<ul class="lista" style="margin-top:6px">${ops.map(filaOperacion)}</ul>` : html`<div class="vacio"><b>Aún no hay movimientos</b><span>Registra una entrada, un envío o una venta y aparecerá aquí.</span></div>`}
+        </section>
+      </div>
+    </div>`);
+  dibujarGrafica();
+}
+
+function filaOperacion(g) {
+  const t = TIPOS[g.tipo] || { t: g.tipo, ic: 'info', c: '' };
+  return html`<li><button type="button" class="item" data-act="op-det" data-grupo="${g.grupo}">
+    <span class="ico-c ${g.anulado ? '' : t.c}">${ico(t.ic)}</span>
+    <div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}">${tituloOp(g)}</div><div class="item-s">${resumenOp(g)} · ${ROLES[g.rol].corto} · ${hace(g.ts)}</div></div>
+    ${g.anulado ? html`<span class="pill bad">Anulada</span>` : g.total ? html`<b class="cifras" style="font:700 18px var(--f-etiqueta)">${dinero(g.total)}</b>` : ''}
+  </button></li>`;
+}
+
+/* ───────── gráfica de ventas (columnas, una sola serie) ───────── */
+function escalaY(max) {
+  if (max <= 0) return { tope: 1000, ticks: [0, 500, 1000] };
+  const p0 = max / 4, mag = Math.pow(10, Math.floor(Math.log10(p0))), f = p0 / mag;
+  const paso = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+  const n = Math.max(2, Math.ceil(max / paso - 1e-9));
+  return { tope: paso * n, ticks: Array.from({ length: n + 1 }, (_, i) => i * paso) };
+}
+const compactoMXN = (v) => (v >= 1000 ? '$' + (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1).replace(/\.0$/, '') + 'k' : '$' + Math.round(v));
+const fmtDiaSemana = new Intl.DateTimeFormat('es-MX', { weekday: 'short' });
+const fmtDiaMes = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'short' });
+
+function dibujarGrafica() {
+  const cont = $('#graf');
+  if (!cont || !S.est) return;
+  const dias = S.est.resumen.dias;
+  const fechaDe = (k) => new Date(k + 'T12:00:00');
+  const hoyK = dias[dias.length - 1].k;
+  if (!dias.some((d) => d.total !== 0 || d.pzas !== 0)) {
+    poner(cont, html`<div class="vacio" style="padding:26px 8px"><b>Sin ventas esta semana</b><span>La gráfica aparece en cuanto la tienda registre la primera venta.</span></div>`);
+    return;
+  }
+  if (S.verTabla) {
+    poner(cont, html`<table class="tabla"><thead><tr><th>Día</th><th class="r">Ventas</th><th class="r">Piezas</th></tr></thead><tbody>${dias.slice().reverse().map((d) => html`<tr><td>${d.k === hoyK ? 'Hoy' : mayus(fmtDiaMes.format(fechaDe(d.k)).replace(/\./g, ''))}</td><td class="r">${dinero(d.total)}</td><td class="r">${num(d.pzas)}</td></tr>`)}</tbody></table>`);
+    return;
+  }
+  const W = Math.max(280, Math.round(cont.clientWidth || 320)), H = 210;
+  const m = { t: 28, r: 8, b: 30, l: 46 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b, base = m.t + ph;
+  const max = Math.max(...dias.map((d) => d.total), 0);
+  const { tope, ticks } = escalaY(max);
+  const slot = pw / dias.length, bw = Math.min(24, slot * 0.58);
+  const iMax = dias.findIndex((d) => d.total === max && max > 0);
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="Ventas de los últimos 7 días">';
+  ticks.forEach((v) => {
+    const y = base - (v / tope) * ph;
+    svg += '<line class="gl" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '"/><text x="' + (m.l - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + esc(compactoMXN(v)) + '</text>';
+  });
+  dias.forEach((d, i) => {
+    const cx = m.l + i * slot + slot / 2, x = cx - bw / 2;
+    const h = d.total > 0 ? Math.max(3, (d.total / tope) * ph) : 0, y = base - h, r = Math.min(4, bw / 2, h);
+    const esHoy = d.k === hoyK;
+    const etiqueta = (esHoy ? 'Hoy' : mayus(fmtDiaMes.format(fechaDe(d.k)).replace(/\./g, ''))) + ': ' + dinero(d.total) + ', ' + plural(d.pzas, 'pieza', 'piezas');
+    svg += '<g class="col" tabindex="0" role="img" aria-label="' + esc(etiqueta) + '" data-i="' + i + '"><rect class="hit" x="' + (m.l + i * slot).toFixed(1) + '" y="' + m.t + '" width="' + slot.toFixed(1) + '" height="' + (ph + m.b - 6) + '" rx="6"/>';
+    if (h > 0) svg += '<path class="barra' + (esHoy ? ' hi' : '') + '" d="M' + x.toFixed(1) + ',' + base + ' V' + (y + r).toFixed(1) + ' Q' + x.toFixed(1) + ',' + y.toFixed(1) + ' ' + (x + r).toFixed(1) + ',' + y.toFixed(1) + ' H' + (x + bw - r).toFixed(1) + ' Q' + (x + bw).toFixed(1) + ',' + y.toFixed(1) + ' ' + (x + bw).toFixed(1) + ',' + (y + r).toFixed(1) + ' V' + base + ' Z"/>';
+    if (h > 0 && (i === iMax || esHoy)) svg += '<text class="val" x="' + cx.toFixed(1) + '" y="' + (y - 7).toFixed(1) + '" text-anchor="middle">' + esc(compactoMXN(d.total)) + '</text>';
+    svg += '<text class="' + (esHoy ? 'hoy-x' : '') + '" x="' + cx.toFixed(1) + '" y="' + (H - 9) + '" text-anchor="middle">' + esc(esHoy ? 'Hoy' : fmtDiaSemana.format(fechaDe(d.k)).replace(/\./g, '')) + '</text></g>';
+  });
+  svg += '</svg><div class="tip" hidden></div>';
+  poner(cont, raw(svg));
+  const tip = $('.tip', cont);
+  const mostrar = (g) => {
+    const i = +g.dataset.i, d = dias[i];
+    const cx = m.l + i * slot + slot / 2;
+    const h = d.total > 0 ? Math.max(3, (d.total / tope) * ph) : 0;
+    tip.hidden = false;
+    poner(tip, html`<b>${dinero(d.total)}</b><span>${d.k === hoyK ? 'Hoy' : mayus(fmtDiaMes.format(fechaDe(d.k)).replace(/\./g, ''))} · ${plural(d.pzas, 'pieza', 'piezas')}</span>`);
+    const ancho = tip.offsetWidth || 140;
+    tip.style.left = Math.min(Math.max(cx, ancho / 2 + 4), W - ancho / 2 - 4) + 'px';
+    tip.style.top = Math.max(base - h - 10, 40) + 'px';
+    g.classList.add('act');
+  };
+  $$('.col', cont).forEach((g) => {
+    g.addEventListener('pointerenter', () => mostrar(g));
+    g.addEventListener('focus', () => mostrar(g));
+    g.addEventListener('pointerleave', () => { tip.hidden = true; g.classList.remove('act'); });
+    g.addEventListener('blur', () => { tip.hidden = true; g.classList.remove('act'); });
+    g.addEventListener('click', () => mostrar(g));
+  });
+}
+
+/* ───────── INVENTARIO ───────── */
+VISTAS.inventario = {
+  armar: () => html`<div data-vista="inventario">
+    <div class="cabecera"><div><h1 class="t-pant">Inventario</h1><p class="t-peq" id="inv-sub" style="margin-top:8px"></p></div><div class="acciones-fab" id="inv-acc"></div></div>
+    <div class="barra-filtros">
+      <div class="buscar">${ico('buscar')}<input class="inp" id="inv-q" type="search" placeholder="Buscar producto, medida o tono" autocomplete="off" aria-label="Buscar producto" value="${S.filtro.q}"></div>
+      <div class="chips" id="inv-chips" style="margin-top:10px"></div>
+    </div>
+    <div id="inv-lista"></div>
+  </div>`,
+  montar() {
+    $('#inv-q').addEventListener('input', (ev) => { S.filtro.q = ev.target.value; pintarListaInv(); });
+  },
+  actualizar() {
+    const e = S.est, activos = e.productos.filter((p) => p.activo), bajos = bajosDe(S.rol).length;
+    $('#inv-sub').textContent = plural(activos.length, 'producto', 'productos') + (bajos ? ' · ' + plural(bajos, 'con stock bajo', 'con stock bajo') : ' · todo en orden');
+    poner($('#inv-acc'), S.rol === 'local' ? html`<button type="button" class="btn btn-p" data-act="prod-nuevo">${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">${ico('capas')}Crear bases</button>` : '');
+    const chips = [['todo', 'Todo'], ['base', 'Bases'], ['material', 'Materiales'], ['accesorio', 'Accesorios']];
+    poner($('#inv-chips'), html`${chips.map(([k, t]) => html`<button type="button" class="chip" data-act="filtro-cat" data-cat="${k}" aria-pressed="${String(S.filtro.cat === k)}">${t}</button>`)}<button type="button" class="chip" data-act="filtro-bajo" aria-pressed="${String(S.filtro.bajo)}">${ico('alerta')}Stock bajo${bajos ? ' (' + bajos + ')' : ''}</button>${S.rol === 'local' && e.productos.some((p) => !p.activo) ? html`<button type="button" class="chip" data-act="filtro-arch" aria-pressed="${String(S.filtro.archivados)}">Archivados</button>` : ''}`);
+    pintarListaInv();
+  }
+};
+
+function filaProducto(p, corto) {
+  const lv = (loc) => nivel(p, loc);
+  const cl = (loc) => { const v = lv(loc), st = loc === 'local' ? p.stock_local : p.stock_tienda; return v === 'agotado' ? 'agotado' : v === 'bajo' ? 'bajo' : st === 0 ? 'cero' : ''; };
+  const cam = S.camino[p.id] || 0;
+  return html`<button type="button" class="prod ${p.activo ? '' : 'arch'}" data-act="prod" data-id="${p.id}">
+    <span class="prod-ico">${iconoProd(p, 34)}</span>
+    <span class="prod-main"><span class="prod-n">${p.nombre}</span><span class="prod-s">${p.activo ? subProd(p, corto) : 'Archivado'}</span></span>
+    <span class="stocks"><span class="st ${cl('local')}"><b>${num(p.stock_local)}</b><i>Local</i></span><span class="st ${cl('tienda')}"><b>${num(p.stock_tienda)}</b><i>Tienda</i></span>${cam ? html`<span class="st cam"><b>${num(cam)}</b><i>Camino</i></span>` : ''}</span>
+  </button>`;
+}
+
+function pintarListaInv() {
+  const cont = $('#inv-lista');
+  if (!cont || !S.est) return;
+  const F = S.filtro, q = norm(F.q);
+  let lista = S.est.productos.filter((p) => (F.archivados ? true : p.activo));
+  if (F.cat !== 'todo') lista = lista.filter((p) => p.cat === F.cat);
+  if (F.bajo) lista = lista.filter((p) => p.activo && nivel(p, S.rol) !== 'ok');
+  if (q) {
+    lista = lista.filter((p) => {
+      const m = medidaDe(p.medida), t = tonoDe(p.tono);
+      return coincide(p.nombre + ' ' + (m ? m.nombre + ' ' + m.dims : '') + ' ' + (t ? t.nombre : '') + ' ' + CATS[p.cat], q);
+    });
+  }
+  lista.sort(ordenProductos);
+  if (!lista.length) {
+    poner(cont, html`<div class="vacio">${ico('buscar')}<b>${q || F.bajo ? 'Nada coincide con tu búsqueda' : 'Todavía no hay productos'}</b><span>${q || F.bajo ? 'Prueba con otra palabra o quita los filtros.' : S.rol === 'local' ? 'Agrega tu primer producto o crea las bases por medida y tono.' : 'El dueño del local debe dar de alta los productos.'}</span></div>`);
+    return;
+  }
+  // las bases se agrupan por medida cuando no hay búsqueda, para ubicarlas rápido
+  const grupos = [];
+  const agrupado = !q;
+  lista.forEach((p) => {
+    const m = p.cat === 'base' ? medidaDe(p.medida) : null;
+    const titulo = !q && F.cat !== 'base' && p.cat !== 'base' ? CATS[p.cat] : !q && p.cat === 'base' ? (m ? m.nombre + ' · ' + m.dims : 'Bases') : '';
+    let g = grupos[grupos.length - 1];
+    if (!g || g.titulo !== titulo) { g = { titulo, items: [] }; grupos.push(g); }
+    g.items.push(p);
+  });
+  poner(cont, html`${grupos.map((g) => html`${g.titulo ? html`<h2 class="t-sec grupo-t">${g.titulo}</h2>` : ''}<div class="prods">${g.items.map((p) => filaProducto(p, agrupado && p.cat === 'base'))}</div>`)}<p class="res-n">${plural(lista.length, 'producto', 'productos')}</p>`);
+}
+
+/* ───────── MOVER ───────── */
+VISTAS.mover = {
+  armar: () => html`<div class="pila" data-vista="mover"><div class="cabecera"><div><h1 class="t-pant">Mover</h1><p class="t-peq" style="margin-top:8px">${S.rol === 'local' ? 'Registra lo que entra, sale y viaja a la tienda.' : 'Registra ventas, mercancía recibida y pedidos al local.'}</p></div></div><div id="mv-acc"></div><div id="mv-env"></div><div id="mv-ped"></div></div>`,
+  actualizar() {
+    const e = S.est;
+    const enT = e.traspasos.filter((t) => t.estado === 'en_transito');
+    const acc = S.rol === 'local'
+      ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
+      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['pedido', 'pedido', 'Pedir al local', 'Avisa qué bases hacen falta'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
+    poner($('#mv-acc'), html`<div class="atajos">${acc.map(([k, ic, t, s, pri]) => html`<button type="button" class="atajo ${pri ? 'pri' : ''}" data-act="forma" data-tipo="${k}"><span class="ico-c ${pri ? '' : 'acc'}">${ico(ic)}</span><b>${t}</b><span>${s}</span></button>`)}</div>`);
+
+    const cerr = (arr, n) => arr.filter((x) => x.estado !== 'en_transito' && x.estado !== 'pendiente').slice(0, n);
+    const envios = e.traspasos.filter((t) => t.estado === 'en_transito').concat(cerr(e.traspasos, 5));
+    const pedidos = e.pedidos.filter((p) => p.estado === 'pendiente').concat(cerr(e.pedidos, 5));
+    poner($('#mv-env'), html`<section><h2 class="t-sec" style="margin:6px 2px 8px">Envíos del local a la tienda</h2>
+      ${envios.length ? html`<div class="card flat"><ul class="lista">${envios.map(tarjetaEnvio)}</ul></div>` : html`<div class="card"><div class="vacio" style="padding:18px"><b>Sin envíos todavía</b><span>${S.rol === 'local' ? 'Cuando mandes bases a la tienda aparecerán aquí hasta que las confirmen.' : 'Aquí verás lo que el local te mande.'}</span></div></div>`}</section>`);
+    poner($('#mv-ped'), html`<section><h2 class="t-sec" style="margin:6px 2px 8px">Pedidos de la tienda</h2>
+      ${pedidos.length ? html`<div class="card flat"><ul class="lista">${pedidos.map(tarjetaPedido)}</ul></div>` : html`<div class="card"><div class="vacio" style="padding:18px"><b>Sin pedidos</b><span>${S.rol === 'tienda' ? 'Usa “Pedir al local” cuando falten bases en tienda.' : 'Cuando la tienda pida bases las verás aquí.'}</span></div></div>`}</section>`);
+  }
+};
+
+const ESTADO_TRASP = { en_transito: ['En camino', 'info'], recibido: ['Recibido', 'ok'], cancelado: ['Cancelado', 'bad'] };
+const ESTADO_PED = { pendiente: ['Pendiente', 'warn'], surtido: ['Surtido', 'ok'], cancelado: ['Cancelado', 'bad'] };
+const resumenLineas = (ls) => plural(ls.length, 'producto', 'productos') + ' · ' + plural(sumar(ls, (l) => l.cant), 'pieza', 'piezas');
+function tarjetaEnvio(t) {
+  const [txt, cl] = t.estado === 'recibido' && t.dif ? ['Con diferencias', 'warn'] : ESTADO_TRASP[t.estado];
+  return html`<li><button type="button" class="item" data-act="traspaso" data-id="${t.id}"><span class="ico-c ${cl === 'info' ? 'info' : cl}">${ico('camion')}</span>
+    <div class="grow"><div class="item-t">${resumenLineas(t.lineas)}</div><div class="item-s">Salió ${hace(t.ts)}${t.nota ? ' · ' + t.nota : ''}</div></div>
+    <span class="pill ${cl}">${txt}</span></button></li>`;
+}
+function tarjetaPedido(p) {
+  const [txt, cl] = ESTADO_PED[p.estado];
+  return html`<li><button type="button" class="item" data-act="pedido-det" data-id="${p.id}"><span class="ico-c ${cl}">${ico('pedido')}</span>
+    <div class="grow"><div class="item-t">${resumenLineas(p.lineas)}</div><div class="item-s">Pedido ${hace(p.ts)}${p.nota ? ' · ' + p.nota : ''}</div></div>
+    <span class="pill ${cl}">${txt}</span></button></li>`;
+}
+
+/* ───────── HISTORIAL ───────── */
+const FILTROS_TIPO = [['todo', 'Todo', null], ['ventas', 'Ventas', 'venta,devolucion'], ['entradas', 'Entradas', 'entrada,inicial'], ['salidas', 'Salidas', 'salida,merma'], ['traspasos', 'Envíos', 'envio,recibo,envio_cancelado'], ['ajustes', 'Ajustes', 'ajuste']];
+VISTAS.historial = {
+  armar: () => html`<div data-vista="historial">
+    <div class="cabecera"><div><h1 class="t-pant">Historial</h1><p class="t-peq" style="margin-top:8px">Todo lo que pasó con el inventario, con fecha y responsable.</p></div><button type="button" class="btn btn-g" data-act="exportar-movs">${ico('bajar')}Exportar CSV</button></div>
+    <div class="barra-filtros">
+      <div class="grid2" style="grid-template-columns:minmax(0,1fr) 150px"><div class="buscar">${ico('buscar')}<input class="inp" id="hs-q" type="search" placeholder="Buscar producto" autocomplete="off" aria-label="Buscar producto en el historial" value="${S.hist.q}"></div>
+      <select class="inp" id="hs-rango" aria-label="Periodo">${[['hoy', 'Hoy'], ['7', '7 días'], ['30', '30 días'], ['todo', 'Todo']].map(([k, t]) => html`<option value="${k}" ${S.hist.rango === k ? raw('selected') : ''}>${t}</option>`)}</select></div>
+      <div class="chips" id="hs-chips" style="margin-top:10px"></div>
+    </div>
+    <div id="hs-lista"></div>
+  </div>`,
+  montar() {
+    let t = null;
+    $('#hs-q').addEventListener('input', (ev) => { S.hist.q = ev.target.value; clearTimeout(t); t = setTimeout(() => cargarHistorial(true), 250); });
+    $('#hs-rango').addEventListener('change', (ev) => { S.hist.rango = ev.target.value; cargarHistorial(true); });
+    S.hist.rev = null;
+  },
+  actualizar() {
+    poner($('#hs-chips'), html`${FILTROS_TIPO.map(([k, t]) => html`<button type="button" class="chip" data-act="hist-tipo" data-tipo="${k}" aria-pressed="${String(S.hist.tipo === k)}">${t}</button>`)}`);
+    if (S.hist.rev !== S.est.rev && !S.hist.cargando) cargarHistorial(true);
+    else pintarHist();
+  }
+};
+
+async function cargarHistorial(reiniciar) {
+  const H = S.hist;
+  if (H.cargando && !reiniciar) return;
+  const q = { limite: 60 };
+  const tipos = FILTROS_TIPO.find((f) => f[0] === H.tipo)[2];
+  if (tipos) q.tipos = tipos;
+  if (H.rango === 'hoy') q.desde = inicioDeDia(Date.now());
+  else if (H.rango !== 'todo') q.desde = Date.now() - Number(H.rango) * DIA;
+  const bq = norm(H.q);
+  if (bq) {
+    const ids = S.est.productos.filter((p) => coincide(p.nombre, bq)).map((p) => p.id).slice(0, 40);
+    if (!ids.length) { H.items = []; H.siguiente = null; H.rev = S.est.rev; pintarHist(); return; }
+    q.prods = ids.join(',');
+  }
+  if (!reiniciar && H.siguiente) q.antes = H.siguiente;
+  const miSolicitud = (H.solicitud = (H.solicitud || 0) + 1);
+  H.cargando = true;
+  pintarHist();
+  try {
+    const r = await llamar('GET', '/movs', null, q);
+    if (miSolicitud !== H.solicitud) return;
+    if (r.json.ok) {
+      H.items = reiniciar ? r.json.items : H.items.concat(r.json.items);
+      H.siguiente = r.json.siguiente;
+      H.rev = S.est.rev;
+    } else if (r.status === 401) salir(r.json.error.mensaje);
+  } catch (e) { toast(e.message, { tipo: 'error' }); } finally {
+    if (miSolicitud === H.solicitud) { H.cargando = false; pintarHist(); }
+  }
+}
+
+function pintarHist() {
+  const cont = $('#hs-lista');
+  if (!cont || S.tab !== 'historial') return;
+  const H = S.hist, ops = agrupar(H.items);
+  if (!ops.length) {
+    poner(cont, H.cargando ? html`<div class="cargando"><i></i></div>` : html`<div class="vacio">${ico('reloj')}<b>No hay movimientos con estos filtros</b><span>Cambia el periodo o el tipo para ver más.</span></div>`);
+    return;
+  }
+  let dia = '';
+  const bloques = [];
+  ops.forEach((g) => {
+    const d = etiquetaDia(g.ts);
+    if (d !== dia) { dia = d; bloques.push(html`<h2 class="t-sec hist-dia">${d}</h2>`); }
+    bloques.push(html`<div class="card flat" style="margin-bottom:8px"><ul class="lista">${filaOperacion(g)}</ul></div>`);
+  });
+  poner(cont, html`${bloques}${H.siguiente ? html`<div style="text-align:center;margin-top:14px"><button type="button" class="btn btn-g" data-act="hist-mas" ${H.cargando ? raw('aria-busy="true"') : ''}>Cargar más</button></div>` : ''}`);
+}
+
+/* ───────── editor de líneas: lista de productos con cantidades (y precio en ventas) ───────── */
+let edN = 0;
+function editorLineas(o) {
+  const uid = 'ed' + (++edN);
+  const L = (o.inicial || []).map((l) => Object.assign({}, l));
+  const max = o.max || Core.MAX_LINEAS;
+  const disp = (p) => (o.loc === 'local' ? p.stock_local : o.loc === 'tienda' ? p.stock_tienda : null);
+  const el = document.createElement('div');
+  poner(el, html`<ul class="lin-lista" aria-live="polite"></ul>
+    <div class="lin-add">
+      <label class="lbl" for="${uid}-q">Agregar producto</label>
+      <div class="buscar">${ico('buscar')}<input class="inp" id="${uid}-q" type="search" autocomplete="off" placeholder="Busca por nombre, medida o tono" aria-controls="${uid}-r"></div>
+      <ul class="lin-res" id="${uid}-r" role="listbox" hidden></ul>
+    </div>`);
+  const lista = $('.lin-lista', el), q = $('#' + uid + '-q', el), res = $('#' + uid + '-r', el), zona = $('.lin-add', el);
+  const subBase = (p) => {
+    const d = disp(p);
+    if (o.modo === 'restar') return 'Disponible: ' + num(d);
+    return d != null ? 'Ahora hay: ' + num(d) : subProd(p);
+  };
+  function lineaHtml(l, i) {
+    const p = S.idx[l.id];
+    if (!p) return '';
+    return html`<li class="lin" data-i="${i}">
+      <span class="prod-ico">${iconoProd(p, 30)}</span>
+      <div style="min-width:0"><div class="lin-n">${p.nombre}</div><div class="lin-s" data-sub>${subBase(p)}</div></div>
+      <button type="button" class="icon-btn" data-quitar aria-label="Quitar ${p.nombre}">${ico('x')}</button>
+      <div class="lin-ctl">
+        <div class="paso"><button type="button" data-menos aria-label="Una menos">${ico('minus')}</button><input type="text" inputmode="numeric" pattern="[0-9]*" value="${l.cant}" data-cant aria-label="Cantidad de ${p.nombre}"><button type="button" data-mas aria-label="Una más">${ico('plus')}</button></div>
+        ${o.precio ? html`<label class="precio"><span class="muted">$</span><input type="text" inputmode="decimal" value="${l.precio}" data-precio placeholder="0" aria-label="Precio de ${p.nombre}"></label><span class="lin-sub cifras" data-sub-total></span>` : ''}
+      </div>
+    </li>`;
+  }
+  function marcar(li, l) {
+    const p = S.idx[l.id], d = p ? disp(p) : null;
+    const mal = o.modo === 'restar' && d != null && l.cant > d;
+    li.classList.toggle('mal', mal);
+    const s = $('[data-sub]', li);
+    if (s) { s.classList.toggle('mal', mal); s.textContent = mal ? 'Solo hay ' + num(d) : subBase(p); }
+    const st = $('[data-sub-total]', li);
+    if (st) st.textContent = dinero(l.cant * decimal(l.precio));
+    if (o.alCambiar) o.alCambiar();
+  }
+  function pintarLineas() {
+    poner(lista, L.map(lineaHtml));
+    $$('.lin', lista).forEach((li) => marcar(li, L[+li.dataset.i]));
+    if (!L.length) poner(lista, html`<li class="t-peq" style="padding:6px 2px">${o.vacio || 'Todavía no agregas productos.'}</li>`);
+    if (o.alCambiar) o.alCambiar();
+  }
+  function agregar(id, cant) {
+    const p = S.idx[id];
+    if (!p || L.some((l) => l.id === id) || L.length >= max) return;
+    L.push({ id, cant: cant || 1, precio: o.precio ? (p.precio ? String(p.precio) : '') : undefined });
+    pintarLineas();
+    const li = lista.lastElementChild;
+    if (li && li.scrollIntoView) li.scrollIntoView({ block: 'nearest' });
+  }
+  function candidatos() {
+    const ya = new Set(L.map((l) => l.id));
+    return S.est.productos.filter((p) => p.activo && !ya.has(p.id) && o.cand(p) && coincide(p.nombre + ' ' + CATS[p.cat], q.value)).sort(ordenProductos);
+  }
+  function pintarRes() {
+    if (L.length >= max) { res.hidden = false; poner(res, html`<li class="nada">Llegaste al máximo de ${max} productos por operación.</li>`); return; }
+    const c = candidatos();
+    res.hidden = false;
+    poner(res, c.length ? c.slice(0, 40).map((p) => html`<li role="option"><button type="button" data-add="${p.id}"><span class="prod-ico" style="width:38px;height:38px">${iconoProd(p, 28)}</span><span class="prod-main"><span class="prod-n">${p.nombre}</span><span class="prod-s">${subBase(p)}</span></span></button></li>`)
+      : html`<li class="nada">${norm(q.value) ? 'Ningún producto coincide.' : (o.sinCand || 'No hay productos disponibles.')}</li>`);
+  }
+  lista.addEventListener('click', (ev) => {
+    const li = ev.target.closest('.lin');
+    if (!li) return;
+    const i = +li.dataset.i, l = L[i];
+    if (ev.target.closest('[data-quitar]')) { L.splice(i, 1); pintarLineas(); return; }
+    const inp = $('[data-cant]', li);
+    if (ev.target.closest('[data-menos]')) { l.cant = Math.max(1, l.cant - 1); inp.value = l.cant; marcar(li, l); }
+    if (ev.target.closest('[data-mas]')) { l.cant = Math.min(99999, l.cant + 1); inp.value = l.cant; marcar(li, l); }
+  });
+  lista.addEventListener('input', (ev) => {
+    const li = ev.target.closest('.lin');
+    if (!li) return;
+    const l = L[+li.dataset.i];
+    if (ev.target.matches('[data-cant]')) l.cant = entero(ev.target.value);
+    if (ev.target.matches('[data-precio]')) l.precio = ev.target.value;
+    marcar(li, l);
+  });
+  q.addEventListener('focus', pintarRes);
+  q.addEventListener('click', pintarRes);
+  q.addEventListener('input', pintarRes);
+  q.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); const c = candidatos()[0]; if (c) { agregar(c.id); q.value = ''; res.hidden = true; } }
+    if (ev.key === 'Escape' && !res.hidden) { ev.stopPropagation(); res.hidden = true; }
+  });
+  res.addEventListener('mousedown', (ev) => ev.preventDefault());
+  res.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-add]');
+    if (b) { agregar(b.dataset.add); q.value = ''; res.hidden = true; }
+  });
+  document.addEventListener('click', function fuera(ev) {
+    if (!el.isConnected) { document.removeEventListener('click', fuera); return; }
+    if (!zona.contains(ev.target)) res.hidden = true;
+  });
+  pintarLineas();
+  return {
+    el,
+    lineas: () => L.map((l) => (o.precio ? { id: l.id, cant: l.cant, precio: decimal(l.precio) } : { id: l.id, cant: l.cant })),
+    total: () => sumar(L, (l) => l.cant * decimal(l.precio)),
+    cuantas: () => L.length,
+    validar() {
+      if (!L.length) return 'Agrega al menos un producto.';
+      for (const l of L) {
+        const p = S.idx[l.id], nom = p ? p.nombre : 'un producto';
+        if (!p) return 'Un producto ya no existe. Quítalo de la lista.';
+        if (l.cant < 1) return 'Pon una cantidad en ' + nom + '.';
+        if (o.modo === 'restar' && l.cant > disp(p)) return 'No alcanza ' + nom + ': solo hay ' + num(disp(p)) + '.';
+        if (o.precio && !(decimal(l.precio) > 0)) return 'Falta el precio de ' + nom + '.';
+      }
+      return '';
+    },
+    agregar
+  };
+}
+
+/* ───────── formularios de movimiento ───────── */
+const FORMAS = {
+  entrada: { titulo: 'Registrar entrada', op: 'mov.entrada', loc: 'local', modo: 'sumar', motivos: ['produccion', 'compra', 'otro'], ok: 'Guardar entrada', cand: () => true, ayuda: 'Suma al local lo que se fabricó o se compró.' },
+  salida: { titulo: 'Registrar salida', op: 'mov.salida', loc: 'local', modo: 'restar', motivos: ['uso', 'merma', 'otro'], ok: 'Guardar salida', cand: (p) => p.stock_local > 0, ayuda: 'Resta del local lo que se usó o se perdió. Para mandar a la tienda usa “Enviar a tienda”.', sinCand: 'No hay productos con existencias en el local.' },
+  venta: { titulo: 'Registrar venta', op: 'mov.venta', loc: 'tienda', modo: 'restar', precio: true, venta: true, ok: 'Registrar venta', cand: (p) => p.stock_tienda > 0, sinCand: 'No hay productos con existencias en la tienda.' },
+  devolucion: { titulo: 'Devolución de cliente', op: 'mov.devolucion', loc: 'tienda', modo: 'sumar', precio: true, ok: 'Guardar devolución', cand: () => true, ayuda: 'La base regresa a la tienda y el monto se resta de las ventas.' },
+  merma: { titulo: 'Merma en tienda', op: 'mov.merma', loc: 'tienda', modo: 'restar', ok: 'Guardar merma', cand: (p) => p.stock_tienda > 0, notaEt: '¿Qué pasó?', ayuda: 'Para daños o pérdidas en la tienda.', sinCand: 'No hay productos con existencias en la tienda.' },
+  envio: { titulo: 'Enviar a la tienda', op: 'traspaso.enviar', loc: 'local', modo: 'restar', ok: 'Enviar a la tienda', cand: (p) => p.stock_local > 0, ayuda: 'Las piezas salen del local ahora y entran a la tienda cuando alguien confirme que llegaron.', sinCand: 'No hay productos con existencias en el local.' },
+  pedido: { titulo: 'Pedir al local', op: 'pedido.crear', loc: 'tienda', modo: 'sumar', ok: 'Enviar pedido', cand: () => true, ayuda: 'El local verá tu pedido y preparará el envío.' }
+};
+const waLink = (tel, texto) => 'https://wa.me/' + (tel || '') + '?text=' + encodeURIComponent(texto);
+const lineasTexto = (ls) => ls.map((l) => '• ' + l.cant + ' × ' + nombreProd(l.id)).join('\n');
+
+function abrirForma(tipo, o) {
+  o = o || {};
+  if (tipo === 'conteo') return abrirConteo();
+  const f = FORMAS[tipo];
+  if (!f) return;
+  const cid = nuevoCid();
+  let motivo = f.motivos ? f.motivos[0] : '', pago = 'efectivo';
+  const ed = editorLineas({
+    modo: f.modo, loc: f.loc || S.rol, precio: f.precio, cand: f.cand, inicial: o.inicial, sinCand: f.sinCand,
+    alCambiar: () => { const t = $('#f-total'); if (t) t.textContent = dinero(ed ? ed.total() : 0); }
+  });
+  const d = dialogo({
+    titulo: f.titulo,
+    clase: 'ancho',
+    cuerpo: html`
+      ${f.ayuda ? html`<p class="t-peq" style="margin-bottom:14px">${f.ayuda}</p>` : ''}
+      ${tipo === 'pedido' && bajosDe('tienda').length ? html`<div class="aviso warn" style="margin-bottom:14px;align-items:center">${ico('alerta')}<span class="grow">${plural(bajosDe('tienda').length, 'producto está bajo', 'productos están bajos')} en la tienda.</span><button type="button" class="btn btn-s btn-g" id="f-bajos">Agregarlos</button></div>` : ''}
+      ${f.motivos ? html`<div class="campo"><span class="lbl">Motivo</span><div class="opciones" id="f-motivos">${f.motivos.map((m) => html`<button type="button" class="opcion" data-motivo="${m}" aria-pressed="${String(m === motivo)}">${MOTIVOS[m]}</button>`)}</div></div>` : ''}
+      <div id="f-ed"></div>
+      ${f.precio ? html`<div class="total-b"><span>Total</span><b id="f-total">${dinero(0)}</b></div>` : ''}
+      ${f.venta ? html`<label class="campo"><span class="lbl">Cliente (opcional)</span><input class="inp" id="f-cliente" maxlength="60" placeholder="Nombre o referencia" autocomplete="off"></label>
+        <div class="campo"><span class="lbl">Forma de pago</span><div class="opciones g4" id="f-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>` : ''}
+      <label class="campo"><span class="lbl">${f.notaEt || 'Nota (opcional)'}</span><textarea class="inp" id="f-nota" rows="2" maxlength="200" placeholder="${tipo === 'envio' ? 'Ej. sale en la camioneta de las 4' : 'Escribe algo que ayude a recordar'}"></textarea></label>
+      <p class="err" id="f-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="f-ok">${f.ok}</button>`
+  });
+  $('#f-ed', d.el).appendChild(ed.el);
+  const bj = $('#f-bajos', d.el);
+  if (bj) bj.addEventListener('click', () => { bajosDe('tienda').forEach((p) => ed.agregar(p.id, Math.max(1, p.min_tienda * 2 - p.stock_tienda))); bj.disabled = true; });
+  if (f.precio) $('#f-total', d.el).textContent = dinero(ed.total());
+  const grupo = (sel, attr, fn) => {
+    const cont = $(sel, d.el);
+    if (!cont) return;
+    cont.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[' + attr + ']');
+      if (!b) return;
+      fn(b.getAttribute(attr));
+      $$('button', cont).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    });
+  };
+  grupo('#f-motivos', 'data-motivo', (v) => { motivo = v; });
+  grupo('#f-pagos', 'data-pago', (v) => { pago = v; });
+  const btn = $('#f-ok', d.el), err = $('#f-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const msg = ed.validar();
+    if (msg) throw new ErrorApi({ mensaje: msg });
+    const cuerpo = { op: f.op, cid, lineas: ed.lineas(), nota: $('#f-nota', d.el).value.trim() };
+    if (f.motivos) cuerpo.motivo = motivo;
+    if (f.venta) { cuerpo.cliente = $('#f-cliente', d.el).value.trim(); cuerpo.pago = pago; }
+    if (o.pedido) cuerpo.pedido = o.pedido;
+    const res = await op(cuerpo);
+    d.cerrar();
+    exitoForma(tipo, res, cuerpo);
+  }));
+  return d;
+}
+
+async function deshacerOp(grupo) {
+  try { await op({ op: 'mov.anular', grupo, motivo: 'Deshecho al momento' }); toast('Operación deshecha.'); } catch (e) { toast(e.message, { tipo: 'error' }); }
+}
+function exitoForma(tipo, res, cuerpo) {
+  const e = S.est.negocio;
+  const deshacer = res.grupo ? { texto: 'Deshacer', fn: () => deshacerOp(res.grupo) } : null;
+  if (tipo === 'venta') toast('Venta registrada · ' + dinero(res.total), { accion: deshacer });
+  else if (tipo === 'devolucion') toast('Devolución guardada · ' + dinero(res.total), { accion: deshacer });
+  else if (tipo === 'entrada' || tipo === 'salida' || tipo === 'merma') toast('Guardado · ' + plural(res.piezas, 'pieza', 'piezas'), { accion: deshacer });
+  else if (tipo === 'envio') {
+    const texto = 'Bases Box Tepic · Envío a la tienda\n' + lineasTexto(cuerpo.lineas) + '\nTotal: ' + plural(res.piezas, 'pieza', 'piezas') + '.\nConfírmalo en el inventario cuando llegue.';
+    toast('Envío creado · ' + plural(res.piezas, 'pieza', 'piezas') + ' en camino', { accion: { texto: 'Avisar por WhatsApp', href: waLink(e.telTienda, texto) } });
+  } else if (tipo === 'pedido') {
+    const texto = 'Bases Box Tepic · Pedido de la tienda\n' + lineasTexto(cuerpo.lineas) + (cuerpo.nota ? '\nNota: ' + cuerpo.nota : '') + '\nRevísalo en el inventario.';
+    toast('Pedido enviado al local', { accion: { texto: 'Avisar por WhatsApp', href: waLink(e.telLocal, texto) } });
+  }
+}
+
+/* ───────── conteo físico general: todos los productos en una lista ───────── */
+function abrirConteo() {
+  const loc = S.rol, cid = nuevoCid();
+  const vals = {};
+  let cat = 'todo';
+  const sist = (p) => (loc === 'local' ? p.stock_local : p.stock_tienda);
+  const d = dialogo({
+    titulo: 'Conteo físico',
+    clase: 'ancho',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:12px">Escribe cuántas piezas contaste de verdad en ${loc === 'local' ? 'el local' : 'la tienda'}. Lo que dejes en blanco no se toca. El sistema se ajusta a tus números y cada ajuste queda registrado.</p>
+      <div class="buscar">${ico('buscar')}<input class="inp" id="cn-q" type="search" placeholder="Buscar producto" autocomplete="off" aria-label="Buscar producto"></div>
+      <div class="chips" id="cn-chips" style="margin:10px 0 12px"></div>
+      <div class="cnt-lista" id="cn-lista"></div>
+      <label class="campo" style="margin-top:14px"><span class="lbl">Nota (opcional)</span><textarea class="inp" id="cn-nota" rows="2" maxlength="140" placeholder="Ej. conteo de fin de mes"></textarea></label>
+      <p class="err" id="cn-err" hidden></p>`,
+    pie: html`<span class="resumen" id="cn-res"></span><button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="cn-ok">Guardar conteo</button>`
+  });
+  const cambios = () => S.est.productos.filter((p) => p.activo && vals[p.id] !== undefined && vals[p.id] !== '' && Number(vals[p.id]) !== sist(p)).map((p) => ({ id: p.id, contado: Number(vals[p.id]) }));
+  const resumen = () => { const n = cambios().length; $('#cn-res', d.el).textContent = n ? plural(n, 'producto con diferencia', 'productos con diferencia') : 'Sin diferencias todavía'; };
+  const chips = () => poner($('#cn-chips', d.el), html`${[['todo', 'Todo'], ['base', 'Bases'], ['material', 'Materiales'], ['accesorio', 'Accesorios']].map(([k, t]) => html`<button type="button" class="chip" data-cat="${k}" aria-pressed="${String(cat === k)}">${t}</button>`)}`);
+  const filas = () => {
+    const q = $('#cn-q', d.el).value;
+    let lista = S.est.productos.filter((p) => p.activo && (cat === 'todo' || p.cat === cat) && (!q || coincide(p.nombre + ' ' + CATS[p.cat], q))).sort(ordenProductos);
+    let ult = '';
+    const out = [];
+    lista.forEach((p) => {
+      const m = p.cat === 'base' ? medidaDe(p.medida) : null;
+      const g = !norm(q) ? (p.cat === 'base' ? (m ? m.nombre + ' · ' + m.dims : 'Bases') : CATS[p.cat]) : '';
+      if (g && g !== ult) { ult = g; out.push(html`<div class="cnt-h">${g}</div>`); }
+      const v = vals[p.id];
+      out.push(html`<div class="cnt ${v !== undefined && v !== '' && Number(v) !== sist(p) ? 'cambio' : ''}" data-id="${p.id}"><span class="prod-ico" style="width:38px;height:38px">${iconoProd(p, 28)}</span><div class="grow"><div class="lin-n">${p.nombre}</div><div class="lin-s">En el sistema: ${num(sist(p))}</div></div><input class="cnt-in" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="${sist(p)}" value="${v === undefined ? '' : v}" aria-label="Contado de ${p.nombre}"></div>`);
+    });
+    poner($('#cn-lista', d.el), out.length ? out : html`<div class="vacio" style="padding:22px"><b>Nada coincide</b><span>Prueba con otra palabra.</span></div>`);
+  };
+  chips(); filas(); resumen();
+  $('#cn-q', d.el).addEventListener('input', filas);
+  $('#cn-chips', d.el).addEventListener('click', (ev) => { const b = ev.target.closest('[data-cat]'); if (b) { cat = b.dataset.cat; chips(); filas(); } });
+  $('#cn-lista', d.el).addEventListener('input', (ev) => {
+    const fila = ev.target.closest('.cnt');
+    if (!fila || !ev.target.matches('.cnt-in')) return;
+    const limpio = ev.target.value.replace(/\D/g, '').slice(0, 5);
+    if (limpio !== ev.target.value) ev.target.value = limpio;
+    vals[fila.dataset.id] = limpio;
+    const p = S.idx[fila.dataset.id];
+    fila.classList.toggle('cambio', limpio !== '' && Number(limpio) !== sist(p));
+    resumen();
+  });
+  const btn = $('#cn-ok', d.el), err = $('#cn-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const cs = cambios();
+    if (!cs.length) throw new ErrorApi({ mensaje: 'No hay diferencias: lo que escribiste coincide con el sistema.' });
+    const nota = $('#cn-nota', d.el).value.trim();
+    const trozos = [];
+    for (let i = 0; i < cs.length; i += Core.MAX_LINEAS) trozos.push(cs.slice(i, i + Core.MAX_LINEAS));
+    let hechos = 0;
+    for (let i = 0; i < trozos.length; i++) {
+      try {
+        await op({ op: 'mov.conteo', cid: cid + '-' + i, nota, lineas: trozos[i] });
+      } catch (e) {
+        if (e.code === 'sin_cambios') { hechos += trozos[i].length; continue; } // ese tramo ya estaba guardado
+        if (hechos) throw new ErrorApi({ mensaje: 'Se guardaron ' + hechos + ' de ' + cs.length + ' productos. ' + e.message + ' Vuelve a guardar: lo que ya quedó no se repite.' });
+        throw e;
+      }
+      hechos += trozos[i].length;
+    }
+    d.cerrar();
+    toast('Inventario ajustado · ' + plural(cs.length, 'producto', 'productos'));
+  }));
+}
+
+/* ───────── recibir mercancía ───────── */
+function formRecibir(id) {
+  const t = S.est.traspasos.find((x) => x.id === id);
+  if (!t || t.estado !== 'en_transito') { toast('Ese envío ya no está en camino.'); return; }
+  const cid = nuevoCid();
+  const rec = {};
+  t.lineas.forEach((l) => { rec[l.id] = l.cant; });
+  const d = dialogo({
+    titulo: 'Recibir mercancía',
+    clase: 'ancho',
+    cuerpo: html`<p style="margin-bottom:4px"><b>Salió ${hace(t.ts)}</b>${t.nota ? ' · ' + t.nota : ''}</p><p class="t-peq" style="margin-bottom:14px">Revisa que cada pieza haya llegado. Si falta o llegó dañada, corrige el número y anota qué pasó.</p>
+      <ul class="lin-lista">${t.lineas.map((l) => html`<li class="lin" data-id="${l.id}">
+        <span class="prod-ico">${S.idx[l.id] ? iconoProd(S.idx[l.id], 30) : ''}</span>
+        <div style="min-width:0"><div class="lin-n">${nombreProd(l.id)}</div><div class="lin-s" data-sub>Enviadas: ${num(l.cant)}</div></div><span></span>
+        <div class="lin-ctl"><div class="paso"><button type="button" data-menos aria-label="Una menos">${ico('minus')}</button><input type="text" inputmode="numeric" value="${l.cant}" data-cant aria-label="Recibidas de ${nombreProd(l.id)}"><button type="button" data-mas aria-label="Una más">${ico('plus')}</button></div><span class="t-peq">de ${num(l.cant)}</span></div>
+      </li>`)}</ul>
+      <label class="campo"><span class="lbl" id="r-nota-et">Nota (obligatoria si hay diferencia)</span><textarea class="inp" id="r-nota" rows="2" maxlength="200" placeholder="Ej. llegó una base rota"></textarea></label>
+      <p class="err" id="r-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="r-ok">${ico('check')}Confirmar recibido</button>`
+  });
+  const lista = $('.lin-lista', d.el);
+  const marcar = (li) => {
+    const l = t.lineas.find((x) => x.id === li.dataset.id), r = rec[l.id], dif = r !== l.cant;
+    li.classList.toggle('mal', dif);
+    const s = $('[data-sub]', li);
+    s.classList.toggle('mal', dif);
+    s.textContent = dif ? (r < l.cant ? 'Faltan ' + (l.cant - r) + ' de ' + num(l.cant) : 'No puede ser más de lo enviado') : 'Enviadas: ' + num(l.cant);
+  };
+  lista.addEventListener('click', (ev) => {
+    const li = ev.target.closest('.lin');
+    if (!li) return;
+    const l = t.lineas.find((x) => x.id === li.dataset.id), inp = $('[data-cant]', li);
+    if (ev.target.closest('[data-menos]')) rec[l.id] = Math.max(0, rec[l.id] - 1);
+    else if (ev.target.closest('[data-mas]')) rec[l.id] = Math.min(l.cant, rec[l.id] + 1);
+    else return;
+    inp.value = rec[l.id];
+    marcar(li);
+  });
+  lista.addEventListener('input', (ev) => {
+    const li = ev.target.closest('.lin');
+    if (!li || !ev.target.matches('[data-cant]')) return;
+    rec[li.dataset.id] = entero(ev.target.value);
+    marcar(li);
+  });
+  const btn = $('#r-ok', d.el), err = $('#r-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const nota = $('#r-nota', d.el).value.trim();
+    const dif = t.lineas.some((l) => rec[l.id] !== l.cant);
+    if (t.lineas.some((l) => rec[l.id] > l.cant)) throw new ErrorApi({ mensaje: 'Lo recibido no puede ser más de lo enviado.' });
+    if (dif && nota.length < 3) { $('#r-nota', d.el).focus(); throw new ErrorApi({ mensaje: 'Anota qué pasó con la diferencia (faltante o daño).' }); }
+    const res = await op({ op: 'traspaso.recibir', cid, id, nota, lineas: t.lineas.map((l) => ({ id: l.id, recibida: rec[l.id] })) });
+    d.cerrar();
+    toast(res.dif ? 'Recibido con diferencias · ' + plural(res.piezas, 'pieza', 'piezas') : 'Mercancía recibida · ' + plural(res.piezas, 'pieza', 'piezas'));
+  }));
+}
+
+function recibirYa() {
+  const enT = S.est.traspasos.filter((t) => t.estado === 'en_transito');
+  if (!enT.length) { toast('No hay envíos en camino.'); return; }
+  if (enT.length === 1) { formRecibir(enT[0].id); return; }
+  const d = dialogo({ titulo: 'Envíos en camino', cuerpo: html`<p class="t-peq" style="margin-bottom:10px">Elige cuál llegó.</p><div class="card flat"><ul class="lista">${enT.map(tarjetaEnvio)}</ul></div>` });
+  d.el.addEventListener('click', (ev) => { if (ev.target.closest('[data-act="traspaso"]')) d.cerrar(); });
+}
+
+/* ───────── detalle de envío, pedido y operación ───────── */
+function abrirTraspaso(id) {
+  const t = S.est.traspasos.find((x) => x.id === id);
+  if (!t) return;
+  const [txt, cl] = t.estado === 'recibido' && t.dif ? ['Con diferencias', 'warn'] : ESTADO_TRASP[t.estado];
+  const esLocal = S.rol === 'local';
+  const abierto = t.estado === 'en_transito';
+  const d = dialogo({
+    titulo: 'Envío a la tienda',
+    clase: 'ancho',
+    cuerpo: html`<div class="sep" style="margin-bottom:12px"><span class="pill ${cl}">${txt}</span><span class="t-peq">Salió ${hace(t.ts)}</span></div>
+      <div class="card flat" style="margin-bottom:14px"><ul class="lista">${t.lineas.map((l) => html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${S.idx[l.id] ? iconoProd(S.idx[l.id], 28) : ''}</span><div class="grow"><div class="item-t">${nombreProd(l.id)}</div></div><div style="text-align:right"><b class="cifras" style="font:700 18px var(--f-etiqueta)">${num(t.estado === 'recibido' ? l.recibida : l.cant)}</b>${t.estado === 'recibido' && l.recibida !== l.cant ? html`<div class="t-peq" style="color:var(--warn)">de ${num(l.cant)} enviadas</div>` : ''}</div></li>`)}</ul></div>
+      <dl class="kv">
+        ${t.nota ? html`<dt>Nota del envío</dt><dd>${t.nota}</dd>` : ''}
+        ${t.estado === 'recibido' ? html`<dt>Recibido</dt><dd>${hace(t.recibido_ts)}</dd>` : ''}
+        ${t.nota_recibo ? html`<dt>${t.estado === 'cancelado' ? 'Motivo' : 'Nota al recibir'}</dt><dd>${t.nota_recibo}</dd>` : ''}
+      </dl>
+      ${abierto && esLocal ? html`<div class="aviso" style="margin-top:14px">${ico('info')}<span>Si cancelas, las piezas regresan al inventario del local.</span></div>` : ''}`,
+    pie: abierto ? (esLocal ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-r" id="t-cancelar">Cancelar envío</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="t-recibir">${ico('check')}Recibir mercancía</button>`) : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+  });
+  const rc = $('#t-recibir', d.el);
+  if (rc) rc.addEventListener('click', () => { d.cerrar(); formRecibir(id); });
+  const cn = $('#t-cancelar', d.el);
+  if (cn) cn.addEventListener('click', async () => {
+    const motivo = await confirmar({ titulo: 'Cancelar envío', texto: 'Las piezas regresan al inventario del local.', ok: 'Cancelar envío', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Motivo', min: 3, error: 'Escribe por qué cancelas el envío.' } });
+    if (!motivo) return;
+    try { await op({ op: 'traspaso.cancelar', id, motivo }); d.cerrar(); toast('Envío cancelado. Las piezas volvieron al local.'); } catch (e) { toast(e.message, { tipo: 'error' }); }
+  });
+}
+
+function abrirPedido(id) {
+  const p = S.est.pedidos.find((x) => x.id === id);
+  if (!p) return;
+  const [txt, cl] = ESTADO_PED[p.estado];
+  const abierto = p.estado === 'pendiente';
+  const d = dialogo({
+    titulo: 'Pedido de la tienda',
+    clase: 'ancho',
+    cuerpo: html`<div class="sep" style="margin-bottom:12px"><span class="pill ${cl}">${txt}</span><span class="t-peq">Pedido ${hace(p.ts)}</span></div>
+      <div class="card flat" style="margin-bottom:14px"><ul class="lista">${p.lineas.map((l) => { const pr = S.idx[l.id]; return html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${pr ? iconoProd(pr, 28) : ''}</span><div class="grow"><div class="item-t">${nombreProd(l.id)}</div>${pr ? html`<div class="item-s">En local: ${num(pr.stock_local)} · En tienda: ${num(pr.stock_tienda)}</div>` : ''}</div><b class="cifras" style="font:700 18px var(--f-etiqueta)">${num(l.cant)}</b></li>`; })}</ul></div>
+      ${p.nota ? html`<dl class="kv"><dt>Nota</dt><dd>${p.nota}</dd></dl>` : ''}`,
+    pie: abierto ? (S.rol === 'local' ? html`<button type="button" class="btn btn-g" id="p-descartar">Descartar</button><button type="button" class="btn btn-p" id="p-surtir">${ico('camion')}Preparar envío</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-r" id="p-descartar">Cancelar pedido</button>`) : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+  });
+  const sr = $('#p-surtir', d.el);
+  if (sr) sr.addEventListener('click', () => {
+    d.cerrar();
+    const inicial = p.lineas.filter((l) => S.idx[l.id] && S.idx[l.id].activo && S.idx[l.id].stock_local > 0).map((l) => ({ id: l.id, cant: Math.min(l.cant, S.idx[l.id].stock_local) }));
+    if (!inicial.length) toast('Ninguno de esos productos tiene existencias en el local.', { tipo: 'error' });
+    abrirForma('envio', { inicial, pedido: id });
+  });
+  const ds = $('#p-descartar', d.el);
+  if (ds) ds.addEventListener('click', async () => {
+    const ok = await confirmar({ titulo: S.rol === 'local' ? 'Descartar pedido' : 'Cancelar pedido', texto: 'El pedido deja de estar pendiente.', ok: S.rol === 'local' ? 'Descartar' : 'Cancelar pedido', cancelar: 'Volver', peligro: true });
+    if (!ok) return;
+    try { await op({ op: 'pedido.cancelar', id }); d.cerrar(); toast('Pedido cancelado.'); } catch (e) { toast(e.message, { tipo: 'error' }); }
+  });
+}
+
+function buscarOperacion(grupo) {
+  const ls = S.hist.items.filter((m) => m.grupo === grupo);
+  const src = ls.length ? ls : S.est.recientes.filter((m) => m.grupo === grupo);
+  return src.length ? agrupar(src)[0] : null;
+}
+function abrirOperacion(grupo) {
+  const g = buscarOperacion(grupo);
+  if (!g) return;
+  const t = TIPOS[g.tipo] || { t: g.tipo, ic: 'info', c: '' };
+  const conPrecio = g.tipo === 'venta' || g.tipo === 'devolucion';
+  const d = dialogo({
+    titulo: tituloOp(g),
+    cuerpo: html`<div class="sep" style="margin-bottom:12px"><span class="t-peq">${ROLES[g.rol].nombre} · ${hace(g.ts)}</span>${g.anulado ? html`<span class="pill bad">Anulada</span>` : ''}</div>
+      <div class="card flat" style="margin-bottom:14px"><ul class="lista">${g.lineas.map((m) => html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${S.idx[m.prod] ? iconoProd(S.idx[m.prod], 28) : ''}</span><div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}">${nombreProd(m.prod)}</div><div class="item-s">${m.loc === 'local' ? 'Local' : 'Tienda'}${conPrecio ? ' · ' + dinero(m.precio) + ' c/u' : ''}</div></div><b class="cifras" style="font:700 19px var(--f-etiqueta);color:${m.delta < 0 ? 'var(--bad)' : 'var(--ok)'}">${m.delta > 0 ? '+' : '−'}${num(Math.abs(m.delta))}</b></li>`)}</ul></div>
+      <dl class="kv">
+        ${conPrecio ? html`<dt>Total</dt><dd>${dinero(g.total)}</dd>` : ''}
+        ${g.cliente ? html`<dt>Cliente</dt><dd>${g.cliente}</dd>` : ''}
+        ${g.pago && g.tipo === 'venta' ? html`<dt>Pago</dt><dd>${PAGOS[g.pago] || g.pago}</dd>` : ''}
+        ${g.nota ? html`<dt>Nota</dt><dd>${g.nota}</dd>` : ''}
+        ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Local' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
+      </dl>`,
+    pie: puedeAnular(g) ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+  });
+  const an = $('#o-anular', d.el);
+  if (an) an.addEventListener('click', async () => {
+    const motivo = await confirmar({ titulo: 'Anular operación', texto: 'El inventario vuelve a como estaba antes. La operación queda en el historial marcada como anulada.', ok: 'Anular', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Motivo', min: 3, error: 'Escribe el motivo de la anulación.' } });
+    if (!motivo) return;
+    try { await op({ op: 'mov.anular', grupo, motivo }); d.cerrar(); toast('Operación anulada.'); S.hist.rev = null; if (S.tab === 'historial') cargarHistorial(true); } catch (e) { toast(e.message, { tipo: 'error' }); }
+  });
+}
+
+/* ───────── producto: detalle y formularios ───────── */
+function abrirProducto(id) {
+  const p = S.idx[id];
+  if (!p) return;
+  const med = p.cat === 'base' ? medidaDe(p.medida) : null, tono = p.cat === 'base' ? tonoDe(p.tono) : null;
+  const esLocal = S.rol === 'local';
+  const cam = S.camino[p.id] || 0;
+  const tile = (et, v, mn, loc) => { const nv = loc ? nivel(p, loc) : 'ok'; return html`<div class="kpi"><span class="t-sec">${et}</span><span class="num-g cifras" style="color:${nv === 'agotado' ? 'var(--bad)' : nv === 'bajo' ? 'var(--warn)' : 'inherit'}">${num(v)}</span><small>${loc ? (nv === 'agotado' ? 'Agotado' : nv === 'bajo' ? 'Stock bajo' : mn > 0 ? 'Mínimo ' + num(mn) : 'Sin mínimo') : 'Sin confirmar'}</small></div>`; };
+  const pie = !p.activo ? (esLocal ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pd-reactivar">Reactivar producto</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`)
+    : esLocal ? html`<button type="button" class="btn btn-g" id="pd-editar">${ico('editar')}Editar</button><button type="button" class="btn btn-g" id="pd-entrada">${ico('entrada')}Entrada</button><button type="button" class="btn btn-p" id="pd-enviar">${ico('camion')}Enviar a tienda</button>`
+    : html`<button type="button" class="btn btn-g" id="pd-pedir">${ico('pedido')}Pedir al local</button><button type="button" class="btn btn-p" id="pd-vender">${ico('recibo')}Vender</button>`;
+  const d = dialogo({
+    titulo: p.nombre,
+    clase: 'ancho',
+    cuerpo: html`<div class="fila" style="gap:14px;margin-bottom:16px"><span class="prod-ico" style="width:68px;height:68px;border-radius:14px">${iconoProd(p, 52)}</span>
+        <div class="grow"><div class="t-peq">${CATS[p.cat].replace(/s$/, '')}${med ? ' · ' + med.nombre + ' ' + med.dims : ''}${tono ? ' · ' + tono.nombre : ''}</div><div class="num-g" style="margin-top:6px">${p.precio ? dinero(p.precio) : 'Sin precio'}</div></div>${p.activo ? '' : html`<span class="pill">Archivado</span>`}</div>
+      <div class="grid-kpi" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px">${tile('Local', p.stock_local, p.min_local, 'local')}${tile('Tienda', p.stock_tienda, p.min_tienda, 'tienda')}${tile('En camino', cam, 0, null)}</div>
+      <dl class="kv" style="margin-bottom:18px"><dt>Unidad</dt><dd>${p.unidad}</dd>${esLocal ? html`<dt>Costo</dt><dd>${p.costo ? dinero(p.costo) : '—'}</dd>${p.costo && p.precio ? html`<dt>Margen</dt><dd>${Math.round((1 - p.costo / p.precio) * 100)}%</dd>` : ''}` : ''}<dt>Mínimos</dt><dd>Local ${num(p.min_local)} · Tienda ${num(p.min_tienda)}</dd></dl>
+      <h3 class="t-sec" style="margin-bottom:8px">Últimos movimientos</h3>
+      <div class="card flat"><ul class="lista" id="pd-movs"><li class="item t-peq">Cargando…</li></ul></div>`,
+    pie
+  });
+  llamar('GET', '/movs', null, { prods: p.id, limite: 8 }).then((r) => {
+    const ul = $('#pd-movs', d.el);
+    if (!ul || !r.json.ok) return;
+    const ops = agrupar(r.json.items);
+    poner(ul, ops.length ? ops.map((g) => { const m = g.lineas.find((x) => x.prod === p.id) || g.lineas[0]; const t = TIPOS[g.tipo] || {}; return html`<li class="item" style="min-height:48px"><span class="ico-c ${g.anulado ? '' : t.c}" style="width:34px;height:34px">${ico(t.ic || 'info')}</span><div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}" style="font-size:15px">${tituloOp(g)}</div><div class="item-s">${hace(g.ts)} · ${ROLES[g.rol].corto}</div></div><b class="cifras" style="font:700 17px var(--f-etiqueta);color:${m.delta < 0 ? 'var(--bad)' : 'var(--ok)'}">${m.delta > 0 ? '+' : '−'}${num(Math.abs(m.delta))}</b></li>`; })
+      : html`<li class="item t-peq">Sin movimientos todavía.</li>`);
+  }).catch(() => { const ul = $('#pd-movs', d.el); if (ul) poner(ul, html`<li class="item t-peq">No se pudo cargar el historial.</li>`); });
+  const ir = (sel, fn) => { const b = $(sel, d.el); if (b) b.addEventListener('click', () => { d.cerrar(); fn(); }); };
+  ir('#pd-editar', () => formProducto(p));
+  ir('#pd-entrada', () => abrirForma('entrada', { inicial: [{ id: p.id, cant: 1 }] }));
+  ir('#pd-enviar', () => { if (p.stock_local < 1) toast('No hay existencias en el local para enviar.', { tipo: 'error' }); else abrirForma('envio', { inicial: [{ id: p.id, cant: 1 }] }); });
+  ir('#pd-pedir', () => abrirForma('pedido', { inicial: [{ id: p.id, cant: Math.max(1, p.min_tienda * 2 - p.stock_tienda) }] }));
+  ir('#pd-vender', () => { if (p.stock_tienda < 1) toast('No hay existencias en la tienda para vender.', { tipo: 'error' }); else abrirForma('venta', { inicial: [{ id: p.id, cant: 1, precio: p.precio ? String(p.precio) : '' }] }); });
+  const rx = $('#pd-reactivar', d.el);
+  if (rx) rx.addEventListener('click', async () => { try { await op({ op: 'producto.archivar', id: p.id, activo: true }); d.cerrar(); toast('Producto reactivado.'); } catch (e) { toast(e.message, { tipo: 'error' }); } });
+}
+
+function formProducto(p) {
+  const nuevo = !p;
+  const e = S.est;
+  const cid = nuevoCid();
+  let nombreManual = !nuevo, precioManual = !nuevo;
+  const sel = (id, lista, actual, vacio) => html`<select class="inp" id="${id}">${vacio ? html`<option value="">${vacio}</option>` : ''}${lista.map((x) => html`<option value="${x.id}" ${x.id === actual ? raw('selected') : ''}>${x.nombre}${x.dims ? ' · ' + x.dims : ''}</option>`)}</select>`;
+  const cat0 = nuevo ? 'base' : p.cat;
+  const d = dialogo({
+    titulo: nuevo ? 'Nuevo producto' : 'Editar producto',
+    clase: 'ancho',
+    cuerpo: html`
+      ${nuevo ? html`<label class="campo"><span class="lbl">Categoría</span><select class="inp" id="pf-cat">${Object.keys(CATS).map((k) => html`<option value="${k}" ${k === cat0 ? raw('selected') : ''}>${CATS[k].replace(/s$/, '')}</option>`)}</select></label>` : ''}
+      <div class="grid2" id="pf-base" ${cat0 === 'base' ? '' : raw('hidden')}>
+        <label class="campo"><span class="lbl">Medida</span>${sel('pf-medida', e.medidas, p ? p.medida : '', 'Sin medida')}</label>
+        <label class="campo"><span class="lbl">Tono</span>${sel('pf-tono', e.tonos, p ? p.tono : '', 'Sin tono')}</label>
+      </div>
+      <label class="campo"><span class="lbl">Nombre</span><input class="inp" id="pf-nombre" maxlength="80" value="${p ? p.nombre : ''}" autocomplete="off" placeholder="Ej. Base Queen · Gris"></label>
+      <div class="grid2">
+        <label class="campo"><span class="lbl">Precio de venta ($)</span><input class="inp" id="pf-precio" inputmode="decimal" value="${p && p.precio ? p.precio : ''}" placeholder="0"></label>
+        <label class="campo"><span class="lbl">Costo ($)</span><input class="inp" id="pf-costo" inputmode="decimal" value="${p && p.costo ? p.costo : ''}" placeholder="0"></label>
+        <label class="campo"><span class="lbl">Unidad</span><input class="inp" id="pf-unidad" maxlength="12" value="${p ? p.unidad : 'pza'}" placeholder="pza, hoja, m…"></label>
+        <span></span>
+        <label class="campo"><span class="lbl">Mínimo en local</span><input class="inp" id="pf-minl" inputmode="numeric" value="${p ? p.min_local : 2}"></label>
+        <label class="campo"><span class="lbl">Mínimo en tienda</span><input class="inp" id="pf-mint" inputmode="numeric" value="${p ? p.min_tienda : 1}"></label>
+        ${nuevo ? html`<label class="campo"><span class="lbl">Existencias en local</span><input class="inp" id="pf-sl" inputmode="numeric" value="0"></label><label class="campo"><span class="lbl">Existencias en tienda</span><input class="inp" id="pf-st" inputmode="numeric" value="0"></label>` : ''}
+      </div>
+      <p class="ayuda" style="margin-top:-6px">Te avisamos cuando las existencias bajen del mínimo. Pon 0 si no quieres alertas.</p>
+      ${!nuevo ? html`<div class="aviso warn" style="margin-top:14px">${ico('info')}<span>Para cambiar las existencias usa un <b>conteo físico</b>, así queda registrado. ${p.activo ? 'Para dejar de usar este producto, déjalo en cero y archívalo.' : ''}</span></div>` : ''}
+      <p class="err" id="pf-err" hidden></p>`,
+    pie: html`${!nuevo && p.activo ? html`<button type="button" class="btn btn-g" id="pf-archivar" style="flex:0 1 auto">${ico('archivo')}Archivar</button>` : ''}<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="pf-ok">${nuevo ? 'Crear producto' : 'Guardar cambios'}</button>`
+  });
+  const $d = (s) => $(s, d.el);
+  const sugerir = () => {
+    const cat = nuevo ? $d('#pf-cat').value : p.cat;
+    if (cat !== 'base') return;
+    const m = e.medidas.find((x) => x.id === $d('#pf-medida').value), t = e.tonos.find((x) => x.id === $d('#pf-tono').value);
+    if (!nombreManual && (m || t)) $d('#pf-nombre').value = m && t ? 'Base ' + m.nombre + ' · ' + t.nombre : 'Base ' + (m ? m.nombre : t.nombre);
+    if (!precioManual && m && m.precio) $d('#pf-precio').value = m.precio;
+  };
+  if (nuevo) {
+    $d('#pf-cat').addEventListener('change', () => { $d('#pf-base').hidden = $d('#pf-cat').value !== 'base'; $d('#pf-unidad').value = $d('#pf-cat').value === 'base' ? 'pza' : $d('#pf-unidad').value; sugerir(); });
+    $d('#pf-nombre').addEventListener('input', () => { nombreManual = true; });
+    $d('#pf-precio').addEventListener('input', () => { precioManual = true; });
+  }
+  $d('#pf-medida').addEventListener('change', sugerir);
+  $d('#pf-tono').addEventListener('change', sugerir);
+  sugerir();
+  const btn = $d('#pf-ok'), err = $d('#pf-err');
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const cuerpo = {
+      nombre: $d('#pf-nombre').value.trim(), precio: decimal($d('#pf-precio').value), costo: decimal($d('#pf-costo').value),
+      unidad: $d('#pf-unidad').value.trim() || 'pza', min_local: entero($d('#pf-minl').value), min_tienda: entero($d('#pf-mint').value)
+    };
+    const cat = nuevo ? $d('#pf-cat').value : p.cat;
+    if (cat === 'base') { cuerpo.medida = $d('#pf-medida').value; cuerpo.tono = $d('#pf-tono').value; }
+    if (nuevo) {
+      Object.assign(cuerpo, { op: 'producto.crear', cid, cat, stock_local: entero($d('#pf-sl').value), stock_tienda: entero($d('#pf-st').value) });
+    } else Object.assign(cuerpo, { op: 'producto.editar', id: p.id });
+    await op(cuerpo);
+    d.cerrar();
+    toast(nuevo ? 'Producto creado.' : 'Cambios guardados.');
+  }));
+  const ar = $d('#pf-archivar');
+  if (ar) ar.addEventListener('click', async () => {
+    const ok = await confirmar({ titulo: 'Archivar producto', texto: p.nombre + ' dejará de aparecer en las listas. Sigue en el historial y puedes reactivarlo cuando quieras.', ok: 'Archivar', cancelar: 'Volver' });
+    if (!ok) return;
+    try { await op({ op: 'producto.archivar', id: p.id, activo: false }); d.cerrar(); toast('Producto archivado.'); } catch (er) { err.hidden = false; err.textContent = er.message; }
+  });
+}
+
+function formVariantes() {
+  const e = S.est, cid = nuevoCid();
+  const existentes = new Set(e.productos.map((p) => norm(p.nombre)));
+  const nombreDe = (m, t) => 'Base ' + m.nombre + ' · ' + t.nombre;
+  const d = dialogo({
+    titulo: 'Crear bases por medida y tono',
+    clase: 'ancho',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Marca las medidas y los tonos que fabricas. Se crea una base por cada combinación, con el precio de la medida. Las que ya existen se omiten.</p>
+      <div class="campo"><span class="lbl">Medidas</span>${e.medidas.map((m) => html`<div class="check-fila" style="margin-bottom:6px"><input type="checkbox" id="vm-${m.id}" data-med="${m.id}" checked><label for="vm-${m.id}">${m.nombre}<small>${m.dims}${m.precio ? ' · ' + dinero(m.precio) : ' · sin precio'}</small></label></div>`)}</div>
+      <div class="campo"><span class="lbl">Tonos</span><div class="grid2">${e.tonos.map((t) => html`<div class="check-fila" style="margin-bottom:0"><input type="checkbox" id="vt-${t.id}" data-ton="${t.id}" checked><label for="vt-${t.id}"><span class="mini-sw" style="background:${hexOk(t.hex)}"></span>${t.nombre}</label></div>`)}</div></div>
+      <div class="grid2"><label class="campo"><span class="lbl">Mínimo en local</span><input class="inp" id="vr-minl" inputmode="numeric" value="2"></label><label class="campo"><span class="lbl">Mínimo en tienda</span><input class="inp" id="vr-mint" inputmode="numeric" value="1"></label></div>
+      <div class="aviso" id="vr-res">${ico('info')}<span></span></div>
+      <p class="err" id="vr-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="vr-ok">Crear bases</button>`
+  });
+  const marcados = (attr) => $$('[' + attr + ']:checked', d.el).map((x) => x.getAttribute(attr));
+  const calc = () => {
+    const ms = e.medidas.filter((m) => marcados('data-med').includes(m.id)), ts = e.tonos.filter((t) => marcados('data-ton').includes(t.id));
+    let nuevas = 0, ya = 0;
+    ms.forEach((m) => ts.forEach((t) => { if (existentes.has(norm(nombreDe(m, t)))) ya++; else nuevas++; }));
+    $('#vr-res span', d.el).textContent = nuevas ? 'Se crearán ' + plural(nuevas, 'base', 'bases') + (ya ? ' (' + plural(ya, 'ya existe', 'ya existen') + ').' : '.') : 'Todas esas combinaciones ya existen.';
+    $('#vr-ok', d.el).disabled = !nuevas || nuevas > 60;
+    return nuevas;
+  };
+  d.el.addEventListener('change', calc);
+  calc();
+  const btn = $('#vr-ok', d.el), err = $('#vr-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const r = await op({ op: 'producto.variantes', cid, medidas: marcados('data-med'), tonos: marcados('data-ton'), min_local: entero($('#vr-minl', d.el).value), min_tienda: entero($('#vr-mint', d.el).value) });
+    d.cerrar();
+    toast('Se crearon ' + plural(r.creados, 'base', 'bases') + '.');
+  }));
+}
+
+/* ───────── ajustes del negocio ───────── */
+function formNegocio() {
+  const n = S.est.negocio;
+  const d = dialogo({
+    titulo: 'Datos del negocio',
+    cuerpo: html`<label class="campo"><span class="lbl">Nombre del negocio</span><input class="inp" id="n-nombre" maxlength="60" value="${n.nombre}"></label>
+      <label class="campo"><span class="lbl">WhatsApp del local</span><input class="inp" id="n-tl" inputmode="tel" value="${n.telLocal}" placeholder="523111234567"><span class="ayuda">Con la clave del país (52). La tienda lo usa para avisarte de sus pedidos.</span></label>
+      <label class="campo"><span class="lbl">WhatsApp de la tienda</span><input class="inp" id="n-tt" inputmode="tel" value="${n.telTienda}" placeholder="523111234567"><span class="ayuda">El local lo usa para avisar de sus envíos.</span></label>
+      <p class="err" id="n-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="n-ok">Guardar</button>`
+  });
+  const btn = $('#n-ok', d.el), err = $('#n-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    await op({ op: 'config.guardar', negocio: { nombre: $('#n-nombre', d.el).value, telLocal: $('#n-tl', d.el).value, telTienda: $('#n-tt', d.el).value } });
+    d.cerrar();
+    toast('Datos guardados.');
+  }));
+}
+
+function formMedidas() {
+  const e = S.est;
+  const filas = e.medidas.map((m) => Object.assign({}, m, { _orig: m.precio }));
+  const enUso = (id) => e.productos.some((p) => p.cat === 'base' && p.medida === id);
+  const d = dialogo({
+    titulo: 'Medidas y precios',
+    clase: 'ancho',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">El precio de cada medida se usa al crear bases nuevas. Los nombres de productos que ya existen no cambian.</p>
+      <div id="md-filas"></div>
+      <button type="button" class="btn btn-g btn-s" id="md-add">${ico('plus')}Agregar medida</button>
+      <label class="check-fila" style="margin-top:16px"><input type="checkbox" id="md-aplicar" checked><span style="flex:1;line-height:1.3">Aplicar los precios cambiados a las bases que ya existen<small>Solo afecta las bases de las medidas cuyo precio modificaste.</small></span></label>
+      <p class="err" id="md-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="md-ok">Guardar</button>`
+  });
+  const cont = $('#md-filas', d.el);
+  const pintar = () => poner(cont, filas.map((m, i) => html`<div class="fila-edit" data-i="${i}"><input class="inp" data-k="nombre" value="${m.nombre}" maxlength="30" placeholder="Nombre" aria-label="Nombre de la medida"><input class="inp" data-k="dims" value="${m.dims}" maxlength="24" placeholder="1.50 × 2.00 m" aria-label="Dimensiones"><input class="inp" data-k="precio" inputmode="decimal" value="${m.precio || ''}" placeholder="Precio $" aria-label="Precio"><button type="button" class="icon-btn" data-quitar aria-label="Quitar ${m.nombre}" ${enUso(m.id) ? raw('disabled title="Hay productos con esta medida"') : ''}>${ico('basura')}</button></div>`));
+  pintar();
+  cont.addEventListener('input', (ev) => { const fila = ev.target.closest('.fila-edit'); if (fila) filas[+fila.dataset.i][ev.target.dataset.k] = ev.target.value; });
+  cont.addEventListener('click', (ev) => { const b = ev.target.closest('[data-quitar]'); if (b && !b.disabled) { filas.splice(+b.closest('.fila-edit').dataset.i, 1); pintar(); } });
+  $('#md-add', d.el).addEventListener('click', () => { filas.push({ id: '', nombre: '', dims: '', precio: 0, _orig: 0 }); pintar(); const ins = $$('.fila-edit', cont); const ult = ins[ins.length - 1]; if (ult) $('input', ult).focus(); });
+  const btn = $('#md-ok', d.el), err = $('#md-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const usados = new Set(filas.map((m) => m.id).filter(Boolean));
+    const medidas = filas.map((m) => {
+      let id = m.id;
+      if (!id) { const base = slug(m.nombre); id = base; let n = 2; while (usados.has(id)) id = base.slice(0, 17) + '-' + n++; usados.add(id); }
+      return { id, nombre: String(m.nombre).trim(), dims: String(m.dims).trim(), precio: decimal(m.precio) };
+    });
+    const cambiadas = medidas.filter((m, i) => filas[i].id && decimal(filas[i]._orig) !== m.precio).map((m) => m.id);
+    await op({ op: 'config.guardar', medidas, aplicarPrecios: $('#md-aplicar', d.el).checked ? cambiadas : [] });
+    d.cerrar();
+    toast('Medidas guardadas.');
+  }));
+}
+
+function formTonos() {
+  const e = S.est;
+  const filas = e.tonos.map((t) => Object.assign({}, t));
+  const enUso = (id) => e.productos.some((p) => p.cat === 'base' && p.tono === id);
+  const d = dialogo({
+    titulo: 'Tonos',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Los tonos aparecen como un círculo de color en cada base.</p><div id="tn-filas"></div>
+      <button type="button" class="btn btn-g btn-s" id="tn-add">${ico('plus')}Agregar tono</button><p class="err" id="tn-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="tn-ok">Guardar</button>`
+  });
+  const cont = $('#tn-filas', d.el);
+  const pintar = () => poner(cont, filas.map((t, i) => html`<div class="fila-edit tono" data-i="${i}"><input type="color" data-k="hex" value="${hexOk(t.hex).toLowerCase()}" aria-label="Color de ${t.nombre}"><input class="inp" data-k="nombre" value="${t.nombre}" maxlength="24" placeholder="Nombre del tono" aria-label="Nombre del tono"><button type="button" class="icon-btn" data-quitar aria-label="Quitar ${t.nombre}" ${enUso(t.id) ? raw('disabled title="Hay productos con este tono"') : ''}>${ico('basura')}</button></div>`));
+  pintar();
+  cont.addEventListener('input', (ev) => { const fila = ev.target.closest('.fila-edit'); if (fila) filas[+fila.dataset.i][ev.target.dataset.k] = ev.target.value; });
+  cont.addEventListener('click', (ev) => { const b = ev.target.closest('[data-quitar]'); if (b && !b.disabled) { filas.splice(+b.closest('.fila-edit').dataset.i, 1); pintar(); } });
+  $('#tn-add', d.el).addEventListener('click', () => { filas.push({ id: '', nombre: '', hex: '#8A8D8F' }); pintar(); const ins = $$('.fila-edit', cont); const ult = ins[ins.length - 1]; if (ult) $('.inp', ult).focus(); });
+  const btn = $('#tn-ok', d.el), err = $('#tn-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const usados = new Set(filas.map((t) => t.id).filter(Boolean));
+    const tonos = filas.map((t) => {
+      let id = t.id;
+      if (!id) { const base = slug(t.nombre); id = base; let n = 2; while (usados.has(id)) id = base.slice(0, 17) + '-' + n++; usados.add(id); }
+      return { id, nombre: String(t.nombre).trim(), hex: hexOk(t.hex) };
+    });
+    await op({ op: 'config.guardar', tonos });
+    d.cerrar();
+    toast('Tonos guardados.');
+  }));
+}
+
+function formPin(reiniciarTienda) {
+  const d = dialogo({
+    titulo: reiniciarTienda ? 'Nuevo PIN para la tienda' : 'Cambiar mi PIN',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">${reiniciarTienda ? 'Escribe tu PIN para confirmar y el PIN nuevo que usará el dueño de la tienda. Su sesión actual se cerrará.' : 'Al cambiarlo se cierra tu sesión en los demás equipos.'}</p>
+      <label class="campo"><span class="lbl">${reiniciarTienda ? 'Tu PIN (dueño del local)' : 'PIN actual'}</span><input class="inp pin" id="pn-act" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">PIN nuevo (4 a 8 números)</span><input class="inp pin" id="pn-nvo" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">Repite el PIN nuevo</span><input class="inp pin" id="pn-rep" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <p class="err" id="pn-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="pn-ok">Guardar PIN</button>`
+  });
+  const btn = $('#pn-ok', d.el), err = $('#pn-err', d.el);
+  const enviar = () => guardando(btn, err, async () => {
+    const act = $('#pn-act', d.el).value, nvo = $('#pn-nvo', d.el).value, rep = $('#pn-rep', d.el).value;
+    if (nvo !== rep) throw new ErrorApi({ mensaje: 'Los dos PIN nuevos no coinciden.' });
+    await op(reiniciarTienda ? { op: 'pin.reiniciar', pinActual: act, pinNuevo: nvo } : { op: 'pin.cambiar', pinActual: act, pinNuevo: nvo });
+    d.cerrar();
+    toast(reiniciarTienda ? 'PIN de la tienda actualizado.' : 'PIN actualizado.');
+  });
+  btn.addEventListener('click', enviar);
+  d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enviar(); });
+}
+
+/* ───────── exportar ───────── */
+const csvCelda = (v) => { const s = v == null ? '' : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const aCsv = (filas) => '﻿' + filas.map((f) => f.map(csvCelda).join(',')).join('\r\n');
+const fechaArchivo = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const fechaISO = (ts) => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+async function descargar(nombre, contenido, tipo) {
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      const dl = await window.claude.use('downloads');
+      if (dl) { await dl.save({ filename: nombre, data: contenido }); toast('Archivo listo: ' + nombre); return; }
+    }
+  } catch (e) { if (e && (e.code === 'declined' || e.code === 'rate_limited')) return; }
+  const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
+  const a = document.createElement('a');
+  a.href = url; a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  toast('Descargando ' + nombre);
+}
+function exportarInventario() {
+  const e = S.est, loc = S.rol === 'local';
+  const cab = ['Producto', 'Categoría', 'Medida', 'Tono', 'Unidad', 'Precio', ...(loc ? ['Costo'] : []), 'Existencias local', 'Existencias tienda', 'En camino', 'Mínimo local', 'Mínimo tienda', 'Activo'];
+  const filas = e.productos.slice().sort(ordenProductos).map((p) => { const m = medidaDe(p.medida), t = tonoDe(p.tono); return [p.nombre, CATS[p.cat].replace(/s$/, ''), m ? m.nombre : '', t ? t.nombre : '', p.unidad, p.precio, ...(loc ? [p.costo] : []), p.stock_local, p.stock_tienda, S.camino[p.id] || 0, p.min_local, p.min_tienda, p.activo ? 'Sí' : 'No']; });
+  descargar('inventario-bases-box-' + fechaArchivo() + '.csv', aCsv([cab, ...filas]), 'text/csv;charset=utf-8');
+}
+async function traerMovimientos(max) {
+  const todos = [];
+  let antes = null;
+  do {
+    const r = await llamar('GET', '/movs', null, Object.assign({ limite: 500, anulaciones: 1 }, antes ? { antes } : {}));
+    if (!r.json.ok) throw new ErrorApi(r.json.error);
+    todos.push(...r.json.items);
+    antes = r.json.siguiente;
+  } while (antes && todos.length < (max || 100000));
+  return todos;
+}
+async function exportarMovimientos(btn) {
+  if (btn) btn.setAttribute('aria-busy', 'true');
+  try {
+    const movs = await traerMovimientos();
+    const cab = ['Fecha', 'Operación', 'Producto', 'Lugar', 'Cantidad', 'Precio', 'Responsable', 'Motivo', 'Nota', 'Cliente', 'Pago', 'Anulada', 'Folio'];
+    const filas = movs.map((m) => [fechaISO(m.ts), (TIPOS[m.tipo] ? TIPOS[m.tipo].t : m.tipo === 'anulacion' ? 'Anulación' : m.tipo), nombreProd(m.prod), m.loc === 'local' ? 'Local' : 'Tienda', m.delta, m.precio == null ? '' : m.precio, ROLES[m.rol].corto, MOTIVOS[m.motivo] || '', m.nota, m.cliente, PAGOS[m.pago] || '', m.anulado ? 'Sí' : '', m.grupo]);
+    await descargar('movimientos-bases-box-' + fechaArchivo() + '.csv', aCsv([cab, ...filas]), 'text/csv;charset=utf-8');
+  } catch (e) { toast(e.message, { tipo: 'error' }); } finally { if (btn) btn.removeAttribute('aria-busy'); }
+}
+async function respaldoCompleto(btn) {
+  if (btn) btn.setAttribute('aria-busy', 'true');
+  try {
+    const movs = await traerMovimientos();
+    const e = S.est;
+    const dato = { app: 'inventario-bases-box', version: Core.VERSION, creado: new Date().toISOString(), negocio: e.negocio, medidas: e.medidas, tonos: e.tonos, productos: e.productos, traspasos: e.traspasos, pedidos: e.pedidos, movimientos: movs };
+    await descargar('respaldo-bases-box-' + fechaArchivo() + '.json', JSON.stringify(dato, null, 1), 'application/json');
+  } catch (er) { toast(er.message, { tipo: 'error' }); } finally { if (btn) btn.removeAttribute('aria-busy'); }
+}
+
+/* ───────── MÁS ───────── */
+VISTAS.mas = {
+  armar: () => html`<div class="pila" data-vista="mas" id="v-mas"></div>`,
+  actualizar() {
+    const cont = $('#v-mas');
+    if (!cont) return;
+    const e = S.est, local = S.rol === 'local', tema = store.get(CLAVE_TEMA) || 'auto';
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const fila = (ic, t, s, act) => html`<li><button type="button" class="item" data-act="${act}"><span class="ico-c">${ico(ic)}</span><div class="grow"><div class="item-t">${t}</div>${s ? html`<div class="item-s">${s}</div>` : ''}</div>${ico('der', 'der')}</button></li>`;
+    poner(cont, html`
+      <div class="cabecera"><div><h1 class="t-pant">Más</h1><p class="t-peq" style="margin-top:8px">${e.negocio.nombre} · ${ROLES[S.rol].nombre}</p></div></div>
+      ${S.modo === 'local' ? html`<div class="aviso warn">${ico('alerta')}<div><b>Los datos están solo en este equipo.</b> El dueño de la otra parte del negocio no los verá. Para compartir el inventario entre los dos dueños hay que publicar la app con su servidor (mira el archivo README).</div></div>` : ''}
+      <section class="sec-mas"><span class="t-sec">Mi cuenta</span><div class="card flat"><ul class="lista">
+        ${fila('candado', 'Cambiar mi PIN', 'Cierra tu sesión en los demás equipos', 'pin-propio')}
+        ${local ? fila('tienda', 'Reiniciar el PIN de la tienda', 'Si el dueño de la tienda lo olvidó', 'pin-tienda') : ''}
+        ${local ? fila('candado', 'Código de recuperación', 'Genera uno nuevo si perdiste el anterior', 'codigo-nuevo') : ''}
+        ${fila('x', 'Cerrar sesión', '', 'salir')}
+      </ul></div></section>
+      ${local ? html`<section class="sec-mas"><span class="t-sec">Negocio y catálogo</span><div class="card flat"><ul class="lista">
+        ${fila('tienda', 'Datos del negocio y WhatsApp', e.negocio.nombre, 'negocio')}
+        ${fila('cubo', 'Medidas y precios', plural(e.medidas.length, 'medida', 'medidas'), 'medidas')}
+        ${fila('capas', 'Tonos', plural(e.tonos.length, 'tono', 'tonos'), 'tonos')}
+      </ul></div></section>` : ''}
+      <section class="sec-mas"><span class="t-sec">Datos</span><div class="card flat"><ul class="lista">
+        ${fila('bajar', 'Exportar inventario', 'Hoja de cálculo (CSV) con las existencias de hoy', 'exportar-inv')}
+        ${fila('bajar', 'Exportar movimientos', 'Todo el historial en CSV', 'exportar-movs')}
+        ${local ? fila('bajar', 'Respaldo completo', 'Archivo JSON con productos y movimientos', 'respaldo') : ''}
+      </ul></div></section>
+      <section class="sec-mas"><span class="t-sec">Apariencia</span><div class="card"><div class="opciones">${[['auto', 'Automática'], ['claro', 'Clara'], ['oscuro', 'Oscura']].map(([k, t]) => html`<button type="button" class="opcion" data-act="tema" data-v="${k}" aria-pressed="${String(tema === k)}">${t}</button>`)}</div></div></section>
+      ${!standalone ? html`<section class="sec-mas"><span class="t-sec">Instalar</span><div class="card">
+        ${S.instalar ? html`<div class="sep"><span>Ábrela como una app, sin la barra del navegador.</span><button type="button" class="btn btn-p" data-act="instalar">Instalar app</button></div>`
+          : ios ? html`<div class="fila" style="align-items:flex-start"><span class="ico-c info">${ico('info')}</span><span>En el iPhone o iPad toca <b>Compartir</b> y luego <b>Agregar a pantalla de inicio</b>.</span></div>`
+          : html`<span class="t-peq">Desde el menú del navegador elige “Instalar app” o “Agregar a pantalla de inicio” para abrirla como una app.</span>`}</div></section>` : ''}
+      ${S.modo === 'local' ? html`<section class="sec-mas"><span class="t-sec">Este equipo</span><div class="card flat"><ul class="lista">${fila('basura', S.demo ? 'Salir de la demostración' : 'Borrar los datos de este equipo', S.demo ? 'Elimina los datos de ejemplo y vuelve al inicio' : 'Empezar desde cero. No se puede deshacer', S.demo ? 'salir-demo' : 'borrar-local')}</ul></div></section>` : ''}
+      <p class="pie-app">Inventario Bases Box · versión ${Core.VERSION} · ${S.modo === 'local' ? 'datos en este equipo' : 'datos en la nube'}</p>`);
+  }
+};
+
+/* ───────── acciones de los botones ───────── */
+const A = {
+  ir: (b) => irA(b.dataset.tabIr),
+  sync: async () => { await sincronizar(true); toast(S.enLinea ? 'Datos actualizados.' : 'Sin conexión por ahora.', { tipo: S.enLinea ? undefined : 'error' }); },
+  salir: () => salir(),
+  'ver-bajos': () => irA('inventario', { bajo: true }),
+  prod: (b) => abrirProducto(b.dataset.id),
+  'prod-nuevo': () => formProducto(),
+  variantes: () => formVariantes(),
+  'filtro-cat': (b) => { S.filtro.cat = b.dataset.cat; VISTAS.inventario.actualizar(); },
+  'filtro-bajo': () => { S.filtro.bajo = !S.filtro.bajo; VISTAS.inventario.actualizar(); },
+  'filtro-arch': () => { S.filtro.archivados = !S.filtro.archivados; VISTAS.inventario.actualizar(); },
+  forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : abrirForma(b.dataset.tipo)),
+  'recibir-ya': () => recibirYa(),
+  traspaso: (b) => abrirTraspaso(b.dataset.id),
+  'pedido-det': (b) => abrirPedido(b.dataset.id),
+  'op-det': (b) => abrirOperacion(b.dataset.grupo),
+  'hist-tipo': (b) => { S.hist.tipo = b.dataset.tipo; S.hist.rev = null; VISTAS.historial.actualizar(); },
+  'hist-mas': () => cargarHistorial(false),
+  'tabla-vtas': () => { S.verTabla = !S.verTabla; pintarInicio(); },
+  'exportar-inv': () => exportarInventario(),
+  'exportar-movs': (b) => exportarMovimientos(b),
+  respaldo: (b) => respaldoCompleto(b),
+  negocio: () => formNegocio(),
+  medidas: () => formMedidas(),
+  tonos: () => formTonos(),
+  'pin-propio': () => formPin(false),
+  'pin-tienda': () => formPin(true),
+  'codigo-nuevo': () => formCodigoNuevo(),
+  tema: (b) => { store.set(CLAVE_TEMA, b.dataset.v); aplicarTema(); VISTAS.mas.actualizar(); },
+  instalar: async () => {
+    if (!S.instalar) return;
+    S.instalar.prompt();
+    try { await S.instalar.userChoice; } catch (e) { /* cerrado */ }
+    S.instalar = null;
+    VISTAS.mas.actualizar();
+  },
+  'salir-demo': async () => {
+    const ok = await confirmar({ titulo: 'Salir de la demostración', texto: 'Se borran los datos de ejemplo de este equipo y vuelves al inicio.', ok: 'Salir y borrar', cancelar: 'Volver', peligro: true });
+    if (ok) reiniciarLocal();
+  },
+  'borrar-local': async () => {
+    const t = await confirmar({ titulo: 'Borrar datos de este equipo', texto: 'Se borran productos, movimientos y PIN de este equipo. No se puede deshacer. Haz antes un respaldo si lo necesitas.', ok: 'Borrar todo', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Escribe BORRAR para confirmar', min: 6, error: 'Escribe la palabra BORRAR.', ayuda: 'BORRAR' } });
+    if (t && t.trim().toUpperCase() === 'BORRAR') reiniciarLocal();
+    else if (t) toast('No se borró nada: la palabra no coincide.', { tipo: 'error' });
+  }
+};
+function reiniciarLocal() {
+  if (repoLocal) repoLocal.borrar();
+  [CLAVE_SESION, 'bb-inv:demo', CLAVE_ROL].forEach((k) => store.del(k));
+  sesionTmp.del(CLAVE_SESION);
+  location.reload();
+}
+
+function formCodigoNuevo() {
+  const d = dialogo({
+    titulo: 'Código de recuperación',
+    cuerpo: html`<div id="cn-cont"><p class="t-peq" style="margin-bottom:14px">El código sirve para crear un PIN nuevo si lo olvidas. Al generar uno nuevo, el anterior deja de servir. Escribe tu PIN para confirmar.</p>
+      <label class="campo"><span class="lbl">Tu PIN (dueño del local)</span><input class="inp pin" id="cn-pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label><p class="err" id="cn-err" hidden></p></div>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="cn-ok">Generar código</button>`
+  });
+  const btn = $('#cn-ok', d.el), err = $('#cn-err', d.el);
+  const enviar = () => guardando(btn, err, async () => {
+    const r = await op({ op: 'recup.nueva', pinActual: $('#cn-pin', d.el).value });
+    poner($('#cn-cont', d.el), vistaCodigo(r.codigo));
+    poner(d.pie, html`<button type="button" class="btn btn-p" data-cerrar>Listo, ya lo guardé</button>`);
+    enlazarCopiar(d.el, r.codigo);
+  });
+  btn.addEventListener('click', enviar);
+  d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && $('#cn-pin', d.el)) enviar(); });
+}
+const vistaCodigo = (codigo) => html`<p class="t-peq" style="margin-bottom:12px">Guárdalo en un lugar seguro (una foto, tu gestor de contraseñas o un papel). Solo se muestra ahora.</p><span class="codigo" id="codigo-v">${codigo}</span><div style="margin-top:12px"><button type="button" class="btn btn-g btn-b" id="cod-copiar">${ico('copiar')}Copiar código</button></div>`;
+function enlazarCopiar(raiz, codigo) {
+  const b = $('#cod-copiar', raiz);
+  if (!b) return;
+  b.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(codigo); toast('Código copiado.'); } catch (e) {
+      const r = document.createRange(); r.selectNodeContents($('#codigo-v', raiz)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Selecciónalo y cópialo.');
+    }
+  });
+}
+
+/* ───────── sesión ───────── */
+function salir(msg) {
+  $$('dialog.sheet').forEach((d) => d.close());
+  S.token = ''; S.est = null; S.rol = ''; S.idx = {};
+  store.del(CLAVE_SESION); sesionTmp.del(CLAVE_SESION); store.del(CLAVE_CACHE);
+  pantallaLogin(msg);
+}
+
+/* ───────── pantallas de acceso ───────── */
+const cabeceraMarca = () => html`<div class="marca-g"><span class="logo"><svg width="50" height="50" aria-hidden="true"><use href="#i-logo"/></svg></span><h1>Bases Bo<b>x</b></h1><span class="sub">Tepic · Inventario</span><div class="tonos-fila" aria-hidden="true">${Core.TONOS_BASE.map((t) => html`<i style="background:${t.hex}"></i>`)}</div></div>`;
+const pie = () => html`<p class="pie-app" style="margin-top:0">Versión ${Core.VERSION} · ${S.modo === 'local' ? 'Los datos viven en este equipo' : 'Datos en la nube'}</p>`;
+function pinError(p) {
+  if (!/^\d{4,8}$/.test(p)) return 'El PIN debe tener de 4 a 8 números.';
+  if (/^(\d)\1+$/.test(p) || '0123456789'.includes(p) || '9876543210'.includes(p)) return 'Ese PIN es muy fácil de adivinar. Elige otro.';
+  return '';
+}
+
+function pantallaLogin(msg) {
+  let rol = S.modo === 'local' && S.demo ? null : store.get(CLAVE_ROL);
+  if (rol !== 'local' && rol !== 'tienda') rol = null;
+  const render = () => {
+    poner($('#raiz'), html`<div class="acceso"><div class="acceso-in">
+      ${cabeceraMarca()}
+      ${msg ? html`<div class="aviso warn">${ico('info')}<span>${msg}</span></div>` : ''}
+      ${S.demo ? html`<div class="aviso">${ico('info')}<span><b>Demostración.</b> PIN del local: <b>1111</b> · PIN de la tienda: <b>2222</b>.</span></div>` : ''}
+      ${!rol ? html`<div class="pila"><h2 class="t-sec" style="text-align:center">¿Quién entra?</h2>${Object.keys(ROLES).map((k) => html`<button type="button" class="rol-btn" data-rol="${k}"><span class="ico-c acc" style="width:48px;height:48px">${ico(ROLES[k].ic, 'g')}</span><span><b>${ROLES[k].nombre}</b><span>${ROLES[k].desc}</span></span></button>`)}</div>`
+        : html`<form class="card pila" id="lg-form" novalidate>
+          <div class="fila"><span class="ico-c acc">${ico(ROLES[rol].ic)}</span><div class="grow"><div class="item-t">${ROLES[rol].nombre}</div></div><button type="button" class="btn btn-g btn-s" id="lg-cambiar">Cambiar</button></div>
+          <label class="campo" style="margin:0"><span class="lbl">Tu PIN</span><input class="inp pin" id="lg-pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" autofocus></label>
+          <label class="check-fila" style="margin:0"><input type="checkbox" id="lg-rec" ${S.recordar ? raw('checked') : ''}><label for="lg-rec" style="font-size:15px">Mantener la sesión en este equipo</label></label>
+          <p class="err" id="lg-err" hidden></p>
+          <button type="submit" class="btn btn-p btn-b" id="lg-ok">Entrar</button>
+          <button type="button" class="btn btn-g btn-s btn-b" id="lg-olvide">Olvidé mi PIN</button></form>`}
+      ${pie()}
+    </div></div>`);
+    $$('[data-rol]').forEach((b) => b.addEventListener('click', () => { rol = b.dataset.rol; msg = ''; render(); }));
+    const f = $('#lg-form');
+    if (!f) return;
+    $('#lg-cambiar').addEventListener('click', () => { rol = null; render(); });
+    $('#lg-olvide').addEventListener('click', () => formOlvide(rol));
+    const pin = $('#lg-pin');
+    if (!matchMedia('(pointer:coarse)').matches) pin.focus();
+    f.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const btn = $('#lg-ok'), err = $('#lg-err');
+      guardando(btn, err, async () => {
+        if (!pin.value) { pin.focus(); throw new ErrorApi({ mensaje: 'Escribe tu PIN.' }); }
+        const r = await llamar('POST', '/login', { rol, pin: pin.value });
+        if (!r.json.ok) { pin.value = ''; pin.focus(); throw new ErrorApi(r.json.error); }
+        S.token = r.json.token; S.rol = rol; S.recordar = $('#lg-rec').checked;
+        store.set(CLAVE_ROL, rol);
+        guardarSesion();
+        await cargarEstado();
+        irA('inicio', { forzar: true });
+      });
+    });
+  };
+  render();
+}
+
+function formOlvide(rolInicial) {
+  let codigoNuevo = '';
+  const d = dialogo({
+    titulo: 'Olvidé mi PIN',
+    cuerpo: html`<div id="ol-cont"><p class="t-peq" style="margin-bottom:14px">Escribe el código de recuperación que te dieron al configurar la app y elige un PIN nuevo.</p>
+      <label class="campo"><span class="lbl">Código de recuperación</span><input class="inp" id="ol-cod" autocomplete="off" autocapitalize="characters" placeholder="XXXX-XXXX" maxlength="12" style="text-transform:uppercase;letter-spacing:.12em"></label>
+      <label class="campo"><span class="lbl">¿De quién es el PIN?</span><select class="inp" id="ol-rol">${Object.keys(ROLES).map((k) => html`<option value="${k}" ${k === rolInicial ? raw('selected') : ''}>${ROLES[k].nombre}</option>`)}</select></label>
+      <label class="campo"><span class="lbl">PIN nuevo (4 a 8 números)</span><input class="inp pin" id="ol-pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">Repite el PIN nuevo</span><input class="inp pin" id="ol-pin2" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <p class="err" id="ol-err" hidden></p></div>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="ol-ok">Cambiar PIN</button>`,
+    alCerrar: () => { if (codigoNuevo) irA('inicio', { forzar: true }); }
+  });
+  const btn = $('#ol-ok', d.el), err = $('#ol-err', d.el);
+  const enviar = () => guardando(btn, err, async () => {
+    const pin = $('#ol-pin', d.el).value;
+    if (pin !== $('#ol-pin2', d.el).value) throw new ErrorApi({ mensaje: 'Los dos PIN no coinciden.' });
+    const rol = $('#ol-rol', d.el).value;
+    const r = await llamar('POST', '/recuperar', { codigo: $('#ol-cod', d.el).value, rol, pin });
+    if (!r.json.ok) throw new ErrorApi(r.json.error);
+    S.token = r.json.token; S.rol = rol; store.set(CLAVE_ROL, rol);
+    guardarSesion();
+    codigoNuevo = r.json.codigo;
+    poner($('#ol-cont', d.el), html`<div class="aviso" style="margin-bottom:14px">${ico('check')}<span>Listo, tu PIN nuevo ya funciona. El código anterior dejó de servir; guarda este.</span></div>${vistaCodigo(codigoNuevo)}`);
+    poner(d.pie, html`<button type="button" class="btn btn-p" data-cerrar>Entrar</button>`);
+    enlazarCopiar(d.el, codigoNuevo);
+    await cargarEstado();
+  });
+  btn.addEventListener('click', enviar);
+  d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && ev.target.tagName === 'INPUT' && $('#ol-ok', d.el)) enviar(); });
+}
+
+function pantallaSetup() {
+  const local = S.modo === 'local';
+  const D = { nombre: 'Bases Box Tepic', pinL: '', pinL2: '', pinT: '', pinT2: '', bases: true, extras: true };
+  let paso = local ? 0 : 1, codigo = '';
+  const nM = Core.MEDIDAS_BASE.length, nT = Core.TONOS_BASE.length;
+  const puntos = () => html`<div class="pasos" aria-label="Paso ${paso} de 3">${[1, 2, 3].map((n) => html`<i class="${n <= paso ? 'on' : ''}"></i>`)}</div>`;
+  const campoPin = (id, et, v) => html`<label class="campo"><span class="lbl">${et}</span><input class="inp pin" id="${id}" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" value="${v}"></label>`;
+
+  function cuerpo() {
+    if (paso === 0) {
+      return html`<div class="pila"><div class="aviso warn">${ico('alerta')}<span>Esta copia funciona <b>sin servidor</b>: los datos se guardan solo en este equipo. Sirve para probar. Para que los dos dueños compartan el inventario hay que publicar la app con su servidor (README).</span></div>
+        <button type="button" class="rol-btn" id="su-empezar"><span class="ico-c acc" style="width:48px;height:48px">${ico('cubo', 'g')}</span><span><b>Configurar mi inventario</b><span>Empieza con tu negocio, tus PIN y el catálogo.</span></span></button>
+        <button type="button" class="rol-btn" id="su-demo"><span class="ico-c info" style="width:48px;height:48px">${ico('reloj', 'g')}</span><span><b>Ver una demostración</b><span>Datos de ejemplo de un mes: ventas, envíos y alertas.</span></span></button></div>`;
+    }
+    if (paso === 1) {
+      return html`${puntos()}<h2 class="t-sec" style="text-align:center">Tu negocio</h2><label class="campo"><span class="lbl">Nombre</span><input class="inp" id="su-nombre" maxlength="60" value="${D.nombre}" autocomplete="off"></label>`;
+    }
+    if (paso === 2) {
+      return html`${puntos()}<h2 class="t-sec" style="text-align:center">Un PIN para cada dueño</h2><p class="t-peq" style="text-align:center">De 4 a 8 números. Cada quien entra con el suyo y puede cambiarlo después.</p>
+        <div class="card" style="padding:14px 14px 2px"><div class="item-t" style="margin-bottom:8px">${ico('fabrica')} Dueño del local</div>${campoPin('su-pl', 'PIN', D.pinL)}${campoPin('su-pl2', 'Repite el PIN', D.pinL2)}</div>
+        <div class="card" style="padding:14px 14px 2px"><div class="item-t" style="margin-bottom:8px">${ico('tienda')} Dueño de la tienda</div>${campoPin('su-pt', 'PIN', D.pinT)}${campoPin('su-pt2', 'Repite el PIN', D.pinT2)}</div>`;
+    }
+    if (paso === 3) {
+      return html`${puntos()}<h2 class="t-sec" style="text-align:center">Catálogo inicial</h2><p class="t-peq" style="text-align:center">Todo se puede cambiar o archivar después.</p>
+        <div class="check-fila"><input type="checkbox" id="su-bases" ${D.bases ? raw('checked') : ''}><label for="su-bases">Bases por medida y tono<small>${nM} medidas × ${nT} tonos = ${plural(nM * nT, 'base', 'bases')} para empezar. Los precios los pones tú después.</small></label></div>
+        <div class="check-fila"><input type="checkbox" id="su-extras" ${D.extras ? raw('checked') : ''}><label for="su-extras">Materiales y accesorios comunes<small>${Core.EXTRAS_BASE.map((x) => x.nombre).join(', ')}.</small></label></div>`;
+    }
+    return html`<div class="pila"><div class="aviso">${ico('check')}<span><b>¡Listo!</b> Tu inventario está configurado y entraste como dueño del local.</span></div>
+      <h2 class="t-sec">Código de recuperación</h2>${vistaCodigo(codigo)}
+      <label class="check-fila" style="margin:0"><input type="checkbox" id="su-guardado"><label for="su-guardado">Ya guardé mi código en un lugar seguro</label></label></div>`;
+  }
+
+  function pintarPaso() {
+    const ultimo = paso === 4;
+    poner($('#raiz'), html`<div class="acceso"><div class="acceso-in">${cabeceraMarca()}
+      ${paso === 0 ? cuerpo() : html`<form class="card pila" id="su-form" novalidate>${cuerpo()}<p class="err" id="su-err" hidden></p>
+        <div class="fila w" style="justify-content:flex-end;gap:10px">${paso > 1 && !ultimo ? html`<button type="button" class="btn btn-g" id="su-atras" style="flex:1">Atrás</button>` : paso === 1 && local ? html`<button type="button" class="btn btn-g" id="su-atras" style="flex:1">Atrás</button>` : ''}
+        <button type="submit" class="btn btn-p" id="su-ok" style="flex:2">${ultimo ? 'Entrar a mi inventario' : paso === 3 ? 'Crear mi inventario' : 'Siguiente'}</button></div></form>`}
+      ${pie()}</div></div>`);
+    enlazar();
+  }
+  function leer() {
+    const v = (id) => { const el = $('#' + id); return el ? el.value : null; };
+    if (paso === 1) D.nombre = v('su-nombre');
+    if (paso === 2) { D.pinL = v('su-pl'); D.pinL2 = v('su-pl2'); D.pinT = v('su-pt'); D.pinT2 = v('su-pt2'); }
+    if (paso === 3) { D.bases = $('#su-bases').checked; D.extras = $('#su-extras').checked; }
+  }
+  function enlazar() {
+    const em = $('#su-empezar'), dm = $('#su-demo');
+    if (em) em.addEventListener('click', () => { paso = 1; pintarPaso(); });
+    if (dm) dm.addEventListener('click', () => guardando(dm, null, async () => {
+      await new Promise((r) => setTimeout(r, 30));
+      await Core.sembrarDemo(repoLocal);
+      store.set('bb-inv:demo', '1');
+      S.demo = true;
+      pantallaLogin();
+    }));
+    const f = $('#su-form');
+    if (!f) return;
+    const at = $('#su-atras');
+    if (at) at.addEventListener('click', () => { leer(); paso = paso === 1 ? 0 : paso - 1; pintarPaso(); });
+    const primero = $('input:not([type=checkbox])', f);
+    if (primero && !matchMedia('(pointer:coarse)').matches) primero.focus();
+    f.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const btn = $('#su-ok'), err = $('#su-err');
+      guardando(btn, err, async () => {
+        if (paso === 4) {
+          if (!$('#su-guardado').checked) throw new ErrorApi({ mensaje: 'Marca la casilla cuando hayas guardado tu código.' });
+          await cargarEstado();
+          irA('inicio', { forzar: true });
+          return;
+        }
+        leer();
+        if (paso === 1) { if (!D.nombre.trim()) throw new ErrorApi({ mensaje: 'Escribe el nombre del negocio.' }); paso = 2; pintarPaso(); return; }
+        if (paso === 2) {
+          const e1 = pinError(D.pinL), e2 = pinError(D.pinT);
+          if (e1) throw new ErrorApi({ mensaje: 'PIN del local: ' + e1 });
+          if (e2) throw new ErrorApi({ mensaje: 'PIN de la tienda: ' + e2 });
+          if (D.pinL !== D.pinL2) throw new ErrorApi({ mensaje: 'Los dos PIN del local no coinciden.' });
+          if (D.pinT !== D.pinT2) throw new ErrorApi({ mensaje: 'Los dos PIN de la tienda no coinciden.' });
+          if (D.pinL === D.pinT) throw new ErrorApi({ mensaje: 'Cada dueño necesita un PIN distinto.' });
+          paso = 3; pintarPaso(); return;
+        }
+        const r = await llamar('POST', '/setup', { nombre: D.nombre, pinLocal: D.pinL, pinTienda: D.pinT, catalogo: { bases: D.bases, extras: D.extras } });
+        if (!r.json.ok) throw new ErrorApi(r.json.error);
+        S.token = r.json.token; S.rol = 'local'; codigo = r.json.codigo;
+        store.set(CLAVE_ROL, 'local');
+        guardarSesion();
+        paso = 4;
+        pintarPaso();
+        enlazarCopiar($('#raiz'), codigo);
+      });
+    });
+    if (paso === 4) enlazarCopiar($('#raiz'), codigo);
+  }
+  pintarPaso();
+}
+
+function pantallaMensaje(titulo, texto, botones) {
+  poner($('#raiz'), html`<div class="acceso"><div class="acceso-in">${cabeceraMarca()}<div class="card pila"><h2 class="t-sec">${titulo}</h2><p>${texto}</p><div class="pila">${botones.map((b, i) => html`<button type="button" class="btn ${i ? 'btn-g' : 'btn-p'} btn-b" data-i="${i}">${b[0]}</button>`)}</div></div></div></div>`);
+  $$('[data-i]').forEach((el) => el.addEventListener('click', () => botones[+el.dataset.i][1]()));
+}
+
+/* ───────── arranque ───────── */
+// ¿Hay servidor? Una respuesta que no es de nuestra API (hosting estático) o un bloqueo inicial = modo local.
+// Si ya sabíamos que este equipo usa el servidor, un fallo de red es “sin internet”, nunca “sin servidor”.
+async function sondear() {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 6000);
+  try {
+    const res = await fetch('api/ping', { cache: 'no-store', signal: ctl.signal });
+    const j = await res.json().catch(() => null);
+    if (j && j.ok && j.servidor) return 'servidor';
+    if (j && j.error && j.error.code === 'sin_base_de_datos') return 'sin_db';
+    return 'local';
+  } catch (e) { return null; } finally { clearTimeout(t); }
+}
+async function detectarModo() {
+  const previo = store.get(CLAVE_MODO);
+  let r = await sondear();
+  if (r === null && previo !== 'servidor' && navigator.onLine !== false) { await new Promise((ok) => setTimeout(ok, 1200)); r = await sondear(); }
+  if (r === 'servidor' || r === 'local') { store.set(CLAVE_MODO, r); return r; }
+  if (r === 'sin_db') return r;
+  if (previo === 'servidor' || previo === 'local') return previo; // sin respuesta: seguimos con lo que ya usaba este equipo
+  return navigator.onLine === false ? 'sin_red' : 'local';
+}
+const tabDeHash = () => { const h = location.hash.replace('#', ''); return VISTAS[h] ? h : 'inicio'; };
+
+async function arrancar() {
+  aplicarTema();
+  const modo = await detectarModo();
+  if (modo === 'sin_red') {
+    pantallaMensaje('Sin conexión', 'Esta es la primera vez que abres la app en este equipo y no hay internet. Conéctate y vuelve a intentarlo.', [['Reintentar', () => location.reload()]]);
+    return;
+  }
+  if (modo === 'sin_db') {
+    S.modo = 'servidor';
+    pantallaMensaje('Falta conectar la base de datos', 'El servidor de la app está en línea pero no encuentra su base de datos D1 (el enlace debe llamarse “DB”). Revisa el README o usa la app solo en este equipo mientras lo resuelves.', [['Reintentar', () => location.reload()], ['Usar solo en este equipo', () => { S.modo = 'local'; iniciarLocal(); }]]);
+    return;
+  }
+  S.modo = modo;
+  if (modo === 'local') return iniciarLocal();
+  return iniciar();
+}
+function iniciarLocal() {
+  S.modo = 'local';
+  repoLocal = Core.crearRepoLocal(almacenCore, CLAVE_LOCAL);
+  S.demo = store.get('bb-inv:demo') === '1';
+  return iniciar();
+}
+async function iniciar() {
+  const ses = leerSesion();
+  if (ses && ses.modo === S.modo) {
+    S.token = ses.token; S.rol = ses.rol; S.recordar = ses.recordar;
+    try {
+      if (await cargarEstado()) irA(tabDeHash(), { forzar: true }); // si no, cargarEstado ya mostró el acceso (sesión vencida)
+      return;
+    } catch (e) {
+      if (e instanceof ErrorRed) {
+        try {
+          const c = JSON.parse(store.get(CLAVE_CACHE) || 'null');
+          if (c && c.est && c.est.rol === ses.rol) {
+            aplicarEstado(c.est);
+            irA(tabDeHash(), { forzar: true });
+            toast('Sin conexión. Estás viendo la última copia (' + hace(c.ts) + ').', { tipo: 'error', ms: 8000 });
+            return;
+          }
+        } catch (e2) { /* sin copia guardada */ }
+        return pantallaMensaje('Sin conexión', 'No pude cargar el inventario. Revisa tu internet e inténtalo de nuevo.', [['Reintentar', () => location.reload()]]);
+      }
+      if (e instanceof ErrorApi && e.code === 'no_configurado') return pantallaSetup();
+      console.error(e);
+      S.token = '';
+    }
+  }
+  let ping;
+  try { ping = await llamar('GET', '/ping'); } catch (e) {
+    return pantallaMensaje('Sin conexión', 'No pude hablar con el servidor. Revisa tu internet e inténtalo de nuevo.', [['Reintentar', () => location.reload()]]);
+  }
+  if (!ping.json.ok) return pantallaMensaje('Algo falló', ping.json.error ? ping.json.error.mensaje : 'No se pudo iniciar la app.', [['Reintentar', () => location.reload()]]);
+  if (!ping.json.configurado) return pantallaSetup();
+  pantallaLogin();
+}
+
+/* ───────── eventos globales ───────── */
+document.addEventListener('click', (ev) => {
+  const t = ev.target.closest('[data-tab]');
+  if (t && t.closest('.rail, .tabbar')) { irA(t.dataset.tab); return; }
+  const b = ev.target.closest('[data-act]');
+  if (b && !b.disabled && A[b.dataset.act]) A[b.dataset.act](b, ev);
+});
+window.addEventListener('hashchange', () => { if (S.est && VISTAS[tabDeHash()] && tabDeHash() !== S.tab) irA(tabDeHash()); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sincronizar(true); });
+window.addEventListener('online', () => sincronizar(true));
+window.addEventListener('focus', () => sincronizar());
+window.addEventListener('storage', (ev) => { if (ev.key === CLAVE_LOCAL && S.modo === 'local' && S.est) sincronizar(true); });
+let tRedim = null;
+window.addEventListener('resize', () => { clearTimeout(tRedim); tRedim = setTimeout(() => { if (S.tab === 'inicio' && S.est) dibujarGrafica(); }, 150); });
+window.addEventListener('beforeinstallprompt', (ev) => { ev.preventDefault(); S.instalar = ev; if (S.est && S.tab === 'mas') VISTAS.mas.actualizar(); });
+window.addEventListener('appinstalled', () => { S.instalar = null; });
+setInterval(() => sincronizar(), SYNC_MS);
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* sin service worker: la app funciona igual */ });
+}
+arrancar().catch((e) => {
+  console.error(e);
+  pantallaMensaje('Algo falló', 'No se pudo iniciar la app. Recarga la página.', [['Recargar', () => location.reload()]]);
+});
+})();
+</script>
+</body>
+</html>

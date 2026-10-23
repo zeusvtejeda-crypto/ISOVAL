@@ -1,0 +1,10 @@
+# Inventario de Bases Box Tepic · Cloudflare Pages + D1 (ver README.md)
+name = "bases-box-inventario"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bases-box-inventario"
+# Sustituye por el id que te da: npx wrangler d1 create bases-box-inventario
+database_id = "00000000-0000-0000-0000-000000000000"
