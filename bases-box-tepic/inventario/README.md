@@ -50,6 +50,8 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 
 *Como Worker en vez de Pages (probado en producción):* `dist/_worker.js` también corre como Worker. Crea la base D1 `bases-box-inventario` (panel de Cloudflare → *Storage & databases → D1*), pon su id en `database_id` de `wrangler.worker.toml` y publica con `npx wrangler@4 deploy -c wrangler.worker.toml --var SETUP_KEY:XXXX-XXXX-XXXX`. Sin clonar el repositorio: descomprime el zip de `dist/`, crea ahí un `wrangler.toml` con `name`, `main = "_worker.js"`, `compatibility_date` y el bloque `[[d1_databases]]` (`binding = "DB"`) y corre el mismo `npx wrangler@4 deploy --var SETUP_KEY:…` en esa carpeta. Ojo: la opción “Upload your static files” del panel crea un Worker de solo archivos y **no** sirve para este paquete.
 
+*Publicación automática desde Git:* en Cloudflare, Worker → *Settings → Build → Connect*, con la rama `inventario-bases-box`, directorio raíz `bases-box-tepic/inventario`, sin comando de build y comando de deploy `npx wrangler deploy -c wrangler.worker.toml`. Desde entonces cada cambio que se suba a esa rama se publica solo. Lo que se publica es `dist/_worker.js`: antes de subir cambios a la app corre `npm run empaquetar` (`npm test` avisa si se te olvida).
+
 ### Primeros pasos
 
 - **Almacén:** *Más → Medidas y precios* (pon los precios) → *Mover → Conteo físico* (carga lo que ya tienes) → listo. Cada vez que fabriques: *Mover → Registrar entrada*; para surtir a la tienda: *Mover → Enviar a tienda*.
