@@ -1,5 +1,6 @@
 // Cloudflare Pages Function — API del inventario de Bases Box Tepic.
-// Necesita una base D1 enlazada con el nombre "DB" (ver README.md). Toda la lógica vive en
+// Necesita una base D1 enlazada con el nombre "DB" (ver README.md); SETUP_KEY es opcional: si existe,
+// el asistente de primera configuración la pide. Toda la lógica vive en
 // public/core.js; aquí solo se traduce la petición HTTP y se responde en JSON.
 import BBCore from '../../public/core.js';
 import { crearRepoD1 } from '../_d1.js';
@@ -26,6 +27,6 @@ export async function onRequest({ request, env }) {
     query: Object.fromEntries(url.searchParams),
     body,
     token: (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
-  });
+  }, { claveInstalacion: env.SETUP_KEY });
   return responder(r.status, r.json);
 }

@@ -277,7 +277,10 @@
 
   async function ping(ctx) {
     const cfg = await cargarCfg(ctx);
-    return ok({ servidor: ctx.servidor !== false, version: VERSION, configurado: cfg.configurado, negocio: cfg.negocio.nombre });
+    return ok({
+      servidor: ctx.servidor !== false, version: VERSION, configurado: cfg.configurado, negocio: cfg.negocio.nombre,
+      requiereClave: !cfg.configurado && !!ctx.claveInstalacion
+    });
   }
 
   function nombreBase(m, t) { return 'Base ' + m.nombre + ' · ' + t.nombre; }
@@ -292,6 +295,11 @@
     const cfg = await cargarCfg(ctx);
     if (cfg.configurado) throw new ApiError(409, 'ya_configurado', 'Este inventario ya está configurado. Entra con tu PIN.');
     const b = ctx.req.body || {};
+    // Con SETUP_KEY definida en el servidor, nadie puede adueñarse del inventario sin conocerla.
+    if (ctx.claveInstalacion && !ctx.demo) {
+      chequearBloqueo(cfg, 'setup', ctx.ahora);
+      if (!normCodigo(b.clave) || !igual(normCodigo(b.clave), normCodigo(ctx.claveInstalacion))) await fallar(ctx, cfg, 'setup', 'clave_instalacion', 'La clave de instalación no es correcta.');
+    }
     const pinL = String(b.pinLocal || ''), pinT = String(b.pinTienda || '');
     if (!ctx.demo) { validarPin(pinL); validarPin(pinT); }
     if (pinL === pinT) throw bad('pin_igual', 'Cada dueño necesita un PIN distinto.');
@@ -881,7 +889,7 @@
   async function handle(repo, req, opts) {
     opts = opts || {};
     const ahora = opts.now || Date.now();
-    const ctx = { repo, ahora, req: req || {}, tz: tzDe(req && req.query), servidor: opts.servidor, demo: !!opts.demo };
+    const ctx = { repo, ahora, req: req || {}, tz: tzDe(req && req.query), servidor: opts.servidor, demo: !!opts.demo, claveInstalacion: opts.claveInstalacion || '' };
     try {
       const path = String(ctx.req.path || '/').replace(/\/+$/, '') || '/';
       const m = String(ctx.req.method || 'GET').toUpperCase();

@@ -2177,9 +2177,11 @@ function formOlvide(rolInicial) {
   d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && ev.target.tagName === 'INPUT' && $('#ol-ok', d.el)) enviar(); });
 }
 
-function pantallaSetup() {
+async function pantallaSetup(info) {
   const local = S.modo === 'local';
-  const D = { nombre: 'Bases Box Tepic', pinL: '', pinL2: '', pinT: '', pinT2: '', bases: true, extras: true };
+  if (!info) { try { info = (await llamar('GET', '/ping')).json; } catch (e) { info = {}; } }
+  const pideClave = !!info.requiereClave;
+  const D = { nombre: 'Bases Box Tepic', clave: '', pinL: '', pinL2: '', pinT: '', pinT2: '', bases: true, extras: true };
   let paso = local ? 0 : 1, codigo = '';
   const nM = Core.MEDIDAS_BASE.length, nT = Core.TONOS_BASE.length;
   const puntos = () => html`<div class="pasos" aria-label="Paso ${paso} de 3">${[1, 2, 3].map((n) => html`<i class="${n <= paso ? 'on' : ''}"></i>`)}</div>`;
@@ -2192,7 +2194,9 @@ function pantallaSetup() {
         <button type="button" class="rol-btn" id="su-demo"><span class="ico-c info" style="width:48px;height:48px">${ico('reloj', 'g')}</span><span><b>Ver una demostración</b><span>Datos de ejemplo de un mes: ventas, envíos y alertas.</span></span></button></div>`;
     }
     if (paso === 1) {
-      return html`${puntos()}<h2 class="t-sec" style="text-align:center">Tu negocio</h2><label class="campo"><span class="lbl">Nombre</span><input class="inp" id="su-nombre" maxlength="60" value="${D.nombre}" autocomplete="off"></label>`;
+      return html`${puntos()}<h2 class="t-sec" style="text-align:center">Tu negocio</h2>
+        ${pideClave ? html`<label class="campo"><span class="lbl">Clave de instalación</span><input class="inp" id="su-clave" maxlength="20" value="${D.clave}" autocomplete="off" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX" style="text-transform:uppercase;letter-spacing:.08em"><span class="ayuda">La imprimió el comando de publicación. Solo se pide en esta primera configuración.</span></label>` : ''}
+        <label class="campo"><span class="lbl">Nombre del negocio</span><input class="inp" id="su-nombre" maxlength="60" value="${D.nombre}" autocomplete="off"></label>`;
     }
     if (paso === 2) {
       return html`${puntos()}<h2 class="t-sec" style="text-align:center">Un PIN para cada dueño</h2><p class="t-peq" style="text-align:center">De 4 a 8 números. Cada quien entra con el suyo y puede cambiarlo después.</p>
@@ -2220,7 +2224,7 @@ function pantallaSetup() {
   }
   function leer() {
     const v = (id) => { const el = $('#' + id); return el ? el.value : null; };
-    if (paso === 1) D.nombre = v('su-nombre');
+    if (paso === 1) { D.nombre = v('su-nombre'); if (pideClave) D.clave = v('su-clave'); }
     if (paso === 2) { D.pinL = v('su-pl'); D.pinL2 = v('su-pl2'); D.pinT = v('su-pt'); D.pinT2 = v('su-pt2'); }
     if (paso === 3) { D.bases = $('#su-bases').checked; D.extras = $('#su-extras').checked; }
   }
@@ -2251,7 +2255,11 @@ function pantallaSetup() {
           return;
         }
         leer();
-        if (paso === 1) { if (!D.nombre.trim()) throw new ErrorApi({ mensaje: 'Escribe el nombre del negocio.' }); paso = 2; pintarPaso(); return; }
+        if (paso === 1) {
+          if (pideClave && !D.clave.trim()) throw new ErrorApi({ mensaje: 'Escribe la clave de instalación.' });
+          if (!D.nombre.trim()) throw new ErrorApi({ mensaje: 'Escribe el nombre del negocio.' });
+          paso = 2; pintarPaso(); return;
+        }
         if (paso === 2) {
           const e1 = pinError(D.pinL), e2 = pinError(D.pinT);
           if (e1) throw new ErrorApi({ mensaje: 'PIN del local: ' + e1 });
@@ -2261,7 +2269,7 @@ function pantallaSetup() {
           if (D.pinL === D.pinT) throw new ErrorApi({ mensaje: 'Cada dueño necesita un PIN distinto.' });
           paso = 3; pintarPaso(); return;
         }
-        const r = await llamar('POST', '/setup', { nombre: D.nombre, pinLocal: D.pinL, pinTienda: D.pinT, catalogo: { bases: D.bases, extras: D.extras } });
+        const r = await llamar('POST', '/setup', { nombre: D.nombre, clave: D.clave, pinLocal: D.pinL, pinTienda: D.pinT, catalogo: { bases: D.bases, extras: D.extras } });
         if (!r.json.ok) throw new ErrorApi(r.json.error);
         S.token = r.json.token; S.rol = 'local'; codigo = r.json.codigo;
         store.set(CLAVE_ROL, 'local');
@@ -2358,7 +2366,7 @@ async function iniciar() {
     return pantallaMensaje('Sin conexión', 'No pude hablar con el servidor. Revisa tu internet e inténtalo de nuevo.', [['Reintentar', () => location.reload()]]);
   }
   if (!ping.json.ok) return pantallaMensaje('Algo falló', ping.json.error ? ping.json.error.mensaje : 'No se pudo iniciar la app.', [['Reintentar', () => location.reload()]]);
-  if (!ping.json.configurado) return pantallaSetup();
+  if (!ping.json.configurado) return pantallaSetup(ping.json);
   pantallaLogin();
 }
 

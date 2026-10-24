@@ -49,6 +49,17 @@ test('flujo completo por HTTP: setup, sesión con Bearer, estado y operación', 
   assert.equal((await json(env, '/api/no-existe', 'GET', null, token)).status, 404);
 });
 
+test('SETUP_KEY del entorno se exige en el primer arranque', async () => {
+  const env = { DB: new D1Falsa(), SETUP_KEY: 'ABCD-EFGH-JKLM' };
+  let r = await json(env, '/api/ping', 'GET');
+  assert.equal((await r.json()).requiereClave, true);
+  r = await json(env, '/api/setup', 'POST', { pinLocal: '4821', pinTienda: '7305' });
+  assert.equal(r.status, 401);
+  assert.equal((await r.json()).error.code, 'clave_instalacion');
+  r = await json(env, '/api/setup', 'POST', { clave: 'abcd-efgh-jklm', pinLocal: '4821', pinTienda: '7305' });
+  assert.equal(r.status, 200);
+});
+
 test('cuerpo inválido o demasiado grande', async () => {
   const env = { DB: new D1Falsa() };
   let r = await llamar(env, '/api/login', { method: 'POST', body: '{no es json' });

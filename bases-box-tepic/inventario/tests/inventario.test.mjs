@@ -95,6 +95,32 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await set({ pinLocal: '4821', pinTienda: '7305' })).status, 200);
     });
 
+    test('clave de instalación: sin ella nadie puede adueñarse del inventario', async () => {
+      const repo = await fabrica();
+      const opts = { claveInstalacion: 'ABCD-EFGH-JKLM' };
+      const set = (extra) => Core.handle(repo, { method: 'POST', path: '/setup', body: Object.assign({ pinLocal: '4821', pinTienda: '7305' }, extra) }, opts);
+      let r = await Core.handle(repo, { method: 'GET', path: '/ping' }, opts);
+      assert.equal(r.json.requiereClave, true);
+      assert.equal((await set({})).json.error.code, 'clave_instalacion');
+      r = await set({ clave: 'otra-cosa' });
+      assert.equal(r.status, 401);
+      assert.match(r.json.error.mensaje, /3 intentos/); // el intento sin clave también cuenta
+      assert.equal((await set({ clave: 'abcd efgh jklm' })).status, 200); // sin importar mayúsculas ni separadores
+      r = await Core.handle(repo, { method: 'GET', path: '/ping' }, opts);
+      assert.equal(r.json.requiereClave, false); // ya configurado: la clave deja de pedirse
+      assert.equal((await set({ clave: 'ABCD-EFGH-JKLM' })).json.error.code, 'ya_configurado');
+    });
+
+    test('clave de instalación: se bloquea tras 5 intentos', async () => {
+      const repo = await fabrica();
+      const opts = { claveInstalacion: 'ABCD-EFGH-JKLM' };
+      let r;
+      for (let i = 0; i < 5; i++) r = await Core.handle(repo, { method: 'POST', path: '/setup', body: { clave: 'x' + i, pinLocal: '4821', pinTienda: '7305' } }, opts);
+      assert.equal(r.status, 423);
+      r = await Core.handle(repo, { method: 'POST', path: '/setup', body: { clave: 'ABCD-EFGH-JKLM', pinLocal: '4821', pinTienda: '7305' } }, opts);
+      assert.equal(r.status, 423);
+    });
+
     test('sesión: sin token, token alterado y roles', async () => {
       const { local, tienda, repo } = await iniciar(fabrica);
       assert.equal((await Core.handle(repo, { method: 'GET', path: '/estado' })).status, 401);

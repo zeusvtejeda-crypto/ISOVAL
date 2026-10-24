@@ -30,25 +30,23 @@ Así funciona también si la subes a un hosting estático: **los datos viven sol
 
 ## Publicarla para los clientes (una sola vez)
 
-Usa **Cloudflare Pages + D1** (plan gratuito alcanza de sobra). Necesitas una cuenta de Cloudflare y Node 22 o más nuevo.
+Usa **Cloudflare Pages + D1** (el plan gratuito alcanza de sobra). Necesitas una computadora con Node 20 o más nuevo y una cuenta de Cloudflare (gratis).
 
 ```bash
 cd bases-box-tepic/inventario
-npx wrangler@4 login
-npx wrangler@4 d1 create bases-box-inventario
-#   → copia el "database_id" que imprime y pégalo en wrangler.toml
-npx wrangler@4 pages project create bases-box-inventario --production-branch main
-npx wrangler@4 pages deploy
+npm run publicar
 ```
 
-1. Abre la dirección que te da (`https://bases-box-inventario.pages.dev`; puedes ponerle un dominio propio desde el panel de Cloudflare, p. ej. `inventario.basesboxtepic.com`).
-2. **Termina el asistente tú mismo antes de compartir el enlace**: pide nombre del negocio, un PIN para cada dueño y el catálogo inicial. Quien lo termine primero queda como administrador.
+Un solo comando: abre el navegador para que entres a Cloudflare, crea la base de datos y el sitio, genera una **clave de instalación**, sube la app y comprueba que responda. Al final imprime la dirección (`https://bases-box-inventario.pages.dev`; si ese nombre ya lo usa alguien más, Cloudflare le agrega unas letras) y la clave.
+
+1. Abre la dirección (puedes ponerle un dominio propio desde el panel de Cloudflare, p. ej. `inventario.basesboxtepic.com`).
+2. **Termina el asistente tú mismo antes de compartir el enlace**: pide la clave de instalación, el nombre del negocio, un PIN para cada dueño y el catálogo inicial. La clave evita que un extraño que adivine la dirección configure la app antes que tú; ya configurada, no se vuelve a usar. Si la pierdes, escribe una nueva con `npx wrangler@4 pages secret put SETUP_KEY --project-name bases-box-inventario`.
 3. Guarda el **código de recuperación** que muestra al final (sirve si alguien olvida su PIN; en *Más → Código de recuperación* se genera uno nuevo).
 4. Manda el enlace a los dos dueños. En el celular: *Compartir → Agregar a pantalla de inicio* (iPhone/iPad) o *Instalar app* (Android/Chrome).
 
-Las tablas se crean solas la primera vez. Para actualizar la app después de cambiar el código, repite `npx wrangler@4 pages deploy`.
+El comando se puede repetir: para actualizar la app después de cambiar el código, vuelve a correr `npm run publicar` (no toca los datos ni la clave). Las tablas se crean solas la primera vez. La primera vez guarda el id de la base en `wrangler.toml`; sube ese cambio al repositorio.
 
-*Otra forma, desde el panel de Cloudflare (conectando el repositorio):* directorio raíz `bases-box-tepic/inventario`, directorio de salida `public`, sin comando de build, y en *Settings → Bindings* agrega una base **D1** con el nombre de variable `DB`.
+*Otra forma, sin terminal (conectando el repositorio desde el panel de Cloudflare):* crea una base D1 llamada `bases-box-inventario`, pega su id en `database_id` de `wrangler.toml` y sube el cambio; en *Workers y Pages* crea un proyecto Pages desde el repositorio con directorio raíz `bases-box-tepic/inventario` y sin comando de build; en *Settings → Variables and Secrets* agrega el secreto `SETUP_KEY` (la clave de instalación que quieras) y vuelve a desplegar. El enlace a la base sale de `wrangler.toml`: en el panel los *Bindings* solo se ven, no se editan.
 
 ### Primeros pasos para los dueños
 
@@ -78,10 +76,11 @@ inventario/
 │   ├── api/[[path]].js       API (Cloudflare Pages Function)
 │   └── _d1.js                guarda en D1; cada operación es una transacción
 ├── tests/                    pruebas (node:test): la misma batería corre contra el modo local y contra D1 simulado
+├── scripts/publicar.mjs      npm run publicar: crea todo en Cloudflare y sube la app
 ├── wrangler.toml             enlace a la base D1
 └── package.json
 ```
 
-- Pruebas: `npm test` (Node 22.13+). Desarrollo local con base D1 simulada: `npm run dev` y abre `http://localhost:8788`.
+- Pruebas: `npm test` (Node 22.13+). Desarrollo local con base D1 simulada: `npm run dev` y abre `http://localhost:8788` (para probar la clave de instalación, crea un archivo `.dev.vars` con `SETUP_KEY=ABCD-EFGH-JKLM`).
 - Los movimientos son un libro contable: el stock de cada producto siempre es la suma de sus movimientos; las anulaciones agregan un movimiento contrario en lugar de borrar nada.
 - `core.js` es el único lugar con reglas de negocio. El modo local (`crearRepoLocal`) y el servidor (`functions/_d1.js`) implementan el mismo contrato de almacenamiento.
