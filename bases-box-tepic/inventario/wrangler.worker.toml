@@ -1,0 +1,12 @@
+# Publicación como Worker (en vez de Pages): sirve el mismo dist/_worker.js, con la API y la app.
+# Uso:  npx wrangler@4 deploy -c wrangler.worker.toml     (ver README, "Cuenta temporal")
+name = "bases-box-inventario"
+main = "dist/_worker.js"
+compatibility_date = "2025-01-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bases-box-inventario"
+# Se reemplaza por el id real de la base al publicar
+database_id = "00000000-0000-0000-0000-000000000000"

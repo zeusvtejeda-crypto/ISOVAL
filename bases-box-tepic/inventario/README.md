@@ -48,6 +48,8 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 
 *Otra forma, sin terminal (conectando el repositorio desde el panel de Cloudflare):* crea una base D1 llamada `bases-box-inventario`, pega su id en `database_id` de `wrangler.toml` y sube el cambio; en *Workers y Pages* crea un proyecto Pages desde el repositorio con directorio raíz `bases-box-tepic/inventario` y sin comando de build; en *Settings → Variables and Secrets* agrega el secreto `SETUP_KEY` (la clave de instalación que quieras) y vuelve a desplegar. El enlace a la base sale de `wrangler.toml`: en el panel los *Bindings* solo se ven, no se editan.
 
+*Como Worker en vez de Pages:* `dist/_worker.js` también corre como Worker. Pon el `database_id` de tu base en `wrangler.worker.toml` y publica con `npx wrangler@4 deploy -c wrangler.worker.toml --var SETUP_KEY:XXXX-XXXX-XXXX` (probado en local con `wrangler dev`).
+
 ### Primeros pasos para los dueños
 
 - **Local:** *Más → Medidas y precios* (pon los precios) → *Mover → Conteo físico* (carga lo que ya tienes) → listo. Cada vez que fabriques: *Mover → Registrar entrada*; para surtir a la tienda: *Mover → Enviar a tienda*.
@@ -79,7 +81,8 @@ inventario/
 ├── scripts/publicar.mjs      npm run publicar: crea todo en Cloudflare y sube la app
 ├── scripts/empaquetar.mjs    npm run empaquetar: arma dist/_worker.js (la app completa en un solo archivo)
 ├── dist/_worker.js           paquete generado para publicar por API sin wrangler (no se edita a mano)
-├── wrangler.toml             enlace a la base D1
+├── wrangler.toml             enlace a la base D1 (Pages)
+├── wrangler.worker.toml      lo mismo para publicar como Worker
 └── package.json
 ```
 
