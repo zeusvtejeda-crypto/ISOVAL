@@ -1,7 +1,7 @@
 // Service worker: guarda la app para abrirla aunque no haya internet.
 // Los datos (/api) nunca se guardan aquí: siempre van a la red.
-const VERSION = 'bb-inv-v1';
-const BASE = ['./', 'index.html', 'core.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const VERSION = 'bb-inv-v2';
+const BASE = ['./', 'index.html', 'core.js', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));

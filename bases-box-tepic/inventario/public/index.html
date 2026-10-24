@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Inventario">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,8 +82,8 @@ a{color:var(--accent-text)}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--rail);color:var(--rail-ink)}
 .top-in{display:flex;align-items:center;gap:10px;min-height:56px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .marca{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.logo{display:grid;place-items:center;width:38px;height:38px;border-radius:9px;background:#262626;flex:none}
-.logo svg{width:28px;height:28px}
+.logo{display:block;width:38px;height:38px;flex:none}
+.logo img{display:block;width:100%;height:100%;border-radius:50%}
 .marca-t{min-width:0;line-height:1}
 .marca-n{font:400 20px/1 var(--f-titulo);letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
 .marca-n b{color:var(--accent);font-weight:400}
@@ -347,8 +347,7 @@ dialog.sheet[open]{animation:sube .2s ease-out}
 .acceso{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .acceso-in{width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px}
 .acceso .marca-g{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
-.acceso .logo{width:68px;height:68px;border-radius:16px;background:var(--rail)}
-.acceso .logo svg{width:50px;height:50px}
+.acceso .logo{width:84px;height:84px}
 .acceso h1{font:400 40px/1 var(--f-titulo);letter-spacing:.03em;text-transform:uppercase}
 .acceso h1 b{color:var(--accent);font-weight:400}
 .acceso .sub{font:600 14px var(--f-etiqueta);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
@@ -440,7 +439,6 @@ dialog.sheet[open]{animation:sube .2s ease-out}
     <symbol id="i-copiar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
     <symbol id="i-ojo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-tabla" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M9.5 10v9.5"/></symbol>
-    <symbol id="i-logo" viewBox="-120 -20 240 300"><g fill="#F2591F"><polygon points="-103.9,190 -83.9,201.5 -83.9,214 -103.9,202.5"/><polygon points="103.9,190 83.9,201.5 83.9,214 103.9,202.5"/><rect x="-6" y="250" width="12" height="12"/></g><polygon points="103.9,60 0,120 0,250 103.9,190" fill="#3A3A3A"/><polygon points="-103.9,60 0,120 0,250 -103.9,190" fill="#2C2C2C"/><polygon points="0,0 103.9,60 0,120 -103.9,60" fill="#ECEAE4" stroke="#1A1A1A" stroke-width="4" stroke-linejoin="round"/><g fill="#1A1A1A" opacity=".55"><circle cx="0" cy="40" r="3"/><circle cx="-34" cy="60" r="3"/><circle cx="34" cy="60" r="3"/><circle cx="0" cy="80" r="3"/><circle cx="0" cy="60" r="3.5"/></g></symbol>
   </defs>
 </svg>
 <div id="raiz"><div class="cargando" role="status" aria-label="Cargando"><i></i></div></div>
@@ -814,7 +812,7 @@ const TABS = [
   { id: 'historial', t: 'Historial', ic: 'reloj' },
   { id: 'mas', t: 'Más', ic: 'mas' }
 ];
-const marca = () => html`<div class="marca"><span class="logo"><svg width="28" height="28" aria-hidden="true"><use href="#i-logo"/></svg></span><span class="marca-t"><span class="marca-n">Bases Bo<b>x</b></span><span class="marca-s">Tepic · Inventario</span></span></div>`;
+const marca = () => html`<div class="marca"><span class="logo"><img src="logo.png" alt="" width="38" height="38"></span><span class="marca-t"><span class="marca-n">Bases Bo<b>x</b></span><span class="marca-s">Tepic · Inventario</span></span></div>`;
 
 function montarApp() {
   poner($('#raiz'), html`
@@ -2094,7 +2092,7 @@ function salir(msg) {
 }
 
 /* ───────── pantallas de acceso ───────── */
-const cabeceraMarca = () => html`<div class="marca-g"><span class="logo"><svg width="50" height="50" aria-hidden="true"><use href="#i-logo"/></svg></span><h1>Bases Bo<b>x</b></h1><span class="sub">Tepic · Inventario</span><div class="tonos-fila" aria-hidden="true">${Core.TONOS_BASE.map((t) => html`<i style="background:${t.hex}"></i>`)}</div></div>`;
+const cabeceraMarca = () => html`<div class="marca-g"><span class="logo"><img src="logo.png" alt="" width="84" height="84"></span><h1>Bases Bo<b>x</b></h1><span class="sub">Tepic · Inventario</span><div class="tonos-fila" aria-hidden="true">${Core.TONOS_BASE.map((t) => html`<i style="background:${t.hex}"></i>`)}</div></div>`;
 const pie = () => html`<p class="pie-app" style="margin-top:0">Versión ${Core.VERSION} · ${S.modo === 'local' ? 'Los datos viven en este equipo' : 'Datos en la nube'}</p>`;
 function pinError(p) {
   if (!/^\d{4,8}$/.test(p)) return 'El PIN debe tener de 4 a 8 números.';
