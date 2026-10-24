@@ -1,7 +1,7 @@
 {
   "name": "Inventario Bases Box Tepic",
   "short_name": "Inventario",
-  "description": "Inventario compartido entre el dueño del local y el dueño de la tienda.",
+  "description": "Inventario compartido entre el almacén y el vendedor de la tienda.",
   "lang": "es-MX",
   "start_url": "./",
   "scope": "./",

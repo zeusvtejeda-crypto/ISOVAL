@@ -1,31 +1,31 @@
 # Inventario Bases Box Tepic
 
-App web (se instala en el celular o la tableta) para que el **dueño del local** y el **dueño de la tienda** lleven el mismo inventario de bases box, cada uno desde su equipo y con su propio PIN.
+App web (se instala en el celular o la tableta) para que el **almacén** y el **vendedor de la tienda** lleven el mismo inventario de bases box, cada uno desde su equipo y con su propio PIN.
 
 ```
-Local (fábrica)  ──envío──▶  En camino  ──confirma recibo──▶  Tienda  ──venta──▶  Cliente
+Almacén (fábrica)  ──envío──▶  En camino  ──confirma recibo──▶  Tienda  ──venta──▶  Cliente
       ▲                                                          │
       └──────────────────────── pedido ◀─────────────────────────┘
 ```
 
-## Qué hace cada dueño
+## Qué hace cada usuario
 
-| | Dueño del local | Dueño de la tienda |
+| | Almacén | Vendedor tienda |
 |---|---|---|
 | Catálogo (productos, medidas, tonos, precios, costos) | Crea y edita | Solo consulta (no ve costos) |
-| Entradas y salidas del local | ✅ | — |
+| Entradas y salidas del almacén | ✅ | — |
 | Enviar a la tienda / cancelar un envío | ✅ | — |
 | Recibir mercancía (con faltantes o daños) | — | ✅ |
 | Ventas, devoluciones, mermas de la tienda | — | ✅ |
-| Pedir al local / surtir pedidos | Surte | Pide |
+| Pedir al almacén / surtir pedidos | Surte | Pide |
 | Conteo físico, anular movimientos | ✅ (todo) | ✅ (lo suyo) |
 | Alertas de stock bajo, tablero, historial, exportar CSV | ✅ | ✅ |
 
-Todo movimiento queda en el historial con fecha, lugar y responsable (Local o Tienda). Las piezas en camino no cuentan como existencias de ninguno de los dos hasta que la tienda confirma que llegaron.
+Todo movimiento queda en el historial con fecha, lugar y responsable (Almacén o Tienda). Las piezas en camino no cuentan como existencias de ninguno de los dos hasta que la tienda confirma que llegaron.
 
 ## Probarla en 1 minuto (sin servidor)
 
-Abre `public/index.html` en el navegador (doble clic) y elige **Ver una demostración**: carga un mes de datos de ejemplo. PIN del local `1111`, PIN de la tienda `2222`.
+Abre `public/index.html` en el navegador (doble clic) y elige **Ver una demostración**: carga un mes de datos de ejemplo. PIN del almacén `1111`, PIN del vendedor `2222`.
 Así funciona también si la subes a un hosting estático: **los datos viven solo en ese equipo**, así que sirve para probar, no para que dos personas compartan el inventario.
 
 ## Publicarla para los clientes (una sola vez)
@@ -40,9 +40,9 @@ npm run publicar
 Un solo comando: abre el navegador para que entres a Cloudflare, crea la base de datos y el sitio, genera una **clave de instalación**, sube la app y comprueba que responda. Al final imprime la dirección (`https://bases-box-inventario.pages.dev`; si ese nombre ya lo usa alguien más, Cloudflare le agrega unas letras) y la clave.
 
 1. Abre la dirección (puedes ponerle un dominio propio desde el panel de Cloudflare, p. ej. `inventario.basesboxtepic.com`).
-2. **Termina el asistente tú mismo antes de compartir el enlace**: pide la clave de instalación, el nombre del negocio, un PIN para cada dueño y el catálogo inicial. La clave evita que un extraño que adivine la dirección configure la app antes que tú; ya configurada, no se vuelve a usar. Si la pierdes, escribe una nueva con `npx wrangler@4 pages secret put SETUP_KEY --project-name bases-box-inventario`.
+2. **Termina el asistente tú mismo antes de compartir el enlace**: pide la clave de instalación, el nombre del negocio, un PIN para cada usuario y el catálogo inicial. La clave evita que un extraño que adivine la dirección configure la app antes que tú; ya configurada, no se vuelve a usar. Si la pierdes, escribe una nueva con `npx wrangler@4 pages secret put SETUP_KEY --project-name bases-box-inventario`.
 3. Guarda el **código de recuperación** que muestra al final (sirve si alguien olvida su PIN; en *Más → Código de recuperación* se genera uno nuevo).
-4. Manda el enlace a los dos dueños. En el celular: *Compartir → Agregar a pantalla de inicio* (iPhone/iPad) o *Instalar app* (Android/Chrome).
+4. Manda el enlace a los dos usuarios. En el celular: *Compartir → Agregar a pantalla de inicio* (iPhone/iPad) o *Instalar app* (Android/Chrome).
 
 El comando se puede repetir: para actualizar la app después de cambiar el código, vuelve a correr `npm run publicar` (no toca los datos ni la clave). Las tablas se crean solas la primera vez. La primera vez guarda el id de la base en `wrangler.toml`; sube ese cambio al repositorio.
 
@@ -50,15 +50,15 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 
 *Como Worker en vez de Pages (probado en producción):* `dist/_worker.js` también corre como Worker. Crea la base D1 `bases-box-inventario` (panel de Cloudflare → *Storage & databases → D1*), pon su id en `database_id` de `wrangler.worker.toml` y publica con `npx wrangler@4 deploy -c wrangler.worker.toml --var SETUP_KEY:XXXX-XXXX-XXXX`. Sin clonar el repositorio: descomprime el zip de `dist/`, crea ahí un `wrangler.toml` con `name`, `main = "_worker.js"`, `compatibility_date` y el bloque `[[d1_databases]]` (`binding = "DB"`) y corre el mismo `npx wrangler@4 deploy --var SETUP_KEY:…` en esa carpeta. Ojo: la opción “Upload your static files” del panel crea un Worker de solo archivos y **no** sirve para este paquete.
 
-### Primeros pasos para los dueños
+### Primeros pasos
 
-- **Local:** *Más → Medidas y precios* (pon los precios) → *Mover → Conteo físico* (carga lo que ya tienes) → listo. Cada vez que fabriques: *Mover → Registrar entrada*; para surtir a la tienda: *Mover → Enviar a tienda*.
-- **Tienda:** cuando el local envíe, aparece “envío por recibir” en *Inicio*; ahí se confirma lo que llegó. Las ventas se registran en *Mover → Registrar venta* (con *Deshacer* a la mano por si te equivocas).
+- **Almacén:** *Más → Medidas y precios* (pon los precios) → *Mover → Conteo físico* (carga lo que ya tienes) → listo. Cada vez que fabriques: *Mover → Registrar entrada*; para surtir a la tienda: *Mover → Enviar a tienda*.
+- **Vendedor tienda:** cuando el almacén envíe, aparece “envío por recibir” en *Inicio*; ahí se confirma lo que llegó. Las ventas se registran en *Mover → Registrar venta* (con *Deshacer* a la mano por si te equivocas).
 - Si un número no cuadra, se corrige con un **conteo físico** (queda registrado quién y cuándo). Los errores de captura se corrigen con **Anular operación** en el historial.
 
 ## Cosas que conviene saber
 
-- **PIN y sesiones.** Cada dueño tiene un PIN de 4 a 8 números (se rechazan los obvios como 1234 o 0000). Se valida en el servidor, no en el teléfono; después de 5 intentos fallidos se bloquea un rato (cada bloqueo dura más). La sesión dura 30 días en ese equipo y se cierra si el PIN cambia. No hay cuentas por persona: quien tenga el PIN de un dueño entra como ese dueño.
+- **PIN y sesiones.** Cada usuario tiene un PIN de 4 a 8 números (se rechazan los obvios como 1234 o 0000). Se valida en el servidor, no en el teléfono; después de 5 intentos fallidos se bloquea un rato (cada bloqueo dura más). La sesión dura 30 días en ese equipo y se cierra si el PIN cambia. No hay cuentas por persona: quien tenga el PIN de un usuario entra como ese usuario.
 - **Sin internet** la app abre con la última copia y se puede consultar, pero no registrar movimientos (así los dos inventarios nunca se desajustan). En cuanto vuelve la conexión se actualiza sola.
 - **Dos personas a la vez.** Las existencias nunca bajan de cero y una operación se guarda completa o no se guarda. Si dos personas gastan la última pieza al mismo tiempo, solo una se registra y a la otra se le avisa.
 - **Cantidades enteras.** Para materiales que se miden en metros u hojas, cuenta la unidad que uses (rollo, hoja, caja…).

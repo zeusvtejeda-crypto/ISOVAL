@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Inventario Bases Box</title>
-<meta name="description" content="Inventario de Bases Box Tepic para el dueño del local y el dueño de la tienda.">
+<meta name="description" content="Inventario de Bases Box Tepic para el almacén y el vendedor de la tienda.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#1A1A1A">
 <meta name="color-scheme" content="light dark">
@@ -540,13 +540,13 @@ let repoLocal = null;
 let sincronizando = false;
 
 const ROLES = {
-  local: { nombre: 'Dueño del local', corto: 'Local', desc: 'Bodega y fábrica: materiales, bases en producción y envíos a la tienda.', ic: 'fabrica' },
-  tienda: { nombre: 'Dueño de la tienda', corto: 'Tienda', desc: 'Venta al público: ventas, devoluciones, pedidos y recibo de mercancía.', ic: 'tienda' }
+  local: { nombre: 'Almacén', corto: 'Almacén', desc: 'Bodega y fábrica: materiales, bases en producción y envíos a la tienda.', ic: 'fabrica' },
+  tienda: { nombre: 'Vendedor tienda', corto: 'Tienda', desc: 'Venta al público: ventas, devoluciones, pedidos y recibo de mercancía.', ic: 'tienda' }
 };
 const CATS = { base: 'Bases', material: 'Materiales', accesorio: 'Accesorios' };
 const TIPOS = {
-  entrada: { t: 'Entrada al local', ic: 'entrada', c: 'ok' },
-  salida: { t: 'Salida del local', ic: 'salida', c: 'warn' },
+  entrada: { t: 'Entrada al almacén', ic: 'entrada', c: 'ok' },
+  salida: { t: 'Salida del almacén', ic: 'salida', c: 'warn' },
   venta: { t: 'Venta', ic: 'recibo', c: 'acc' },
   devolucion: { t: 'Devolución de cliente', ic: 'devolver', c: 'info' },
   merma: { t: 'Merma en tienda', ic: 'basura', c: 'bad' },
@@ -904,10 +904,10 @@ function pendientesDeAtencion() {
   const ped = e.pedidos.filter((p) => p.estado === 'pendiente');
   const pzEnT = sumar(enT, (t) => sumar(t.lineas, (l) => l.cant));
   const pzPed = sumar(ped, (p) => sumar(p.lineas, (l) => l.cant));
-  if (S.rol === 'tienda' && enT.length) items.push({ c: 'info', ic: 'camion', t: plural(enT.length, 'envío por recibir', 'envíos por recibir'), s: plural(pzEnT, 'pieza', 'piezas') + ' en camino desde el local', btn: 'Recibir', act: 'recibir-ya' });
+  if (S.rol === 'tienda' && enT.length) items.push({ c: 'info', ic: 'camion', t: plural(enT.length, 'envío por recibir', 'envíos por recibir'), s: plural(pzEnT, 'pieza', 'piezas') + ' en camino desde el almacén', btn: 'Recibir', act: 'recibir-ya' });
   if (S.rol === 'local' && ped.length) items.push({ c: 'acc', ic: 'pedido', t: plural(ped.length, 'pedido de la tienda', 'pedidos de la tienda'), s: plural(pzPed, 'pieza', 'piezas') + ' por surtir', btn: 'Ver pedidos', act: 'ir', tab: 'mover' });
   if (S.rol === 'local' && enT.length) items.push({ c: 'info', ic: 'camion', t: plural(enT.length, 'envío en camino', 'envíos en camino'), s: 'Esperan a que la tienda confirme el recibo', btn: 'Ver', act: 'ir', tab: 'mover' });
-  if (S.rol === 'tienda' && ped.length) items.push({ c: 'info', ic: 'pedido', t: plural(ped.length, 'pedido esperando', 'pedidos esperando'), s: 'El local aún no los surte', btn: 'Ver', act: 'ir', tab: 'mover' });
+  if (S.rol === 'tienda' && ped.length) items.push({ c: 'info', ic: 'pedido', t: plural(ped.length, 'pedido esperando', 'pedidos esperando'), s: 'El almacén aún no los surte', btn: 'Ver', act: 'ir', tab: 'mover' });
   const bajos = bajosDe(S.rol);
   if (bajos.length) {
     const agot = bajos.filter((p) => nivel(p, S.rol) === 'agotado').length;
@@ -934,19 +934,19 @@ function pintarInicio() {
     <div class="cabecera">
       <div><h1 class="t-pant">${saludo}</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · ${ROLES[S.rol].nombre}</p></div>
     </div>
-    ${vacioTodo ? html`<section class="card" aria-label="Empezar"><div class="fila" style="align-items:flex-start;gap:14px"><span class="ico-c acc">${ico('cubo')}</span><div class="grow"><div class="item-t">Empieza cargando tus existencias</div><div class="item-s" style="margin-bottom:12px">${S.rol === 'local' ? 'Aún no hay piezas registradas. Cuenta lo que tienes en el local y anótalo de un jalón, o registra una entrada cada vez que fabriques o compres.' : 'Aún no hay piezas registradas. Cuando el local envíe mercancía te aparecerá aquí para recibirla; si ya tienes bases en la tienda, cuéntalas.'}</div><div class="fila w"><button type="button" class="btn btn-p btn-s" data-act="forma" data-tipo="conteo">${ico('conteo')}Contar existencias</button>${S.rol === 'local' ? html`<button type="button" class="btn btn-g btn-s" data-act="forma" data-tipo="entrada">${ico('entrada')}Registrar entrada</button>` : ''}</div></div></div></section>` : ''}
+    ${vacioTodo ? html`<section class="card" aria-label="Empezar"><div class="fila" style="align-items:flex-start;gap:14px"><span class="ico-c acc">${ico('cubo')}</span><div class="grow"><div class="item-t">Empieza cargando tus existencias</div><div class="item-s" style="margin-bottom:12px">${S.rol === 'local' ? 'Aún no hay piezas registradas. Cuenta lo que tienes en el almacén y anótalo de un jalón, o registra una entrada cada vez que fabriques o compres.' : 'Aún no hay piezas registradas. Cuando el almacén envíe mercancía te aparecerá aquí para recibirla; si ya tienes bases en la tienda, cuéntalas.'}</div><div class="fila w"><button type="button" class="btn btn-p btn-s" data-act="forma" data-tipo="conteo">${ico('conteo')}Contar existencias</button>${S.rol === 'local' ? html`<button type="button" class="btn btn-g btn-s" data-act="forma" data-tipo="entrada">${ico('entrada')}Registrar entrada</button>` : ''}</div></div></div></section>` : ''}
     ${pend.length ? html`<section class="card flat" aria-label="Por atender"><ul class="lista">${pend.map((p) => html`<li class="item">
         <span class="ico-c ${p.c}">${ico(p.ic)}</span>
         <div class="grow"><div class="item-t">${p.t}</div><div class="item-s">${p.s}</div></div>
         <button type="button" class="btn btn-s ${p.c === 'bad' || p.c === 'acc' ? 'btn-p' : 'btn-d'}" data-act="${p.act}" ${p.tab ? raw('data-tab-ir="' + p.tab + '"') : ''}>${p.btn}</button></li>`)}</ul></section>`
       : vacioTodo ? '' : html`<section class="card"><div class="fila"><span class="ico-c ok">${ico('check')}</span><div><div class="item-t">Todo al día</div><div class="item-s">No hay envíos, pedidos ni productos con stock bajo por atender.</div></div></div></section>`}
     <section class="grid-kpi" aria-label="Resumen">
-      <div class="kpi"><span class="t-sec">Bases en el local</span><span class="num-g cifras">${num(bLocal)}</span><small>${plural(bases.filter((p) => p.stock_local > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
+      <div class="kpi"><span class="t-sec">Bases en el almacén</span><span class="num-g cifras">${num(bLocal)}</span><small>${plural(bases.filter((p) => p.stock_local > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
       <div class="kpi"><span class="t-sec">Bases en tienda</span><span class="num-g cifras">${num(bTienda)}</span><small>${plural(bases.filter((p) => p.stock_tienda > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
       <div class="kpi"><span class="t-sec">Bases en camino</span><span class="num-g cifras" style="color:${bCamino ? 'var(--info)' : 'inherit'}">${num(bCamino)}</span><small>${bCamino ? 'Sin confirmar en tienda' : 'Nada por llegar'}</small></div>
       <div class="kpi dest"><span class="t-sec">Ventas de hoy</span><span class="num-g cifras">${dinero(r.hoy.total)}</span><small>${plural(r.hoy.n, 'venta', 'ventas')} · ${plural(r.hoy.pzas, 'pieza', 'piezas')}</small></div>
       <div class="kpi"><span class="t-sec">Ventas del mes</span><span class="num-g cifras">${dinero(r.mes.total)}</span><small>${plural(r.mes.n, 'venta', 'ventas')} · ${plural(r.mes.pzas, 'pieza', 'piezas')}</small></div>
-      <div class="kpi"><span class="t-sec">${S.rol === 'local' ? 'Valor a costo' : 'Valor en tienda'}</span><span class="num-g cifras">${dinero(valor)}</span><small>${S.rol === 'local' ? 'Local y tienda, al costo' : 'Existencias a precio de venta'}</small></div>
+      <div class="kpi"><span class="t-sec">${S.rol === 'local' ? 'Valor a costo' : 'Valor en tienda'}</span><span class="num-g cifras">${dinero(valor)}</span><small>${S.rol === 'local' ? 'Almacén y tienda, al costo' : 'Existencias a precio de venta'}</small></div>
     </section>
     <div class="dos-col">
       <div class="pila">
@@ -1080,7 +1080,7 @@ function filaProducto(p, corto) {
   return html`<button type="button" class="prod ${p.activo ? '' : 'arch'}" data-act="prod" data-id="${p.id}">
     <span class="prod-ico">${iconoProd(p, 34)}</span>
     <span class="prod-main"><span class="prod-n">${p.nombre}</span><span class="prod-s">${p.activo ? subProd(p, corto) : 'Archivado'}</span></span>
-    <span class="stocks"><span class="st ${cl('local')}"><b>${num(p.stock_local)}</b><i>Local</i></span><span class="st ${cl('tienda')}"><b>${num(p.stock_tienda)}</b><i>Tienda</i></span>${cam ? html`<span class="st cam"><b>${num(cam)}</b><i>Camino</i></span>` : ''}</span>
+    <span class="stocks"><span class="st ${cl('local')}"><b>${num(p.stock_local)}</b><i>Almacén</i></span><span class="st ${cl('tienda')}"><b>${num(p.stock_tienda)}</b><i>Tienda</i></span>${cam ? html`<span class="st cam"><b>${num(cam)}</b><i>Camino</i></span>` : ''}</span>
   </button>`;
 }
 
@@ -1099,7 +1099,7 @@ function pintarListaInv() {
   }
   lista.sort(ordenProductos);
   if (!lista.length) {
-    poner(cont, html`<div class="vacio">${ico('buscar')}<b>${q || F.bajo ? 'Nada coincide con tu búsqueda' : 'Todavía no hay productos'}</b><span>${q || F.bajo ? 'Prueba con otra palabra o quita los filtros.' : S.rol === 'local' ? 'Agrega tu primer producto o crea las bases por medida y tono.' : 'El dueño del local debe dar de alta los productos.'}</span></div>`);
+    poner(cont, html`<div class="vacio">${ico('buscar')}<b>${q || F.bajo ? 'Nada coincide con tu búsqueda' : 'Todavía no hay productos'}</b><span>${q || F.bajo ? 'Prueba con otra palabra o quita los filtros.' : S.rol === 'local' ? 'Agrega tu primer producto o crea las bases por medida y tono.' : 'El almacén debe dar de alta los productos.'}</span></div>`);
     return;
   }
   // las bases se agrupan por medida cuando no hay búsqueda, para ubicarlas rápido
@@ -1117,22 +1117,22 @@ function pintarListaInv() {
 
 /* ───────── MOVER ───────── */
 VISTAS.mover = {
-  armar: () => html`<div class="pila" data-vista="mover"><div class="cabecera"><div><h1 class="t-pant">Mover</h1><p class="t-peq" style="margin-top:8px">${S.rol === 'local' ? 'Registra lo que entra, sale y viaja a la tienda.' : 'Registra ventas, mercancía recibida y pedidos al local.'}</p></div></div><div id="mv-acc"></div><div id="mv-env"></div><div id="mv-ped"></div></div>`,
+  armar: () => html`<div class="pila" data-vista="mover"><div class="cabecera"><div><h1 class="t-pant">Mover</h1><p class="t-peq" style="margin-top:8px">${S.rol === 'local' ? 'Registra lo que entra, sale y viaja a la tienda.' : 'Registra ventas, mercancía recibida y pedidos al almacén.'}</p></div></div><div id="mv-acc"></div><div id="mv-env"></div><div id="mv-ped"></div></div>`,
   actualizar() {
     const e = S.est;
     const enT = e.traspasos.filter((t) => t.estado === 'en_transito');
     const acc = S.rol === 'local'
       ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
-      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['pedido', 'pedido', 'Pedir al local', 'Avisa qué bases hacen falta'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
+      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['pedido', 'pedido', 'Pedir al almacén', 'Avisa qué bases hacen falta'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
     poner($('#mv-acc'), html`<div class="atajos">${acc.map(([k, ic, t, s, pri]) => html`<button type="button" class="atajo ${pri ? 'pri' : ''}" data-act="forma" data-tipo="${k}"><span class="ico-c ${pri ? '' : 'acc'}">${ico(ic)}</span><b>${t}</b><span>${s}</span></button>`)}</div>`);
 
     const cerr = (arr, n) => arr.filter((x) => x.estado !== 'en_transito' && x.estado !== 'pendiente').slice(0, n);
     const envios = e.traspasos.filter((t) => t.estado === 'en_transito').concat(cerr(e.traspasos, 5));
     const pedidos = e.pedidos.filter((p) => p.estado === 'pendiente').concat(cerr(e.pedidos, 5));
-    poner($('#mv-env'), html`<section><h2 class="t-sec" style="margin:6px 2px 8px">Envíos del local a la tienda</h2>
-      ${envios.length ? html`<div class="card flat"><ul class="lista">${envios.map(tarjetaEnvio)}</ul></div>` : html`<div class="card"><div class="vacio" style="padding:18px"><b>Sin envíos todavía</b><span>${S.rol === 'local' ? 'Cuando mandes bases a la tienda aparecerán aquí hasta que las confirmen.' : 'Aquí verás lo que el local te mande.'}</span></div></div>`}</section>`);
+    poner($('#mv-env'), html`<section><h2 class="t-sec" style="margin:6px 2px 8px">Envíos del almacén a la tienda</h2>
+      ${envios.length ? html`<div class="card flat"><ul class="lista">${envios.map(tarjetaEnvio)}</ul></div>` : html`<div class="card"><div class="vacio" style="padding:18px"><b>Sin envíos todavía</b><span>${S.rol === 'local' ? 'Cuando mandes bases a la tienda aparecerán aquí hasta que las confirmen.' : 'Aquí verás lo que el almacén te mande.'}</span></div></div>`}</section>`);
     poner($('#mv-ped'), html`<section><h2 class="t-sec" style="margin:6px 2px 8px">Pedidos de la tienda</h2>
-      ${pedidos.length ? html`<div class="card flat"><ul class="lista">${pedidos.map(tarjetaPedido)}</ul></div>` : html`<div class="card"><div class="vacio" style="padding:18px"><b>Sin pedidos</b><span>${S.rol === 'tienda' ? 'Usa “Pedir al local” cuando falten bases en tienda.' : 'Cuando la tienda pida bases las verás aquí.'}</span></div></div>`}</section>`);
+      ${pedidos.length ? html`<div class="card flat"><ul class="lista">${pedidos.map(tarjetaPedido)}</ul></div>` : html`<div class="card"><div class="vacio" style="padding:18px"><b>Sin pedidos</b><span>${S.rol === 'tienda' ? 'Usa “Pedir al almacén” cuando falten bases en tienda.' : 'Cuando la tienda pida bases las verás aquí.'}</span></div></div>`}</section>`);
   }
 };
 
@@ -1350,13 +1350,13 @@ function editorLineas(o) {
 
 /* ───────── formularios de movimiento ───────── */
 const FORMAS = {
-  entrada: { titulo: 'Registrar entrada', op: 'mov.entrada', loc: 'local', modo: 'sumar', motivos: ['produccion', 'compra', 'otro'], ok: 'Guardar entrada', cand: () => true, ayuda: 'Suma al local lo que se fabricó o se compró.' },
-  salida: { titulo: 'Registrar salida', op: 'mov.salida', loc: 'local', modo: 'restar', motivos: ['uso', 'merma', 'otro'], ok: 'Guardar salida', cand: (p) => p.stock_local > 0, ayuda: 'Resta del local lo que se usó o se perdió. Para mandar a la tienda usa “Enviar a tienda”.', sinCand: 'No hay productos con existencias en el local.' },
+  entrada: { titulo: 'Registrar entrada', op: 'mov.entrada', loc: 'local', modo: 'sumar', motivos: ['produccion', 'compra', 'otro'], ok: 'Guardar entrada', cand: () => true, ayuda: 'Suma al almacén lo que se fabricó o se compró.' },
+  salida: { titulo: 'Registrar salida', op: 'mov.salida', loc: 'local', modo: 'restar', motivos: ['uso', 'merma', 'otro'], ok: 'Guardar salida', cand: (p) => p.stock_local > 0, ayuda: 'Resta del almacén lo que se usó o se perdió. Para mandar a la tienda usa “Enviar a tienda”.', sinCand: 'No hay productos con existencias en el almacén.' },
   venta: { titulo: 'Registrar venta', op: 'mov.venta', loc: 'tienda', modo: 'restar', precio: true, venta: true, ok: 'Registrar venta', cand: (p) => p.stock_tienda > 0, sinCand: 'No hay productos con existencias en la tienda.' },
   devolucion: { titulo: 'Devolución de cliente', op: 'mov.devolucion', loc: 'tienda', modo: 'sumar', precio: true, ok: 'Guardar devolución', cand: () => true, ayuda: 'La base regresa a la tienda y el monto se resta de las ventas.' },
   merma: { titulo: 'Merma en tienda', op: 'mov.merma', loc: 'tienda', modo: 'restar', ok: 'Guardar merma', cand: (p) => p.stock_tienda > 0, notaEt: '¿Qué pasó?', ayuda: 'Para daños o pérdidas en la tienda.', sinCand: 'No hay productos con existencias en la tienda.' },
-  envio: { titulo: 'Enviar a la tienda', op: 'traspaso.enviar', loc: 'local', modo: 'restar', ok: 'Enviar a la tienda', cand: (p) => p.stock_local > 0, ayuda: 'Las piezas salen del local ahora y entran a la tienda cuando alguien confirme que llegaron.', sinCand: 'No hay productos con existencias en el local.' },
-  pedido: { titulo: 'Pedir al local', op: 'pedido.crear', loc: 'tienda', modo: 'sumar', ok: 'Enviar pedido', cand: () => true, ayuda: 'El local verá tu pedido y preparará el envío.' }
+  envio: { titulo: 'Enviar a la tienda', op: 'traspaso.enviar', loc: 'local', modo: 'restar', ok: 'Enviar a la tienda', cand: (p) => p.stock_local > 0, ayuda: 'Las piezas salen del almacén ahora y entran a la tienda cuando alguien confirme que llegaron.', sinCand: 'No hay productos con existencias en el almacén.' },
+  pedido: { titulo: 'Pedir al almacén', op: 'pedido.crear', loc: 'tienda', modo: 'sumar', ok: 'Enviar pedido', cand: () => true, ayuda: 'El almacén verá tu pedido y preparará el envío.' }
 };
 const waLink = (tel, texto) => 'https://wa.me/' + (tel || '') + '?text=' + encodeURIComponent(texto);
 const lineasTexto = (ls) => ls.map((l) => '• ' + l.cant + ' × ' + nombreProd(l.id)).join('\n');
@@ -1432,7 +1432,7 @@ function exitoForma(tipo, res, cuerpo) {
     toast('Envío creado · ' + plural(res.piezas, 'pieza', 'piezas') + ' en camino', { accion: { texto: 'Avisar por WhatsApp', href: waLink(e.telTienda, texto) } });
   } else if (tipo === 'pedido') {
     const texto = 'Bases Box Tepic · Pedido de la tienda\n' + lineasTexto(cuerpo.lineas) + (cuerpo.nota ? '\nNota: ' + cuerpo.nota : '') + '\nRevísalo en el inventario.';
-    toast('Pedido enviado al local', { accion: { texto: 'Avisar por WhatsApp', href: waLink(e.telLocal, texto) } });
+    toast('Pedido enviado al almacén', { accion: { texto: 'Avisar por WhatsApp', href: waLink(e.telLocal, texto) } });
   }
 }
 
@@ -1445,7 +1445,7 @@ function abrirConteo() {
   const d = dialogo({
     titulo: 'Conteo físico',
     clase: 'ancho',
-    cuerpo: html`<p class="t-peq" style="margin-bottom:12px">Escribe cuántas piezas contaste de verdad en ${loc === 'local' ? 'el local' : 'la tienda'}. Lo que dejes en blanco no se toca. El sistema se ajusta a tus números y cada ajuste queda registrado.</p>
+    cuerpo: html`<p class="t-peq" style="margin-bottom:12px">Escribe cuántas piezas contaste de verdad en ${loc === 'local' ? 'el almacén' : 'la tienda'}. Lo que dejes en blanco no se toca. El sistema se ajusta a tus números y cada ajuste queda registrado.</p>
       <div class="buscar">${ico('buscar')}<input class="inp" id="cn-q" type="search" placeholder="Buscar producto" autocomplete="off" aria-label="Buscar producto"></div>
       <div class="chips" id="cn-chips" style="margin:10px 0 12px"></div>
       <div class="cnt-lista" id="cn-lista"></div>
@@ -1587,16 +1587,16 @@ function abrirTraspaso(id) {
         ${t.estado === 'recibido' ? html`<dt>Recibido</dt><dd>${hace(t.recibido_ts)}</dd>` : ''}
         ${t.nota_recibo ? html`<dt>${t.estado === 'cancelado' ? 'Motivo' : 'Nota al recibir'}</dt><dd>${t.nota_recibo}</dd>` : ''}
       </dl>
-      ${abierto && esLocal ? html`<div class="aviso" style="margin-top:14px">${ico('info')}<span>Si cancelas, las piezas regresan al inventario del local.</span></div>` : ''}`,
+      ${abierto && esLocal ? html`<div class="aviso" style="margin-top:14px">${ico('info')}<span>Si cancelas, las piezas regresan al inventario del almacén.</span></div>` : ''}`,
     pie: abierto ? (esLocal ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-r" id="t-cancelar">Cancelar envío</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="t-recibir">${ico('check')}Recibir mercancía</button>`) : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
   });
   const rc = $('#t-recibir', d.el);
   if (rc) rc.addEventListener('click', () => { d.cerrar(); formRecibir(id); });
   const cn = $('#t-cancelar', d.el);
   if (cn) cn.addEventListener('click', async () => {
-    const motivo = await confirmar({ titulo: 'Cancelar envío', texto: 'Las piezas regresan al inventario del local.', ok: 'Cancelar envío', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Motivo', min: 3, error: 'Escribe por qué cancelas el envío.' } });
+    const motivo = await confirmar({ titulo: 'Cancelar envío', texto: 'Las piezas regresan al inventario del almacén.', ok: 'Cancelar envío', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Motivo', min: 3, error: 'Escribe por qué cancelas el envío.' } });
     if (!motivo) return;
-    try { await op({ op: 'traspaso.cancelar', id, motivo }); d.cerrar(); toast('Envío cancelado. Las piezas volvieron al local.'); } catch (e) { toast(e.message, { tipo: 'error' }); }
+    try { await op({ op: 'traspaso.cancelar', id, motivo }); d.cerrar(); toast('Envío cancelado. Las piezas volvieron al almacén.'); } catch (e) { toast(e.message, { tipo: 'error' }); }
   });
 }
 
@@ -1609,7 +1609,7 @@ function abrirPedido(id) {
     titulo: 'Pedido de la tienda',
     clase: 'ancho',
     cuerpo: html`<div class="sep" style="margin-bottom:12px"><span class="pill ${cl}">${txt}</span><span class="t-peq">Pedido ${hace(p.ts)}</span></div>
-      <div class="card flat" style="margin-bottom:14px"><ul class="lista">${p.lineas.map((l) => { const pr = S.idx[l.id]; return html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${pr ? iconoProd(pr, 28) : ''}</span><div class="grow"><div class="item-t">${nombreProd(l.id)}</div>${pr ? html`<div class="item-s">En local: ${num(pr.stock_local)} · En tienda: ${num(pr.stock_tienda)}</div>` : ''}</div><b class="cifras" style="font:700 18px var(--f-etiqueta)">${num(l.cant)}</b></li>`; })}</ul></div>
+      <div class="card flat" style="margin-bottom:14px"><ul class="lista">${p.lineas.map((l) => { const pr = S.idx[l.id]; return html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${pr ? iconoProd(pr, 28) : ''}</span><div class="grow"><div class="item-t">${nombreProd(l.id)}</div>${pr ? html`<div class="item-s">En almacén: ${num(pr.stock_local)} · En tienda: ${num(pr.stock_tienda)}</div>` : ''}</div><b class="cifras" style="font:700 18px var(--f-etiqueta)">${num(l.cant)}</b></li>`; })}</ul></div>
       ${p.nota ? html`<dl class="kv"><dt>Nota</dt><dd>${p.nota}</dd></dl>` : ''}`,
     pie: abierto ? (S.rol === 'local' ? html`<button type="button" class="btn btn-g" id="p-descartar">Descartar</button><button type="button" class="btn btn-p" id="p-surtir">${ico('camion')}Preparar envío</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-r" id="p-descartar">Cancelar pedido</button>`) : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
   });
@@ -1617,7 +1617,7 @@ function abrirPedido(id) {
   if (sr) sr.addEventListener('click', () => {
     d.cerrar();
     const inicial = p.lineas.filter((l) => S.idx[l.id] && S.idx[l.id].activo && S.idx[l.id].stock_local > 0).map((l) => ({ id: l.id, cant: Math.min(l.cant, S.idx[l.id].stock_local) }));
-    if (!inicial.length) toast('Ninguno de esos productos tiene existencias en el local.', { tipo: 'error' });
+    if (!inicial.length) toast('Ninguno de esos productos tiene existencias en el almacén.', { tipo: 'error' });
     abrirForma('envio', { inicial, pedido: id });
   });
   const ds = $('#p-descartar', d.el);
@@ -1641,13 +1641,13 @@ function abrirOperacion(grupo) {
   const d = dialogo({
     titulo: tituloOp(g),
     cuerpo: html`<div class="sep" style="margin-bottom:12px"><span class="t-peq">${ROLES[g.rol].nombre} · ${hace(g.ts)}</span>${g.anulado ? html`<span class="pill bad">Anulada</span>` : ''}</div>
-      <div class="card flat" style="margin-bottom:14px"><ul class="lista">${g.lineas.map((m) => html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${S.idx[m.prod] ? iconoProd(S.idx[m.prod], 28) : ''}</span><div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}">${nombreProd(m.prod)}</div><div class="item-s">${m.loc === 'local' ? 'Local' : 'Tienda'}${conPrecio ? ' · ' + dinero(m.precio) + ' c/u' : ''}</div></div><b class="cifras" style="font:700 19px var(--f-etiqueta);color:${m.delta < 0 ? 'var(--bad)' : 'var(--ok)'}">${m.delta > 0 ? '+' : '−'}${num(Math.abs(m.delta))}</b></li>`)}</ul></div>
+      <div class="card flat" style="margin-bottom:14px"><ul class="lista">${g.lineas.map((m) => html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${S.idx[m.prod] ? iconoProd(S.idx[m.prod], 28) : ''}</span><div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}">${nombreProd(m.prod)}</div><div class="item-s">${m.loc === 'local' ? 'Almacén' : 'Tienda'}${conPrecio ? ' · ' + dinero(m.precio) + ' c/u' : ''}</div></div><b class="cifras" style="font:700 19px var(--f-etiqueta);color:${m.delta < 0 ? 'var(--bad)' : 'var(--ok)'}">${m.delta > 0 ? '+' : '−'}${num(Math.abs(m.delta))}</b></li>`)}</ul></div>
       <dl class="kv">
         ${conPrecio ? html`<dt>Total</dt><dd>${dinero(g.total)}</dd>` : ''}
         ${g.cliente ? html`<dt>Cliente</dt><dd>${g.cliente}</dd>` : ''}
         ${g.pago && g.tipo === 'venta' ? html`<dt>Pago</dt><dd>${PAGOS[g.pago] || g.pago}</dd>` : ''}
         ${g.nota ? html`<dt>Nota</dt><dd>${g.nota}</dd>` : ''}
-        ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Local' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
+        ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Almacén' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
       </dl>`,
     pie: puedeAnular(g) ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
   });
@@ -1669,14 +1669,14 @@ function abrirProducto(id) {
   const tile = (et, v, mn, loc) => { const nv = loc ? nivel(p, loc) : 'ok'; return html`<div class="kpi"><span class="t-sec">${et}</span><span class="num-g cifras" style="color:${nv === 'agotado' ? 'var(--bad)' : nv === 'bajo' ? 'var(--warn)' : 'inherit'}">${num(v)}</span><small>${loc ? (nv === 'agotado' ? 'Agotado' : nv === 'bajo' ? 'Stock bajo' : mn > 0 ? 'Mínimo ' + num(mn) : 'Sin mínimo') : 'Sin confirmar'}</small></div>`; };
   const pie = !p.activo ? (esLocal ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pd-reactivar">Reactivar producto</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`)
     : esLocal ? html`<button type="button" class="btn btn-g" id="pd-editar">${ico('editar')}Editar</button><button type="button" class="btn btn-g" id="pd-entrada">${ico('entrada')}Entrada</button><button type="button" class="btn btn-p" id="pd-enviar">${ico('camion')}Enviar a tienda</button>`
-    : html`<button type="button" class="btn btn-g" id="pd-pedir">${ico('pedido')}Pedir al local</button><button type="button" class="btn btn-p" id="pd-vender">${ico('recibo')}Vender</button>`;
+    : html`<button type="button" class="btn btn-g" id="pd-pedir">${ico('pedido')}Pedir al almacén</button><button type="button" class="btn btn-p" id="pd-vender">${ico('recibo')}Vender</button>`;
   const d = dialogo({
     titulo: p.nombre,
     clase: 'ancho',
     cuerpo: html`<div class="fila" style="gap:14px;margin-bottom:16px"><span class="prod-ico" style="width:68px;height:68px;border-radius:14px">${iconoProd(p, 52)}</span>
         <div class="grow"><div class="t-peq">${CATS[p.cat].replace(/s$/, '')}${med ? ' · ' + med.nombre + ' ' + med.dims : ''}${tono ? ' · ' + tono.nombre : ''}</div><div class="num-g" style="margin-top:6px">${p.precio ? dinero(p.precio) : 'Sin precio'}</div></div>${p.activo ? '' : html`<span class="pill">Archivado</span>`}</div>
-      <div class="grid-kpi" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px">${tile('Local', p.stock_local, p.min_local, 'local')}${tile('Tienda', p.stock_tienda, p.min_tienda, 'tienda')}${tile('En camino', cam, 0, null)}</div>
-      <dl class="kv" style="margin-bottom:18px"><dt>Unidad</dt><dd>${p.unidad}</dd>${esLocal ? html`<dt>Costo</dt><dd>${p.costo ? dinero(p.costo) : '—'}</dd>${p.costo && p.precio ? html`<dt>Margen</dt><dd>${Math.round((1 - p.costo / p.precio) * 100)}%</dd>` : ''}` : ''}<dt>Mínimos</dt><dd>Local ${num(p.min_local)} · Tienda ${num(p.min_tienda)}</dd></dl>
+      <div class="grid-kpi" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px">${tile('Almacén', p.stock_local, p.min_local, 'local')}${tile('Tienda', p.stock_tienda, p.min_tienda, 'tienda')}${tile('En camino', cam, 0, null)}</div>
+      <dl class="kv" style="margin-bottom:18px"><dt>Unidad</dt><dd>${p.unidad}</dd>${esLocal ? html`<dt>Costo</dt><dd>${p.costo ? dinero(p.costo) : '—'}</dd>${p.costo && p.precio ? html`<dt>Margen</dt><dd>${Math.round((1 - p.costo / p.precio) * 100)}%</dd>` : ''}` : ''}<dt>Mínimos</dt><dd>Almacén ${num(p.min_local)} · Tienda ${num(p.min_tienda)}</dd></dl>
       <h3 class="t-sec" style="margin-bottom:8px">Últimos movimientos</h3>
       <div class="card flat"><ul class="lista" id="pd-movs"><li class="item t-peq">Cargando…</li></ul></div>`,
     pie
@@ -1691,7 +1691,7 @@ function abrirProducto(id) {
   const ir = (sel, fn) => { const b = $(sel, d.el); if (b) b.addEventListener('click', () => { d.cerrar(); fn(); }); };
   ir('#pd-editar', () => formProducto(p));
   ir('#pd-entrada', () => abrirForma('entrada', { inicial: [{ id: p.id, cant: 1 }] }));
-  ir('#pd-enviar', () => { if (p.stock_local < 1) toast('No hay existencias en el local para enviar.', { tipo: 'error' }); else abrirForma('envio', { inicial: [{ id: p.id, cant: 1 }] }); });
+  ir('#pd-enviar', () => { if (p.stock_local < 1) toast('No hay existencias en el almacén para enviar.', { tipo: 'error' }); else abrirForma('envio', { inicial: [{ id: p.id, cant: 1 }] }); });
   ir('#pd-pedir', () => abrirForma('pedido', { inicial: [{ id: p.id, cant: Math.max(1, p.min_tienda * 2 - p.stock_tienda) }] }));
   ir('#pd-vender', () => { if (p.stock_tienda < 1) toast('No hay existencias en la tienda para vender.', { tipo: 'error' }); else abrirForma('venta', { inicial: [{ id: p.id, cant: 1, precio: p.precio ? String(p.precio) : '' }] }); });
   const rx = $('#pd-reactivar', d.el);
@@ -1720,9 +1720,9 @@ function formProducto(p) {
         <label class="campo"><span class="lbl">Costo ($)</span><input class="inp" id="pf-costo" inputmode="decimal" value="${p && p.costo ? p.costo : ''}" placeholder="0"></label>
         <label class="campo"><span class="lbl">Unidad</span><input class="inp" id="pf-unidad" maxlength="12" value="${p ? p.unidad : 'pza'}" placeholder="pza, hoja, m…"></label>
         <span></span>
-        <label class="campo"><span class="lbl">Mínimo en local</span><input class="inp" id="pf-minl" inputmode="numeric" value="${p ? p.min_local : 2}"></label>
+        <label class="campo"><span class="lbl">Mínimo en almacén</span><input class="inp" id="pf-minl" inputmode="numeric" value="${p ? p.min_local : 2}"></label>
         <label class="campo"><span class="lbl">Mínimo en tienda</span><input class="inp" id="pf-mint" inputmode="numeric" value="${p ? p.min_tienda : 1}"></label>
-        ${nuevo ? html`<label class="campo"><span class="lbl">Existencias en local</span><input class="inp" id="pf-sl" inputmode="numeric" value="0"></label><label class="campo"><span class="lbl">Existencias en tienda</span><input class="inp" id="pf-st" inputmode="numeric" value="0"></label>` : ''}
+        ${nuevo ? html`<label class="campo"><span class="lbl">Existencias en almacén</span><input class="inp" id="pf-sl" inputmode="numeric" value="0"></label><label class="campo"><span class="lbl">Existencias en tienda</span><input class="inp" id="pf-st" inputmode="numeric" value="0"></label>` : ''}
       </div>
       <p class="ayuda" style="margin-top:-6px">Te avisamos cuando las existencias bajen del mínimo. Pon 0 si no quieres alertas.</p>
       ${!nuevo ? html`<div class="aviso warn" style="margin-top:14px">${ico('info')}<span>Para cambiar las existencias usa un <b>conteo físico</b>, así queda registrado. ${p.activo ? 'Para dejar de usar este producto, déjalo en cero y archívalo.' : ''}</span></div>` : ''}
@@ -1778,7 +1778,7 @@ function formVariantes() {
     cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Marca las medidas y los tonos que fabricas. Se crea una base por cada combinación, con el precio de la medida. Las que ya existen se omiten.</p>
       <div class="campo"><span class="lbl">Medidas</span>${e.medidas.map((m) => html`<div class="check-fila" style="margin-bottom:6px"><input type="checkbox" id="vm-${m.id}" data-med="${m.id}" checked><label for="vm-${m.id}">${m.nombre}<small>${m.dims}${m.precio ? ' · ' + dinero(m.precio) : ' · sin precio'}</small></label></div>`)}</div>
       <div class="campo"><span class="lbl">Tonos</span><div class="grid2">${e.tonos.map((t) => html`<div class="check-fila" style="margin-bottom:0"><input type="checkbox" id="vt-${t.id}" data-ton="${t.id}" checked><label for="vt-${t.id}"><span class="mini-sw" style="background:${hexOk(t.hex)}"></span>${t.nombre}</label></div>`)}</div></div>
-      <div class="grid2"><label class="campo"><span class="lbl">Mínimo en local</span><input class="inp" id="vr-minl" inputmode="numeric" value="2"></label><label class="campo"><span class="lbl">Mínimo en tienda</span><input class="inp" id="vr-mint" inputmode="numeric" value="1"></label></div>
+      <div class="grid2"><label class="campo"><span class="lbl">Mínimo en almacén</span><input class="inp" id="vr-minl" inputmode="numeric" value="2"></label><label class="campo"><span class="lbl">Mínimo en tienda</span><input class="inp" id="vr-mint" inputmode="numeric" value="1"></label></div>
       <div class="aviso" id="vr-res">${ico('info')}<span></span></div>
       <p class="err" id="vr-err" hidden></p>`,
     pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="vr-ok">Crear bases</button>`
@@ -1808,8 +1808,8 @@ function formNegocio() {
   const d = dialogo({
     titulo: 'Datos del negocio',
     cuerpo: html`<label class="campo"><span class="lbl">Nombre del negocio</span><input class="inp" id="n-nombre" maxlength="60" value="${n.nombre}"></label>
-      <label class="campo"><span class="lbl">WhatsApp del local</span><input class="inp" id="n-tl" inputmode="tel" value="${n.telLocal}" placeholder="523111234567"><span class="ayuda">Con la clave del país (52). La tienda lo usa para avisarte de sus pedidos.</span></label>
-      <label class="campo"><span class="lbl">WhatsApp de la tienda</span><input class="inp" id="n-tt" inputmode="tel" value="${n.telTienda}" placeholder="523111234567"><span class="ayuda">El local lo usa para avisar de sus envíos.</span></label>
+      <label class="campo"><span class="lbl">WhatsApp del almacén</span><input class="inp" id="n-tl" inputmode="tel" value="${n.telLocal}" placeholder="523111234567"><span class="ayuda">Con la clave del país (52). La tienda lo usa para avisarte de sus pedidos.</span></label>
+      <label class="campo"><span class="lbl">WhatsApp de la tienda</span><input class="inp" id="n-tt" inputmode="tel" value="${n.telTienda}" placeholder="523111234567"><span class="ayuda">El almacén lo usa para avisar de sus envíos.</span></label>
       <p class="err" id="n-err" hidden></p>`,
     pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="n-ok">Guardar</button>`
   });
@@ -1888,9 +1888,9 @@ function formTonos() {
 
 function formPin(reiniciarTienda) {
   const d = dialogo({
-    titulo: reiniciarTienda ? 'Nuevo PIN para la tienda' : 'Cambiar mi PIN',
-    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">${reiniciarTienda ? 'Escribe tu PIN para confirmar y el PIN nuevo que usará el dueño de la tienda. Su sesión actual se cerrará.' : 'Al cambiarlo se cierra tu sesión en los demás equipos.'}</p>
-      <label class="campo"><span class="lbl">${reiniciarTienda ? 'Tu PIN (dueño del local)' : 'PIN actual'}</span><input class="inp pin" id="pn-act" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+    titulo: reiniciarTienda ? 'Nuevo PIN para el vendedor' : 'Cambiar mi PIN',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">${reiniciarTienda ? 'Escribe tu PIN para confirmar y el PIN nuevo que usará el vendedor de la tienda. Su sesión actual se cerrará.' : 'Al cambiarlo se cierra tu sesión en los demás equipos.'}</p>
+      <label class="campo"><span class="lbl">${reiniciarTienda ? 'Tu PIN (almacén)' : 'PIN actual'}</span><input class="inp pin" id="pn-act" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
       <label class="campo"><span class="lbl">PIN nuevo (4 a 8 números)</span><input class="inp pin" id="pn-nvo" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
       <label class="campo"><span class="lbl">Repite el PIN nuevo</span><input class="inp pin" id="pn-rep" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
       <p class="err" id="pn-err" hidden></p>`,
@@ -1902,7 +1902,7 @@ function formPin(reiniciarTienda) {
     if (nvo !== rep) throw new ErrorApi({ mensaje: 'Los dos PIN nuevos no coinciden.' });
     await op(reiniciarTienda ? { op: 'pin.reiniciar', pinActual: act, pinNuevo: nvo } : { op: 'pin.cambiar', pinActual: act, pinNuevo: nvo });
     d.cerrar();
-    toast(reiniciarTienda ? 'PIN de la tienda actualizado.' : 'PIN actualizado.');
+    toast(reiniciarTienda ? 'PIN del vendedor actualizado.' : 'PIN actualizado.');
   });
   btn.addEventListener('click', enviar);
   d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enviar(); });
@@ -1930,7 +1930,7 @@ async function descargar(nombre, contenido, tipo) {
 }
 function exportarInventario() {
   const e = S.est, loc = S.rol === 'local';
-  const cab = ['Producto', 'Categoría', 'Medida', 'Tono', 'Unidad', 'Precio', ...(loc ? ['Costo'] : []), 'Existencias local', 'Existencias tienda', 'En camino', 'Mínimo local', 'Mínimo tienda', 'Activo'];
+  const cab = ['Producto', 'Categoría', 'Medida', 'Tono', 'Unidad', 'Precio', ...(loc ? ['Costo'] : []), 'Existencias almacén', 'Existencias tienda', 'En camino', 'Mínimo almacén', 'Mínimo tienda', 'Activo'];
   const filas = e.productos.slice().sort(ordenProductos).map((p) => { const m = medidaDe(p.medida), t = tonoDe(p.tono); return [p.nombre, CATS[p.cat].replace(/s$/, ''), m ? m.nombre : '', t ? t.nombre : '', p.unidad, p.precio, ...(loc ? [p.costo] : []), p.stock_local, p.stock_tienda, S.camino[p.id] || 0, p.min_local, p.min_tienda, p.activo ? 'Sí' : 'No']; });
   descargar('inventario-bases-box-' + fechaArchivo() + '.csv', aCsv([cab, ...filas]), 'text/csv;charset=utf-8');
 }
@@ -1950,7 +1950,7 @@ async function exportarMovimientos(btn) {
   try {
     const movs = await traerMovimientos();
     const cab = ['Fecha', 'Operación', 'Producto', 'Lugar', 'Cantidad', 'Precio', 'Responsable', 'Motivo', 'Nota', 'Cliente', 'Pago', 'Anulada', 'Folio'];
-    const filas = movs.map((m) => [fechaISO(m.ts), (TIPOS[m.tipo] ? TIPOS[m.tipo].t : m.tipo === 'anulacion' ? 'Anulación' : m.tipo), nombreProd(m.prod), m.loc === 'local' ? 'Local' : 'Tienda', m.delta, m.precio == null ? '' : m.precio, ROLES[m.rol].corto, MOTIVOS[m.motivo] || '', m.nota, m.cliente, PAGOS[m.pago] || '', m.anulado ? 'Sí' : '', m.grupo]);
+    const filas = movs.map((m) => [fechaISO(m.ts), (TIPOS[m.tipo] ? TIPOS[m.tipo].t : m.tipo === 'anulacion' ? 'Anulación' : m.tipo), nombreProd(m.prod), m.loc === 'local' ? 'Almacén' : 'Tienda', m.delta, m.precio == null ? '' : m.precio, ROLES[m.rol].corto, MOTIVOS[m.motivo] || '', m.nota, m.cliente, PAGOS[m.pago] || '', m.anulado ? 'Sí' : '', m.grupo]);
     await descargar('movimientos-bases-box-' + fechaArchivo() + '.csv', aCsv([cab, ...filas]), 'text/csv;charset=utf-8');
   } catch (e) { toast(e.message, { tipo: 'error' }); } finally { if (btn) btn.removeAttribute('aria-busy'); }
 }
@@ -1976,10 +1976,10 @@ VISTAS.mas = {
     const fila = (ic, t, s, act) => html`<li><button type="button" class="item" data-act="${act}"><span class="ico-c">${ico(ic)}</span><div class="grow"><div class="item-t">${t}</div>${s ? html`<div class="item-s">${s}</div>` : ''}</div>${ico('der', 'der')}</button></li>`;
     poner(cont, html`
       <div class="cabecera"><div><h1 class="t-pant">Más</h1><p class="t-peq" style="margin-top:8px">${e.negocio.nombre} · ${ROLES[S.rol].nombre}</p></div></div>
-      ${S.modo === 'local' ? html`<div class="aviso warn">${ico('alerta')}<div><b>Los datos están solo en este equipo.</b> El dueño de la otra parte del negocio no los verá. Para compartir el inventario entre los dos dueños hay que publicar la app con su servidor (mira el archivo README).</div></div>` : ''}
+      ${S.modo === 'local' ? html`<div class="aviso warn">${ico('alerta')}<div><b>Los datos están solo en este equipo.</b> La otra persona (almacén o vendedor) no los verá. Para compartir el inventario entre los dos hay que publicar la app con su servidor (mira el archivo README).</div></div>` : ''}
       <section class="sec-mas"><span class="t-sec">Mi cuenta</span><div class="card flat"><ul class="lista">
         ${fila('candado', 'Cambiar mi PIN', 'Cierra tu sesión en los demás equipos', 'pin-propio')}
-        ${local ? fila('tienda', 'Reiniciar el PIN de la tienda', 'Si el dueño de la tienda lo olvidó', 'pin-tienda') : ''}
+        ${local ? fila('tienda', 'Reiniciar el PIN del vendedor', 'Si el vendedor lo olvidó', 'pin-tienda') : ''}
         ${local ? fila('candado', 'Código de recuperación', 'Genera uno nuevo si perdiste el anterior', 'codigo-nuevo') : ''}
         ${fila('x', 'Cerrar sesión', '', 'salir')}
       </ul></div></section>
@@ -2061,7 +2061,7 @@ function formCodigoNuevo() {
   const d = dialogo({
     titulo: 'Código de recuperación',
     cuerpo: html`<div id="cn-cont"><p class="t-peq" style="margin-bottom:14px">El código sirve para crear un PIN nuevo si lo olvidas. Al generar uno nuevo, el anterior deja de servir. Escribe tu PIN para confirmar.</p>
-      <label class="campo"><span class="lbl">Tu PIN (dueño del local)</span><input class="inp pin" id="cn-pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label><p class="err" id="cn-err" hidden></p></div>`,
+      <label class="campo"><span class="lbl">Tu PIN (almacén)</span><input class="inp pin" id="cn-pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label><p class="err" id="cn-err" hidden></p></div>`,
     pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="cn-ok">Generar código</button>`
   });
   const btn = $('#cn-ok', d.el), err = $('#cn-err', d.el);
@@ -2109,7 +2109,7 @@ function pantallaLogin(msg) {
     poner($('#raiz'), html`<div class="acceso"><div class="acceso-in">
       ${cabeceraMarca()}
       ${msg ? html`<div class="aviso warn">${ico('info')}<span>${msg}</span></div>` : ''}
-      ${S.demo ? html`<div class="aviso">${ico('info')}<span><b>Demostración.</b> PIN del local: <b>1111</b> · PIN de la tienda: <b>2222</b>.</span></div>` : ''}
+      ${S.demo ? html`<div class="aviso">${ico('info')}<span><b>Demostración.</b> PIN del almacén: <b>1111</b> · PIN del vendedor: <b>2222</b>.</span></div>` : ''}
       ${!rol ? html`<div class="pila"><h2 class="t-sec" style="text-align:center">¿Quién entra?</h2>${Object.keys(ROLES).map((k) => html`<button type="button" class="rol-btn" data-rol="${k}"><span class="ico-c acc" style="width:48px;height:48px">${ico(ROLES[k].ic, 'g')}</span><span><b>${ROLES[k].nombre}</b><span>${ROLES[k].desc}</span></span></button>`)}</div>`
         : html`<form class="card pila" id="lg-form" novalidate>
           <div class="fila"><span class="ico-c acc">${ico(ROLES[rol].ic)}</span><div class="grow"><div class="item-t">${ROLES[rol].nombre}</div></div><button type="button" class="btn btn-g btn-s" id="lg-cambiar">Cambiar</button></div>
@@ -2189,7 +2189,7 @@ async function pantallaSetup(info) {
 
   function cuerpo() {
     if (paso === 0) {
-      return html`<div class="pila"><div class="aviso warn">${ico('alerta')}<span>Esta copia funciona <b>sin servidor</b>: los datos se guardan solo en este equipo. Sirve para probar. Para que los dos dueños compartan el inventario hay que publicar la app con su servidor (README).</span></div>
+      return html`<div class="pila"><div class="aviso warn">${ico('alerta')}<span>Esta copia funciona <b>sin servidor</b>: los datos se guardan solo en este equipo. Sirve para probar. Para que los dos usuarios compartan el inventario hay que publicar la app con su servidor (README).</span></div>
         <button type="button" class="rol-btn" id="su-empezar"><span class="ico-c acc" style="width:48px;height:48px">${ico('cubo', 'g')}</span><span><b>Configurar mi inventario</b><span>Empieza con tu negocio, tus PIN y el catálogo.</span></span></button>
         <button type="button" class="rol-btn" id="su-demo"><span class="ico-c info" style="width:48px;height:48px">${ico('reloj', 'g')}</span><span><b>Ver una demostración</b><span>Datos de ejemplo de un mes: ventas, envíos y alertas.</span></span></button></div>`;
     }
@@ -2199,16 +2199,16 @@ async function pantallaSetup(info) {
         <label class="campo"><span class="lbl">Nombre del negocio</span><input class="inp" id="su-nombre" maxlength="60" value="${D.nombre}" autocomplete="off"></label>`;
     }
     if (paso === 2) {
-      return html`${puntos()}<h2 class="t-sec" style="text-align:center">Un PIN para cada dueño</h2><p class="t-peq" style="text-align:center">De 4 a 8 números. Cada quien entra con el suyo y puede cambiarlo después.</p>
-        <div class="card" style="padding:14px 14px 2px"><div class="item-t" style="margin-bottom:8px">${ico('fabrica')} Dueño del local</div>${campoPin('su-pl', 'PIN', D.pinL)}${campoPin('su-pl2', 'Repite el PIN', D.pinL2)}</div>
-        <div class="card" style="padding:14px 14px 2px"><div class="item-t" style="margin-bottom:8px">${ico('tienda')} Dueño de la tienda</div>${campoPin('su-pt', 'PIN', D.pinT)}${campoPin('su-pt2', 'Repite el PIN', D.pinT2)}</div>`;
+      return html`${puntos()}<h2 class="t-sec" style="text-align:center">Un PIN para cada usuario</h2><p class="t-peq" style="text-align:center">De 4 a 8 números. Cada quien entra con el suyo y puede cambiarlo después.</p>
+        <div class="card" style="padding:14px 14px 2px"><div class="item-t" style="margin-bottom:8px">${ico('fabrica')} Almacén</div>${campoPin('su-pl', 'PIN', D.pinL)}${campoPin('su-pl2', 'Repite el PIN', D.pinL2)}</div>
+        <div class="card" style="padding:14px 14px 2px"><div class="item-t" style="margin-bottom:8px">${ico('tienda')} Vendedor tienda</div>${campoPin('su-pt', 'PIN', D.pinT)}${campoPin('su-pt2', 'Repite el PIN', D.pinT2)}</div>`;
     }
     if (paso === 3) {
       return html`${puntos()}<h2 class="t-sec" style="text-align:center">Catálogo inicial</h2><p class="t-peq" style="text-align:center">Todo se puede cambiar o archivar después.</p>
         <div class="check-fila"><input type="checkbox" id="su-bases" ${D.bases ? raw('checked') : ''}><label for="su-bases">Bases por medida y tono<small>${nM} medidas × ${nT} tonos = ${plural(nM * nT, 'base', 'bases')} para empezar. Los precios los pones tú después.</small></label></div>
         <div class="check-fila"><input type="checkbox" id="su-extras" ${D.extras ? raw('checked') : ''}><label for="su-extras">Materiales y accesorios comunes<small>${Core.EXTRAS_BASE.map((x) => x.nombre).join(', ')}.</small></label></div>`;
     }
-    return html`<div class="pila"><div class="aviso">${ico('check')}<span><b>¡Listo!</b> Tu inventario está configurado y entraste como dueño del local.</span></div>
+    return html`<div class="pila"><div class="aviso">${ico('check')}<span><b>¡Listo!</b> Tu inventario está configurado y entraste como Almacén.</span></div>
       <h2 class="t-sec">Código de recuperación</h2>${vistaCodigo(codigo)}
       <label class="check-fila" style="margin:0"><input type="checkbox" id="su-guardado"><label for="su-guardado">Ya guardé mi código en un lugar seguro</label></label></div>`;
   }
@@ -2262,11 +2262,11 @@ async function pantallaSetup(info) {
         }
         if (paso === 2) {
           const e1 = pinError(D.pinL), e2 = pinError(D.pinT);
-          if (e1) throw new ErrorApi({ mensaje: 'PIN del local: ' + e1 });
-          if (e2) throw new ErrorApi({ mensaje: 'PIN de la tienda: ' + e2 });
-          if (D.pinL !== D.pinL2) throw new ErrorApi({ mensaje: 'Los dos PIN del local no coinciden.' });
-          if (D.pinT !== D.pinT2) throw new ErrorApi({ mensaje: 'Los dos PIN de la tienda no coinciden.' });
-          if (D.pinL === D.pinT) throw new ErrorApi({ mensaje: 'Cada dueño necesita un PIN distinto.' });
+          if (e1) throw new ErrorApi({ mensaje: 'PIN del almacén: ' + e1 });
+          if (e2) throw new ErrorApi({ mensaje: 'PIN del vendedor: ' + e2 });
+          if (D.pinL !== D.pinL2) throw new ErrorApi({ mensaje: 'Los dos PIN del almacén no coinciden.' });
+          if (D.pinT !== D.pinT2) throw new ErrorApi({ mensaje: 'Los dos PIN del vendedor no coinciden.' });
+          if (D.pinL === D.pinT) throw new ErrorApi({ mensaje: 'Cada usuario necesita un PIN distinto.' });
           paso = 3; pintarPaso(); return;
         }
         const r = await llamar('POST', '/setup', { nombre: D.nombre, clave: D.clave, pinLocal: D.pinL, pinTienda: D.pinT, catalogo: { bases: D.bases, extras: D.extras } });

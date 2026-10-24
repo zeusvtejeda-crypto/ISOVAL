@@ -168,7 +168,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await local.op({ op: 'no.existe' })).status, 400);
     });
 
-    test('costos solo para el dueño del local', async () => {
+    test('costos solo para el almacén', async () => {
       const { local, tienda } = await iniciar(fabrica, { bases: false, extras: false });
       await local.op({ op: 'producto.crear', nombre: 'Base de prueba', cat: 'base', precio: 3000, costo: 1800, stock_local: 2 });
       assert.equal((await local.estado()).productos[0].costo, 1800);

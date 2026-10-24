@@ -302,7 +302,7 @@
     }
     const pinL = String(b.pinLocal || ''), pinT = String(b.pinTienda || '');
     if (!ctx.demo) { validarPin(pinL); validarPin(pinT); }
-    if (pinL === pinT) throw bad('pin_igual', 'Cada dueño necesita un PIN distinto.');
+    if (pinL === pinT) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const nombre = clean(b.nombre, 60) || 'Bases Box Tepic';
     const codigo = codigoRecuperacion();
     const acceso = { local: nuevoAcceso(pinL), tienda: nuevoAcceso(pinT), recup: nuevoAcceso(normCodigo(codigo)) };
@@ -353,7 +353,7 @@
     const rec = cfg.acceso.recup;
     if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) await fallar(ctx, cfg, 'recup', 'codigo_incorrecto', 'Código de recuperación incorrecto.');
     const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
-    if (otro && igual(hashPin(otro.salt, pin), otro.hash)) throw bad('pin_igual', 'Cada dueño necesita un PIN distinto.');
+    if (otro && igual(hashPin(otro.salt, pin), otro.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const codigo = codigoRecuperacion();
     const acceso = Object.assign({}, cfg.acceso, {
       [rol]: nuevoAcceso(pin, ((cfg.acceso[rol] && cfg.acceso[rol].v) || 0) + 1),
@@ -437,7 +437,7 @@
 
   const indexar = (arr) => arr.reduce((o, x) => { o[x.id] = x; return o; }, {});
   const stockDe = (p, loc) => (loc === 'local' ? p.stock_local : p.stock_tienda);
-  const nombreLoc = (loc) => (loc === 'local' ? 'el local' : 'la tienda');
+  const nombreLoc = (loc) => (loc === 'local' ? 'el almacén' : 'la tienda');
   const deltaStock = (id, loc, delta) => ({ id, dl: loc === 'local' ? delta : 0, dt: loc === 'tienda' ? delta : 0 });
   function revisarStock(p, loc, delta) {
     if (stockDe(p, loc) + delta < 0) {
@@ -744,7 +744,7 @@
     const activo = b.activo ? 1 : 0;
     if (!activo) {
       if (p.stock_local || p.stock_tienda) {
-        throw new ApiError(409, 'tiene_stock', 'Primero deja en cero el stock de ' + p.nombre + ' (local ' + p.stock_local + ', tienda ' + p.stock_tienda + ').');
+        throw new ApiError(409, 'tiene_stock', 'Primero deja en cero el stock de ' + p.nombre + ' (almacén ' + p.stock_local + ', tienda ' + p.stock_tienda + ').');
       }
       const enUso = (await ctx.repo.traspasos({ abiertos: true })).some((t) => t.lineas.some((l) => l.id === p.id)) ||
         (await ctx.repo.pedidos({ abiertos: true })).some((x) => x.lineas.some((l) => l.id === p.id));
@@ -820,7 +820,7 @@
     const nuevo = String(b.pinNuevo || '');
     validarPin(nuevo);
     const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
-    if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad('pin_igual', 'Cada dueño necesita un PIN distinto.');
+    if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const acceso = Object.assign({}, cfg.acceso, { [rol]: nuevoAcceso(nuevo, acc.v + 1) });
     tx.config = { acceso, intentos: sinIntentos(cfg, rol) };
     return { token: firmar(Object.assign({}, cfg, { acceso }), rol, ctx.ahora) };
@@ -833,7 +833,7 @@
     if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
     const nuevo = String(b.pinNuevo || '');
     validarPin(nuevo);
-    if (igual(hashPin(acc.salt, nuevo), acc.hash)) throw bad('pin_igual', 'Cada dueño necesita un PIN distinto.');
+    if (igual(hashPin(acc.salt, nuevo), acc.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const t = cfg.acceso.tienda;
     const acceso = Object.assign({}, cfg.acceso, { tienda: nuevoAcceso(nuevo, ((t && t.v) || 0) + 1) });
     tx.config = { acceso, intentos: sinIntentos(cfg, 'local', 'tienda') };
@@ -877,7 +877,7 @@
   async function correrOp(ctx, body) {
     const def = OPS[body && body.op];
     if (!def) throw bad('op_invalida', 'Operación desconocida.');
-    if (!def[0].includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', def[0][0] === 'local' ? 'Esta acción es del dueño del local.' : 'Esta acción es del dueño de la tienda.');
+    if (!def[0].includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', def[0][0] === 'local' ? 'Esta acción es del almacén.' : 'Esta acción es del vendedor de la tienda.');
     const tx = nuevaTx();
     const resultado = (await def[1](ctx, body, tx)) || {};
     await ctx.repo.commit(tx);
