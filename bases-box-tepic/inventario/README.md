@@ -48,7 +48,7 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 
 *Otra forma, sin terminal (conectando el repositorio desde el panel de Cloudflare):* crea una base D1 llamada `bases-box-inventario`, pega su id en `database_id` de `wrangler.toml` y sube el cambio; en *Workers y Pages* crea un proyecto Pages desde el repositorio con directorio raíz `bases-box-tepic/inventario` y sin comando de build; en *Settings → Variables and Secrets* agrega el secreto `SETUP_KEY` (la clave de instalación que quieras) y vuelve a desplegar. El enlace a la base sale de `wrangler.toml`: en el panel los *Bindings* solo se ven, no se editan.
 
-*Como Worker en vez de Pages:* `dist/_worker.js` también corre como Worker. Pon el `database_id` de tu base en `wrangler.worker.toml` y publica con `npx wrangler@4 deploy -c wrangler.worker.toml --var SETUP_KEY:XXXX-XXXX-XXXX` (probado en local con `wrangler dev`).
+*Como Worker en vez de Pages (probado en producción):* `dist/_worker.js` también corre como Worker. Crea la base D1 `bases-box-inventario` (panel de Cloudflare → *Storage & databases → D1*), pon su id en `database_id` de `wrangler.worker.toml` y publica con `npx wrangler@4 deploy -c wrangler.worker.toml --var SETUP_KEY:XXXX-XXXX-XXXX`. Sin clonar el repositorio: descomprime el zip de `dist/`, crea ahí un `wrangler.toml` con `name`, `main = "_worker.js"`, `compatibility_date` y el bloque `[[d1_databases]]` (`binding = "DB"`) y corre el mismo `npx wrangler@4 deploy --var SETUP_KEY:…` en esa carpeta. Ojo: la opción “Upload your static files” del panel crea un Worker de solo archivos y **no** sirve para este paquete.
 
 ### Primeros pasos para los dueños
 
