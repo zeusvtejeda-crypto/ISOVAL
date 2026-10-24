@@ -77,10 +77,13 @@ inventario/
 │   └── _d1.js                guarda en D1; cada operación es una transacción
 ├── tests/                    pruebas (node:test): la misma batería corre contra el modo local y contra D1 simulado
 ├── scripts/publicar.mjs      npm run publicar: crea todo en Cloudflare y sube la app
+├── scripts/empaquetar.mjs    npm run empaquetar: arma dist/_worker.js (la app completa en un solo archivo)
+├── dist/_worker.js           paquete generado para publicar por API sin wrangler (no se edita a mano)
 ├── wrangler.toml             enlace a la base D1
 └── package.json
 ```
 
 - Pruebas: `npm test` (Node 22.13+). Desarrollo local con base D1 simulada: `npm run dev` y abre `http://localhost:8788` (para probar la clave de instalación, crea un archivo `.dev.vars` con `SETUP_KEY=ABCD-EFGH-JKLM`).
+- Si cambias algo en `public/`, `functions/` o `scripts/`, corre `npm run empaquetar` y sube también `dist/`; `npm test` avisa si el paquete quedó viejo.
 - Los movimientos son un libro contable: el stock de cada producto siempre es la suma de sus movimientos; las anulaciones agregan un movimiento contrario en lugar de borrar nada.
 - `core.js` es el único lugar con reglas de negocio. El modo local (`crearRepoLocal`) y el servidor (`functions/_d1.js`) implementan el mismo contrato de almacenamiento.

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "npx wrangler@4 pages dev",
     "test": "node --test \"tests/*.test.mjs\"",
+    "empaquetar": "node scripts/empaquetar.mjs",
     "publicar": "node scripts/publicar.mjs"
   },
   "engines": { "node": ">=22.13" }
