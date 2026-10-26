@@ -320,8 +320,8 @@ dialog.sheet[open]{animation:sube .2s ease-out}
 .precio input:focus{outline:none}
 .precio:focus-within{outline:2px solid var(--accent)}
 .lin-sub{margin-left:auto;font:700 17px var(--f-etiqueta);font-variant-numeric:tabular-nums}
-.lin-add{position:relative;margin-bottom:16px}
-.lin-res{margin-top:6px;border:1px solid var(--line-2);border-radius:var(--radio);background:var(--surface);max-height:260px;overflow:auto}
+.lin-add{position:sticky;top:0;z-index:3;margin:0 -20px 14px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+.lin-res{margin-top:6px;border:1px solid var(--line-2);border-radius:var(--radio);background:var(--surface);max-height:min(260px,38vh);overflow:auto;-webkit-overflow-scrolling:touch}
 .lin-res li+li{border-top:1px solid var(--line)}
 .lin-res button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:none;border:0;text-align:left;min-height:48px}
 .lin-res button:hover,.lin-res button:focus-visible{background:var(--surface-2)}
@@ -1232,12 +1232,12 @@ function editorLineas(o) {
   const max = o.max || Core.MAX_LINEAS;
   const disp = (p) => (o.loc === 'local' ? p.stock_local : o.loc === 'tienda' ? p.stock_tienda : null);
   const el = document.createElement('div');
-  poner(el, html`<ul class="lin-lista" aria-live="polite"></ul>
-    <div class="lin-add">
-      <label class="lbl" for="${uid}-q">Agregar producto</label>
+  poner(el, html`<div class="lin-add">
+      <label class="lbl" for="${uid}-q">Agregar producto <span class="muted" data-cuenta></span></label>
       <div class="buscar">${ico('buscar')}<input class="inp" id="${uid}-q" type="search" autocomplete="off" placeholder="Busca por nombre, medida o tono" aria-controls="${uid}-r"></div>
       <ul class="lin-res" id="${uid}-r" role="listbox" hidden></ul>
-    </div>`);
+    </div>
+    <ul class="lin-lista" aria-live="polite"></ul>`);
   const lista = $('.lin-lista', el), q = $('#' + uid + '-q', el), res = $('#' + uid + '-r', el), zona = $('.lin-add', el);
   const subBase = (p) => {
     const d = disp(p);
@@ -1271,6 +1271,8 @@ function editorLineas(o) {
     poner(lista, L.map(lineaHtml));
     $$('.lin', lista).forEach((li) => marcar(li, L[+li.dataset.i]));
     if (!L.length) poner(lista, html`<li class="t-peq" style="padding:6px 2px">${o.vacio || 'Todavía no agregas productos.'}</li>`);
+    const cuenta = $('[data-cuenta]', el);
+    if (cuenta) cuenta.textContent = L.length ? '· ' + L.length + ' de ' + max : '';
     if (o.alCambiar) o.alCambiar();
   }
   function agregar(id, cant) {
@@ -1278,8 +1280,6 @@ function editorLineas(o) {
     if (!p || L.some((l) => l.id === id) || L.length >= max) return;
     L.push({ id, cant: cant || 1, precio: o.precio ? (p.precio ? String(p.precio) : '') : undefined });
     pintarLineas();
-    const li = lista.lastElementChild;
-    if (li && li.scrollIntoView) li.scrollIntoView({ block: 'nearest' });
   }
   function candidatos() {
     const ya = new Set(L.map((l) => l.id));
@@ -1313,17 +1313,17 @@ function editorLineas(o) {
   q.addEventListener('click', pintarRes);
   q.addEventListener('input', pintarRes);
   q.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter') { ev.preventDefault(); const c = candidatos()[0]; if (c) { agregar(c.id); q.value = ''; res.hidden = true; } }
+    if (ev.key === 'Enter') { ev.preventDefault(); const c = candidatos()[0]; if (c) { agregar(c.id); q.value = ''; pintarRes(); } }
     if (ev.key === 'Escape' && !res.hidden) { ev.stopPropagation(); res.hidden = true; }
   });
   res.addEventListener('mousedown', (ev) => ev.preventDefault());
   res.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-add]');
-    if (b) { agregar(b.dataset.add); q.value = ''; res.hidden = true; }
+    if (b) { agregar(b.dataset.add); q.value = ''; pintarRes(); }
   });
   document.addEventListener('click', function fuera(ev) {
     if (!el.isConnected) { document.removeEventListener('click', fuera); return; }
-    if (!zona.contains(ev.target)) res.hidden = true;
+    if (ev.target.isConnected && !zona.contains(ev.target)) res.hidden = true;
   });
   pintarLineas();
   return {

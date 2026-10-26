@@ -16,7 +16,7 @@
   const ROLES = ['local', 'tienda'];
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
-  const MAX_LINEAS = 15;
+  const MAX_LINEAS = 60;
   const SESION_DIAS = 30;
   const TZ_DEFECTO = -420; // Tepic, Nayarit: UTC−7 todo el año
   const NO_ANULABLES = ['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'];
