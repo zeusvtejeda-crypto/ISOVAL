@@ -698,6 +698,46 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await tienda.call('GET', '/estado')).json.error.code, 'sin_sesion');
     });
 
+    test('seguridad: ráfaga de PIN en paralelo, sondeo del PIN ajeno, ids con nombre de propiedad, pedido repetido', async () => {
+      const { repo, local, tienda } = await iniciar(fabrica);
+      // 1) 40 intentos simultáneos con PIN malo: solo 5 llegan a comprobarse; el resto ya está bloqueado
+      const c = cliente(repo, local.now);
+      const rs = await Promise.all(Array.from({ length: 40 }, (_, i) => c.call('POST', '/login', { rol: 'local', pin: String(100000 + i * 7919) })));
+      const codigos = rs.map((r) => r.json.error.code);
+      assert.equal(codigos.filter((x) => x === 'pin_incorrecto').length, 4, 'cuatro con aviso de intentos');
+      assert.ok(codigos.filter((x) => x === 'bloqueado').length >= 36, 'el resto bloqueado: ' + codigos.join(','));
+      assert.equal((await c.call('POST', '/login', { rol: 'local', pin: '482159' })).json.error.code, 'bloqueado', 'ni el PIN correcto entra durante el bloqueo');
+      local.avanzar(6 * 60000);
+      assert.equal((await c.call('POST', '/login', { rol: 'local', pin: '482159' })).status, 200, 'pasado el bloqueo entra con su PIN');
+
+      // 2) el vendedor no puede ir probando PIN para descubrir el del Almacén con pin.cambiar
+      const vistos = [];
+      let pinT = '730518';
+      for (let i = 0; i < 12; i++) {
+        const r = await tienda.op({ op: 'pin.cambiar', pinActual: pinT, pinNuevo: String(482150 + i) });
+        if (r.status === 200) pinT = String(482150 + i);
+        vistos.push(r.json.error);
+      }
+      const bloq = vistos.findIndex((e) => e && e.code === 'bloqueado');
+      assert.ok(bloq >= 0 && bloq <= 6, 'se bloquea en pocos intentos (' + bloq + ')');
+      assert.ok(vistos.every((e) => !e || e.code !== 'pin_igual' || e.mensaje.indexOf('Almacén') < 0));
+
+      // 3) ids con nombre de propiedad no rompen reportes ni historial
+      const est = await local.estado();
+      const a = prod(est, 'Base Queen · Gris');
+      await local.op({ op: 'mov.entrada', cid: '__proto__', lineas: [{ id: a.id, cant: 3 }] });
+      await local.op({ op: 'mov.entrada', cid: 'constructor', lineas: [{ id: a.id, cant: 3 }] });
+      assert.equal((await tienda.call('GET', '/reporte-dia')).status, 200);
+      assert.equal((await local.call('GET', '/movs', null, { limite: '50' })).status, 200);
+
+      // 4) un pedido no se puede sobrescribir repitiendo su id
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 5 }] });
+      const t2 = cliente(repo, local.now); local.avanzar(25 * 3600000); const lg2 = await t2.login('tienda', pinT); assert.equal(lg2.status, 200, JSON.stringify(lg2.json));
+      const p1 = await t2.op({ op: 'pedido.crear', cid: 'pedido-unico-01', lineas: [{ id: a.id, cant: 2 }] });
+      assert.equal(p1.status, 200, JSON.stringify(p1.json));
+      assert.equal((await t2.op({ op: 'pedido.crear', cid: 'pedido-unico-01', lineas: [{ id: a.id, cant: 9 }] })).json.error.code, 'duplicado');
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });

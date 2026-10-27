@@ -235,40 +235,20 @@
     return { rol: d.r, exp: d.exp };
   }
 
-  // Bloqueo por intentos fallidos: 5 fallos = 5 min, y cada bloqueo siguiente dura el triple (tope 24 h).
-  function chequearBloqueo(cfg, clave, ahora) {
-    const it = cfg.intentos[clave];
-    if (it && it.hasta > ahora) {
-      const espera = Math.ceil((it.hasta - ahora) / 1000);
-      throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(espera) + ' para volver a intentar.', { espera });
-    }
+  // Bloqueo por intentos fallidos: se CUENTA el intento antes de comprobar el PIN y de forma atómica en el repo
+  // (así ni una ráfaga de peticiones en paralelo se salta el límite). 5 intentos = bloqueo de 5 min; cada bloqueo
+  // siguiente dura el triple (tope 24 h). Un acierto borra el contador.
+  async function reservar(ctx, clave) {
+    const r = await ctx.repo.intento(clave, ctx.ahora);
+    const espera = Math.max(0, Math.ceil((r.hasta - ctx.ahora) / 1000));
+    if (!r.adm) throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(espera) + ' para volver a intentar.', { espera });
+    return { restantes: r.hasta > ctx.ahora ? 0 : 5 - r.n, espera };
   }
-  function registrarFallo(cfg, clave, ahora) {
-    const it = Object.assign({ n: 0, b: 0, hasta: 0 }, cfg.intentos[clave]);
-    it.n += 1;
-    let restantes = 5 - it.n;
-    if (it.n >= 5) {
-      it.b += 1;
-      it.n = 0;
-      it.hasta = ahora + Math.min(DIA, 5 * 60000 * Math.pow(3, it.b - 1));
-      restantes = 0;
-    }
-    return { intentos: Object.assign({}, cfg.intentos, { [clave]: it }), restantes, espera: restantes === 0 ? Math.ceil((it.hasta - ahora) / 1000) : 0 };
+  function fallar(res, code, msg) {
+    if (res.restantes === 0) throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(res.espera) + ' para volver a intentar.', { espera: res.espera });
+    throw new ApiError(401, code, msg + ' Te quedan ' + res.restantes + (res.restantes === 1 ? ' intento.' : ' intentos.'), { restantes: res.restantes });
   }
-  function sinIntentos(cfg, ...claves) {
-    const o = Object.assign({}, cfg.intentos);
-    claves.forEach((c) => delete o[c]);
-    return o;
-  }
-  async function fallar(ctx, cfg, clave, code, msg) {
-    const f = registrarFallo(cfg, clave, ctx.ahora);
-    const tx = nuevaTx();
-    tx.config = { intentos: f.intentos };
-    tx.sinRev = true;
-    await ctx.repo.commit(tx);
-    if (f.restantes === 0) throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(f.espera) + ' para volver a intentar.', { espera: f.espera });
-    throw new ApiError(401, code, msg + ' Te quedan ' + f.restantes + (f.restantes === 1 ? ' intento.' : ' intentos.'), { restantes: f.restantes });
-  }
+  const limpiarIntentos = (ctx, ...claves) => ctx.repo.limpiarIntentos(claves);
 
   const nuevaTx = () => ({
     config: {}, configInsert: null, guardas: [], productosInsert: [], productosUpdate: [], stock: [], movs: [],
@@ -299,8 +279,8 @@
     const b = ctx.req.body || {};
     // Con SETUP_KEY definida en el servidor, nadie puede adueñarse del inventario sin conocerla.
     if (ctx.claveInstalacion && !ctx.demo) {
-      chequearBloqueo(cfg, 'setup', ctx.ahora);
-      if (!normCodigo(b.clave) || !igual(normCodigo(b.clave), normCodigo(ctx.claveInstalacion))) await fallar(ctx, cfg, 'setup', 'clave_instalacion', 'La clave de instalación no es correcta.');
+      const it = await reservar(ctx, 'setup');
+      if (!normCodigo(b.clave) || !igual(normCodigo(b.clave), normCodigo(ctx.claveInstalacion))) fallar(it, 'clave_instalacion', 'La clave de instalación no es correcta.');
     }
     const pinL = String(b.pinLocal || ''), pinT = String(b.pinTienda || '');
     if (!ctx.demo) { validarPin(pinL); validarPin(pinT); }
@@ -332,15 +312,10 @@
     const b = ctx.req.body || {};
     const rol = b.rol;
     if (!ROLES.includes(rol)) throw bad('rol_invalido', 'Elige quién eres.');
-    chequearBloqueo(cfg, rol, ctx.ahora);
+    const it = await reservar(ctx, rol);
     const acc = cfg.acceso[rol];
-    if (!acc || !igual(hashPin(acc.salt, String(b.pin || '')), acc.hash)) await fallar(ctx, cfg, rol, 'pin_incorrecto', 'PIN incorrecto.');
-    if (cfg.intentos[rol]) {
-      const tx = nuevaTx();
-      tx.config = { intentos: sinIntentos(cfg, rol) };
-      tx.sinRev = true;
-      await ctx.repo.commit(tx);
-    }
+    if (!acc || !igual(hashPin(acc.salt, String(b.pin || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'PIN incorrecto.');
+    await limpiarIntentos(ctx, rol);
     return ok({ token: firmar(cfg, rol, ctx.ahora), rol });
   }
 
@@ -351,9 +326,9 @@
     const rol = b.rol, pin = String(b.pin || '');
     if (!ROLES.includes(rol)) throw bad('rol_invalido', 'Elige de quién es el PIN.');
     validarPin(pin);
-    chequearBloqueo(cfg, 'recup', ctx.ahora);
+    const it = await reservar(ctx, 'recup');
     const rec = cfg.acceso.recup;
-    if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) await fallar(ctx, cfg, 'recup', 'codigo_incorrecto', 'Código de recuperación incorrecto.');
+    if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) fallar(it, 'codigo_incorrecto', 'Código de recuperación incorrecto.');
     const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
     if (otro && igual(hashPin(otro.salt, pin), otro.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const codigo = codigoRecuperacion();
@@ -362,8 +337,9 @@
       recup: nuevoAcceso(normCodigo(codigo))
     });
     const tx = nuevaTx();
-    tx.config = { acceso, intentos: sinIntentos(cfg, 'recup', rol) };
+    tx.config = { acceso };
     await ctx.repo.commit(tx);
+    await limpiarIntentos(ctx, 'recup', rol);
     return ok({ token: firmar(Object.assign({}, cfg, { acceso }), rol, ctx.ahora), rol, codigo });
   }
 
@@ -449,7 +425,7 @@
       dia = String(q.dia);
     }
     const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
-    const grupos = {}, orden = [];
+    const grupos = Object.create(null), orden = [];
     filas.forEach((r) => {
       const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', pago: r.pago || '', entrega: r.tipo === 'venta' ? r.motivo || '' : '', envio: 0, lineas: [], total: 0 });
       if (!orden.includes(g)) orden.push(g);
@@ -536,7 +512,7 @@
     });
   }
   function grupoDe(b, prefijo) {
-    return typeof b.cid === 'string' && /^[A-Za-z0-9_-]{8,40}$/.test(b.cid) ? b.cid : uid(prefijo || 'G');
+    return typeof b.cid === 'string' && /^[A-Za-z0-9_-]{8,40}$/.test(b.cid) && !(b.cid in Object.prototype) ? b.cid : uid(prefijo || 'G');
   }
   function nuevoMov(ctx, grupo, i, p, loc, delta, tipo, extra) {
     return Object.assign({
@@ -733,6 +709,7 @@
     const prods = indexar(await ctx.repo.productos());
     ls.forEach((l) => activoOError(prods[l.id]));
     const id = grupoDe(b, 'P');
+    if (await ctx.repo.pedido(id)) throw new ApiError(409, 'duplicado', 'Este pedido ya se había guardado.');
     tx.pedidos.push({
       p: { id, ts: ctx.ahora, estado: 'pendiente', nota: clean(b.nota, 200), traspaso: '' },
       lineas: ls.map((l) => ({ id: l.id, cant: l.cant, recibida: 0 }))
@@ -905,51 +882,57 @@
 
   async function opPinCambiar(ctx, b, tx) {
     const cfg = ctx.cfg, rol = ctx.rol;
-    chequearBloqueo(cfg, rol, ctx.ahora);
+    const it = await reservar(ctx, rol);
     const acc = cfg.acceso[rol];
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, rol, 'pin_incorrecto', 'Tu PIN actual no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN actual no coincide.');
     const nuevo = String(b.pinNuevo || '');
     validarPin(nuevo);
+    // “ese PIN ya lo usa el otro usuario” revelaría el PIN ajeno a quien pruebe uno por uno: cada intento cuenta y no se borra con el acierto
+    await reservar(ctx, 'cambio:' + rol);
     const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
-    if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
+    if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad('pin_igual', 'Ese PIN no está disponible. Elige otro.');
+    await limpiarIntentos(ctx, rol);
     const acceso = Object.assign({}, cfg.acceso, { [rol]: nuevoAcceso(nuevo, acc.v + 1) });
-    tx.config = { acceso, intentos: sinIntentos(cfg, rol) };
+    tx.config = { acceso };
     return { token: firmar(Object.assign({}, cfg, { acceso }), rol, ctx.ahora) };
   }
 
   async function opPinReiniciar(ctx, b, tx) {
     const cfg = ctx.cfg;
-    chequearBloqueo(cfg, 'local', ctx.ahora);
+    const it = await reservar(ctx, 'local');
     const acc = cfg.acceso.local;
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local', 'tienda');
     const nuevo = String(b.pinNuevo || '');
     validarPin(nuevo);
     if (igual(hashPin(acc.salt, nuevo), acc.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const t = cfg.acceso.tienda;
     const acceso = Object.assign({}, cfg.acceso, { tienda: nuevoAcceso(nuevo, ((t && t.v) || 0) + 1) });
-    tx.config = { acceso, intentos: sinIntentos(cfg, 'local', 'tienda') };
+    tx.config = { acceso };
     return {};
   }
 
   async function opRecupNueva(ctx, b, tx) {
     const cfg = ctx.cfg;
-    chequearBloqueo(cfg, 'local', ctx.ahora);
+    const it = await reservar(ctx, 'local');
     const acc = cfg.acceso.local;
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local');
     const codigo = codigoRecuperacion();
-    tx.config = { acceso: Object.assign({}, cfg.acceso, { recup: nuevoAcceso(normCodigo(codigo)) }), intentos: sinIntentos(cfg, 'local') };
+    tx.config = { acceso: Object.assign({}, cfg.acceso, { recup: nuevoAcceso(normCodigo(codigo)) }) };
     return { codigo };
   }
 
   // Deja el inventario en cero (borra movimientos, envíos y pedidos; conserva productos, precios, PIN y ajustes).
   async function opReiniciar(ctx, b, tx) {
     const cfg = ctx.cfg;
-    chequearBloqueo(cfg, 'local', ctx.ahora);
+    const it = await reservar(ctx, 'local');
     const acc = cfg.acceso.local;
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local');
     if (String(b.confirmacion || '').trim().toUpperCase() !== 'BORRAR TODO') throw bad('falta_confirmacion', 'Escribe BORRAR TODO para confirmar.');
     tx.reiniciar = true;
-    tx.config = { intentos: sinIntentos(cfg, 'local'), reinicio: { ts: ctx.ahora, rol: ctx.rol } };
+    tx.config = { reinicio: { ts: ctx.ahora, rol: ctx.rol } };
     return {};
   }
 
@@ -1029,7 +1012,7 @@
   // ───────── repo local (localStorage o memoria): mismo contrato que el repo D1
 
   function crearRepoLocal(almacen, clave) {
-    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {} });
+    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {}, intentos: {} });
     let S = leer();
     let ids = new Set(S.movs.map((m) => m.id));
     let diferido = false;
@@ -1059,6 +1042,17 @@
 
     return {
       async config() { return clonar(S.config); },
+      // cuenta un intento de PIN de forma atómica (ver reservar en el núcleo)
+      async intento(clave, ahora) {
+        const m = S.intentos || (S.intentos = {});
+        const it = Object.prototype.hasOwnProperty.call(m, clave) ? m[clave] : (m[clave] = { n: 0, b: 0, hasta: 0 });
+        let adm = 1;
+        if (it.hasta > ahora) adm = 0;
+        else if (it.n + 1 >= 5) { it.hasta = ahora + Math.min(DIA, 5 * 60000 * Math.pow(3, it.b)); it.b += 1; it.n = 0; } else it.n += 1;
+        guardar();
+        return { n: it.n, b: it.b, hasta: it.hasta, adm };
+      },
+      async limpiarIntentos(claves) { const m = S.intentos || {}; claves.forEach((c) => { delete m[c]; }); S.intentos = m; guardar(); },
       async productos() { return Object.values(S.productos).map((p) => Object.assign({}, p)); },
       async traspasos(f) {
         f = f || {};

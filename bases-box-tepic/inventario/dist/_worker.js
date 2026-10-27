@@ -1,4 +1,4 @@
-/* huella:f89adcb6991a171f */
+/* huella:c206156cfde881d2 */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -320,39 +320,17 @@ var require_core = __commonJS({
         if (!acc || !ROLES.includes(d.r) || !(d.exp > ahora) || acc.v !== d.pv) throw sinSesion();
         return { rol: d.r, exp: d.exp };
       }
-      function chequearBloqueo(cfg, clave, ahora) {
-        const it = cfg.intentos[clave];
-        if (it && it.hasta > ahora) {
-          const espera = Math.ceil((it.hasta - ahora) / 1e3);
-          throw new ApiError2(423, "bloqueado", "Demasiados intentos. Espera " + fmtEspera(espera) + " para volver a intentar.", { espera });
-        }
+      async function reservar(ctx, clave) {
+        const r = await ctx.repo.intento(clave, ctx.ahora);
+        const espera = Math.max(0, Math.ceil((r.hasta - ctx.ahora) / 1e3));
+        if (!r.adm) throw new ApiError2(423, "bloqueado", "Demasiados intentos. Espera " + fmtEspera(espera) + " para volver a intentar.", { espera });
+        return { restantes: r.hasta > ctx.ahora ? 0 : 5 - r.n, espera };
       }
-      function registrarFallo(cfg, clave, ahora) {
-        const it = Object.assign({ n: 0, b: 0, hasta: 0 }, cfg.intentos[clave]);
-        it.n += 1;
-        let restantes = 5 - it.n;
-        if (it.n >= 5) {
-          it.b += 1;
-          it.n = 0;
-          it.hasta = ahora + Math.min(DIA, 5 * 6e4 * Math.pow(3, it.b - 1));
-          restantes = 0;
-        }
-        return { intentos: Object.assign({}, cfg.intentos, { [clave]: it }), restantes, espera: restantes === 0 ? Math.ceil((it.hasta - ahora) / 1e3) : 0 };
+      function fallar(res, code, msg) {
+        if (res.restantes === 0) throw new ApiError2(423, "bloqueado", "Demasiados intentos. Espera " + fmtEspera(res.espera) + " para volver a intentar.", { espera: res.espera });
+        throw new ApiError2(401, code, msg + " Te quedan " + res.restantes + (res.restantes === 1 ? " intento." : " intentos."), { restantes: res.restantes });
       }
-      function sinIntentos(cfg, ...claves) {
-        const o = Object.assign({}, cfg.intentos);
-        claves.forEach((c) => delete o[c]);
-        return o;
-      }
-      async function fallar(ctx, cfg, clave, code, msg) {
-        const f = registrarFallo(cfg, clave, ctx.ahora);
-        const tx = nuevaTx();
-        tx.config = { intentos: f.intentos };
-        tx.sinRev = true;
-        await ctx.repo.commit(tx);
-        if (f.restantes === 0) throw new ApiError2(423, "bloqueado", "Demasiados intentos. Espera " + fmtEspera(f.espera) + " para volver a intentar.", { espera: f.espera });
-        throw new ApiError2(401, code, msg + " Te quedan " + f.restantes + (f.restantes === 1 ? " intento." : " intentos."), { restantes: f.restantes });
-      }
+      const limpiarIntentos = (ctx, ...claves) => ctx.repo.limpiarIntentos(claves);
       const nuevaTx = () => ({
         config: {},
         configInsert: null,
@@ -406,8 +384,8 @@ var require_core = __commonJS({
         if (cfg.configurado) throw new ApiError2(409, "ya_configurado", "Este inventario ya est\xE1 configurado. Entra con tu PIN.");
         const b = ctx.req.body || {};
         if (ctx.claveInstalacion && !ctx.demo) {
-          chequearBloqueo(cfg, "setup", ctx.ahora);
-          if (!normCodigo(b.clave) || !igual(normCodigo(b.clave), normCodigo(ctx.claveInstalacion))) await fallar(ctx, cfg, "setup", "clave_instalacion", "La clave de instalaci\xF3n no es correcta.");
+          const it = await reservar(ctx, "setup");
+          if (!normCodigo(b.clave) || !igual(normCodigo(b.clave), normCodigo(ctx.claveInstalacion))) fallar(it, "clave_instalacion", "La clave de instalaci\xF3n no es correcta.");
         }
         const pinL = String(b.pinLocal || ""), pinT = String(b.pinTienda || "");
         if (!ctx.demo) {
@@ -441,15 +419,10 @@ var require_core = __commonJS({
         const b = ctx.req.body || {};
         const rol = b.rol;
         if (!ROLES.includes(rol)) throw bad("rol_invalido", "Elige qui\xE9n eres.");
-        chequearBloqueo(cfg, rol, ctx.ahora);
+        const it = await reservar(ctx, rol);
         const acc = cfg.acceso[rol];
-        if (!acc || !igual(hashPin(acc.salt, String(b.pin || "")), acc.hash)) await fallar(ctx, cfg, rol, "pin_incorrecto", "PIN incorrecto.");
-        if (cfg.intentos[rol]) {
-          const tx = nuevaTx();
-          tx.config = { intentos: sinIntentos(cfg, rol) };
-          tx.sinRev = true;
-          await ctx.repo.commit(tx);
-        }
+        if (!acc || !igual(hashPin(acc.salt, String(b.pin || "")), acc.hash)) fallar(it, "pin_incorrecto", "PIN incorrecto.");
+        await limpiarIntentos(ctx, rol);
         return ok({ token: firmar(cfg, rol, ctx.ahora), rol });
       }
       async function recuperar(ctx) {
@@ -459,9 +432,9 @@ var require_core = __commonJS({
         const rol = b.rol, pin = String(b.pin || "");
         if (!ROLES.includes(rol)) throw bad("rol_invalido", "Elige de qui\xE9n es el PIN.");
         validarPin(pin);
-        chequearBloqueo(cfg, "recup", ctx.ahora);
+        const it = await reservar(ctx, "recup");
         const rec = cfg.acceso.recup;
-        if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) await fallar(ctx, cfg, "recup", "codigo_incorrecto", "C\xF3digo de recuperaci\xF3n incorrecto.");
+        if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) fallar(it, "codigo_incorrecto", "C\xF3digo de recuperaci\xF3n incorrecto.");
         const otro = cfg.acceso[rol === "local" ? "tienda" : "local"];
         if (otro && igual(hashPin(otro.salt, pin), otro.hash)) throw bad("pin_igual", "Cada usuario necesita un PIN distinto.");
         const codigo = codigoRecuperacion();
@@ -470,8 +443,9 @@ var require_core = __commonJS({
           recup: nuevoAcceso(normCodigo(codigo))
         });
         const tx = nuevaTx();
-        tx.config = { acceso, intentos: sinIntentos(cfg, "recup", rol) };
+        tx.config = { acceso };
         await ctx.repo.commit(tx);
+        await limpiarIntentos(ctx, "recup", rol);
         return ok({ token: firmar(Object.assign({}, cfg, { acceso }), rol, ctx.ahora), rol, codigo });
       }
       function lunesDe(k) {
@@ -573,7 +547,7 @@ var require_core = __commonJS({
           dia = String(q.dia);
         }
         const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
-        const grupos = {}, orden = [];
+        const grupos = /* @__PURE__ */ Object.create(null), orden = [];
         filas.forEach((r) => {
           const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || "", pago: r.pago || "", entrega: r.tipo === "venta" ? r.motivo || "" : "", envio: 0, lineas: [], total: 0 });
           if (!orden.includes(g)) orden.push(g);
@@ -682,7 +656,7 @@ var require_core = __commonJS({
         });
       }
       function grupoDe(b, prefijo) {
-        return typeof b.cid === "string" && /^[A-Za-z0-9_-]{8,40}$/.test(b.cid) ? b.cid : uid(prefijo || "G");
+        return typeof b.cid === "string" && /^[A-Za-z0-9_-]{8,40}$/.test(b.cid) && !(b.cid in Object.prototype) ? b.cid : uid(prefijo || "G");
       }
       function nuevoMov(ctx, grupo, i, p, loc, delta, tipo, extra) {
         return Object.assign({
@@ -907,6 +881,7 @@ var require_core = __commonJS({
         const prods = indexar(await ctx.repo.productos());
         ls.forEach((l) => activoOError(prods[l.id]));
         const id = grupoDe(b, "P");
+        if (await ctx.repo.pedido(id)) throw new ApiError2(409, "duplicado", "Este pedido ya se hab\xEDa guardado.");
         tx.pedidos.push({
           p: { id, ts: ctx.ahora, estado: "pendiente", nota: clean(b.nota, 200), traspaso: "" },
           lineas: ls.map((l) => ({ id: l.id, cant: l.cant, recibida: 0 }))
@@ -1074,47 +1049,52 @@ var require_core = __commonJS({
       }
       async function opPinCambiar(ctx, b, tx) {
         const cfg = ctx.cfg, rol = ctx.rol;
-        chequearBloqueo(cfg, rol, ctx.ahora);
+        const it = await reservar(ctx, rol);
         const acc = cfg.acceso[rol];
-        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) await fallar(ctx, cfg, rol, "pin_incorrecto", "Tu PIN actual no coincide.");
+        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) fallar(it, "pin_incorrecto", "Tu PIN actual no coincide.");
         const nuevo = String(b.pinNuevo || "");
         validarPin(nuevo);
+        await reservar(ctx, "cambio:" + rol);
         const otro = cfg.acceso[rol === "local" ? "tienda" : "local"];
-        if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad("pin_igual", "Cada usuario necesita un PIN distinto.");
+        if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad("pin_igual", "Ese PIN no est\xE1 disponible. Elige otro.");
+        await limpiarIntentos(ctx, rol);
         const acceso = Object.assign({}, cfg.acceso, { [rol]: nuevoAcceso(nuevo, acc.v + 1) });
-        tx.config = { acceso, intentos: sinIntentos(cfg, rol) };
+        tx.config = { acceso };
         return { token: firmar(Object.assign({}, cfg, { acceso }), rol, ctx.ahora) };
       }
       async function opPinReiniciar(ctx, b, tx) {
         const cfg = ctx.cfg;
-        chequearBloqueo(cfg, "local", ctx.ahora);
+        const it = await reservar(ctx, "local");
         const acc = cfg.acceso.local;
-        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) await fallar(ctx, cfg, "local", "pin_incorrecto", "Tu PIN no coincide.");
+        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) fallar(it, "pin_incorrecto", "Tu PIN no coincide.");
+        await limpiarIntentos(ctx, "local", "tienda");
         const nuevo = String(b.pinNuevo || "");
         validarPin(nuevo);
         if (igual(hashPin(acc.salt, nuevo), acc.hash)) throw bad("pin_igual", "Cada usuario necesita un PIN distinto.");
         const t = cfg.acceso.tienda;
         const acceso = Object.assign({}, cfg.acceso, { tienda: nuevoAcceso(nuevo, (t && t.v || 0) + 1) });
-        tx.config = { acceso, intentos: sinIntentos(cfg, "local", "tienda") };
+        tx.config = { acceso };
         return {};
       }
       async function opRecupNueva(ctx, b, tx) {
         const cfg = ctx.cfg;
-        chequearBloqueo(cfg, "local", ctx.ahora);
+        const it = await reservar(ctx, "local");
         const acc = cfg.acceso.local;
-        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) await fallar(ctx, cfg, "local", "pin_incorrecto", "Tu PIN no coincide.");
+        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) fallar(it, "pin_incorrecto", "Tu PIN no coincide.");
+        await limpiarIntentos(ctx, "local");
         const codigo = codigoRecuperacion();
-        tx.config = { acceso: Object.assign({}, cfg.acceso, { recup: nuevoAcceso(normCodigo(codigo)) }), intentos: sinIntentos(cfg, "local") };
+        tx.config = { acceso: Object.assign({}, cfg.acceso, { recup: nuevoAcceso(normCodigo(codigo)) }) };
         return { codigo };
       }
       async function opReiniciar(ctx, b, tx) {
         const cfg = ctx.cfg;
-        chequearBloqueo(cfg, "local", ctx.ahora);
+        const it = await reservar(ctx, "local");
         const acc = cfg.acceso.local;
-        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) await fallar(ctx, cfg, "local", "pin_incorrecto", "Tu PIN no coincide.");
+        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) fallar(it, "pin_incorrecto", "Tu PIN no coincide.");
+        await limpiarIntentos(ctx, "local");
         if (String(b.confirmacion || "").trim().toUpperCase() !== "BORRAR TODO") throw bad("falta_confirmacion", "Escribe BORRAR TODO para confirmar.");
         tx.reiniciar = true;
-        tx.config = { intentos: sinIntentos(cfg, "local"), reinicio: { ts: ctx.ahora, rol: ctx.rol } };
+        tx.config = { reinicio: { ts: ctx.ahora, rol: ctx.rol } };
         return {};
       }
       const OPS = {
@@ -1188,7 +1168,7 @@ var require_core = __commonJS({
         }
       }
       function crearRepoLocal(almacen, clave) {
-        const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {} });
+        const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {}, intentos: {} });
         let S = leer();
         let ids = new Set(S.movs.map((m) => m.id));
         let diferido = false;
@@ -1218,6 +1198,28 @@ var require_core = __commonJS({
         return {
           async config() {
             return clonar(S.config);
+          },
+          // cuenta un intento de PIN de forma atómica (ver reservar en el núcleo)
+          async intento(clave2, ahora) {
+            const m = S.intentos || (S.intentos = {});
+            const it = Object.prototype.hasOwnProperty.call(m, clave2) ? m[clave2] : m[clave2] = { n: 0, b: 0, hasta: 0 };
+            let adm = 1;
+            if (it.hasta > ahora) adm = 0;
+            else if (it.n + 1 >= 5) {
+              it.hasta = ahora + Math.min(DIA, 5 * 6e4 * Math.pow(3, it.b));
+              it.b += 1;
+              it.n = 0;
+            } else it.n += 1;
+            guardar();
+            return { n: it.n, b: it.b, hasta: it.hasta, adm };
+          },
+          async limpiarIntentos(claves) {
+            const m = S.intentos || {};
+            claves.forEach((c) => {
+              delete m[c];
+            });
+            S.intentos = m;
+            guardar();
           },
           async productos() {
             return Object.values(S.productos).map((p) => Object.assign({}, p));
@@ -1482,8 +1484,8 @@ var require_core = __commonJS({
   }
 });
 
-// ../../../../../tmp/bb-empaquetar-gnijo0/archivos.js
-var archivos_default = { "/app.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"8540f13b6ad91dd5bd43"' }, "texto": `(function () {
+// ../../../../../tmp/bb-empaquetar-j4j8LP/archivos.js
+var archivos_default = { "/app.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"8a0e27f64d52383b2eb9"' }, "texto": `(function () {
 'use strict';
 const Core = window.BBCore;
 
@@ -1816,7 +1818,7 @@ function ordenProductos(a, b) {
 
 /* agrupa los movimientos de una misma operaci\xF3n (venta de varias bases, entrada de varios productos\u2026) */
 function agrupar(movs) {
-  const out = [], idx = {};
+  const out = [], idx = Object.create(null);
   movs.forEach((m) => {
     let g = idx[m.grupo];
     if (!g) {
@@ -3127,7 +3129,8 @@ function formPin(reiniciarTienda) {
 }
 
 /* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 exportar \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-const csvCelda = (v) => { const s = v == null ? '' : String(v); return /[",\\r\\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const csvCelda = (v) => { let s = v == null ? '' : String(v); if (typeof v === 'string' && /^[=+\\-@\\t\\r]/.test(s)) s = "'" + s; // evita que Excel ejecute f\xF3rmulas escritas por otro usuario
+   return /[",\\r\\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 const aCsv = (filas) => '\uFEFF' + filas.map((f) => f.map(csvCelda).join(',')).join('\\r\\n');
 const fechaArchivo = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const fechaISO = (ts) => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
@@ -3638,7 +3641,7 @@ arrancar().catch((e) => {
   pantallaMensaje('Algo fall\xF3', 'No se pudo iniciar la app. Recarga la p\xE1gina.', [['Recargar', () => location.reload()]]);
 });
 })();
-` }, "/apple-touch-icon.png": { "cabeceras": { "content-type": "image/png", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"1acc6c85a28da7d51980"' }, "b64": "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" }, "/core.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"b1f8674077fbf8ecf0a6"' }, "texto": `/* N\xFAcleo del inventario de Bases Box Tepic.
+` }, "/apple-touch-icon.png": { "cabeceras": { "content-type": "image/png", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"1acc6c85a28da7d51980"' }, "b64": "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" }, "/core.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"cc0855621056e584628a"' }, "texto": `/* N\xFAcleo del inventario de Bases Box Tepic.
    Lo comparten el servidor (Cloudflare Pages Function + D1) y el modo local del navegador:
    mismas reglas, mismos permisos y mismo formato de respuesta.
 
@@ -3875,40 +3878,20 @@ arrancar().catch((e) => {
     return { rol: d.r, exp: d.exp };
   }
 
-  // Bloqueo por intentos fallidos: 5 fallos = 5 min, y cada bloqueo siguiente dura el triple (tope 24 h).
-  function chequearBloqueo(cfg, clave, ahora) {
-    const it = cfg.intentos[clave];
-    if (it && it.hasta > ahora) {
-      const espera = Math.ceil((it.hasta - ahora) / 1000);
-      throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(espera) + ' para volver a intentar.', { espera });
-    }
+  // Bloqueo por intentos fallidos: se CUENTA el intento antes de comprobar el PIN y de forma at\xF3mica en el repo
+  // (as\xED ni una r\xE1faga de peticiones en paralelo se salta el l\xEDmite). 5 intentos = bloqueo de 5 min; cada bloqueo
+  // siguiente dura el triple (tope 24 h). Un acierto borra el contador.
+  async function reservar(ctx, clave) {
+    const r = await ctx.repo.intento(clave, ctx.ahora);
+    const espera = Math.max(0, Math.ceil((r.hasta - ctx.ahora) / 1000));
+    if (!r.adm) throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(espera) + ' para volver a intentar.', { espera });
+    return { restantes: r.hasta > ctx.ahora ? 0 : 5 - r.n, espera };
   }
-  function registrarFallo(cfg, clave, ahora) {
-    const it = Object.assign({ n: 0, b: 0, hasta: 0 }, cfg.intentos[clave]);
-    it.n += 1;
-    let restantes = 5 - it.n;
-    if (it.n >= 5) {
-      it.b += 1;
-      it.n = 0;
-      it.hasta = ahora + Math.min(DIA, 5 * 60000 * Math.pow(3, it.b - 1));
-      restantes = 0;
-    }
-    return { intentos: Object.assign({}, cfg.intentos, { [clave]: it }), restantes, espera: restantes === 0 ? Math.ceil((it.hasta - ahora) / 1000) : 0 };
+  function fallar(res, code, msg) {
+    if (res.restantes === 0) throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(res.espera) + ' para volver a intentar.', { espera: res.espera });
+    throw new ApiError(401, code, msg + ' Te quedan ' + res.restantes + (res.restantes === 1 ? ' intento.' : ' intentos.'), { restantes: res.restantes });
   }
-  function sinIntentos(cfg, ...claves) {
-    const o = Object.assign({}, cfg.intentos);
-    claves.forEach((c) => delete o[c]);
-    return o;
-  }
-  async function fallar(ctx, cfg, clave, code, msg) {
-    const f = registrarFallo(cfg, clave, ctx.ahora);
-    const tx = nuevaTx();
-    tx.config = { intentos: f.intentos };
-    tx.sinRev = true;
-    await ctx.repo.commit(tx);
-    if (f.restantes === 0) throw new ApiError(423, 'bloqueado', 'Demasiados intentos. Espera ' + fmtEspera(f.espera) + ' para volver a intentar.', { espera: f.espera });
-    throw new ApiError(401, code, msg + ' Te quedan ' + f.restantes + (f.restantes === 1 ? ' intento.' : ' intentos.'), { restantes: f.restantes });
-  }
+  const limpiarIntentos = (ctx, ...claves) => ctx.repo.limpiarIntentos(claves);
 
   const nuevaTx = () => ({
     config: {}, configInsert: null, guardas: [], productosInsert: [], productosUpdate: [], stock: [], movs: [],
@@ -3939,8 +3922,8 @@ arrancar().catch((e) => {
     const b = ctx.req.body || {};
     // Con SETUP_KEY definida en el servidor, nadie puede adue\xF1arse del inventario sin conocerla.
     if (ctx.claveInstalacion && !ctx.demo) {
-      chequearBloqueo(cfg, 'setup', ctx.ahora);
-      if (!normCodigo(b.clave) || !igual(normCodigo(b.clave), normCodigo(ctx.claveInstalacion))) await fallar(ctx, cfg, 'setup', 'clave_instalacion', 'La clave de instalaci\xF3n no es correcta.');
+      const it = await reservar(ctx, 'setup');
+      if (!normCodigo(b.clave) || !igual(normCodigo(b.clave), normCodigo(ctx.claveInstalacion))) fallar(it, 'clave_instalacion', 'La clave de instalaci\xF3n no es correcta.');
     }
     const pinL = String(b.pinLocal || ''), pinT = String(b.pinTienda || '');
     if (!ctx.demo) { validarPin(pinL); validarPin(pinT); }
@@ -3972,15 +3955,10 @@ arrancar().catch((e) => {
     const b = ctx.req.body || {};
     const rol = b.rol;
     if (!ROLES.includes(rol)) throw bad('rol_invalido', 'Elige qui\xE9n eres.');
-    chequearBloqueo(cfg, rol, ctx.ahora);
+    const it = await reservar(ctx, rol);
     const acc = cfg.acceso[rol];
-    if (!acc || !igual(hashPin(acc.salt, String(b.pin || '')), acc.hash)) await fallar(ctx, cfg, rol, 'pin_incorrecto', 'PIN incorrecto.');
-    if (cfg.intentos[rol]) {
-      const tx = nuevaTx();
-      tx.config = { intentos: sinIntentos(cfg, rol) };
-      tx.sinRev = true;
-      await ctx.repo.commit(tx);
-    }
+    if (!acc || !igual(hashPin(acc.salt, String(b.pin || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'PIN incorrecto.');
+    await limpiarIntentos(ctx, rol);
     return ok({ token: firmar(cfg, rol, ctx.ahora), rol });
   }
 
@@ -3991,9 +3969,9 @@ arrancar().catch((e) => {
     const rol = b.rol, pin = String(b.pin || '');
     if (!ROLES.includes(rol)) throw bad('rol_invalido', 'Elige de qui\xE9n es el PIN.');
     validarPin(pin);
-    chequearBloqueo(cfg, 'recup', ctx.ahora);
+    const it = await reservar(ctx, 'recup');
     const rec = cfg.acceso.recup;
-    if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) await fallar(ctx, cfg, 'recup', 'codigo_incorrecto', 'C\xF3digo de recuperaci\xF3n incorrecto.');
+    if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) fallar(it, 'codigo_incorrecto', 'C\xF3digo de recuperaci\xF3n incorrecto.');
     const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
     if (otro && igual(hashPin(otro.salt, pin), otro.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const codigo = codigoRecuperacion();
@@ -4002,8 +3980,9 @@ arrancar().catch((e) => {
       recup: nuevoAcceso(normCodigo(codigo))
     });
     const tx = nuevaTx();
-    tx.config = { acceso, intentos: sinIntentos(cfg, 'recup', rol) };
+    tx.config = { acceso };
     await ctx.repo.commit(tx);
+    await limpiarIntentos(ctx, 'recup', rol);
     return ok({ token: firmar(Object.assign({}, cfg, { acceso }), rol, ctx.ahora), rol, codigo });
   }
 
@@ -4089,7 +4068,7 @@ arrancar().catch((e) => {
       dia = String(q.dia);
     }
     const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
-    const grupos = {}, orden = [];
+    const grupos = Object.create(null), orden = [];
     filas.forEach((r) => {
       const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', pago: r.pago || '', entrega: r.tipo === 'venta' ? r.motivo || '' : '', envio: 0, lineas: [], total: 0 });
       if (!orden.includes(g)) orden.push(g);
@@ -4176,7 +4155,7 @@ arrancar().catch((e) => {
     });
   }
   function grupoDe(b, prefijo) {
-    return typeof b.cid === 'string' && /^[A-Za-z0-9_-]{8,40}$/.test(b.cid) ? b.cid : uid(prefijo || 'G');
+    return typeof b.cid === 'string' && /^[A-Za-z0-9_-]{8,40}$/.test(b.cid) && !(b.cid in Object.prototype) ? b.cid : uid(prefijo || 'G');
   }
   function nuevoMov(ctx, grupo, i, p, loc, delta, tipo, extra) {
     return Object.assign({
@@ -4373,6 +4352,7 @@ arrancar().catch((e) => {
     const prods = indexar(await ctx.repo.productos());
     ls.forEach((l) => activoOError(prods[l.id]));
     const id = grupoDe(b, 'P');
+    if (await ctx.repo.pedido(id)) throw new ApiError(409, 'duplicado', 'Este pedido ya se hab\xEDa guardado.');
     tx.pedidos.push({
       p: { id, ts: ctx.ahora, estado: 'pendiente', nota: clean(b.nota, 200), traspaso: '' },
       lineas: ls.map((l) => ({ id: l.id, cant: l.cant, recibida: 0 }))
@@ -4545,51 +4525,57 @@ arrancar().catch((e) => {
 
   async function opPinCambiar(ctx, b, tx) {
     const cfg = ctx.cfg, rol = ctx.rol;
-    chequearBloqueo(cfg, rol, ctx.ahora);
+    const it = await reservar(ctx, rol);
     const acc = cfg.acceso[rol];
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, rol, 'pin_incorrecto', 'Tu PIN actual no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN actual no coincide.');
     const nuevo = String(b.pinNuevo || '');
     validarPin(nuevo);
+    // \u201Cese PIN ya lo usa el otro usuario\u201D revelar\xEDa el PIN ajeno a quien pruebe uno por uno: cada intento cuenta y no se borra con el acierto
+    await reservar(ctx, 'cambio:' + rol);
     const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
-    if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
+    if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad('pin_igual', 'Ese PIN no est\xE1 disponible. Elige otro.');
+    await limpiarIntentos(ctx, rol);
     const acceso = Object.assign({}, cfg.acceso, { [rol]: nuevoAcceso(nuevo, acc.v + 1) });
-    tx.config = { acceso, intentos: sinIntentos(cfg, rol) };
+    tx.config = { acceso };
     return { token: firmar(Object.assign({}, cfg, { acceso }), rol, ctx.ahora) };
   }
 
   async function opPinReiniciar(ctx, b, tx) {
     const cfg = ctx.cfg;
-    chequearBloqueo(cfg, 'local', ctx.ahora);
+    const it = await reservar(ctx, 'local');
     const acc = cfg.acceso.local;
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local', 'tienda');
     const nuevo = String(b.pinNuevo || '');
     validarPin(nuevo);
     if (igual(hashPin(acc.salt, nuevo), acc.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const t = cfg.acceso.tienda;
     const acceso = Object.assign({}, cfg.acceso, { tienda: nuevoAcceso(nuevo, ((t && t.v) || 0) + 1) });
-    tx.config = { acceso, intentos: sinIntentos(cfg, 'local', 'tienda') };
+    tx.config = { acceso };
     return {};
   }
 
   async function opRecupNueva(ctx, b, tx) {
     const cfg = ctx.cfg;
-    chequearBloqueo(cfg, 'local', ctx.ahora);
+    const it = await reservar(ctx, 'local');
     const acc = cfg.acceso.local;
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local');
     const codigo = codigoRecuperacion();
-    tx.config = { acceso: Object.assign({}, cfg.acceso, { recup: nuevoAcceso(normCodigo(codigo)) }), intentos: sinIntentos(cfg, 'local') };
+    tx.config = { acceso: Object.assign({}, cfg.acceso, { recup: nuevoAcceso(normCodigo(codigo)) }) };
     return { codigo };
   }
 
   // Deja el inventario en cero (borra movimientos, env\xEDos y pedidos; conserva productos, precios, PIN y ajustes).
   async function opReiniciar(ctx, b, tx) {
     const cfg = ctx.cfg;
-    chequearBloqueo(cfg, 'local', ctx.ahora);
+    const it = await reservar(ctx, 'local');
     const acc = cfg.acceso.local;
-    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local');
     if (String(b.confirmacion || '').trim().toUpperCase() !== 'BORRAR TODO') throw bad('falta_confirmacion', 'Escribe BORRAR TODO para confirmar.');
     tx.reiniciar = true;
-    tx.config = { intentos: sinIntentos(cfg, 'local'), reinicio: { ts: ctx.ahora, rol: ctx.rol } };
+    tx.config = { reinicio: { ts: ctx.ahora, rol: ctx.rol } };
     return {};
   }
 
@@ -4669,7 +4655,7 @@ arrancar().catch((e) => {
   // \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 repo local (localStorage o memoria): mismo contrato que el repo D1
 
   function crearRepoLocal(almacen, clave) {
-    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {} });
+    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {}, intentos: {} });
     let S = leer();
     let ids = new Set(S.movs.map((m) => m.id));
     let diferido = false;
@@ -4699,6 +4685,17 @@ arrancar().catch((e) => {
 
     return {
       async config() { return clonar(S.config); },
+      // cuenta un intento de PIN de forma at\xF3mica (ver reservar en el n\xFAcleo)
+      async intento(clave, ahora) {
+        const m = S.intentos || (S.intentos = {});
+        const it = Object.prototype.hasOwnProperty.call(m, clave) ? m[clave] : (m[clave] = { n: 0, b: 0, hasta: 0 });
+        let adm = 1;
+        if (it.hasta > ahora) adm = 0;
+        else if (it.n + 1 >= 5) { it.hasta = ahora + Math.min(DIA, 5 * 60000 * Math.pow(3, it.b)); it.b += 1; it.n = 0; } else it.n += 1;
+        guardar();
+        return { n: it.n, b: it.b, hasta: it.hasta, adm };
+      },
+      async limpiarIntentos(claves) { const m = S.intentos || {}; claves.forEach((c) => { delete m[c]; }); S.intentos = m; guardar(); },
       async productos() { return Object.values(S.productos).map((p) => Object.assign({}, p)); },
       async traspasos(f) {
         f = f || {};
@@ -5416,6 +5413,7 @@ var SCHEMA = [
   `CREATE TABLE IF NOT EXISTS pedidos (
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, estado TEXT NOT NULL, nota TEXT NOT NULL DEFAULT '', traspaso TEXT NOT NULL DEFAULT '')`,
   `CREATE TABLE IF NOT EXISTS pedido_lineas (pedido_id TEXT NOT NULL, prod TEXT NOT NULL, cant INTEGER NOT NULL, PRIMARY KEY (pedido_id, prod))`,
+  `CREATE TABLE IF NOT EXISTS intentos (k TEXT PRIMARY KEY, n INTEGER NOT NULL, b INTEGER NOT NULL, hasta INTEGER NOT NULL, adm INTEGER NOT NULL)`,
   // tabla trampa: insertar aquí rompe el CHECK y deshace todo el batch (ver guardas)
   `CREATE TABLE IF NOT EXISTS guardas (g INTEGER NOT NULL CHECK (g = 0))`
 ];
@@ -5438,6 +5436,7 @@ async function crearRepoD1(db) {
         }
       }
     }
+    await db.prepare(SCHEMA.find((x) => x.includes("TABLE IF NOT EXISTS intentos"))).run();
     migradas.add(db);
   }
   const q = (sql, ...args) => db.prepare(sql).bind(...args);
@@ -5613,6 +5612,25 @@ async function crearRepoD1(db) {
     },
     ventas(desde) {
       return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
+    },
+    // Cuenta un intento de PIN en una sola sentencia atómica (el contador no se pierde aunque lleguen muchas peticiones a la vez).
+    async intento(clave, ahora) {
+      const fila = await q(
+        `INSERT INTO intentos (k, n, b, hasta, adm) VALUES (?1, 1, 0, 0, 1)
+         ON CONFLICT(k) DO UPDATE SET
+           adm = CASE WHEN hasta > ?2 THEN 0 ELSE 1 END,
+           n = CASE WHEN hasta > ?2 THEN n WHEN n + 1 >= 5 THEN 0 ELSE n + 1 END,
+           hasta = CASE WHEN hasta > ?2 THEN hasta WHEN n + 1 >= 5 THEN ?2 + (CASE b WHEN 0 THEN 300000 WHEN 1 THEN 900000 WHEN 2 THEN 2700000 WHEN 3 THEN 8100000 WHEN 4 THEN 24300000 WHEN 5 THEN 72900000 ELSE 86400000 END) ELSE hasta END,
+           b = CASE WHEN hasta > ?2 THEN b WHEN n + 1 >= 5 THEN b + 1 ELSE b END
+         RETURNING n, b, hasta, adm`,
+        clave,
+        ahora
+      ).first();
+      return fila;
+    },
+    async limpiarIntentos(claves) {
+      if (!claves.length) return;
+      await q(`DELETE FROM intentos WHERE k IN (SELECT value FROM json_each(?1))`, JSON.stringify(claves)).run();
     },
     async commit(tx) {
       try {

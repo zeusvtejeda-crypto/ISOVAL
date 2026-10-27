@@ -33,6 +33,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS pedidos (
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, estado TEXT NOT NULL, nota TEXT NOT NULL DEFAULT '', traspaso TEXT NOT NULL DEFAULT '')`,
   `CREATE TABLE IF NOT EXISTS pedido_lineas (pedido_id TEXT NOT NULL, prod TEXT NOT NULL, cant INTEGER NOT NULL, PRIMARY KEY (pedido_id, prod))`,
+  `CREATE TABLE IF NOT EXISTS intentos (k TEXT PRIMARY KEY, n INTEGER NOT NULL, b INTEGER NOT NULL, hasta INTEGER NOT NULL, adm INTEGER NOT NULL)`,
   // tabla trampa: insertar aquí rompe el CHECK y deshace todo el batch (ver guardas)
   `CREATE TABLE IF NOT EXISTS guardas (g INTEGER NOT NULL CHECK (g = 0))`
 ];
@@ -56,6 +57,7 @@ export async function crearRepoD1(db) {
         try { await db.prepare(`ALTER TABLE movs ADD COLUMN envio REAL NOT NULL DEFAULT 0`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
       }
     }
+    await db.prepare(SCHEMA.find((x) => x.includes('TABLE IF NOT EXISTS intentos'))).run();
     migradas.add(db);
   }
   const q = (sql, ...args) => db.prepare(sql).bind(...args);
@@ -192,6 +194,22 @@ export async function crearRepoD1(db) {
     },
     ventas(desde) {
       return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
+    },
+    // Cuenta un intento de PIN en una sola sentencia atómica (el contador no se pierde aunque lleguen muchas peticiones a la vez).
+    async intento(clave, ahora) {
+      const fila = await q(
+        `INSERT INTO intentos (k, n, b, hasta, adm) VALUES (?1, 1, 0, 0, 1)
+         ON CONFLICT(k) DO UPDATE SET
+           adm = CASE WHEN hasta > ?2 THEN 0 ELSE 1 END,
+           n = CASE WHEN hasta > ?2 THEN n WHEN n + 1 >= 5 THEN 0 ELSE n + 1 END,
+           hasta = CASE WHEN hasta > ?2 THEN hasta WHEN n + 1 >= 5 THEN ?2 + (CASE b WHEN 0 THEN 300000 WHEN 1 THEN 900000 WHEN 2 THEN 2700000 WHEN 3 THEN 8100000 WHEN 4 THEN 24300000 WHEN 5 THEN 72900000 ELSE 86400000 END) ELSE hasta END,
+           b = CASE WHEN hasta > ?2 THEN b WHEN n + 1 >= 5 THEN b + 1 ELSE b END
+         RETURNING n, b, hasta, adm`, clave, ahora).first();
+      return fila;
+    },
+    async limpiarIntentos(claves) {
+      if (!claves.length) return;
+      await q(`DELETE FROM intentos WHERE k IN (SELECT value FROM json_each(?1))`, JSON.stringify(claves)).run();
     },
     async commit(tx) {
       try {

@@ -72,7 +72,7 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 
 ## Seguridad (qué está protegido y qué no)
 
-- **Acceso:** PIN de 6 a 8 números por usuario (se rechazan los fáciles: 123456, 111111, 121212…). Se guarda con sal; nunca viaja ni se guarda en claro. 5 fallos bloquean 5 min y cada bloqueo siguiente dura el triple (tope 24 h). Las sesiones duran 14 días y se renuevan con el uso; cambiar un PIN cierra las sesiones de ese usuario.
+- **Acceso:** PIN de 6 a 8 números por usuario (se rechazan los fáciles: 123456, 111111, 121212…). Se guarda con sal; nunca viaja ni se guarda en claro. Cada intento se cuenta antes de comprobar el PIN y de forma atómica (una ráfaga de peticiones en paralelo no se salta el límite): 5 intentos bloquean 5 min y cada bloqueo siguiente dura el triple (tope 24 h). Las sesiones duran 14 días y se renuevan con el uso; cambiar un PIN cierra las sesiones de ese usuario.
 - **Permisos en el servidor:** cada operación comprueba el rol (el vendedor no puede entrar al almacén ni ver costos aunque manipule la app). Los movimientos solo se agregan; deshacer es una anulación con motivo.
 - **Navegador:** política de seguridad estricta (sin scripts en línea, sin recursos de terceros: hasta las tipografías son propias), HTTPS forzado, sin incrustar en otros sitios, sin caché de datos y rechazo de peticiones que no vengan de la propia app.
 - **Datos:** todo cambio es atómico en D1 (o se guarda completo o no se guarda). Un número no puede dejar existencias negativas.

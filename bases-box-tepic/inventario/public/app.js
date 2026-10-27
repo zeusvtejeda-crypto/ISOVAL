@@ -331,7 +331,7 @@ function ordenProductos(a, b) {
 
 /* agrupa los movimientos de una misma operación (venta de varias bases, entrada de varios productos…) */
 function agrupar(movs) {
-  const out = [], idx = {};
+  const out = [], idx = Object.create(null);
   movs.forEach((m) => {
     let g = idx[m.grupo];
     if (!g) {
@@ -1642,7 +1642,8 @@ function formPin(reiniciarTienda) {
 }
 
 /* ───────── exportar ───────── */
-const csvCelda = (v) => { const s = v == null ? '' : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+const csvCelda = (v) => { let s = v == null ? '' : String(v); if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s; // evita que Excel ejecute fórmulas escritas por otro usuario
+   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 const aCsv = (filas) => '﻿' + filas.map((f) => f.map(csvCelda).join(',')).join('\r\n');
 const fechaArchivo = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const fechaISO = (ts) => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
