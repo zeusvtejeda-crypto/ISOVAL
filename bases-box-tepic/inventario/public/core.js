@@ -574,6 +574,24 @@
     return { grupo, total: Math.round((total + envio) * 100) / 100, piezas, envio };
   }
 
+  // Regresa piezas de la tienda al almacén de inmediato (una sola operación: sale de la tienda y entra al almacén).
+  async function opRegreso(ctx, b, tx) {
+    const ls = lineas(b.lineas);
+    const prods = indexar(await ctx.repo.productos());
+    const grupo = grupoDe(b, 'R');
+    const nota = clean(b.nota, 200);
+    let piezas = 0;
+    ls.forEach((l, i) => {
+      const p = activoOError(prods[l.id]);
+      revisarStock(p, 'tienda', -l.cant);
+      piezas += l.cant;
+      tx.stock.push(deltaStock(p.id, 'tienda', -l.cant), deltaStock(p.id, 'local', l.cant));
+      tx.movs.push(nuevoMov(ctx, grupo, i * 2, p, 'tienda', -l.cant, 'regreso', { nota }));
+      tx.movs.push(nuevoMov(ctx, grupo, i * 2 + 1, p, 'local', l.cant, 'regreso', { nota }));
+    });
+    return { grupo, piezas };
+  }
+
   async function opConteo(ctx, b, tx) {
     const loc = ctx.rol;
     const ls = lineas(b.lineas, 'contado', 0);
@@ -946,6 +964,7 @@
     'mov.venta': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'venta')],
     'mov.devolucion': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'devolucion')],
     'mov.merma': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'merma')],
+    'mov.regreso': [['local', 'tienda'], opRegreso],
     'mov.conteo': [['local', 'tienda'], opConteo],
     'mov.anular': [['local', 'tienda'], opAnular],
     'traspaso.enviar': [['local'], opEnviar],

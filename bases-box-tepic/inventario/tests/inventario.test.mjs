@@ -738,6 +738,36 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await t2.op({ op: 'pedido.crear', cid: 'pedido-unico-01', lineas: [{ id: a.id, cant: 9 }] })).json.error.code, 'duplicado');
     });
 
+    test('regreso de tienda al almacén: mueve de inmediato, valida existencias, se puede anular', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      const est0 = await local.estado();
+      const a = prod(est0, 'Base Queen · Gris'), b = prod(est0, 'Base Individual · Rosa');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 10 }, { id: b.id, cant: 4 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 6 }, { id: b.id, cant: 4 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      // no se puede regresar más de lo que hay en la tienda
+      assert.equal((await tienda.op({ op: 'mov.regreso', lineas: [{ id: a.id, cant: 7 }] })).json.error.code, 'stock_insuficiente');
+      const r = await tienda.op({ op: 'mov.regreso', lineas: [{ id: a.id, cant: 2 }, { id: b.id, cant: 1 }], nota: 'Se movieron por error' });
+      assert.equal(r.status, 200, JSON.stringify(r.json));
+      assert.equal(r.json.resultado.piezas, 3);
+      let est = r.json.estado;
+      assert.deepEqual([prod(est, 'Base Queen · Gris').stock_local, prod(est, 'Base Queen · Gris').stock_tienda], [6, 4]);
+      assert.deepEqual([prod(est, 'Base Individual · Rosa').stock_local, prod(est, 'Base Individual · Rosa').stock_tienda], [1, 3]);
+      // el Almacén también puede registrarlo, y las ventas no se alteran
+      assert.equal((await local.op({ op: 'mov.regreso', lineas: [{ id: a.id, cant: 1 }] })).status, 200);
+      assert.equal((await local.estado()).resumen.hoy.total, 0);
+      // anular lo deja como estaba
+      const g = r.json.resultado.grupo;
+      const an = await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'Fue un error' });
+      assert.equal(an.status, 200, JSON.stringify(an.json));
+      est = an.json.estado;
+      assert.deepEqual([prod(est, 'Base Queen · Gris').stock_local, prod(est, 'Base Queen · Gris').stock_tienda], [5, 5]);
+      assert.deepEqual([prod(est, 'Base Individual · Rosa').stock_local, prod(est, 'Base Individual · Rosa').stock_tienda], [0, 4]);
+      // aparece en el historial filtrado por envíos
+      const h = (await local.call('GET', '/movs', null, { limite: '50', tipos: 'regreso' })).json.items;
+      assert.ok(h.length >= 4 && h.every((m) => m.tipo === 'regreso'));
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });

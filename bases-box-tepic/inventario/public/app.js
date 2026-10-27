@@ -103,6 +103,7 @@ const TIPOS = {
   ajuste: { t: 'Ajuste por conteo', ic: 'conteo', c: 'info' },
   inicial: { t: 'Inventario inicial', ic: 'cubo', c: '' },
   envio: { t: 'Envío a la tienda', ic: 'camion', c: 'info' },
+  regreso: { t: 'Regreso de tienda al almacén', ic: 'entrada', c: 'info' },
   recibo: { t: 'Recibido en tienda', ic: 'check', c: 'ok' },
   envio_cancelado: { t: 'Envío cancelado', ic: 'x', c: 'bad' }
 };
@@ -338,6 +339,7 @@ function agrupar(movs) {
       g = idx[m.grupo] = { grupo: m.grupo, ts: m.ts, tipo: m.tipo, rol: m.rol, nota: m.nota, motivo: m.motivo, cliente: m.cliente, pago: m.pago, ref: m.ref, anulado: !!m.anulado, anulado_ts: m.anulado_ts, anulado_por: m.anulado_por, anulado_nota: m.anulado_nota, lineas: [] };
       out.push(g);
     }
+    if (m.tipo === 'regreso' && m.delta < 0) return; // un regreso guarda salida de tienda + entrada al almacén; se muestra una sola línea
     g.lineas.push(m);
     if (m.ts < g.ts) g.ts = m.ts;
   });
@@ -683,8 +685,8 @@ VISTAS.mover = {
     const e = S.est;
     const enT = e.traspasos.filter((t) => t.estado === 'en_transito');
     const acc = S.rol === 'local'
-      ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
-      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['reporte', 'tabla', 'Reporte del día', 'Total vendido, por forma de pago'], ['pedido', 'pedido', 'Pedir al almacén', 'Avisa qué bases hacen falta'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
+      ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['regreso', 'entrada', 'Regresar de tienda', 'Mueve piezas de la tienda al almacén'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
+      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['reporte', 'tabla', 'Reporte del día', 'Total vendido, por forma de pago'], ['pedido', 'pedido', 'Pedir al almacén', 'Avisa qué bases hacen falta'], ['regreso', 'entrada', 'Regresar al almacén', 'Mueve piezas de la tienda al almacén'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
     poner($('#mv-acc'), html`<div class="atajos">${acc.map(([k, ic, t, s, pri]) => html`<button type="button" class="atajo ${pri ? 'pri' : ''}" data-act="forma" data-tipo="${k}"><span class="ico-c ${pri ? '' : 'acc'}">${ico(ic)}</span><b>${t}</b><span>${s}</span></button>`)}</div>`);
 
     const cerr = (arr, n) => arr.filter((x) => x.estado !== 'en_transito' && x.estado !== 'pendiente').slice(0, n);
@@ -714,7 +716,7 @@ function tarjetaPedido(p) {
 }
 
 /* ───────── HISTORIAL ───────── */
-const FILTROS_TIPO = [['todo', 'Todo', null], ['ventas', 'Ventas', 'venta,devolucion'], ['entradas', 'Entradas', 'entrada,inicial'], ['salidas', 'Salidas', 'salida,merma'], ['traspasos', 'Envíos', 'envio,recibo,envio_cancelado'], ['ajustes', 'Ajustes', 'ajuste']];
+const FILTROS_TIPO = [['todo', 'Todo', null], ['ventas', 'Ventas', 'venta,devolucion'], ['entradas', 'Entradas', 'entrada,inicial'], ['salidas', 'Salidas', 'salida,merma'], ['traspasos', 'Envíos', 'envio,recibo,envio_cancelado,regreso'], ['ajustes', 'Ajustes', 'ajuste']];
 VISTAS.historial = {
   armar: () => html`<div data-vista="historial">
     <div class="cabecera"><div><h1 class="t-pant">Historial</h1><p class="t-peq" style="margin-top:8px">Todo lo que pasó con el inventario, con fecha y responsable.</p></div><button type="button" class="btn btn-g" data-act="exportar-movs">${ico('bajar')}Exportar CSV</button></div>
@@ -918,6 +920,7 @@ const FORMAS = {
   venta: { titulo: 'Registrar venta', op: 'mov.venta', loc: 'tienda', modo: 'restar', precio: true, venta: true, ok: 'Registrar venta', cand: (p) => p.stock_tienda > 0, sinCand: 'No hay productos con existencias en la tienda.' },
   devolucion: { titulo: 'Devolución de cliente', op: 'mov.devolucion', loc: 'tienda', modo: 'sumar', precio: true, ok: 'Guardar devolución', cand: () => true, ayuda: 'La base regresa a la tienda y el monto se resta de las ventas.' },
   merma: { titulo: 'Merma en tienda', op: 'mov.merma', loc: 'tienda', modo: 'restar', ok: 'Guardar merma', cand: (p) => p.stock_tienda > 0, notaEt: '¿Qué pasó?', ayuda: 'Para daños o pérdidas en la tienda.', sinCand: 'No hay productos con existencias en la tienda.' },
+  regreso: { titulo: 'Regresar al almacén', op: 'mov.regreso', loc: 'tienda', modo: 'restar', ok: 'Mover al almacén', cand: (p) => p.stock_tienda > 0, ayuda: 'Las piezas salen de la tienda y entran al almacén al momento.', sinCand: 'No hay productos con existencias en la tienda.' },
   envio: { titulo: 'Enviar a la tienda', op: 'traspaso.enviar', loc: 'local', modo: 'restar', ok: 'Enviar a la tienda', cand: (p) => p.stock_local > 0, ayuda: 'Las piezas salen del almacén ahora y entran a la tienda cuando alguien confirme que llegaron.', sinCand: 'No hay productos con existencias en el almacén.' },
   pedido: { titulo: 'Pedir al almacén', op: 'pedido.crear', loc: 'tienda', modo: 'sumar', ok: 'Enviar pedido', cand: () => true, ayuda: 'El almacén verá tu pedido y preparará el envío.' }
 };
@@ -1021,6 +1024,7 @@ function exitoForma(tipo, res, cuerpo) {
   if (tipo === 'venta') toast('Venta registrada · ' + dinero(res.total), { accion: deshacer });
   else if (tipo === 'devolucion') toast('Devolución guardada · ' + dinero(res.total), { accion: deshacer });
   else if (tipo === 'entrada' || tipo === 'salida' || tipo === 'merma') toast('Guardado · ' + plural(res.piezas, 'pieza', 'piezas'), { accion: deshacer });
+  else if (tipo === 'regreso') toast('Movido al almacén · ' + plural(res.piezas, 'pieza', 'piezas'), { accion: deshacer });
   else if (tipo === 'envio') {
     const texto = 'Bases Box Tepic · Envío a la tienda\n' + lineasTexto(cuerpo.lineas) + '\nTotal: ' + plural(res.piezas, 'pieza', 'piezas') + '.\nConfírmalo en el inventario cuando llegue.';
     toast('Envío creado · ' + plural(res.piezas, 'pieza', 'piezas') + ' en camino', { accion: { texto: 'Avisar por WhatsApp', href: waLink(e.telTienda, texto) } });
