@@ -203,6 +203,7 @@ export async function crearRepoD1(db) {
       const last = items[items.length - 1];
       return { items, siguiente: filas.length > f.limite && last ? last.ts + '_' + last.id : null };
     },
+    producciones(desde) { return todas(`SELECT ts, prod, delta, motivo FROM movs WHERE tipo = 'entrada' AND anulado = 0 AND ts >= ?1`, desde); },
     gastos(desde) { return todas(`SELECT * FROM gastos WHERE ts >= ?1 ORDER BY ts DESC`, desde); },
     async gasto(id) { return (await q(`SELECT * FROM gastos WHERE id = ?1`, id).first()) || null; },
     ventas(desde) {

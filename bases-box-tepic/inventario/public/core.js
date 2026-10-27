@@ -13,7 +13,7 @@
 
   const VERSION = '1.0.0';
   const DIA = 86400000;
-  const ROLES = ['local', 'tienda'];
+  const ROLES = ['local', 'tienda', 'dueno']; // dueno: solo lectura (resumen del negocio)
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
   const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'retiro', 'otro'];
@@ -193,6 +193,8 @@
     return { salt, hash: hashPin(salt, secreto), v: v || 1 };
   }
   const PINS_COMUNES = ['123456', '654321', '121212', '112233', '123123', '159753', '147258', '102030', '123321', '010203', '696969', '202020', '2580', '12345678', '87654321', '11223344', '12341234', '123654', '1234567'];
+  // ¿ese PIN ya lo usa otro usuario?
+  const pinEnUso = (cfg, rol, pin) => ROLES.some((r) => r !== rol && cfg.acceso[r] && igual(hashPin(cfg.acceso[r].salt, pin), cfg.acceso[r].hash));
   function validarPin(pin) {
     if (!/^\d{6,8}$/.test(pin)) throw bad('pin_formato', 'El PIN debe tener de 6 a 8 números.');
     const debil = /^(\d)\1+$/.test(pin) || /^(\d{1,4})\1+$/.test(pin) || '01234567890123456789'.includes(pin) || '98765432109876543210'.includes(pin) || PINS_COMUNES.includes(pin);
@@ -262,7 +264,7 @@
     const cfg = await cargarCfg(ctx);
     return ok({
       servidor: ctx.servidor !== false, version: VERSION, configurado: cfg.configurado, negocio: cfg.negocio.nombre,
-      requiereClave: !cfg.configurado && !!ctx.claveInstalacion
+      requiereClave: !cfg.configurado && !!ctx.claveInstalacion, dueno: !!(cfg.acceso && cfg.acceso.dueno)
     });
   }
 
@@ -330,8 +332,7 @@
     const it = await reservar(ctx, 'recup');
     const rec = cfg.acceso.recup;
     if (!rec || !igual(hashPin(rec.salt, normCodigo(b.codigo)), rec.hash)) fallar(it, 'codigo_incorrecto', 'Código de recuperación incorrecto.');
-    const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
-    if (otro && igual(hashPin(otro.salt, pin), otro.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
+    if (pinEnUso(cfg, rol, pin)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const codigo = codigoRecuperacion();
     const acceso = Object.assign({}, cfg.acceso, {
       [rol]: nuevoAcceso(pin, ((cfg.acceso[rol] && cfg.acceso[rol].v) || 0) + 1),
@@ -417,7 +418,7 @@
   }
 
   // gastos: el vendedor solo ve los que registró la tienda; el Almacén ve todos
-  const gastosVisibles = (filas, rol) => filas.filter((g) => rol === 'local' || g.rol === 'tienda');
+  const gastosVisibles = (filas) => filas; // los gastos son de todo el negocio: todos los usuarios ven lo mismo
   function resumenGastos(filas, ahora, tz) {
     const hoyK = diaKey(ahora, tz), mesK = hoyK.slice(0, 7), semK = lunesDe(hoyK);
     const per = { hoy: (k) => k === hoyK, semana: (k) => k >= semK && k <= hoyK, mes: (k) => k.slice(0, 7) === mesK };
@@ -442,7 +443,7 @@
     return out;
   }
   async function listarGastos(ctx) {
-    const filas = gastosVisibles(await ctx.repo.gastos(ctx.ahora - 36 * DIA), ctx.rol);
+    const filas = gastosVisibles(await ctx.repo.gastos(ctx.ahora - 36 * DIA));
     const items = filas.slice().sort((a, b) => b.ts - a.ts || (a.id < b.id ? 1 : -1)).slice(0, 400);
     return { items, resumen: resumenGastos(filas, ctx.ahora, ctx.tz) };
   }
@@ -477,6 +478,86 @@
     tx.gastosAnular.push({ id: g.id, ts: ctx.ahora, por: ctx.rol, nota: motivo });
     tx.guardas.push({ tipo: 'gasto_sin_anular', id: g.id });
     return { id: g.id };
+  }
+
+  // Resumen del negocio (Dueño y Almacén): producción, ventas, gastos, egresos, resultado e inventario.
+  async function resumenDueno(ctx) {
+    const { repo, ahora, tz } = ctx;
+    const hoyK = diaKey(ahora, tz), mesK = hoyK.slice(0, 7), semK = lunesDe(hoyK);
+    const per = { hoy: (k) => k === hoyK, semana: (k) => k >= semK && k <= hoyK, mes: (k) => k.slice(0, 7) === mesK };
+    const [filasV, gastosF, prods, prodRows, trasp, peds] = await Promise.all([
+      repo.ventas(ahora - 36 * DIA), repo.gastos(ahora - 36 * DIA), repo.productos(), repo.producciones(ahora - 36 * DIA),
+      repo.traspasos({ desde: ahora - 60 * DIA }), repo.pedidos({ desde: ahora - 60 * DIA })
+    ]);
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const costoDe = {};
+    prods.forEach((p) => { costoDe[p.id] = p.costo || 0; });
+    const periodos = {};
+    Object.keys(per).forEach((n) => {
+      periodos[n] = { ventas: { bruto: 0, devuelto: 0, neto: 0, pzas: 0, n: 0, envios: 0, porPago: {} }, gastos: null, produccion: { pzas: 0, costo: 0, compras: 0, comprasCosto: 0, porProducto: {} } };
+    });
+    const grupos = {};
+    Object.keys(per).forEach((n) => { grupos[n] = new Set(); });
+    filasV.forEach((r) => {
+      const k = diaKey(r.ts, tz), pz = Math.abs(r.delta), monto = pz * (r.precio || 0), env = r.envio || 0;
+      Object.keys(per).forEach((n) => {
+        if (!per[n](k)) return;
+        const v = periodos[n].ventas;
+        if (r.tipo === 'venta') {
+          v.bruto += monto + env; v.envios += env; v.pzas += pz; grupos[n].add(r.grupo);
+          const pg = r.pago || 'efectivo';
+          v.porPago[pg] = (v.porPago[pg] || 0) + monto + env;
+        } else { v.devuelto += monto; v.pzas -= pz; }
+      });
+    });
+    prodRows.forEach((r) => {
+      const k = diaKey(r.ts, tz);
+      Object.keys(per).forEach((n) => {
+        if (!per[n](k)) return;
+        const o = periodos[n].produccion, costo = r.delta * (costoDe[r.prod] || 0);
+        if (r.motivo === 'produccion') {
+          o.pzas += r.delta; o.costo += costo;
+          o.porProducto[r.prod] = (o.porProducto[r.prod] || 0) + r.delta;
+        } else if (r.motivo === 'compra') { o.compras += r.delta; o.comprasCosto += costo; }
+      });
+    });
+    const gres = resumenGastos(gastosF, ahora, tz);
+    Object.keys(per).forEach((n) => {
+      const p = periodos[n], v = p.ventas;
+      v.n = grupos[n].size;
+      v.bruto = r2(v.bruto); v.devuelto = r2(v.devuelto); v.envios = r2(v.envios); v.neto = r2(v.bruto - v.devuelto);
+      Object.keys(v.porPago).forEach((c) => { v.porPago[c] = r2(v.porPago[c]); });
+      p.gastos = gres[n];
+      p.egresos = r2(gres[n].total + v.devuelto);
+      p.resultado = r2(v.bruto - p.egresos);
+      p.produccion.costo = r2(p.produccion.costo); p.produccion.comprasCosto = r2(p.produccion.comprasCosto);
+      p.produccion.porProducto = Object.keys(p.produccion.porProducto).map((id) => ({ id, pzas: p.produccion.porProducto[id] })).sort((a, b) => b.pzas - a.pzas).slice(0, 8);
+    });
+    // últimos 7 días: lo que entró vs. lo que salió
+    const dias = [];
+    for (let i = 6; i >= 0; i--) dias.push({ k: diaKey(ahora - i * DIA, tz), ventas: 0, gastos: 0 });
+    const idx = {};
+    dias.forEach((d, i) => { idx[d.k] = i; });
+    filasV.forEach((r) => { const i = idx[diaKey(r.ts, tz)]; if (i === undefined) return; const m = Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0); dias[i].ventas += r.tipo === 'venta' ? m : -Math.abs(r.delta) * (r.precio || 0); });
+    gastosF.filter((g) => !g.anulado).forEach((g) => { const i = idx[diaKey(g.ts, tz)]; if (i !== undefined) dias[i].gastos += g.monto; });
+    dias.forEach((d) => { d.ventas = r2(d.ventas); d.gastos = r2(d.gastos); });
+    // inventario
+    const act = prods.filter((p) => p.activo);
+    const enCamino = trasp.filter((t) => t.estado === 'en_transito').reduce((a, t) => a + t.lineas.reduce((b, l) => b + l.cant, 0), 0);
+    const inv = {
+      pzasAlmacen: act.reduce((a, p) => a + p.stock_local, 0), pzasTienda: act.reduce((a, p) => a + p.stock_tienda, 0), pzasCamino: enCamino,
+      valorCosto: r2(act.reduce((a, p) => a + (p.stock_local + p.stock_tienda) * (p.costo || 0), 0)),
+      valorVenta: r2(act.reduce((a, p) => a + (p.stock_local + p.stock_tienda) * (p.precio || 0), 0)),
+      bajos: act.filter((p) => (p.min_local > 0 && p.hubo_local && p.stock_local <= p.min_local) || (p.min_tienda > 0 && p.hubo_tienda && p.stock_tienda <= p.min_tienda)).length,
+      enviosEnCamino: trasp.filter((t) => t.estado === 'en_transito').length,
+      pedidosPendientes: peds.filter((p) => p.estado === 'pendiente').length
+    };
+    const top = {};
+    filasV.filter((r) => per.mes(diaKey(r.ts, tz))).forEach((r) => { const t = top[r.prod] || (top[r.prod] = { id: r.prod, pzas: 0, total: 0 }); const pz = -r.delta; t.pzas += pz; t.total += pz * (r.precio || 0); });
+    return {
+      ahora, periodos, dias, inventario: inv,
+      top: Object.values(top).filter((t) => t.pzas > 0).sort((a, b) => b.pzas - a.pzas).slice(0, 5).map((t) => ({ id: t.id, pzas: t.pzas, total: r2(t.total) }))
+    };
   }
 
   // reporte del día de la tienda: cada venta con sus piezas, cobro por forma de pago, envíos y devoluciones
@@ -526,12 +607,12 @@
     const cfg = normalizarCfg(raw);
     const productos = prods.map((p) => {
       const o = Object.assign({}, p);
-      if (rol !== 'local') delete o.costo;
+      if (rol === 'tienda') delete o.costo;
       return o;
     });
     const est = {
-      rev: cfg.rev, ahora, rol, version: VERSION, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
-      productos, traspasos: trasp, pedidos: peds, resumen: Object.assign(resumenVentas(ventas, ahora, ctx.tz), { gastos: (({ hoy, semana, mes }) => ({ hoy: hoy.total, semana: semana.total, mes: mes.total }))(resumenGastos(gastosVisibles(gastosFilas, rol), ahora, ctx.tz)) }), recientes: rec.items
+      rev: cfg.rev, ahora, rol, version: VERSION, dueno: !!cfg.acceso.dueno, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
+      productos, traspasos: trasp, pedidos: peds, resumen: Object.assign(resumenVentas(ventas, ahora, ctx.tz), { gastos: (({ hoy, semana, mes }) => ({ hoy: hoy.total, semana: semana.total, mes: mes.total }))(resumenGastos(gastosVisibles(gastosFilas), ahora, ctx.tz)) }), recientes: rec.items
     };
     if (ctx.exp && ctx.exp - ahora < (SESION_DIAS / 2) * DIA) est.token = firmar(cfg, rol, ahora);
     return est;
@@ -975,8 +1056,7 @@
     validarPin(nuevo);
     // “ese PIN ya lo usa el otro usuario” revelaría el PIN ajeno a quien pruebe uno por uno: cada intento cuenta y no se borra con el acierto
     await reservar(ctx, 'cambio:' + rol);
-    const otro = cfg.acceso[rol === 'local' ? 'tienda' : 'local'];
-    if (otro && igual(hashPin(otro.salt, nuevo), otro.hash)) throw bad('pin_igual', 'Ese PIN no está disponible. Elige otro.');
+    if (pinEnUso(cfg, rol, nuevo)) throw bad('pin_igual', 'Ese PIN no está disponible. Elige otro.');
     await limpiarIntentos(ctx, rol);
     const acceso = Object.assign({}, cfg.acceso, { [rol]: nuevoAcceso(nuevo, acc.v + 1) });
     tx.config = { acceso };
@@ -991,7 +1071,7 @@
     await limpiarIntentos(ctx, 'local', 'tienda');
     const nuevo = String(b.pinNuevo || '');
     validarPin(nuevo);
-    if (igual(hashPin(acc.salt, nuevo), acc.hash)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
+    if (pinEnUso(cfg, 'tienda', nuevo)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
     const t = cfg.acceso.tienda;
     const acceso = Object.assign({}, cfg.acceso, { tienda: nuevoAcceso(nuevo, ((t && t.v) || 0) + 1) });
     tx.config = { acceso };
@@ -1007,6 +1087,21 @@
     const codigo = codigoRecuperacion();
     tx.config = { acceso: Object.assign({}, cfg.acceso, { recup: nuevoAcceso(normCodigo(codigo)) }) };
     return { codigo };
+  }
+
+  // El Almacén crea o cambia el PIN del Dueño (usuario de solo lectura con el resumen del negocio).
+  async function opPinDueno(ctx, b, tx) {
+    const cfg = ctx.cfg;
+    const it = await reservar(ctx, 'local');
+    const acc = cfg.acceso.local;
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local', 'dueno');
+    const nuevo = String(b.pinNuevo || '');
+    validarPin(nuevo);
+    if (pinEnUso(cfg, 'dueno', nuevo)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
+    const d = cfg.acceso.dueno;
+    tx.config = { acceso: Object.assign({}, cfg.acceso, { dueno: nuevoAcceso(nuevo, ((d && d.v) || 0) + 1) }) };
+    return {};
   }
 
   // Deja el inventario en cero (borra movimientos, envíos y pedidos; conserva productos, precios, PIN y ajustes).
@@ -1043,7 +1138,8 @@
     'pedido.crear': [['tienda'], opPedidoCrear],
     'pedido.cancelar': [['local', 'tienda'], opPedidoCancelar],
     'config.guardar': [['local'], opConfigGuardar],
-    'pin.cambiar': [['local', 'tienda'], opPinCambiar],
+    'pin.cambiar': [['local', 'tienda', 'dueno'], opPinCambiar],
+    'pin.dueno': [['local'], opPinDueno],
     'pin.reiniciar': [['local'], opPinReiniciar],
     'recup.nueva': [['local'], opRecupNueva],
     'sistema.reiniciar': [['local'], opReiniciar]
@@ -1082,6 +1178,10 @@
       if (path === '/estado' && m === 'GET') return ok(await armarEstado(ctx));
       if (path === '/movs' && m === 'GET') return ok(await listarMovs(ctx));
       if (path === '/reporte-dia' && m === 'GET') return ok(await reporteDia(ctx));
+      if (path === '/resumen' && m === 'GET') {
+        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El resumen del negocio es del dueño y del almacén.');
+        return ok(await resumenDueno(ctx));
+      }
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
       if (path === '/op' && m === 'POST') {
@@ -1132,6 +1232,7 @@
 
     return {
       async config() { return clonar(S.config); },
+      async producciones(desde) { return S.movs.filter((m) => m.tipo === 'entrada' && !m.anulado && m.ts >= desde).map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, motivo: m.motivo })); },
       async gastos(desde) { return (S.gastos || []).filter((g) => g.ts >= desde).map((g) => Object.assign({}, g)); },
       async gasto(id) { const g = (S.gastos || []).find((x) => x.id === id); return g ? Object.assign({}, g) : null; },
       // cuenta un intento de PIN de forma atómica (ver reservar en el núcleo)
@@ -1291,6 +1392,13 @@
         body: { nombre: 'Bases Box Tepic', pinLocal: '1111', pinTienda: '2222', catalogo: { bases: true, extras: true } }
       }, { now: inicio, demo: true, servidor: false });
 
+      { // el Dueño de la demostración entra con 3333
+        const cfgD = normalizarCfg(await repo.config());
+        const txD = nuevaTx();
+        txD.config = { acceso: Object.assign({}, cfgD.acceso, { dueno: nuevoAcceso('3333', 1) }) };
+        txD.sinRev = true;
+        await repo.commit(txD);
+      }
       const precios = { ind: 2350, mat: 3100, qn: 3790, kg: 4650 };
       const cfg0 = normalizarCfg(await repo.config());
       await run('local', {
@@ -1359,7 +1467,7 @@
       const pedirP = fin2.filter((p) => p.cat === 'base').slice(0, 2);
       await run('tienda', { op: 'pedido.crear', nota: 'Se están acabando en tienda', lineas: pedirP.map((p) => ({ id: p.id, cant: 3 })) }, fin - 60 * 60000);
     });
-    return { local: '1111', tienda: '2222' };
+    return { local: '1111', tienda: '2222', dueno: '3333' };
   }
 
   return {

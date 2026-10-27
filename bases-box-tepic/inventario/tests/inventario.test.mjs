@@ -780,21 +780,22 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const g2 = await tienda.op({ op: 'gasto.crear', monto: 300, cat: 'transporte', concepto: 'Gasolina camioneta', pago: 'tarjeta' });
       const g3 = await local.op({ op: 'gasto.crear', monto: 5000, cat: 'materiales', concepto: 'Madera y tela', pago: 'transferencia' });
       assert.equal(g3.status, 200);
-      // el vendedor solo ve los gastos de la tienda; el Almacén ve todos
+      // los gastos son de todo el negocio: Almacén y Tienda ven exactamente lo mismo
       const lt = (await tienda.call('GET', '/gastos')).json, ll = (await local.call('GET', '/gastos')).json;
-      assert.equal(lt.items.length, 2);
+      assert.equal(lt.items.length, 3);
       assert.equal(ll.items.length, 3);
-      assert.equal(lt.resumen.hoy.total, 420.5);
+      assert.deepEqual(lt.resumen, ll.resumen);
+      assert.equal(lt.resumen.hoy.total, 5420.5);
       assert.equal(ll.resumen.hoy.total, 5420.5);
       assert.equal(ll.resumen.mes.porCat.materiales, 5000);
       assert.equal(ll.resumen.hoy.porPago.efectivo, 120.5);
-      assert.equal((await tienda.estado()).resumen.gastos.hoy, 420.5);
+      assert.equal((await tienda.estado()).resumen.gastos.hoy, 5420.5);
       assert.equal((await local.estado()).resumen.gastos.mes, 5420.5);
       // un gasto de ayer entra al mes pero no al día de hoy
       const ayerK = new Date(Date.now() - DIA).toISOString().slice(0, 10);
       const g4 = await tienda.op({ op: 'gasto.crear', monto: 80, cat: 'comida', dia: ayerK });
       assert.equal(g4.status, 200, JSON.stringify(g4.json));
-      assert.equal((await tienda.call('GET', '/gastos', null, { tz: '0' })).json.resumen.hoy.total, 420.5);
+      assert.equal((await tienda.call('GET', '/gastos', null, { tz: '0' })).json.resumen.hoy.total, 5420.5);
       // reporte del día: gastos de la tienda y efectivo neto
       const a = prod(await local.estado(), 'Base Queen · Gris');
       await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 5 }] });
@@ -812,7 +813,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await tienda.op({ op: 'gasto.anular', id: 'no-existe', motivo: 'prueba' })).status, 404);
       assert.equal((await tienda.op({ op: 'gasto.anular', id: g1.json.resultado.id, motivo: 'Me equivoqué' })).status, 200);
       assert.equal((await tienda.op({ op: 'gasto.anular', id: g1.json.resultado.id, motivo: 'otra vez' })).json.error.code, 'ya_anulado');
-      assert.equal((await tienda.call('GET', '/gastos', null, { tz: '0' })).json.resumen.hoy.total, 300);
+      assert.equal((await tienda.call('GET', '/gastos', null, { tz: '0' })).json.resumen.hoy.total, 5300);
       assert.equal((await local.op({ op: 'gasto.anular', id: g2.json.resultado.id, motivo: 'Lo pagó el dueño' })).status, 200);
       // el mismo id no se registra dos veces (reintento de red)
       const cid = 'gasto-reintento-1';
@@ -824,10 +825,89 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await local.call('GET', '/gastos')).json.items.length, 0);
     });
 
+    test('Dueño: solo lectura, PIN lo crea el Almacén, ve costos y el resumen del negocio', async () => {
+      const { repo, local, tienda } = await iniciar(fabrica);
+      const c0 = cliente(repo, local.now);
+      assert.equal((await c0.call('GET', '/ping')).json.dueno, false);
+      assert.equal((await c0.login('dueno', '482150')).status, 401, 'sin PIN de dueño no entra nadie');
+      // solo el Almacén crea el PIN del dueño, con su propio PIN; no puede repetir el de otro usuario
+      assert.equal((await tienda.op({ op: 'pin.dueno', pinActual: '730518', pinNuevo: '615243' })).status, 403);
+      assert.equal((await local.op({ op: 'pin.dueno', pinActual: '000999', pinNuevo: '615243' })).json.error.code, 'pin_incorrecto');
+      assert.equal((await local.op({ op: 'pin.dueno', pinActual: '482159', pinNuevo: '730518' })).json.error.code, 'pin_igual');
+      assert.equal((await local.op({ op: 'pin.dueno', pinActual: '482159', pinNuevo: '123456' })).json.error.code, 'pin_debil');
+      assert.equal((await local.op({ op: 'pin.dueno', pinActual: '482159', pinNuevo: '615243' })).status, 200);
+      assert.equal((await c0.call('GET', '/ping')).json.dueno, true);
+      const dueno = cliente(repo, local.now);
+      assert.equal((await dueno.login('dueno', '615243')).status, 200);
+      // los PIN siguen siendo distintos entre los tres
+      assert.equal((await tienda.op({ op: 'pin.cambiar', pinActual: '730518', pinNuevo: '615243' })).json.error.code, 'pin_igual');
+
+      // datos del negocio: producción, venta con envío, devolución, gasto
+      const est0 = await local.estado();
+      const a = prod(est0, 'Base Queen · Gris'), b = prod(est0, 'Base Individual · Rosa');
+      await local.op({ op: 'producto.editar', id: a.id, costo: 1000, precio: 2000 });
+      await local.op({ op: 'producto.editar', id: b.id, costo: 700, precio: 1600 });
+      await local.op({ op: 'mov.entrada', motivo: 'produccion', lineas: [{ id: a.id, cant: 10 }, { id: b.id, cant: 5 }] });
+      await local.op({ op: 'mov.entrada', motivo: 'compra', lineas: [{ id: b.id, cant: 2 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 6 }, { id: b.id, cant: 4 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      await tienda.op({ op: 'mov.venta', pago: 'efectivo', entrega: 'tepic', lineas: [{ id: a.id, cant: 2, precio: 1800 }] });   // 3600 + 200
+      await tienda.op({ op: 'mov.venta', pago: 'transferencia', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });                  // 1600
+      await tienda.op({ op: 'mov.devolucion', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });                                    // -1600
+      await tienda.op({ op: 'gasto.crear', monto: 500, cat: 'comida', concepto: 'Comida' });
+      await local.op({ op: 'gasto.crear', monto: 2500, cat: 'materiales', concepto: 'Tela', pago: 'transferencia' });
+      await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 1 }] });
+
+      const r = (await dueno.call('GET', '/resumen', null, { tz: '0' })).json;
+      assert.equal(r.ok, true, JSON.stringify(r));
+      const h = r.periodos.hoy;
+      assert.equal(h.ventas.bruto, 3800 + 1600);
+      assert.equal(h.ventas.devuelto, 1600);
+      assert.equal(h.ventas.neto, 3800);
+      assert.equal(h.ventas.envios, 200);
+      assert.equal(h.ventas.n, 2);
+      assert.equal(h.ventas.porPago.efectivo, 3800);
+      assert.equal(h.ventas.porPago.transferencia, 1600);
+      assert.equal(h.gastos.total, 3000);
+      assert.equal(h.gastos.porCat.materiales, 2500);
+      assert.equal(h.egresos, 3000 + 1600);
+      assert.equal(h.resultado, 5400 - 4600);
+      assert.equal(h.produccion.pzas, 15);
+      assert.equal(h.produccion.costo, 10 * 1000 + 5 * 700);
+      assert.equal(h.produccion.compras, 2);
+      assert.equal(r.periodos.mes.ventas.bruto, 5400);
+      assert.equal(r.periodos.semana.gastos.total, 3000);
+      assert.equal(r.dias.length, 7);
+      assert.equal(r.dias[6].gastos, 3000);
+      assert.equal(r.dias[6].ventas, 3800);
+      assert.equal(r.inventario.pzasCamino, 1);
+      assert.equal(r.inventario.enviosEnCamino, 1);
+      assert.equal(r.inventario.pzasAlmacen + r.inventario.pzasTienda, 15 + 2 - 2 - 1 + 0 - 1 + 1 - 0 + 0 - 0, 'inventario: producido y comprado menos lo vendido y lo que va en camino');
+      assert.ok(r.inventario.valorCosto > 0 && r.inventario.valorVenta > 0);
+      assert.equal(r.top[0].id, a.id);
+      // el Almacén ve el mismo resumen; el vendedor no
+      assert.deepEqual((await local.call('GET', '/resumen', null, { tz: '0' })).json.periodos, r.periodos);
+      assert.equal((await tienda.call('GET', '/resumen')).status, 403);
+
+      // el dueño ve los costos; el vendedor no
+      assert.equal((await dueno.estado()).productos.find((p) => p.id === a.id).costo, 1000);
+      assert.equal('costo' in (await tienda.estado()).productos[0], false);
+      // lee gastos, ventas y reporte, pero no puede hacer NADA (ninguna operación, salvo cambiar su propio PIN)
+      assert.equal((await dueno.call('GET', '/gastos')).json.items.length, 2);
+      assert.equal((await dueno.call('GET', '/ventas')).status, 200);
+      assert.equal((await dueno.call('GET', '/movs', null, { limite: '20' })).status, 200);
+      for (const op of ['mov.entrada', 'mov.salida', 'mov.venta', 'mov.devolucion', 'mov.merma', 'mov.regreso', 'mov.conteo', 'mov.anular', 'traspaso.enviar', 'traspaso.recibir', 'traspaso.cancelar', 'pedido.crear', 'pedido.cancelar', 'producto.crear', 'producto.editar', 'producto.variantes', 'producto.archivar', 'config.guardar', 'pin.reiniciar', 'pin.dueno', 'recup.nueva', 'sistema.reiniciar', 'gasto.crear', 'gasto.anular']) {
+        const x = await dueno.op({ op, lineas: [{ id: a.id, cant: 1 }], monto: 5, cat: 'comida', pinActual: '615243', pinNuevo: '951357', confirmacion: 'BORRAR TODO', id: 'x', grupo: 'x', motivo: 'prueba' });
+        assert.equal(x.status, 403, op + ' → ' + x.status);
+      }
+      assert.equal((await dueno.op({ op: 'pin.cambiar', pinActual: '615243', pinNuevo: '951357' })).status, 200, 'puede cambiar su propio PIN');
+      assert.equal((await cliente(repo, local.now).login('dueno', '951357')).status, 200);
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });
-      assert.deepEqual(pins, { local: '1111', tienda: '2222' });
+      assert.deepEqual(pins, { local: '1111', tienda: '2222', dueno: '3333' });
       const c = cliente(repo);
       assert.equal((await c.login('local', '1111')).status, 200);
       const est = await c.estado();

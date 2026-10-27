@@ -22,11 +22,14 @@ Almacén (fábrica)  ──envío──▶  En camino  ──confirma recibo─�
 | Alertas de stock bajo, tablero, historial, exportar CSV | ✅ | ✅ |
 | Ventas por día, semana y mes · reporte del día (WhatsApp / CSV) | ✅ | ✅ |
 | Entrega en la venta: recoge (−$200 por base), envío Tepic ($200), Xalisco y La Cantera ($250); tarifas editables | Cambia tarifas | Cobra |
-| Gastos (salidas de dinero): registrar, anular y ver por día, semana y mes; el vendedor solo ve los de la tienda | ✅ (todos) | ✅ (los suyos) |
+| Resumen del negocio: producción, ventas, gastos, egresos, resultado e inventario | ✅ | — (el Dueño lo ve de inicio) |
+| Gastos (salidas de dinero): registrar, anular y ver por día, semana y mes; todos ven los mismos y se actualizan solos | ✅ | ✅ (anula solo los suyos) |
 | Mover piezas de la tienda al almacén | ✅ | ✅ |
 | Dejar todo en cero (con PIN y frase de confirmación) | ✅ | — |
 
 Todo movimiento queda en el historial con fecha, lugar y responsable (Almacén o Tienda). Las piezas en camino no cuentan como existencias de ninguno de los dos hasta que la tienda confirma que llegaron.
+
+**Tercer usuario: Dueño (solo consulta).** El Almacén le crea el PIN en *Más → PIN del dueño*. El dueño entra con él y ve el resumen (producción, ventas, gastos, egresos, resultado, inventario), el inventario con costos, el historial y los gastos, pero no puede cambiar nada (el servidor rechaza cualquier operación suya, salvo cambiar su propio PIN).
 
 ## Probarla en 1 minuto (sin servidor)
 
