@@ -377,7 +377,7 @@ const marca = () => html`<div class="marca"><span class="logo"><img src="logo.pn
 
 function montarApp() {
   poner($('#raiz'), html`
-    <div class="app">
+    <div class="app ${S.rol === 'tienda' ? 'con-venta' : ''}">
       <aside class="rail" aria-label="Menú principal">
         ${marca()}
         <nav style="display:flex;flex-direction:column;gap:4px" aria-label="Secciones">
@@ -394,6 +394,7 @@ function montarApp() {
         <div class="demo-b" id="demo-b" hidden><span>Demostración · datos de ejemplo</span><button type="button" class="btn btn-s btn-g" data-act="salir-demo">Salir de la demo</button></div>
         <main class="main" id="vista" tabindex="-1"><div class="main-in" id="vista-in"></div></main>
       </div>
+      ${S.rol === 'tienda' ? html`<button type="button" class="btn btn-p fab fab-venta" id="fab-venta" data-act="venta-nueva" aria-label="Nueva venta">${ico('recibo')}Nueva venta</button>` : ''}
       <nav class="tabbar" aria-label="Secciones" style="grid-template-columns:repeat(${tabsDe().length},1fr)">
         ${tabsDe().map((t) => html`<button type="button" class="tab" data-tab="${t.id}">${ico(t.ic)}<span>${t.t}</span><span class="badge" hidden></span></button>`)}
       </nav>
@@ -418,6 +419,8 @@ function conteoInsignias() {
 }
 function pintarNav() {
   const ins = S.est ? conteoInsignias() : {};
+  const fv = $('#fab-venta');
+  if (fv) fv.hidden = S.tab === 'inicio' || S.tab === 'mas';
   $$('[data-tab]').forEach((b) => {
     const on = b.dataset.tab === S.tab;
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -494,6 +497,7 @@ function pintarInicio() {
     <div class="cabecera">
       <div><h1 class="t-pant">${saludo}</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · ${ROLES[S.rol].nombre}</p></div>
     </div>
+    ${S.rol === 'tienda' ? html`<button type="button" class="btn btn-p btn-b btn-venta-grande" data-act="venta-nueva">${ico('recibo')}Nueva venta</button>` : ''}
     ${vacioTodo ? html`<section class="card" aria-label="Empezar"><div class="fila" style="align-items:flex-start;gap:14px"><span class="ico-c acc">${ico('cubo')}</span><div class="grow"><div class="item-t">Empieza cargando tus existencias</div><div class="item-s" style="margin-bottom:12px">${S.rol === 'local' ? 'Aún no hay piezas registradas. Cuenta lo que tienes en el almacén y anótalo de un jalón, o registra una entrada cada vez que fabriques o compres.' : 'Aún no hay piezas registradas. Cuando el almacén envíe mercancía te aparecerá aquí para recibirla; si ya tienes bases en la tienda, cuéntalas.'}</div><div class="fila w"><button type="button" class="btn btn-p btn-s" data-act="forma" data-tipo="conteo">${ico('conteo')}Contar existencias</button>${S.rol === 'local' ? html`<button type="button" class="btn btn-g btn-s" data-act="forma" data-tipo="entrada">${ico('entrada')}Registrar entrada</button>` : ''}</div></div></div></section>` : ''}
     ${pend.length ? html`<section class="card flat" aria-label="Por atender"><ul class="lista">${pend.map((p) => html`<li class="item">
         <span class="ico-c ${p.c}">${ico(p.ic)}</span>
@@ -2015,6 +2019,7 @@ const A = {
   forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : b.dataset.tipo === 'reporte' ? abrirReporteDia() : b.dataset.tipo === 'gasto' ? formGasto() : abrirForma(b.dataset.tipo)),
   'reporte-dia': () => abrirReporteDia(),
   gastos: () => abrirGastos(),
+  'venta-nueva': () => abrirForma('venta'),
   resumen: () => abrirResumen(),
   'pin-dueno': () => formPinDueno(),
   'gasto-nuevo': () => formGasto(),
