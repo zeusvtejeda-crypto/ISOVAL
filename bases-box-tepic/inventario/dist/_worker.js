@@ -1,4 +1,4 @@
-/* huella:f9177737c134cdcc */
+/* huella:0e28fc8d2235c42f */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -1611,8 +1611,8 @@ var require_core = __commonJS({
   }
 });
 
-// ../../../../../tmp/bb-empaquetar-agKvbp/archivos.js
-var archivos_default = { "/app.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"c9ae6594a950db2de7f1"' }, "texto": `(function () {
+// ../../../../../tmp/bb-empaquetar-glKeQT/archivos.js
+var archivos_default = { "/app.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"e8d419ec0a84a7b28754"' }, "texto": `(function () {
 'use strict';
 const Core = window.BBCore;
 
@@ -2246,7 +2246,7 @@ VISTAS.inventario = {
     const e = S.est, activos = e.productos.filter((p) => p.activo), bajos = bajosDe(S.rol).length;
     const pzL = sumar(activos, (p) => p.stock_local), pzT = sumar(activos, (p) => p.stock_tienda);
     $('#inv-sub').textContent = (S.rol === 'local' ? num(pzL) + ' pzas en almac\xE9n \xB7 ' + num(pzT) + ' en tienda' : num(pzT) + ' pzas en tienda') + (bajos ? ' \xB7 ' + plural(bajos, 'con stock bajo', 'con stock bajo') : ' \xB7 todo en orden');
-    poner($('#inv-acc'), S.rol === 'local' ? html\`<button type="button" class="btn btn-p" data-act="prod-nuevo">\${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">\${ico('capas')}Crear bases</button>\` : '');
+    poner($('#inv-acc'), S.rol === 'local' ? html\`<button type="button" class="btn btn-p" data-act="prod-nuevo">\${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">\${ico('capas')}Crear bases</button><button type="button" class="btn btn-g" data-act="gasto-nuevo">\${ico('salida')}Gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\` : html\`<button type="button" class="btn btn-g" data-act="gasto-nuevo">\${ico('salida')}Registrar gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\`);
     const chips = [['todo', 'Todo'], ['base', 'Bases'], ['material', 'Materiales'], ['accesorio', 'Accesorios']];
     poner($('#inv-chips'), html\`\${chips.map(([k, t]) => html\`<button type="button" class="chip" data-act="filtro-cat" data-cat="\${k}" aria-pressed="\${String(S.filtro.cat === k)}">\${t}</button>\`)}<button type="button" class="chip" data-act="filtro-bajo" aria-pressed="\${String(S.filtro.bajo)}">\${ico('alerta')}Stock bajo\${bajos ? ' (' + bajos + ')' : ''}</button>\${S.rol === 'local' && e.productos.some((p) => !p.activo) ? html\`<button type="button" class="chip" data-act="filtro-arch" aria-pressed="\${String(S.filtro.archivados)}">Archivados</button>\` : ''}\`);
     pintarListaInv();
@@ -3493,11 +3493,13 @@ const A = {
     const d = dialogo({
       titulo: 'Agregar',
       cuerpo: html\`<button type="button" class="agregar-op" id="ag-prod"><span class="ico-c acc">\${ico('plus')}</span><span><b>Producto nuevo</b><span class="s">Una base, material o accesorio con su precio y existencias.</span></span></button>
+        <button type="button" class="agregar-op" id="ag-gasto"><span class="ico-c warn">\${ico('salida')}</span><span><b>Registrar gasto</b><span class="s">Salida de dinero: material, sueldos, renta, gasolina\u2026</span></span></button>
         <button type="button" class="agregar-op" id="ag-bases"><span class="ico-c acc">\${ico('capas')}</span><span><b>Crear bases (medida y tono)</b><span class="s">Genera varias bases de una vez: elige medidas y colores.</span></span></button>\`,
       enfocar: false
     });
     $('#ag-prod', d.el).addEventListener('click', () => { d.cerrar(); formProducto(); });
     $('#ag-bases', d.el).addEventListener('click', () => { d.cerrar(); formVariantes(); });
+    $('#ag-gasto', d.el).addEventListener('click', () => { d.cerrar(); formGasto(); });
   },
   variantes: () => formVariantes(),
   'filtro-cat': (b) => { S.filtro.cat = b.dataset.cat; VISTAS.inventario.actualizar(); },
@@ -3506,6 +3508,7 @@ const A = {
   forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : b.dataset.tipo === 'reporte' ? abrirReporteDia() : b.dataset.tipo === 'gasto' ? formGasto() : abrirForma(b.dataset.tipo)),
   'reporte-dia': () => abrirReporteDia(),
   gastos: () => abrirGastos(),
+  'gasto-nuevo': () => formGasto(),
   'recibir-ya': () => recibirYa(),
   traspaso: (b) => abrirTraspaso(b.dataset.id),
   'pedido-det': (b) => abrirPedido(b.dataset.id),
