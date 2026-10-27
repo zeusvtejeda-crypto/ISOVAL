@@ -252,6 +252,13 @@ button.item:hover{background:var(--surface-2)}
 .st.cero b{color:var(--muted);font-weight:500}
 .btn-vender{flex:none;min-height:40px;padding:0 14px}
 .grupo-t{margin:20px 2px 2px}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px) + 12px);z-index:15;min-height:54px;padding:0 22px;border-radius:99px;font-size:16px;box-shadow:0 6px 20px rgba(0,0,0,.28)}
+@media (min-width:900px){.fab{right:32px;bottom:28px}}
+.con-fab{padding-bottom:90px}
+.agregar-op{display:flex;align-items:center;gap:14px;width:100%;padding:14px;margin-bottom:10px;text-align:left;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radio-lg);min-height:68px}
+.agregar-op:hover{border-color:var(--ink)}
+.agregar-op b{display:block;font-size:17px}
+.agregar-op span.s{display:block;font-size:13px;color:var(--muted);margin-top:2px}
 @media (max-width:380px){.st{min-width:40px}.prod-ico{display:none}.btn-vender{padding:0 10px}}
 .res-n{margin-top:12px;font-size:13px;color:var(--muted)}
 .acciones-fab{display:flex;gap:8px;flex-wrap:wrap}

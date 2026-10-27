@@ -497,6 +497,7 @@ function pintarInicio() {
       <span class="vtas-t"><span class="t-sec">Ventas</span><span class="vtas-ver">Ver reporte ${ico('der')}</span></span>
       <span class="vtas-g">${[['Hoy', r.hoy], ['Semana', r.semana], ['Mes', r.mes]].map(([t, v]) => html`<span class="vtas-c"><small>${t}</small><b class="cifras">${dinero(v.total)}</b><i>${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pza', 'pzas')}</i></span>`)}</span>
     </button>
+    ${S.rol === 'local' ? html`<div class="acciones-fab"><button type="button" class="btn btn-p" data-act="prod-nuevo">${ico('plus')}Agregar producto</button><button type="button" class="btn btn-g" data-act="variantes">${ico('capas')}Agregar bases</button></div>` : ''}
     ${S.rol === 'tienda' ? html`<button type="button" class="btn btn-p btn-b" data-act="reporte-dia" style="min-height:52px">${ico('tabla')}Reporte del día</button>` : ''}
     <section class="grid-kpi" aria-label="Resumen">
       <div class="kpi"><span class="t-sec">Bases en el almacén</span><span class="num-g cifras">${num(bLocal)}</span><small>${plural(bases.filter((p) => p.stock_local > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
@@ -614,7 +615,8 @@ VISTAS.inventario = {
       <div class="buscar">${ico('buscar')}<input class="inp" id="inv-q" type="search" placeholder="Buscar producto, medida o tono" autocomplete="off" aria-label="Buscar producto" value="${S.filtro.q}"></div>
       <div class="chips" id="inv-chips" style="margin-top:10px"></div>
     </div>
-    <div id="inv-lista"></div>
+    <div id="inv-lista" class="${S.rol === 'local' ? 'con-fab' : ''}"></div>
+    ${S.rol === 'local' ? html`<button type="button" class="btn btn-p fab" data-act="agregar" aria-label="Agregar producto o crear bases">${ico('plus')}Agregar</button>` : ''}
   </div>`,
   montar() {
     $('#inv-q').addEventListener('input', (ev) => { S.filtro.q = ev.target.value; pintarListaInv(); });
@@ -1752,6 +1754,16 @@ const A = {
   vender: (b) => { const p = S.idx[b.dataset.id]; if (p) abrirForma('venta', { inicial: [{ id: p.id, cant: 1, precio: p.precio ? String(p.precio) : '' }] }); },
   ventas: () => abrirVentas(),
   'prod-nuevo': () => formProducto(),
+  agregar: () => {
+    const d = dialogo({
+      titulo: 'Agregar',
+      cuerpo: html`<button type="button" class="agregar-op" id="ag-prod"><span class="ico-c acc">${ico('plus')}</span><span><b>Producto nuevo</b><span class="s">Una base, material o accesorio con su precio y existencias.</span></span></button>
+        <button type="button" class="agregar-op" id="ag-bases"><span class="ico-c acc">${ico('capas')}</span><span><b>Crear bases (medida y tono)</b><span class="s">Genera varias bases de una vez: elige medidas y colores.</span></span></button>`,
+      enfocar: false
+    });
+    $('#ag-prod', d.el).addEventListener('click', () => { d.cerrar(); formProducto(); });
+    $('#ag-bases', d.el).addEventListener('click', () => { d.cerrar(); formVariantes(); });
+  },
   variantes: () => formVariantes(),
   'filtro-cat': (b) => { S.filtro.cat = b.dataset.cat; VISTAS.inventario.actualizar(); },
   'filtro-bajo': () => { S.filtro.bajo = !S.filtro.bajo; VISTAS.inventario.actualizar(); },
