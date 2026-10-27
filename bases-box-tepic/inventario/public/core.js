@@ -17,7 +17,7 @@
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
   const MAX_LINEAS = 60;
-  const SESION_DIAS = 30;
+  const SESION_DIAS = 14;
   const TZ_DEFECTO = -420; // Tepic, Nayarit: UTC−7 todo el año
   const NO_ANULABLES = ['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'];
 
@@ -191,9 +191,11 @@
     const salt = aleatorioHex(8);
     return { salt, hash: hashPin(salt, secreto), v: v || 1 };
   }
+  const PINS_COMUNES = ['123456', '654321', '121212', '112233', '123123', '159753', '147258', '102030', '123321', '010203', '696969', '202020', '2580', '12345678', '87654321', '11223344', '12341234', '123654', '1234567'];
   function validarPin(pin) {
-    if (!/^\d{4,8}$/.test(pin)) throw bad('pin_formato', 'El PIN debe tener de 4 a 8 números.');
-    if (/^(\d)\1+$/.test(pin) || '0123456789'.includes(pin) || '9876543210'.includes(pin)) throw bad('pin_debil', 'Ese PIN es muy fácil de adivinar. Elige otro.');
+    if (!/^\d{6,8}$/.test(pin)) throw bad('pin_formato', 'El PIN debe tener de 6 a 8 números.');
+    const debil = /^(\d)\1+$/.test(pin) || /^(\d{1,4})\1+$/.test(pin) || '01234567890123456789'.includes(pin) || '98765432109876543210'.includes(pin) || PINS_COMUNES.includes(pin);
+    if (debil) throw bad('pin_debil', 'Ese PIN es muy fácil de adivinar. Elige otro.');
   }
 
   // ───────── configuración y sesión
@@ -202,7 +204,7 @@
     raw = raw || {};
     return {
       configurado: !!raw.configurado,
-      negocio: Object.assign({ nombre: 'Bases Box Tepic', telLocal: '', telTienda: '' }, raw.negocio),
+      negocio: Object.assign({ nombre: 'Bases Box Tepic', telLocal: '', telTienda: '', envioTepic: 200, envioFuera: 250, descRecoge: 200 }, raw.negocio),
       medidas: Array.isArray(raw.medidas) ? raw.medidas : [],
       tonos: Array.isArray(raw.tonos) ? raw.tonos : [],
       acceso: raw.acceso || {},
@@ -270,7 +272,7 @@
 
   const nuevaTx = () => ({
     config: {}, configInsert: null, guardas: [], productosInsert: [], productosUpdate: [], stock: [], movs: [],
-    movsAnulados: [], traspasos: [], pedidos: [], sinRev: false
+    movsAnulados: [], traspasos: [], pedidos: [], sinRev: false, reiniciar: false
   });
 
   // ───────── rutas públicas: ping, setup, login, recuperar
@@ -385,17 +387,17 @@
       mes: { desde: mesK + '-01', test: (k) => k.slice(0, 7) === mesK }
     };
     const out = {};
-    Object.keys(per).forEach((n) => { out[n] = { desde: per[n].desde, total: 0, pzas: 0, n: 0, g: new Set(), prods: {}, dias: {} }; });
+    Object.keys(per).forEach((n) => { out[n] = { desde: per[n].desde, total: 0, envios: 0, pzas: 0, n: 0, g: new Set(), prods: {}, dias: {} }; });
     filas.forEach((r) => {
-      const pzas = -r.delta, monto = pzas * (r.precio || 0), k = diaKey(r.ts, tz);
+      const pzas = -r.delta, monto = pzas * (r.precio || 0), env = r.envio || 0, k = diaKey(r.ts, tz);
       Object.keys(per).forEach((n) => {
         if (!per[n].test(k)) return;
         const o = out[n];
-        o.total += monto; o.pzas += pzas;
+        o.total += monto + env; o.envios += env; o.pzas += pzas;
         const pr = o.prods[r.prod] || (o.prods[r.prod] = { id: r.prod, pzas: 0, total: 0 });
         pr.pzas += pzas; pr.total += monto;
-        const d = o.dias[k] || (o.dias[k] = { k, pzas: 0, total: 0, g: new Set() });
-        d.pzas += pzas; d.total += monto;
+        const d = o.dias[k] || (o.dias[k] = { k, pzas: 0, total: 0, envios: 0, g: new Set() });
+        d.pzas += pzas; d.total += monto + env; d.envios += env;
         if (r.tipo === 'venta') { o.g.add(r.grupo); d.g.add(r.grupo); }
       });
     });
@@ -405,6 +407,8 @@
       o.productos = Object.values(o.prods).filter((t) => t.pzas !== 0).sort((a, b) => b.total - a.total || b.pzas - a.pzas).map(redondear2);
       o.dias = Object.values(o.dias).sort((a, b) => (a.k < b.k ? 1 : -1)).map((d) => { d.n = d.g.size; delete d.g; return redondear2(d); });
       delete o.prods;
+      o.dias.forEach((d) => { d.envios = Math.round(d.envios * 100) / 100; });
+      o.envios = Math.round(o.envios * 100) / 100;
       redondear2(o);
     });
     return out;
@@ -421,18 +425,52 @@
     const top = {};
     filas.forEach((r) => {
       const pzas = -r.delta, monto = pzas * (r.precio || 0), k = diaKey(r.ts, tz);
-      if (k in idxDia) { dias[idxDia[k]].total += monto; dias[idxDia[k]].pzas += pzas; }
+      if (k in idxDia) { dias[idxDia[k]].total += monto + (r.envio || 0); dias[idxDia[k]].pzas += pzas; }
       if (r.ts >= ahora - 30 * DIA) {
         const t = top[r.prod] || (top[r.prod] = { id: r.prod, pzas: 0, total: 0 });
         t.pzas += pzas;
         t.total += monto;
       }
     });
-    const res = (o) => ({ total: o.total, pzas: o.pzas, n: o.n });
+    const res = (o) => ({ total: o.total, pzas: o.pzas, n: o.n, envios: o.envios });
     return {
       hoy: res(det.hoy), semana: res(det.semana), mes: res(det.mes), dias: dias.map(redondear2),
       top: Object.values(top).filter((t) => t.pzas > 0).sort((a, b) => b.pzas - a.pzas).slice(0, 5).map(redondear2)
     };
+  }
+
+  // reporte del día de la tienda: cada venta con sus piezas, cobro por forma de pago, envíos y devoluciones
+  async function reporteDia(ctx) {
+    const q = ctx.req.query || {};
+    const hoyK = diaKey(ctx.ahora, ctx.tz);
+    let dia = hoyK;
+    if (q.dia !== undefined && q.dia !== '') {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(q.dia)) || String(q.dia) > hoyK || diaKey(ctx.ahora - 34 * DIA, ctx.tz) > String(q.dia)) throw bad('dia_invalido', 'Elige un día de los últimos 30 días.');
+      dia = String(q.dia);
+    }
+    const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
+    const grupos = {}, orden = [];
+    filas.forEach((r) => {
+      const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', pago: r.pago || '', entrega: r.tipo === 'venta' ? r.motivo || '' : '', envio: 0, lineas: [], total: 0 });
+      if (!orden.includes(g)) orden.push(g);
+      const pzas = Math.abs(r.delta);
+      g.lineas.push({ id: r.prod, pzas, precio: r.precio || 0 });
+      g.envio += r.envio || 0;
+      g.total += pzas * (r.precio || 0) + (r.envio || 0);
+    });
+    const redo = (n) => Math.round(n * 100) / 100;
+    const ventas = orden.filter((g) => g.tipo === 'venta').map((g) => Object.assign(g, { total: redo(g.total), envio: redo(g.envio) }));
+    const devs = orden.filter((g) => g.tipo === 'devolucion').map((g) => ({ grupo: g.grupo, ts: g.ts, lineas: g.lineas, total: redo(g.total) }));
+    const t = { ventas: ventas.length, pzas: 0, envios: 0, vendido: 0, devuelto: 0, neto: 0, porPago: {} };
+    ventas.forEach((g) => {
+      t.vendido += g.total; t.envios += g.envio;
+      g.lineas.forEach((l) => { t.pzas += l.pzas; });
+      t.porPago[g.pago || 'efectivo'] = redo((t.porPago[g.pago || 'efectivo'] || 0) + g.total);
+    });
+    devs.forEach((g) => { t.devuelto += g.total; g.lineas.forEach((l) => { t.pzas -= l.pzas; }); });
+    t.vendido = redo(t.vendido); t.envios = redo(t.envios); t.devuelto = redo(t.devuelto); t.neto = redo(t.vendido - t.devuelto);
+    const prods = await ctx.repo.productos();
+    return { dia, hoy: dia === hoyK, ventas, devoluciones: devs, totales: t, tienda: { pzas: prods.filter((p) => p.activo).reduce((a, p) => a + p.stock_tienda, 0) } };
   }
 
   async function armarEstado(ctx) {
@@ -471,7 +509,9 @@
 
   // ───────── operaciones
 
-  const indexar = (arr) => arr.reduce((o, x) => { o[x.id] = x; return o; }, {});
+  // sin prototipo: un id como "__proto__" o "constructor" mandado por un cliente no encuentra nada
+  const own = (o, k) => (typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined);
+  const indexar = (arr) => arr.reduce((o, x) => { o[x.id] = x; return o; }, Object.create(null));
   const stockDe = (p, loc) => (loc === 'local' ? p.stock_local : p.stock_tienda);
   const nombreLoc = (loc) => (loc === 'local' ? 'el almacén' : 'la tienda');
   const deltaStock = (id, loc, delta) => ({ id, dl: loc === 'local' ? delta : 0, dt: loc === 'tienda' ? delta : 0 });
@@ -501,7 +541,7 @@
   function nuevoMov(ctx, grupo, i, p, loc, delta, tipo, extra) {
     return Object.assign({
       id: grupo + '-' + i, ts: ctx.ahora, prod: p.id, loc, delta, tipo, motivo: '', nota: '', rol: ctx.rol, precio: null,
-      cliente: '', pago: '', grupo, ref: '', anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
+      cliente: '', pago: '', envio: 0, grupo, ref: '', anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
     }, extra);
   }
   async function productoPorId(ctx, id) {
@@ -514,6 +554,9 @@
     if (!p.activo) throw new ApiError(409, 'producto_archivado', p.nombre + ' está archivado.');
     return p;
   }
+
+  // entrega de una venta → tarifa de envío en la configuración del negocio (null = sin cargo)
+  const ENTREGAS = { recoge: null, tepic: 'envioTepic', xalisco: 'envioFuera', cantera: 'envioFuera' };
 
   const MOV_DEF = {
     entrada: { loc: 'local', signo: 1, motivos: ['produccion', 'compra', 'otro'] },
@@ -534,6 +577,13 @@
       cliente: tipo === 'venta' ? clean(b.cliente, 60) : '',
       pago: tipo === 'venta' ? (PAGOS.includes(b.pago) ? b.pago : 'efectivo') : ''
     };
+    // entrega de una venta: recoge en tienda, o envío con tarifa por zona (el vendedor puede ajustar el monto)
+    let envio = 0;
+    if (tipo === 'venta' && Object.prototype.hasOwnProperty.call(ENTREGAS, b.entrega)) {
+      extra.motivo = b.entrega;
+      const neg = (await cargarCfg(ctx)).negocio;
+      if (ENTREGAS[b.entrega]) envio = numero(b.envio == null || b.envio === '' ? neg[ENTREGAS[b.entrega]] : b.envio, 0, 100000, neg[ENTREGAS[b.entrega]]);
+    }
     let total = 0, piezas = 0;
     ls.forEach((l, i) => {
       const p = activoOError(prods[l.id]);
@@ -543,9 +593,9 @@
       total += (precio || 0) * l.cant;
       piezas += l.cant;
       tx.stock.push(deltaStock(p.id, def.loc, delta));
-      tx.movs.push(nuevoMov(ctx, grupo, i, p, def.loc, delta, tipo, Object.assign({ precio }, extra)));
+      tx.movs.push(nuevoMov(ctx, grupo, i, p, def.loc, delta, tipo, Object.assign({ precio, envio: i === 0 ? envio : 0 }, extra)));
     });
-    return { grupo, total: Math.round(total * 100) / 100, piezas };
+    return { grupo, total: Math.round((total + envio) * 100) / 100, piezas, envio };
   }
 
   async function opConteo(ctx, b, tx) {
@@ -589,7 +639,7 @@
       tx.stock.push(deltaStock(m.prod, m.loc, -m.delta));
       tx.movs.push({
         id: nuevo + '-' + i, ts: ctx.ahora, prod: m.prod, loc: m.loc, delta: -m.delta, tipo: 'anulacion', motivo: '', nota: motivo,
-        rol: ctx.rol, precio: m.precio, cliente: '', pago: '', grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
+        rol: ctx.rol, precio: m.precio, cliente: '', pago: '', envio: 0, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
       });
       tx.movsAnulados.push({ id: m.id, ts: ctx.ahora, por: ctx.rol, nota: motivo });
     });
@@ -813,6 +863,8 @@
     });
   }
 
+  const tarifa = (v, actual) => (v === undefined || v === null || v === '' ? actual : numero(v, 0, 100000, actual));
+
   async function opConfigGuardar(ctx, b, tx) {
     const cfg = ctx.cfg, patch = {};
     const prods = await ctx.repo.productos();
@@ -820,7 +872,10 @@
       patch.negocio = {
         nombre: clean(b.negocio.nombre, 60) || cfg.negocio.nombre,
         telLocal: String(b.negocio.telLocal || '').replace(/\D/g, '').slice(0, 15),
-        telTienda: String(b.negocio.telTienda || '').replace(/\D/g, '').slice(0, 15)
+        telTienda: String(b.negocio.telTienda || '').replace(/\D/g, '').slice(0, 15),
+        envioTepic: tarifa(b.negocio.envioTepic, cfg.negocio.envioTepic),
+        envioFuera: tarifa(b.negocio.envioFuera, cfg.negocio.envioFuera),
+        descRecoge: tarifa(b.negocio.descRecoge, cfg.negocio.descRecoge)
       };
     }
     if (b.medidas) {
@@ -886,6 +941,18 @@
     return { codigo };
   }
 
+  // Deja el inventario en cero (borra movimientos, envíos y pedidos; conserva productos, precios, PIN y ajustes).
+  async function opReiniciar(ctx, b, tx) {
+    const cfg = ctx.cfg;
+    chequearBloqueo(cfg, 'local', ctx.ahora);
+    const acc = cfg.acceso.local;
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) await fallar(ctx, cfg, 'local', 'pin_incorrecto', 'Tu PIN no coincide.');
+    if (String(b.confirmacion || '').trim().toUpperCase() !== 'BORRAR TODO') throw bad('falta_confirmacion', 'Escribe BORRAR TODO para confirmar.');
+    tx.reiniciar = true;
+    tx.config = { intentos: sinIntentos(cfg, 'local'), reinicio: { ts: ctx.ahora, rol: ctx.rol } };
+    return {};
+  }
+
   const OPS = {
     'producto.crear': [['local'], opProductoCrear],
     'producto.variantes': [['local'], opVariantes],
@@ -906,12 +973,13 @@
     'config.guardar': [['local'], opConfigGuardar],
     'pin.cambiar': [['local', 'tienda'], opPinCambiar],
     'pin.reiniciar': [['local'], opPinReiniciar],
-    'recup.nueva': [['local'], opRecupNueva]
+    'recup.nueva': [['local'], opRecupNueva],
+    'sistema.reiniciar': [['local'], opReiniciar]
   };
 
   // Ejecuta una operación ya autenticada y la guarda de forma atómica.
   async function correrOp(ctx, body) {
-    const def = OPS[body && body.op];
+    const def = body && typeof body.op === 'string' && Object.prototype.hasOwnProperty.call(OPS, body.op) ? OPS[body.op] : null;
     if (!def) throw bad('op_invalida', 'Operación desconocida.');
     if (!def[0].includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', def[0][0] === 'local' ? 'Esta acción es del almacén.' : 'Esta acción es del vendedor de la tienda.');
     const tx = nuevaTx();
@@ -941,6 +1009,7 @@
       if (path === '/rev' && m === 'GET') return ok({ rev: cfg.rev });
       if (path === '/estado' && m === 'GET') return ok(await armarEstado(ctx));
       if (path === '/movs' && m === 'GET') return ok(await listarMovs(ctx));
+      if (path === '/reporte-dia' && m === 'GET') return ok(await reporteDia(ctx));
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
       if (path === '/op' && m === 'POST') {
         const resultado = await correrOp(ctx, ctx.req.body);
@@ -997,14 +1066,14 @@
           .filter((t) => (f.abiertos ? t.estado === 'en_transito' : t.estado === 'en_transito' || t.ts >= (f.desde || 0)))
           .sort(porFecha).slice(0, 80).map(conLineas);
       },
-      async traspaso(id) { return conLineas(S.traspasos[id]); },
+      async traspaso(id) { return conLineas(own(S.traspasos, id)); },
       async pedidos(f) {
         f = f || {};
         return Object.values(S.pedidos)
           .filter((t) => (f.abiertos ? t.estado === 'pendiente' : t.estado === 'pendiente' || t.ts >= (f.desde || 0)))
           .sort(porFecha).slice(0, 80).map(conLineas);
       },
-      async pedido(id) { return conLineas(S.pedidos[id]); },
+      async pedido(id) { return conLineas(own(S.pedidos, id)); },
       async movsGrupo(grupo) { return S.movs.filter((m) => m.grupo === grupo).map((m) => Object.assign({}, m)); },
       async movs(f) {
         let arr = S.movs.filter((m) => {
@@ -1026,13 +1095,13 @@
       },
       async ventas(desde) {
         return S.movs.filter((m) => (m.tipo === 'venta' || m.tipo === 'devolucion') && !m.anulado && m.ts >= desde)
-          .map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, precio: m.precio, grupo: m.grupo, tipo: m.tipo }));
+          .map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, precio: m.precio, grupo: m.grupo, tipo: m.tipo, cliente: m.cliente, pago: m.pago, motivo: m.motivo, envio: m.envio || 0, rol: m.rol }));
       },
       async commit(tx) {
         // 1) verificar todo antes de tocar nada
         (tx.guardas || []).forEach((g) => {
-          if (g.tipo === 'traspaso_estado' && (!S.traspasos[g.id] || S.traspasos[g.id].estado !== g.estado)) throw conflicto();
-          if (g.tipo === 'pedido_estado' && (!S.pedidos[g.id] || S.pedidos[g.id].estado !== g.estado)) throw conflicto();
+          if (g.tipo === 'traspaso_estado' && (!own(S.traspasos, g.id) || S.traspasos[g.id].estado !== g.estado)) throw conflicto();
+          if (g.tipo === 'pedido_estado' && (!own(S.pedidos, g.id) || S.pedidos[g.id].estado !== g.estado)) throw conflicto();
           if (g.tipo === 'grupo_sin_anular' && S.movs.some((m) => m.grupo === g.grupo && m.anulado)) throw conflicto();
         });
         if (tx.configInsert) Object.keys(tx.configInsert).forEach((k) => { if (k in S.config) throw new ApiError(409, 'ya_configurado', 'Este inventario ya está configurado.'); });
@@ -1040,12 +1109,16 @@
         const acum = {};
         tx.stock.forEach((s) => { const a = acum[s.id] || (acum[s.id] = [0, 0]); a[0] += s.dl; a[1] += s.dt; });
         Object.keys(acum).forEach((id) => {
-          const p = S.productos[id];
+          const p = own(S.productos, id);
           if (!p || p.stock_local + acum[id][0] < 0 || p.stock_tienda + acum[id][1] < 0) throw conflicto();
         });
         // 2) aplicar
         const antes = diferido ? null : JSON.stringify(S);
         try {
+          if (tx.reiniciar) {
+            S.movs = []; ids = new Set(); S.traspasos = {}; S.pedidos = {};
+            Object.keys(S.productos).forEach((k) => Object.assign(S.productos[k], { stock_local: 0, stock_tienda: 0, hubo_local: 0, hubo_tienda: 0 }));
+          }
           if (tx.configInsert) Object.assign(S.config, tx.configInsert);
           Object.assign(S.config, tx.config);
           tx.productosInsert.forEach((p) => { S.productos[p.id] = Object.assign({}, p); });

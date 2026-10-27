@@ -1,7 +1,9 @@
 // Service worker: guarda la app para abrirla aunque no haya internet.
 // Los datos (/api) nunca se guardan aquí: siempre van a la red.
-const VERSION = 'bb-inv-v2';
-const BASE = ['./', 'index.html', 'core.js', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const VERSION = 'bb-inv-v4';
+const BASE = ['./', 'index.html', 'core.js', 'app.js', 'fonts.css', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
+  'fonts/anton-400.woff2', 'fonts/barlow-400.woff2', 'fonts/barlow-500.woff2', 'fonts/barlow-600.woff2', 'fonts/barlow-700.woff2',
+  'fonts/barlow-condensed-500.woff2', 'fonts/barlow-condensed-600.woff2', 'fonts/barlow-condensed-700.woff2'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));
@@ -25,6 +27,6 @@ self.addEventListener('fetch', (e) => {
         if (res.ok) { const copia = res.clone(); caches.open(VERSION).then((c) => c.put(r, copia)); }
         return res;
       })
-      .catch(() => caches.match(r).then((m) => m || caches.match('index.html')))
+      .catch(() => caches.match(r).then((m) => m || (r.mode === 'navigate' ? caches.match('index.html') : Response.error())))
   );
 });

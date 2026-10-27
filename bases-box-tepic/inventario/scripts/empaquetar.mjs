@@ -14,7 +14,7 @@ const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const ESBUILD = process.env.ESBUILD_BIN ? [process.env.ESBUILD_BIN] : ['npx', '--yes', 'esbuild@0.25.0']; // ESBUILD_BIN: solo para pruebas
 const TIPOS = {
   html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', json: 'application/json; charset=utf-8',
-  webmanifest: 'application/manifest+json', svg: 'image/svg+xml', png: 'image/png', ico: 'image/x-icon', txt: 'text/plain; charset=utf-8'
+  webmanifest: 'application/manifest+json', svg: 'image/svg+xml', png: 'image/png', ico: 'image/x-icon', txt: 'text/plain; charset=utf-8', woff2: 'font/woff2'
 };
 const TEXTO = new Set(['html', 'js', 'css', 'json', 'webmanifest', 'svg', 'txt']);
 const ESPECIALES = new Set(['_headers', '_redirects', '_worker.js', '_routes.json']);
@@ -37,16 +37,21 @@ function leerReglas(texto) {
 
 const reglas = leerReglas(readFileSync(join(RAIZ, 'public/_headers'), 'utf8'));
 const archivos = {};
-for (const nombre of readdirSync(join(RAIZ, 'public')).sort()) {
-  const ruta = join(RAIZ, 'public', nombre);
-  if (ESPECIALES.has(nombre) || !statSync(ruta).isFile()) continue;
-  const ext = extname(nombre).slice(1).toLowerCase();
-  const datos = readFileSync(ruta);
-  const cabeceras = { 'content-type': TIPOS[ext] || 'application/octet-stream' };
-  for (const r of reglas) if (r.re.test('/' + nombre)) for (const [k, v] of r.cabeceras) cabeceras[k] = v;
-  cabeceras.etag = '"' + createHash('sha256').update(datos).digest('hex').slice(0, 20) + '"';
-  archivos['/' + nombre] = TEXTO.has(ext) ? { cabeceras, texto: datos.toString('utf8') } : { cabeceras, b64: datos.toString('base64') };
-}
+const recorrer = (dir) => {
+  for (const nombre of readdirSync(join(RAIZ, 'public', dir)).sort()) {
+    const rel = dir ? dir + '/' + nombre : nombre;
+    const ruta = join(RAIZ, 'public', rel);
+    if (statSync(ruta).isDirectory()) { recorrer(rel); continue; }
+    if (!dir && ESPECIALES.has(nombre)) continue;
+    const ext = extname(nombre).slice(1).toLowerCase();
+    const datos = readFileSync(ruta);
+    const cabeceras = { 'content-type': TIPOS[ext] || 'application/octet-stream' };
+    for (const r of reglas) if (r.re.test('/' + rel)) for (const [k, v] of r.cabeceras) cabeceras[k] = v;
+    cabeceras.etag = '"' + createHash('sha256').update(datos).digest('hex').slice(0, 20) + '"';
+    archivos['/' + rel] = TEXTO.has(ext) ? { cabeceras, texto: datos.toString('utf8') } : { cabeceras, b64: datos.toString('base64') };
+  }
+};
+recorrer('');
 
 const tmp = mkdtempSync(join(tmpdir(), 'bb-empaquetar-'));
 try {

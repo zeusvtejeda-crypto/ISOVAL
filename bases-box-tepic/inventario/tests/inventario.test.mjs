@@ -48,14 +48,14 @@ async function iniciar(fabrica, opciones) {
   const api = cliente(repo, reloj);
   api.avanzar = (ms) => { offset += ms; };
   const r = await api.call('POST', '/setup', {
-    nombre: 'Bases Box Tepic', pinLocal: '4821', pinTienda: '7305',
+    nombre: 'Bases Box Tepic', pinLocal: '482159', pinTienda: '730518',
     catalogo: Object.assign({ bases: true, extras: true }, opciones)
   });
   assert.equal(r.status, 200, JSON.stringify(r.json));
   api.token = r.json.token;
   api.codigo = r.json.codigo;
   const tienda = cliente(repo, reloj);
-  await tienda.login('tienda', '7305');
+  await tienda.login('tienda', '730518');
   return { repo, local: api, tienda };
 }
 
@@ -64,7 +64,7 @@ const prod = (est, nombre) => est.productos.find((p) => p.nombre === nombre);
 for (const [nombre, fabrica] of Object.entries(fabricas)) {
   describe('inventario · repo ' + nombre, () => {
     test('hash y firma coinciden con node:crypto', () => {
-      for (const s of ['', 'abc', '4821', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'ñandú ' + 'x'.repeat(200)]) {
+      for (const s of ['', 'abc', '482159', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'ñandú ' + 'x'.repeat(200)]) {
         assert.equal(Core.sha256hex(s), createHash('sha256').update(s).digest('hex'));
         assert.equal(Core.hmacHex('clave', s), createHmac('sha256', 'clave').update(s).digest('hex'));
       }
@@ -80,7 +80,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(est.medidas.length, 4);
       assert.equal(est.tonos.length, 8);
       assert.match(local.codigo, /^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
-      const otra = await Core.handle(repo, { method: 'POST', path: '/setup', body: { pinLocal: '5937', pinTienda: '6482' } });
+      const otra = await Core.handle(repo, { method: 'POST', path: '/setup', body: { pinLocal: '593764', pinTienda: '648251' } });
       assert.equal(otra.status, 409);
       assert.equal(otra.json.error.code, 'ya_configurado');
     });
@@ -88,17 +88,17 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
     test('PIN: formato, débiles y distintos', async () => {
       const repo = await fabrica();
       const set = (b) => Core.handle(repo, { method: 'POST', path: '/setup', body: b });
-      assert.equal((await set({ pinLocal: '12', pinTienda: '7305' })).json.error.code, 'pin_formato');
-      assert.equal((await set({ pinLocal: '1234', pinTienda: '7305' })).json.error.code, 'pin_debil');
-      assert.equal((await set({ pinLocal: '0000', pinTienda: '7305' })).json.error.code, 'pin_debil');
-      assert.equal((await set({ pinLocal: '4821', pinTienda: '4821' })).json.error.code, 'pin_igual');
-      assert.equal((await set({ pinLocal: '4821', pinTienda: '7305' })).status, 200);
+      assert.equal((await set({ pinLocal: '12', pinTienda: '730518' })).json.error.code, 'pin_formato');
+      assert.equal((await set({ pinLocal: '4821', pinTienda: '730518' })).json.error.code, 'pin_formato', 'menos de 6 números');
+      for (const debil of ['123456', '000000', '111111', '654321', '121212', '123123', '112233', '987654', '45674567']) assert.equal((await set({ pinLocal: debil, pinTienda: '730518' })).json.error.code, 'pin_debil', debil);
+      assert.equal((await set({ pinLocal: '482159', pinTienda: '482159' })).json.error.code, 'pin_igual');
+      assert.equal((await set({ pinLocal: '482159', pinTienda: '730518' })).status, 200);
     });
 
     test('clave de instalación: sin ella nadie puede adueñarse del inventario', async () => {
       const repo = await fabrica();
       const opts = { claveInstalacion: 'ABCD-EFGH-JKLM' };
-      const set = (extra) => Core.handle(repo, { method: 'POST', path: '/setup', body: Object.assign({ pinLocal: '4821', pinTienda: '7305' }, extra) }, opts);
+      const set = (extra) => Core.handle(repo, { method: 'POST', path: '/setup', body: Object.assign({ pinLocal: '482159', pinTienda: '730518' }, extra) }, opts);
       let r = await Core.handle(repo, { method: 'GET', path: '/ping' }, opts);
       assert.equal(r.json.requiereClave, true);
       assert.equal((await set({})).json.error.code, 'clave_instalacion');
@@ -115,9 +115,9 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const repo = await fabrica();
       const opts = { claveInstalacion: 'ABCD-EFGH-JKLM' };
       let r;
-      for (let i = 0; i < 5; i++) r = await Core.handle(repo, { method: 'POST', path: '/setup', body: { clave: 'x' + i, pinLocal: '4821', pinTienda: '7305' } }, opts);
+      for (let i = 0; i < 5; i++) r = await Core.handle(repo, { method: 'POST', path: '/setup', body: { clave: 'x' + i, pinLocal: '482159', pinTienda: '730518' } }, opts);
       assert.equal(r.status, 423);
-      r = await Core.handle(repo, { method: 'POST', path: '/setup', body: { clave: 'ABCD-EFGH-JKLM', pinLocal: '4821', pinTienda: '7305' } }, opts);
+      r = await Core.handle(repo, { method: 'POST', path: '/setup', body: { clave: 'ABCD-EFGH-JKLM', pinLocal: '482159', pinTienda: '730518' } }, opts);
       assert.equal(r.status, 423);
     });
 
@@ -144,13 +144,13 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.match(r.json.error.mensaje, /1 intento/);
       r = await c.login('local', '0001');
       assert.equal(r.status, 423);
-      r = await c.login('local', '4821'); // aun con el PIN bueno, bloqueado
+      r = await c.login('local', '482159'); // aun con el PIN bueno, bloqueado
       assert.equal(r.status, 423);
       local.avanzar(5 * 60000 + 1000);
-      r = await c.login('local', '4821');
+      r = await c.login('local', '482159');
       assert.equal(r.status, 200);
       // el otro rol nunca se bloqueó
-      assert.equal((await c.login('tienda', '7305')).status, 200);
+      assert.equal((await c.login('tienda', '730518')).status, 200);
     });
 
     test('permisos por rol', async () => {
@@ -364,7 +364,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id, cant: 1 }] });
       await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
       const otra = cliente(repo, tienda.now);
-      await otra.login('tienda', '7305');
+      await otra.login('tienda', '730518');
       const [r1, r2] = await Promise.all([
         tienda.op({ op: 'mov.venta', lineas: [{ id, cant: 1, precio: 100 }] }),
         otra.op({ op: 'mov.venta', lineas: [{ id, cant: 1, precio: 100 }] })
@@ -434,49 +434,49 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
     test('cambiar PIN cierra las demás sesiones; la tienda no cambia el del local', async () => {
       const { local, tienda, repo } = await iniciar(fabrica);
       const vieja = tienda.token;
-      assert.equal((await tienda.op({ op: 'pin.cambiar', pinActual: '0000', pinNuevo: '8264' })).json.error.code, 'pin_incorrecto');
-      assert.equal((await tienda.op({ op: 'pin.cambiar', pinActual: '7305', pinNuevo: '4821' })).json.error.code, 'pin_igual');
-      assert.equal((await tienda.op({ op: 'pin.cambiar', pinActual: '7305', pinNuevo: '1111' })).json.error.code, 'pin_debil');
-      const r = await tienda.op({ op: 'pin.cambiar', pinActual: '7305', pinNuevo: '8264' });
+      assert.equal((await tienda.op({ op: 'pin.cambiar', pinActual: '0000', pinNuevo: '826437' })).json.error.code, 'pin_incorrecto');
+      assert.equal((await tienda.op({ op: 'pin.cambiar', pinActual: '730518', pinNuevo: '482159' })).json.error.code, 'pin_igual');
+      assert.equal((await tienda.op({ op: 'pin.cambiar', pinActual: '730518', pinNuevo: '111111' })).json.error.code, 'pin_debil');
+      const r = await tienda.op({ op: 'pin.cambiar', pinActual: '730518', pinNuevo: '826437' });
       assert.equal(r.status, 200);
       assert.notEqual(tienda.token, vieja);
       assert.equal((await tienda.estado()).rol, 'tienda');
       assert.equal((await Core.handle(repo, { method: 'GET', path: '/estado', token: vieja })).status, 401);
-      assert.equal((await cliente(repo, local.now).login('tienda', '7305')).status, 401);
-      assert.equal((await cliente(repo, local.now).login('tienda', '8264')).status, 200);
+      assert.equal((await cliente(repo, local.now).login('tienda', '730518')).status, 401);
+      assert.equal((await cliente(repo, local.now).login('tienda', '826437')).status, 200);
       // el local reinicia el PIN de la tienda con su propio PIN
-      assert.equal((await local.op({ op: 'pin.reiniciar', pinActual: '9999', pinNuevo: '3917' })).json.error.code, 'pin_incorrecto');
-      assert.equal((await local.op({ op: 'pin.reiniciar', pinActual: '4821', pinNuevo: '3917' })).status, 200);
-      assert.equal((await cliente(repo, local.now).login('tienda', '3917')).status, 200);
+      assert.equal((await local.op({ op: 'pin.reiniciar', pinActual: '9999', pinNuevo: '391752' })).json.error.code, 'pin_incorrecto');
+      assert.equal((await local.op({ op: 'pin.reiniciar', pinActual: '482159', pinNuevo: '391752' })).status, 200);
+      assert.equal((await cliente(repo, local.now).login('tienda', '391752')).status, 200);
       const t2 = cliente(repo, local.now);
-      await t2.login('tienda', '3917');
-      assert.equal((await t2.op({ op: 'pin.reiniciar', pinActual: '3917', pinNuevo: '2846' })).status, 403);
+      await t2.login('tienda', '391752');
+      assert.equal((await t2.op({ op: 'pin.reiniciar', pinActual: '391752', pinNuevo: '284613' })).status, 403);
     });
 
     test('recuperar PIN con el código y rotarlo', async () => {
       const { local, repo } = await iniciar(fabrica);
       const c = cliente(repo, local.now);
-      assert.equal((await c.call('POST', '/recuperar', { codigo: 'AAAA-BBBB', rol: 'local', pin: '5927' })).status, 401);
-      const r = await c.call('POST', '/recuperar', { codigo: local.codigo.toLowerCase().replace('-', ' '), rol: 'local', pin: '5927' });
+      assert.equal((await c.call('POST', '/recuperar', { codigo: 'AAAA-BBBB', rol: 'local', pin: '592741' })).status, 401);
+      const r = await c.call('POST', '/recuperar', { codigo: local.codigo.toLowerCase().replace('-', ' '), rol: 'local', pin: '592741' });
       assert.equal(r.status, 200, JSON.stringify(r.json));
       assert.notEqual(r.json.codigo, local.codigo);
-      assert.equal((await cliente(repo, local.now).login('local', '4821')).status, 401);
-      assert.equal((await cliente(repo, local.now).login('local', '5927')).status, 200);
+      assert.equal((await cliente(repo, local.now).login('local', '482159')).status, 401);
+      assert.equal((await cliente(repo, local.now).login('local', '592741')).status, 200);
       // el código anterior ya no sirve
-      assert.equal((await c.call('POST', '/recuperar', { codigo: local.codigo, rol: 'local', pin: '6039' })).status, 401);
-      assert.equal((await c.call('POST', '/recuperar', { codigo: r.json.codigo, rol: 'tienda', pin: '5927' })).json.error.code, 'pin_igual');
+      assert.equal((await c.call('POST', '/recuperar', { codigo: local.codigo, rol: 'local', pin: '603958' })).status, 401);
+      assert.equal((await c.call('POST', '/recuperar', { codigo: r.json.codigo, rol: 'tienda', pin: '592741' })).json.error.code, 'pin_igual');
     });
 
     test('código de recuperación nuevo: pide PIN y el anterior deja de servir', async () => {
       const { local, tienda, repo } = await iniciar(fabrica);
-      assert.equal((await tienda.op({ op: 'recup.nueva', pinActual: '7305' })).status, 403);
+      assert.equal((await tienda.op({ op: 'recup.nueva', pinActual: '730518' })).status, 403);
       assert.equal((await local.op({ op: 'recup.nueva', pinActual: '0000' })).json.error.code, 'pin_incorrecto');
-      const r = await local.op({ op: 'recup.nueva', pinActual: '4821' });
+      const r = await local.op({ op: 'recup.nueva', pinActual: '482159' });
       assert.equal(r.status, 200);
       assert.match(r.json.resultado.codigo, /^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
       const c = cliente(repo, local.now);
-      assert.equal((await c.call('POST', '/recuperar', { codigo: local.codigo, rol: 'local', pin: '5927' })).status, 401);
-      assert.equal((await c.call('POST', '/recuperar', { codigo: r.json.resultado.codigo, rol: 'local', pin: '5927' })).status, 200);
+      assert.equal((await c.call('POST', '/recuperar', { codigo: local.codigo, rol: 'local', pin: '592741' })).status, 401);
+      assert.equal((await c.call('POST', '/recuperar', { codigo: r.json.resultado.codigo, rol: 'local', pin: '592741' })).status, 200);
     });
 
     test('historial: filtros, paginación y orden', async () => {
@@ -543,6 +543,159 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.deepEqual({ t: est.resumen.semana.total, p: est.resumen.semana.pzas }, { t: r.semana.total, p: r.semana.pzas });
       assert.equal(est.resumen.mes.total, r.mes.total);
       assert.ok(r.mes.dias.every((d, i, l) => !i || l[i - 1].k > d.k), 'días del más reciente al más antiguo');
+    });
+
+    test('entrega y envío en ventas; reporte del día por forma de pago', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      const est0 = await local.estado();
+      assert.deepEqual([est0.negocio.envioTepic, est0.negocio.envioFuera, est0.negocio.descRecoge], [200, 250, 200]);
+      const a = prod(est0, 'Base Queen · Gris'), b = prod(est0, 'Base Individual · Rosa');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 20 }, { id: b.id, cant: 20 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 20 }, { id: b.id, cant: 20 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+
+      // recoge en tienda: sin cargo; el precio por base lo pone el vendedor
+      const v1 = await tienda.op({ op: 'mov.venta', pago: 'efectivo', entrega: 'recoge', cliente: 'Ana', lineas: [{ id: a.id, cant: 2, precio: 1800 }] });
+      assert.equal(v1.json.resultado.total, 3600);
+      // envío a Tepic con la tarifa de la configuración (200) y a Xalisco con monto ajustado
+      const v2 = await tienda.op({ op: 'mov.venta', pago: 'transferencia', entrega: 'tepic', lineas: [{ id: b.id, cant: 1, precio: 1600 }, { id: a.id, cant: 1, precio: 2000 }] });
+      assert.equal(v2.json.resultado.total, 3800);
+      assert.equal(v2.json.resultado.envio, 200);
+      const v3 = await tienda.op({ op: 'mov.venta', pago: 'tarjeta', entrega: 'xalisco', envio: 300, lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      assert.equal(v3.json.resultado.total, 1900);
+      // una entrega inventada se ignora; un monto de envío inválido se rechaza
+      const v4 = await tienda.op({ op: 'mov.venta', entrega: 'luna', envio: 999, lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      assert.equal(v4.json.resultado.total, 1600);
+      assert.equal((await tienda.op({ op: 'mov.venta', entrega: 'cantera', envio: -50, lineas: [{ id: b.id, cant: 1, precio: 1600 }] })).json.error.code, 'numero_invalido');
+      const v5 = await tienda.op({ op: 'mov.venta', entrega: 'cantera', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      assert.equal(v5.json.resultado.envio, 250, 'La Cantera usa la tarifa de fuera de Tepic');
+      await tienda.op({ op: 'mov.anular', grupo: v5.json.resultado.grupo, motivo: 'Cliente canceló' });
+
+      const rep = (await tienda.call('GET', '/reporte-dia')).json;
+      assert.equal(rep.ok, true, JSON.stringify(rep));
+      assert.equal(rep.hoy, true);
+      assert.equal(rep.totales.ventas, 4);
+      assert.equal(rep.totales.envios, 500);
+      assert.equal(rep.totales.vendido, 3600 + 3800 + 1900 + 1600);
+      assert.equal(rep.totales.porPago.efectivo, 3600 + 1600);
+      assert.equal(rep.totales.porPago.transferencia, 3800);
+      assert.equal(rep.totales.porPago.tarjeta, 1900);
+      assert.equal(rep.ventas[0].cliente, 'Ana');
+      assert.equal(rep.ventas[0].entrega, 'recoge');
+      assert.equal(rep.ventas[1].lineas.length, 2);
+      assert.equal(rep.totales.pzas, 2 + 2 + 1 + 1);
+      // la devolución resta del neto
+      await tienda.op({ op: 'mov.devolucion', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      const rep2 = (await tienda.call('GET', '/reporte-dia')).json;
+      assert.equal(rep2.totales.devuelto, 1600);
+      assert.equal(rep2.totales.neto, rep.totales.vendido - 1600);
+      assert.equal(rep2.devoluciones.length, 1);
+      // el reporte semanal/mensual incluye los envíos
+      const rv = (await tienda.call('GET', '/ventas')).json.ventas;
+      assert.equal(rv.hoy.envios, 500);
+      assert.equal(rv.hoy.total, rep.totales.vendido - 1600);
+      // sin sesión no hay reporte; fechas absurdas se rechazan
+      assert.equal((await Core.handle(await fabrica(), { method: 'GET', path: '/reporte-dia' }, { now: Date.now() })).status, 409);
+      assert.equal((await tienda.call('GET', '/reporte-dia', null, { dia: '2020-01-01' })).status, 400);
+      assert.equal((await tienda.call('GET', '/reporte-dia', null, { dia: 'ayer' })).status, 400);
+      assert.equal((await tienda.call('GET', '/reporte-dia', null, { dia: '2999-01-01' })).status, 400);
+      // un día de otra fecha queda vacío
+      local.avanzar(2 * DIA);
+      const rep3 = (await tienda.call('GET', '/reporte-dia')).json;
+      assert.equal(rep3.totales.ventas, 0);
+      const ayer = rep.dia;
+      assert.equal((await tienda.call('GET', '/reporte-dia', null, { dia: ayer })).json.totales.ventas, 4);
+      // las tarifas se pueden cambiar desde Almacén y no se pierden al guardar el negocio sin ellas
+      await local.op({ op: 'config.guardar', negocio: { nombre: 'Bases Box Tepic', envioTepic: 220 } });
+      let e2 = await local.estado();
+      assert.deepEqual([e2.negocio.envioTepic, e2.negocio.envioFuera], [220, 250]);
+      await local.op({ op: 'config.guardar', negocio: { nombre: 'Bases Box Tepic' } });
+      e2 = await local.estado();
+      assert.equal(e2.negocio.envioTepic, 220);
+    });
+
+    test('reiniciar a cero: pide PIN y frase, borra movimientos y stock, conserva catálogo, precios y PIN', async () => {
+      const { repo, local, tienda } = await iniciar(fabrica);
+      const est0 = await local.estado();
+      const a = prod(est0, 'Base Queen · Gris');
+      await local.op({ op: 'config.guardar', medidas: est0.medidas.map((m) => (m.id === 'qn' ? { ...m, precio: 2000 } : m)), aplicarPrecios: ['qn'] });
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 9 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 5 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      await tienda.op({ op: 'mov.venta', lineas: [{ id: a.id, cant: 1 }] });
+      await tienda.op({ op: 'pedido.crear', lineas: [{ id: a.id, cant: 3 }] });
+      await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 1 }] });
+
+      // solo Almacén, con su PIN y la frase exacta
+      assert.equal((await tienda.op({ op: 'sistema.reiniciar', pinActual: '730518', confirmacion: 'BORRAR TODO' })).status, 403);
+      assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: '000999', confirmacion: 'BORRAR TODO' })).json.error.code, 'pin_incorrecto');
+      assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: '482159', confirmacion: 'borrar' })).json.error.code, 'falta_confirmacion');
+      assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: '482159' })).json.error.code, 'falta_confirmacion');
+      assert.ok((await local.estado()).productos.some((p) => p.stock_local + p.stock_tienda > 0), 'nada se borró con los intentos fallidos');
+
+      const r = await local.op({ op: 'sistema.reiniciar', pinActual: '482159', confirmacion: 'borrar todo' });
+      assert.equal(r.status, 200, JSON.stringify(r.json));
+      const est = r.json.estado;
+      assert.ok(est.productos.every((p) => p.stock_local === 0 && p.stock_tienda === 0));
+      assert.equal(est.productos.length, est0.productos.length);
+      assert.equal(prod(est, 'Base Queen · Gris').precio, 2000, 'los precios se conservan');
+      assert.deepEqual([est.traspasos.length, est.pedidos.length, est.recientes.length], [0, 0, 0]);
+      assert.equal(est.resumen.hoy.total, 0);
+      assert.equal((await local.call('GET', '/movs', null, { limite: '50' })).json.items.length, 0);
+      // los PIN siguen sirviendo y se puede volver a trabajar
+      assert.equal((await cliente(repo, local.now).login('tienda', '730518')).status, 200);
+      assert.equal((await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 2 }] })).status, 200);
+    });
+
+    test('entradas basura nunca tumban el servidor (siempre 4xx, jamás 500) ni corrompen datos', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      const est = await local.estado();
+      const a = prod(est, 'Base Queen · Gris');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 5 }] });
+      const raros = [null, undefined, true, 0, -1, 1e999, NaN, '', 'x', '__proto__', 'constructor', '<img src=x onerror=alert(1)>', { a: 1 }, [], [[]], 'DROP TABLE movs;--', 'a'.repeat(5000)];
+      const cuerpos = [];
+      for (const v of raros) {
+        for (const op of ['mov.entrada', 'mov.salida', 'mov.venta', 'mov.devolucion', 'mov.merma', 'mov.conteo', 'mov.anular', 'traspaso.enviar', 'traspaso.recibir', 'traspaso.cancelar', 'pedido.crear', 'pedido.cancelar', 'producto.crear', 'producto.editar', 'producto.variantes', 'producto.archivar', 'config.guardar', 'pin.cambiar', 'pin.reiniciar', 'recup.nueva', 'sistema.reiniciar', v]) {
+          cuerpos.push({ op, lineas: v, id: v, grupo: v, cant: v, precio: v, nota: v, motivo: v, pago: v, entrega: v, envio: v, cliente: v, nombre: v, negocio: v, medidas: v, tonos: v, pinActual: v, pinNuevo: v, confirmacion: v });
+          cuerpos.push({ op, lineas: [{ id: v, cant: v, precio: v, contado: v, recibida: v }] });
+          cuerpos.push({ op, lineas: [{ id: a.id, cant: v, precio: v }] });
+        }
+      }
+      for (const c of cuerpos) {
+        for (const quien of [local, tienda]) {
+          let r;
+          try { r = await quien.op(c); } catch (e) { assert.fail('lanzó excepción con ' + JSON.stringify(c).slice(0, 120) + ': ' + e.message); }
+          assert.ok(r.status < 500, 'status ' + r.status + ' con ' + JSON.stringify(c).slice(0, 160));
+        }
+      }
+      for (const ruta of ['/', '/op', '/estado', '/movs', '/ventas', '/reporte-dia', '/../x', '/%00', '/constructor']) {
+        const r = await local.call('GET', ruta, null, { limite: 'x', dia: '__proto__', antes: '__proto__', tipos: ['a'], tz: 'zzz' });
+        assert.ok(r.status < 500, ruta + ' → ' + r.status);
+      }
+      // el inventario sigue consistente: ninguna existencia negativa y el total no cambió por basura
+      const fin = await local.estado();
+      fin.productos.forEach((p) => assert.ok(p.stock_local >= 0 && p.stock_tienda >= 0 && Number.isInteger(p.stock_local)));
+      assert.equal(prod(fin, 'Base Queen · Gris').stock_local + prod(fin, 'Base Queen · Gris').stock_tienda >= 0, true);
+    });
+
+    test('la sesión vence a los 14 días sin uso y se renueva con el uso; el rol no se puede cambiar', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      assert.equal((await tienda.call('GET', '/estado')).status, 200);
+      local.avanzar(8 * DIA);
+      const e = (await tienda.call('GET', '/estado')).json;
+      assert.ok(e.token, 'a mitad de vida se entrega un token renovado');
+      const viejo = tienda.token;
+      tienda.token = e.token;
+      local.avanzar(10 * DIA); // 18 días desde el primer login, pero solo 10 desde la renovación
+      assert.equal((await tienda.call('GET', '/estado')).status, 200);
+      tienda.token = viejo;
+      assert.equal((await tienda.call('GET', '/estado')).json.error.code, 'sin_sesion', 'el token viejo ya venció');
+      // un token de tienda con el rol cambiado a local no sirve
+      const [cuerpo, firma] = e.token.split('.');
+      const obj = JSON.parse(Buffer.from(cuerpo, 'base64url').toString());
+      obj.r = 'local';
+      tienda.token = Buffer.from(JSON.stringify(obj)).toString('base64url') + '.' + firma;
+      assert.equal((await tienda.call('GET', '/estado')).json.error.code, 'sin_sesion');
     });
 
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {

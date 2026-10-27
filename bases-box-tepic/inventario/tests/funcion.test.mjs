@@ -30,7 +30,7 @@ test('flujo completo por HTTP: setup, sesión con Bearer, estado y operación', 
   assert.equal((await r.json()).configurado, false);
   assert.equal(r.headers.get('cache-control'), 'no-store');
 
-  r = await json(env, '/api/setup', 'POST', { nombre: 'Bases Box', pinLocal: '4821', pinTienda: '7305', catalogo: { bases: true } });
+  r = await json(env, '/api/setup', 'POST', { nombre: 'Bases Box', pinLocal: '482159', pinTienda: '730518', catalogo: { bases: true } });
   assert.equal(r.status, 200);
   const { token } = await r.json();
 
@@ -53,10 +53,10 @@ test('SETUP_KEY del entorno se exige en el primer arranque', async () => {
   const env = { DB: new D1Falsa(), SETUP_KEY: 'ABCD-EFGH-JKLM' };
   let r = await json(env, '/api/ping', 'GET');
   assert.equal((await r.json()).requiereClave, true);
-  r = await json(env, '/api/setup', 'POST', { pinLocal: '4821', pinTienda: '7305' });
+  r = await json(env, '/api/setup', 'POST', { pinLocal: '482159', pinTienda: '730518' });
   assert.equal(r.status, 401);
   assert.equal((await r.json()).error.code, 'clave_instalacion');
-  r = await json(env, '/api/setup', 'POST', { clave: 'abcd-efgh-jklm', pinLocal: '4821', pinTienda: '7305' });
+  r = await json(env, '/api/setup', 'POST', { clave: 'abcd-efgh-jklm', pinLocal: '482159', pinTienda: '730518' });
   assert.equal(r.status, 200);
 });
 
@@ -66,4 +66,24 @@ test('cuerpo inválido o demasiado grande', async () => {
   assert.equal(r.status, 400);
   r = await llamar(env, '/api/login', { method: 'POST', headers: { 'content-length': '70000' }, body: '{}' });
   assert.equal(r.status, 413);
+});
+
+test('seguridad HTTP: origen ajeno, cuerpo sin content-length, JSON que no es objeto y cabeceras', async () => {
+  const env = { DB: new D1Falsa() };
+  let r = await llamar(env, '/api/setup', { method: 'POST', headers: { origin: 'https://sitio-malo.example' }, body: '{}' });
+  assert.equal(r.status, 403);
+  assert.equal((await r.json()).error.code, 'origen');
+  // el mismo origen de la app sí pasa
+  r = await llamar(env, '/api/ping', { method: 'GET', headers: { origin: 'http://inventario.test' } });
+  assert.equal(r.status, 200);
+  for (const h of ['x-content-type-options', 'strict-transport-security', 'content-security-policy', 'x-frame-options']) assert.ok(r.headers.get(h), h);
+  assert.equal(r.headers.get('cache-control'), 'no-store');
+  // cuerpo enorme enviado por tramos (sin content-length confiable)
+  const grande = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"a":"' + 'x'.repeat(70000) + '"}')); c.close(); } });
+  r = await llamar(env, '/api/login', { method: 'POST', body: grande, duplex: 'half', headers: { 'content-type': 'application/json' } });
+  assert.equal(r.status, 413);
+  for (const raro of ['[]', 'null', '"texto"', '5']) {
+    r = await llamar(env, '/api/login', { method: 'POST', body: raro });
+    assert.equal(r.status, 400, raro);
+  }
 });

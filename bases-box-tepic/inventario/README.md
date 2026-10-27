@@ -20,6 +20,9 @@ Almacén (fábrica)  ──envío──▶  En camino  ──confirma recibo─�
 | Pedir al almacén / surtir pedidos | Surte | Pide |
 | Conteo físico, anular movimientos | ✅ (todo) | ✅ (lo suyo) |
 | Alertas de stock bajo, tablero, historial, exportar CSV | ✅ | ✅ |
+| Ventas por día, semana y mes · reporte del día (WhatsApp / CSV) | ✅ | ✅ |
+| Entrega en la venta: recoge (−$200 por base), envío Tepic ($200), Xalisco y La Cantera ($250); tarifas editables | Cambia tarifas | Cobra |
+| Dejar todo en cero (con PIN y frase de confirmación) | ✅ | — |
 
 Todo movimiento queda en el historial con fecha, lugar y responsable (Almacén o Tienda). Las piezas en camino no cuentan como existencias de ninguno de los dos hasta que la tienda confirma que llegaron.
 
@@ -67,12 +70,22 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 - **Respaldo.** *Más → Respaldo completo* descarga todo en un archivo; vale la pena hacerlo cada mes. Los datos viven en la base D1 de tu cuenta de Cloudflare.
 - **Límites del plan gratuito.** Cada app abierta consulta cambios cada ~9 segundos; para dos negocios con pocos equipos queda muy por debajo del límite de peticiones diarias.
 
+## Seguridad (qué está protegido y qué no)
+
+- **Acceso:** PIN de 6 a 8 números por usuario (se rechazan los fáciles: 123456, 111111, 121212…). Se guarda con sal; nunca viaja ni se guarda en claro. 5 fallos bloquean 5 min y cada bloqueo siguiente dura el triple (tope 24 h). Las sesiones duran 14 días y se renuevan con el uso; cambiar un PIN cierra las sesiones de ese usuario.
+- **Permisos en el servidor:** cada operación comprueba el rol (el vendedor no puede entrar al almacén ni ver costos aunque manipule la app). Los movimientos solo se agregan; deshacer es una anulación con motivo.
+- **Navegador:** política de seguridad estricta (sin scripts en línea, sin recursos de terceros: hasta las tipografías son propias), HTTPS forzado, sin incrustar en otros sitios, sin caché de datos y rechazo de peticiones que no vengan de la propia app.
+- **Datos:** todo cambio es atómico en D1 (o se guarda completo o no se guarda). Un número no puede dejar existencias negativas.
+- **Lo que ya no depende del código:** protege la cuenta de Cloudflare con verificación en dos pasos (quien entra ahí ve la base de datos) y no compartas los PIN ni el código de recuperación. Quien tenga el teléfono desbloqueado con la sesión abierta es el usuario: cierra sesión en equipos ajenos (Más → Salir).
+
 ## Para quien mantenga el código
 
 ```
 inventario/
 ├── public/                   ← lo que se publica
-│   ├── index.html            interfaz (HTML + CSS + JS, sin dependencias)
+│   ├── index.html            interfaz (HTML + CSS)
+│   ├── app.js                lógica de la interfaz (sin scripts en línea por seguridad)
+│   ├── fonts.css, fonts/     tipografías propias
 │   ├── core.js               reglas del negocio: permisos, stock, traspasos, PIN… (lo usan el servidor y el modo local)
 │   ├── sw.js, manifest…, iconos   instalable y abre sin internet
 │   └── _headers              cabeceras de seguridad

@@ -20,7 +20,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS movs (
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, prod TEXT NOT NULL, loc TEXT NOT NULL, delta INTEGER NOT NULL, tipo TEXT NOT NULL,
     motivo TEXT NOT NULL DEFAULT '', nota TEXT NOT NULL DEFAULT '', rol TEXT NOT NULL, precio REAL, cliente TEXT NOT NULL DEFAULT '',
-    pago TEXT NOT NULL DEFAULT '', grupo TEXT NOT NULL, ref TEXT NOT NULL DEFAULT '', anulado INTEGER NOT NULL DEFAULT 0,
+    pago TEXT NOT NULL DEFAULT '', envio REAL NOT NULL DEFAULT 0, grupo TEXT NOT NULL, ref TEXT NOT NULL DEFAULT '', anulado INTEGER NOT NULL DEFAULT 0,
     anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '')`,
   `CREATE INDEX IF NOT EXISTS movs_ts ON movs (ts DESC, id DESC)`,
   `CREATE INDEX IF NOT EXISTS movs_grupo ON movs (grupo)`,
@@ -38,7 +38,7 @@ const SCHEMA = [
 ];
 
 const COLS_PRODUCTO = ['id', 'nombre', 'cat', 'medida', 'tono', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'activo', 'stock_local', 'stock_tienda', 'hubo_local', 'hubo_tienda', 'creado', 'actualizado'];
-const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
+const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'envio', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
 const COLS_EDITABLES = ['nombre', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'medida', 'tono', 'activo', 'actualizado'];
 
 const insertarJson = (tabla, cols) =>
@@ -50,6 +50,12 @@ export async function crearRepoD1(db) {
   if (!migradas.has(db)) {
     const existe = await db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'productos'`).first();
     if (!existe) await db.batch(SCHEMA.map((s) => db.prepare(s)));
+    else {
+      // bases creadas antes de existir el cobro de envío: se agrega la columna una sola vez
+      try { await db.prepare(`SELECT envio FROM movs LIMIT 0`).all(); } catch (e) {
+        try { await db.prepare(`ALTER TABLE movs ADD COLUMN envio REAL NOT NULL DEFAULT 0`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
+      }
+    }
     migradas.add(db);
   }
   const q = (sql, ...args) => db.prepare(sql).bind(...args);
@@ -70,6 +76,10 @@ export async function crearRepoD1(db) {
       else if (g.tipo === 'pedido_estado') st.push(q(`INSERT INTO guardas (g) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM pedidos WHERE id = ?1 AND estado = ?2)`, g.id, g.estado));
       else if (g.tipo === 'grupo_sin_anular') st.push(q(`INSERT INTO guardas (g) SELECT 1 WHERE EXISTS (SELECT 1 FROM movs WHERE grupo = ?1 AND anulado = 1)`, g.grupo));
     });
+    if (tx.reiniciar) {
+      ['movs', 'traspaso_lineas', 'traspasos', 'pedido_lineas', 'pedidos'].forEach((t) => st.push(q(`DELETE FROM ${t}`)));
+      st.push(q(`UPDATE productos SET stock_local = 0, stock_tienda = 0, hubo_local = 0, hubo_tienda = 0`));
+    }
     if (tx.configInsert) Object.keys(tx.configInsert).forEach((k) => st.push(q(`INSERT INTO config (k, v) VALUES (?1, ?2)`, k, JSON.stringify(tx.configInsert[k]))));
     Object.keys(tx.config).forEach((k) => st.push(q(`INSERT INTO config (k, v) VALUES (?1, ?2) ON CONFLICT(k) DO UPDATE SET v = excluded.v`, k, JSON.stringify(tx.config[k]))));
     if (tx.productosInsert.length) st.push(q(insertarJson('productos', COLS_PRODUCTO), JSON.stringify(tx.productosInsert)));
@@ -181,7 +191,7 @@ export async function crearRepoD1(db) {
       return { items, siguiente: filas.length > f.limite && last ? last.ts + '_' + last.id : null };
     },
     ventas(desde) {
-      return todas(`SELECT ts, prod, delta, precio, grupo, tipo FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
+      return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
     },
     async commit(tx) {
       try {
