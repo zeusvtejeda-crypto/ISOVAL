@@ -187,6 +187,26 @@ select.inp{background-image:linear-gradient(45deg,transparent 50%,currentColor 5
 .kpi small{display:block;margin-top:6px;font-size:13px;color:var(--muted)}
 .kpi.dest{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .kpi.dest .t-sec,.kpi.dest small{color:var(--bg);opacity:.75}
+.vtas{display:block;width:100%;text-align:left;background:var(--ink);color:var(--bg);border:1px solid var(--ink);border-radius:var(--radio-lg);padding:14px 14px 12px}
+.vtas-t{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.vtas .t-sec{color:var(--bg);opacity:.75}
+.vtas-ver{display:inline-flex;align-items:center;gap:2px;font-size:13px;font-weight:600;opacity:.85}
+.vtas-ver svg{width:16px;height:16px}
+.vtas-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.vtas-c{display:flex;flex-direction:column;min-width:0;padding-left:10px;border-left:1px solid rgba(255,255,255,.22)}
+.vtas-c:first-child{padding-left:0;border-left:0}
+.vtas-c small{font:600 11px/1 var(--f-etiqueta);letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.vtas-c b{font:700 20px/1.1 var(--f-etiqueta);margin-top:6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.vtas-c i{font-style:normal;font-size:12px;opacity:.75;margin-top:4px;line-height:1.25}
+@media (min-width:520px){.vtas-c b{font-size:26px}}
+.vt-seg{display:flex;gap:8px;margin-bottom:14px}
+.vt-seg .chip{flex:1;justify-content:center}
+.vt-lista{display:flex;flex-direction:column;margin:6px 0 16px}
+.vt-fila{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline;padding:10px 2px;border-bottom:1px solid var(--line)}
+.vt-fila:last-child{border-bottom:0}
+.vt-fila .n{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.vt-fila .v{font:700 16px var(--f-etiqueta);font-variant-numeric:tabular-nums;text-align:right}
+.vt-fila small{grid-column:1/-1;color:var(--muted);font-size:13px}
 @supports (color:color-mix(in srgb,red,blue)){.kpi.dest .t-sec,.kpi.dest small{color:color-mix(in srgb,var(--bg) 70%,transparent);opacity:1}}
 .dos-col{display:grid;gap:14px}
 @media (min-width:900px){.dos-col{grid-template-columns:minmax(0,3fr) minmax(0,2fr);align-items:start}}
@@ -216,28 +236,25 @@ button.item:hover{background:var(--surface-2)}
 .buscar .inp{padding-left:40px}
 .prods{display:grid;gap:10px;margin-top:14px}
 @media (min-width:760px){.prods{grid-template-columns:1fr 1fr}}
-.prod{display:flex;align-items:center;gap:12px;width:100%;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radio-lg);text-align:left}
+.prod{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radio-lg);padding-right:8px;min-width:0}
 .prod:hover{border-color:var(--line-2);box-shadow:var(--sombra)}
 .prod.arch{opacity:.6}
-.prod-ico{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:var(--surface-2);flex:none}
+.prod-btn{display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:9px 6px 9px 10px;background:none;border:0;border-radius:var(--radio-lg);text-align:left;color:inherit}
+.prod-ico{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:var(--surface-2);flex:none}
 .prod-main{min-width:0;flex:1}
 .prod-n{display:block;font-weight:600;line-height:1.2}
 .prod-s{display:block;margin-top:2px;font-size:13px;color:var(--muted);line-height:1.25}
-.stocks{display:flex;gap:2px;flex:none}
-.st{display:flex;flex-direction:column;align-items:center;min-width:46px;padding:2px 4px}
+.prod-s .cam{color:var(--info);font-weight:600}
+.stocks{display:flex;gap:0;flex:none}
+.st{display:flex;flex-direction:column;align-items:center;min-width:48px;padding:2px 4px}
 .st b{font:700 22px/1 var(--f-etiqueta);font-variant-numeric:tabular-nums}
-.st i{font:600 11px/1 var(--f-etiqueta);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.st i{font:600 10px/1 var(--f-etiqueta);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:3px}
 .st.agotado b{color:var(--bad)}
 .st.bajo b{color:var(--warn)}
 .st.cero b{color:var(--muted);font-weight:500}
-.st.cam b{color:var(--info)}
+.btn-vender{flex:none;min-height:40px;padding:0 14px}
 .grupo-t{margin:20px 2px 2px}
-@media (max-width:560px){
-  .prod{flex-wrap:wrap}
-  .stocks{flex:1 0 100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));margin-top:2px;padding-top:10px;border-top:1px solid var(--line);gap:0}
-  .st{flex-direction:row;justify-content:center;align-items:baseline;gap:7px;min-width:0}
-  .st i{margin-top:0}
-}
+@media (max-width:380px){.st{min-width:40px}.prod-ico{display:none}.btn-vender{padding:0 10px}}
 .res-n{margin-top:12px;font-size:13px;color:var(--muted)}
 .acciones-fab{display:flex;gap:8px;flex-wrap:wrap}
 
@@ -938,12 +955,14 @@ function pintarInicio() {
         <div class="grow"><div class="item-t">${p.t}</div><div class="item-s">${p.s}</div></div>
         <button type="button" class="btn btn-s ${p.c === 'bad' || p.c === 'acc' ? 'btn-p' : 'btn-d'}" data-act="${p.act}" ${p.tab ? raw('data-tab-ir="' + p.tab + '"') : ''}>${p.btn}</button></li>`)}</ul></section>`
       : vacioTodo ? '' : html`<section class="card"><div class="fila"><span class="ico-c ok">${ico('check')}</span><div><div class="item-t">Todo al día</div><div class="item-s">No hay envíos, pedidos ni productos con stock bajo por atender.</div></div></div></section>`}
+    <button type="button" class="vtas" data-act="ventas" aria-label="Ver reporte de ventas">
+      <span class="vtas-t"><span class="t-sec">Ventas</span><span class="vtas-ver">Ver reporte ${ico('der')}</span></span>
+      <span class="vtas-g">${[['Hoy', r.hoy], ['Semana', r.semana], ['Mes', r.mes]].map(([t, v]) => html`<span class="vtas-c"><small>${t}</small><b class="cifras">${dinero(v.total)}</b><i>${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pza', 'pzas')}</i></span>`)}</span>
+    </button>
     <section class="grid-kpi" aria-label="Resumen">
       <div class="kpi"><span class="t-sec">Bases en el almacén</span><span class="num-g cifras">${num(bLocal)}</span><small>${plural(bases.filter((p) => p.stock_local > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
       <div class="kpi"><span class="t-sec">Bases en tienda</span><span class="num-g cifras">${num(bTienda)}</span><small>${plural(bases.filter((p) => p.stock_tienda > 0).length, 'modelo con existencias', 'modelos con existencias')}</small></div>
       <div class="kpi"><span class="t-sec">Bases en camino</span><span class="num-g cifras" style="color:${bCamino ? 'var(--info)' : 'inherit'}">${num(bCamino)}</span><small>${bCamino ? 'Sin confirmar en tienda' : 'Nada por llegar'}</small></div>
-      <div class="kpi dest"><span class="t-sec">Ventas de hoy</span><span class="num-g cifras">${dinero(r.hoy.total)}</span><small>${plural(r.hoy.n, 'venta', 'ventas')} · ${plural(r.hoy.pzas, 'pieza', 'piezas')}</small></div>
-      <div class="kpi"><span class="t-sec">Ventas del mes</span><span class="num-g cifras">${dinero(r.mes.total)}</span><small>${plural(r.mes.n, 'venta', 'ventas')} · ${plural(r.mes.pzas, 'pieza', 'piezas')}</small></div>
       <div class="kpi"><span class="t-sec">${S.rol === 'local' ? 'Valor a costo' : 'Valor en tienda'}</span><span class="num-g cifras">${dinero(valor)}</span><small>${S.rol === 'local' ? 'Almacén y tienda, al costo' : 'Existencias a precio de venta'}</small></div>
     </section>
     <div class="dos-col">
@@ -1063,7 +1082,8 @@ VISTAS.inventario = {
   },
   actualizar() {
     const e = S.est, activos = e.productos.filter((p) => p.activo), bajos = bajosDe(S.rol).length;
-    $('#inv-sub').textContent = plural(activos.length, 'producto', 'productos') + (bajos ? ' · ' + plural(bajos, 'con stock bajo', 'con stock bajo') : ' · todo en orden');
+    const pzL = sumar(activos, (p) => p.stock_local), pzT = sumar(activos, (p) => p.stock_tienda);
+    $('#inv-sub').textContent = (S.rol === 'local' ? num(pzL) + ' pzas en almacén · ' + num(pzT) + ' en tienda' : num(pzT) + ' pzas en tienda') + (bajos ? ' · ' + plural(bajos, 'con stock bajo', 'con stock bajo') : ' · todo en orden');
     poner($('#inv-acc'), S.rol === 'local' ? html`<button type="button" class="btn btn-p" data-act="prod-nuevo">${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">${ico('capas')}Crear bases</button>` : '');
     const chips = [['todo', 'Todo'], ['base', 'Bases'], ['material', 'Materiales'], ['accesorio', 'Accesorios']];
     poner($('#inv-chips'), html`${chips.map(([k, t]) => html`<button type="button" class="chip" data-act="filtro-cat" data-cat="${k}" aria-pressed="${String(S.filtro.cat === k)}">${t}</button>`)}<button type="button" class="chip" data-act="filtro-bajo" aria-pressed="${String(S.filtro.bajo)}">${ico('alerta')}Stock bajo${bajos ? ' (' + bajos + ')' : ''}</button>${S.rol === 'local' && e.productos.some((p) => !p.activo) ? html`<button type="button" class="chip" data-act="filtro-arch" aria-pressed="${String(S.filtro.archivados)}">Archivados</button>` : ''}`);
@@ -1075,11 +1095,17 @@ function filaProducto(p, corto) {
   const lv = (loc) => nivel(p, loc);
   const cl = (loc) => { const v = lv(loc), st = loc === 'local' ? p.stock_local : p.stock_tienda; return v === 'agotado' ? 'agotado' : v === 'bajo' ? 'bajo' : st === 0 ? 'cero' : ''; };
   const cam = S.camino[p.id] || 0;
-  return html`<button type="button" class="prod ${p.activo ? '' : 'arch'}" data-act="prod" data-id="${p.id}">
-    <span class="prod-ico">${iconoProd(p, 34)}</span>
-    <span class="prod-main"><span class="prod-n">${p.nombre}</span><span class="prod-s">${p.activo ? subProd(p, corto) : 'Archivado'}</span></span>
-    <span class="stocks"><span class="st ${cl('local')}"><b>${num(p.stock_local)}</b><i>Almacén</i></span><span class="st ${cl('tienda')}"><b>${num(p.stock_tienda)}</b><i>Tienda</i></span>${cam ? html`<span class="st cam"><b>${num(cam)}</b><i>Camino</i></span>` : ''}</span>
-  </button>`;
+  const vende = S.rol === 'tienda' && p.activo;
+  const stA = html`<span class="st ${cl('local')}"><b>${num(p.stock_local)}</b><i>Almacén</i></span>`;
+  const stT = html`<span class="st ${cl('tienda')}"><b>${num(p.stock_tienda)}</b><i>Tienda</i></span>`;
+  return html`<div class="prod ${p.activo ? '' : 'arch'}">
+    <button type="button" class="prod-btn" data-act="prod" data-id="${p.id}">
+      <span class="prod-ico">${iconoProd(p, 32)}</span>
+      <span class="prod-main"><span class="prod-n">${corto && p.cat === 'base' && tonoDe(p.tono) ? tonoDe(p.tono).nombre : p.nombre}</span><span class="prod-s">${p.activo ? subProd(p, corto) : 'Archivado'}${cam ? html` · <span class="cam">${cam} en camino</span>` : ''}</span></span>
+      <span class="stocks">${S.rol === 'local' ? html`${stA}${stT}` : stT}</span>
+    </button>
+    ${vende ? html`<button type="button" class="btn btn-s btn-p btn-vender" data-act="vender" data-id="${p.id}" ${p.stock_tienda > 0 ? '' : 'disabled'} aria-label="Vender ${p.nombre}">Vender</button>` : ''}
+  </div>`;
 }
 
 function pintarListaInv() {
@@ -1431,6 +1457,59 @@ function exitoForma(tipo, res, cuerpo) {
   } else if (tipo === 'pedido') {
     const texto = 'Bases Box Tepic · Pedido de la tienda\n' + lineasTexto(cuerpo.lineas) + (cuerpo.nota ? '\nNota: ' + cuerpo.nota : '') + '\nRevísalo en el inventario.';
     toast('Pedido enviado al almacén', { accion: { texto: 'Avisar por WhatsApp', href: waLink(e.telLocal, texto) } });
+  }
+}
+
+/* ───────── reporte de ventas: hoy, semana y mes ───────── */
+const fmtMes = new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' });
+const fechaDeKey = (k) => new Date(k + 'T12:00:00');
+const PERIODOS = [['hoy', 'Hoy'], ['semana', 'Semana'], ['mes', 'Mes']];
+function etiquetaPeriodo(per, v) {
+  if (per === 'hoy') return mayus(fmtDiaLargo.format(fechaDeKey(v.desde)));
+  if (per === 'semana') return 'Semana del lunes ' + fmtDiaCorto.format(fechaDeKey(v.desde)).replace(/^[^ ]+ /, '') + ' a hoy';
+  return mayus(fmtMes.format(fechaDeKey(v.desde)));
+}
+async function abrirVentas(inicial) {
+  let per = inicial || 'hoy', datos = null;
+  const d = dialogo({
+    titulo: 'Ventas',
+    clase: 'ancho',
+    cuerpo: html`<div class="vt-seg" id="vt-seg" role="group" aria-label="Periodo"></div><div id="vt-cont"><p class="t-peq">Cargando…</p></div>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="vt-csv" disabled>Descargar CSV</button>`,
+    enfocar: false
+  });
+  const pintar = () => {
+    poner($('#vt-seg', d.el), html`${PERIODOS.map(([k, t]) => html`<button type="button" class="chip" data-per="${k}" aria-pressed="${String(per === k)}">${t}</button>`)}`);
+    const v = datos && datos[per];
+    if (!v) return;
+    const vacio = !v.dias.length;
+    poner($('#vt-cont', d.el), html`
+      <p class="t-peq" style="margin-bottom:10px">${etiquetaPeriodo(per, v)}</p>
+      <div class="total-b"><span>Vendido</span><b>${dinero(v.total)}</b></div>
+      <p class="t-peq" style="margin:-6px 0 14px">${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pieza', 'piezas')}</p>
+      ${vacio ? html`<div class="vacio" style="padding:18px 8px"><b>Sin ventas en este periodo</b><span>Cuando la tienda registre ventas aparecerán aquí.</span></div>` : html`
+        <h3 class="t-sec">Por producto</h3>
+        <div class="vt-lista">${v.productos.map((t) => html`<div class="vt-fila"><span class="n">${nombreProd(t.id)}</span><span class="v">${dinero(t.total)}</span><small>${plural(t.pzas, 'pieza', 'piezas')}</small></div>`)}</div>
+        ${per === 'hoy' ? '' : html`<h3 class="t-sec">Por día</h3>
+        <div class="vt-lista">${v.dias.map((x) => html`<div class="vt-fila"><span class="n">${mayus(fmtDiaCorto.format(fechaDeKey(x.k)).replace('.', ''))}</span><span class="v">${dinero(x.total)}</span><small>${plural(x.n, 'venta', 'ventas')} · ${plural(x.pzas, 'pieza', 'piezas')}</small></div>`)}</div>`}`}`);
+    $('#vt-csv', d.el).disabled = vacio;
+  };
+  $('#vt-seg', d.el).addEventListener('click', (ev) => { const b = ev.target.closest('[data-per]'); if (b) { per = b.dataset.per; pintar(); } });
+  $('#vt-csv', d.el).addEventListener('click', () => {
+    const v = datos[per], nombre = PERIODOS.find((x) => x[0] === per)[1];
+    const filas = [['Periodo', 'Tipo', 'Detalle', 'Ventas', 'Piezas', 'Total'], [nombre, 'Total', etiquetaPeriodo(per, v), v.n, v.pzas, v.total]];
+    v.dias.slice().reverse().forEach((x) => filas.push([nombre, 'Día', x.k, x.n, x.pzas, x.total]));
+    v.productos.forEach((t) => filas.push([nombre, 'Producto', nombreProd(t.id), '', t.pzas, t.total]));
+    descargar('ventas-' + per + '-bases-box-' + fechaArchivo() + '.csv', aCsv(filas), 'text/csv;charset=utf-8');
+  });
+  pintar();
+  try {
+    const r = await llamar('GET', '/ventas');
+    if (!r.json.ok) throw new ErrorApi(r.json.error);
+    datos = r.json.ventas;
+    pintar();
+  } catch (e) {
+    poner($('#vt-cont', d.el), html`<p class="err">${e.message || 'No se pudo cargar el reporte.'}</p>`);
   }
 }
 
@@ -2008,6 +2087,8 @@ const A = {
   salir: () => salir(),
   'ver-bajos': () => irA('inventario', { bajo: true }),
   prod: (b) => abrirProducto(b.dataset.id),
+  vender: (b) => { const p = S.idx[b.dataset.id]; if (p) abrirForma('venta', { inicial: [{ id: p.id, cant: 1, precio: p.precio ? String(p.precio) : '' }] }); },
+  ventas: () => abrirVentas(),
   'prod-nuevo': () => formProducto(),
   variantes: () => formVariantes(),
   'filtro-cat': (b) => { S.filtro.cat = b.dataset.cat; VISTAS.inventario.actualizar(); },

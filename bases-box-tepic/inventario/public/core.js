@@ -367,10 +367,51 @@
 
   // ───────── estado para el cliente
 
+  // lunes de la semana de una fecha 'YYYY-MM-DD' (semana lunes–domingo)
+  function lunesDe(k) {
+    const [y, m, d] = k.split('-').map(Number);
+    const dow = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7;
+    return new Date(Date.UTC(y, m - 1, d - dow)).toISOString().slice(0, 10);
+  }
+
+  const redondear2 = (o) => { o.total = Math.round(o.total * 100) / 100; return o; };
+
+  // ventas netas (ventas − devoluciones) de hoy, de la semana y del mes, con desglose por producto y por día
+  function detalleVentas(filas, ahora, tz) {
+    const hoyK = diaKey(ahora, tz), mesK = hoyK.slice(0, 7), semK = lunesDe(hoyK);
+    const per = {
+      hoy: { desde: hoyK, test: (k) => k === hoyK },
+      semana: { desde: semK, test: (k) => k >= semK && k <= hoyK },
+      mes: { desde: mesK + '-01', test: (k) => k.slice(0, 7) === mesK }
+    };
+    const out = {};
+    Object.keys(per).forEach((n) => { out[n] = { desde: per[n].desde, total: 0, pzas: 0, n: 0, g: new Set(), prods: {}, dias: {} }; });
+    filas.forEach((r) => {
+      const pzas = -r.delta, monto = pzas * (r.precio || 0), k = diaKey(r.ts, tz);
+      Object.keys(per).forEach((n) => {
+        if (!per[n].test(k)) return;
+        const o = out[n];
+        o.total += monto; o.pzas += pzas;
+        const pr = o.prods[r.prod] || (o.prods[r.prod] = { id: r.prod, pzas: 0, total: 0 });
+        pr.pzas += pzas; pr.total += monto;
+        const d = o.dias[k] || (o.dias[k] = { k, pzas: 0, total: 0, g: new Set() });
+        d.pzas += pzas; d.total += monto;
+        if (r.tipo === 'venta') { o.g.add(r.grupo); d.g.add(r.grupo); }
+      });
+    });
+    Object.keys(out).forEach((n) => {
+      const o = out[n];
+      o.n = o.g.size; delete o.g;
+      o.productos = Object.values(o.prods).filter((t) => t.pzas !== 0).sort((a, b) => b.total - a.total || b.pzas - a.pzas).map(redondear2);
+      o.dias = Object.values(o.dias).sort((a, b) => (a.k < b.k ? 1 : -1)).map((d) => { d.n = d.g.size; delete d.g; return redondear2(d); });
+      delete o.prods;
+      redondear2(o);
+    });
+    return out;
+  }
+
   function resumenVentas(filas, ahora, tz) {
-    const hoyK = diaKey(ahora, tz), mesK = hoyK.slice(0, 7);
-    const hoy = { total: 0, pzas: 0, n: 0 }, mes = { total: 0, pzas: 0, n: 0 };
-    const hoyG = new Set(), mesG = new Set();
+    const det = detalleVentas(filas, ahora, tz);
     const dias = [], idxDia = {};
     for (let i = 6; i >= 0; i--) {
       const k = diaKey(ahora - i * DIA, tz);
@@ -379,10 +420,7 @@
     }
     const top = {};
     filas.forEach((r) => {
-      const pzas = -r.delta, monto = pzas * (r.precio || 0);
-      const k = diaKey(r.ts, tz);
-      if (k === hoyK) { hoy.total += monto; hoy.pzas += pzas; if (r.tipo === 'venta') hoyG.add(r.grupo); }
-      if (k.slice(0, 7) === mesK) { mes.total += monto; mes.pzas += pzas; if (r.tipo === 'venta') mesG.add(r.grupo); }
+      const pzas = -r.delta, monto = pzas * (r.precio || 0), k = diaKey(r.ts, tz);
       if (k in idxDia) { dias[idxDia[k]].total += monto; dias[idxDia[k]].pzas += pzas; }
       if (r.ts >= ahora - 30 * DIA) {
         const t = top[r.prod] || (top[r.prod] = { id: r.prod, pzas: 0, total: 0 });
@@ -390,12 +428,10 @@
         t.total += monto;
       }
     });
-    hoy.n = hoyG.size;
-    mes.n = mesG.size;
-    const redondear = (o) => { o.total = Math.round(o.total * 100) / 100; return o; };
+    const res = (o) => ({ total: o.total, pzas: o.pzas, n: o.n });
     return {
-      hoy: redondear(hoy), mes: redondear(mes), dias: dias.map(redondear),
-      top: Object.values(top).filter((t) => t.pzas > 0).sort((a, b) => b.pzas - a.pzas).slice(0, 5).map(redondear)
+      hoy: res(det.hoy), semana: res(det.semana), mes: res(det.mes), dias: dias.map(redondear2),
+      top: Object.values(top).filter((t) => t.pzas > 0).sort((a, b) => b.pzas - a.pzas).slice(0, 5).map(redondear2)
     };
   }
 
@@ -905,6 +941,7 @@
       if (path === '/rev' && m === 'GET') return ok({ rev: cfg.rev });
       if (path === '/estado' && m === 'GET') return ok(await armarEstado(ctx));
       if (path === '/movs' && m === 'GET') return ok(await listarMovs(ctx));
+      if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
       if (path === '/op' && m === 'POST') {
         const resultado = await correrOp(ctx, ctx.req.body);
         const extra = {};

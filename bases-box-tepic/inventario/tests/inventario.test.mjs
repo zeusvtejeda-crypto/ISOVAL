@@ -497,6 +497,54 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await local.call('GET', '/movs', null, { rol: 'tienda' })).json.items.length, 0);
     });
 
+    test('reporte de ventas: hoy, semana y mes con desglose; devoluciones restan; anuladas no cuentan', async () => {
+      const { repo, local, tienda } = await iniciar(fabrica);
+      const est0 = await local.estado();
+      const a = prod(est0, 'Base Queen · Gris'), b = prod(est0, 'Base Individual · Rosa');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 20 }, { id: b.id, cant: 20 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 20 }, { id: b.id, cant: 20 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+
+      assert.equal((await local.call('GET', '/ventas')).status, 200);
+      assert.equal((await Core.handle(repo, { method: 'GET', path: '/ventas' }, { now: Date.now() })).status, 401);
+      let r = (await tienda.call('GET', '/ventas')).json;
+      assert.equal(r.ventas.hoy.total, 0);
+      assert.deepEqual(r.ventas.mes.productos, []);
+
+      await tienda.op({ op: 'mov.venta', lineas: [{ id: a.id, cant: 2, precio: 3000 }, { id: b.id, cant: 1, precio: 1000 }] });
+      const v2 = await tienda.op({ op: 'mov.venta', lineas: [{ id: a.id, cant: 1, precio: 3000 }] });
+      await tienda.op({ op: 'mov.devolucion', lineas: [{ id: b.id, cant: 1, precio: 1000 }] });
+      r = (await tienda.call('GET', '/ventas')).json.ventas;
+      assert.equal(r.hoy.total, 9000);
+      assert.equal(r.hoy.pzas, 3);
+      assert.equal(r.hoy.n, 2);
+      assert.equal(r.hoy.productos.length, 1, 'la base devuelta queda en cero y no aparece');
+      assert.equal(r.hoy.productos[0].id, a.id);
+      assert.equal(r.hoy.productos[0].pzas, 3);
+      assert.equal(r.hoy.dias.length, 1);
+      assert.equal(r.hoy.dias[0].total, 9000);
+      assert.equal(r.semana.total, 9000);
+      assert.equal(r.mes.total, 9000);
+
+      // anulada: deja de contar
+      await tienda.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'Error de captura' });
+      r = (await tienda.call('GET', '/ventas')).json.ventas;
+      assert.equal(r.hoy.total, 6000);
+      assert.equal(r.hoy.n, 1);
+
+      // ocho días después: ya no es "semana" ni "hoy"; el resumen del estado coincide con el reporte
+      local.avanzar(8 * DIA);
+      await tienda.op({ op: 'mov.venta', lineas: [{ id: b.id, cant: 2, precio: 1500 }] });
+      const est = await tienda.estado();
+      r = (await tienda.call('GET', '/ventas')).json.ventas;
+      assert.equal(r.hoy.total, 3000);
+      assert.equal(r.semana.total, 3000);
+      assert.ok(r.mes.total === 3000 || r.mes.total === 9000, 'el mes puede incluir o no la venta de hace 8 días');
+      assert.deepEqual({ t: est.resumen.semana.total, p: est.resumen.semana.pzas }, { t: r.semana.total, p: r.semana.pzas });
+      assert.equal(est.resumen.mes.total, r.mes.total);
+      assert.ok(r.mes.dias.every((d, i, l) => !i || l[i - 1].k > d.k), 'días del más reciente al más antiguo');
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });

@@ -55,7 +55,7 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 ### Primeros pasos
 
 - **Almacén:** *Más → Medidas y precios* (pon los precios) → *Mover → Conteo físico* (carga lo que ya tienes) → listo. Cada vez que fabriques: *Mover → Registrar entrada*; para surtir a la tienda: *Mover → Enviar a tienda*.
-- **Vendedor tienda:** cuando el almacén envíe, aparece “envío por recibir” en *Inicio*; ahí se confirma lo que llegó. Las ventas se registran en *Mover → Registrar venta* (con *Deshacer* a la mano por si te equivocas).
+- **Vendedor tienda:** cuando el almacén envíe, aparece “envío por recibir” en *Inicio*; ahí se confirma lo que llegó. Las ventas se registran con el botón *Vender* de cada producto en *Inventario* (o en *Mover → Registrar venta* para varias piezas), con *Deshacer* a la mano por si te equivocas. En *Inicio → Ventas* (ambos usuarios) está el reporte de lo vendido **hoy, en la semana (lunes a domingo) y en el mes**, por producto y por día, con descarga en CSV.
 - Si un número no cuadra, se corrige con un **conteo físico** (queda registrado quién y cuándo). Los errores de captura se corrigen con **Anular operación** en el historial.
 
 ## Cosas que conviene saber
