@@ -16,6 +16,7 @@
   const ROLES = ['local', 'tienda'];
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
+  const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'retiro', 'otro'];
   const MAX_LINEAS = 60;
   const SESION_DIAS = 14;
   const TZ_DEFECTO = -420; // Tepic, Nayarit: UTC−7 todo el año
@@ -252,7 +253,7 @@
 
   const nuevaTx = () => ({
     config: {}, configInsert: null, guardas: [], productosInsert: [], productosUpdate: [], stock: [], movs: [],
-    movsAnulados: [], traspasos: [], pedidos: [], sinRev: false, reiniciar: false
+    movsAnulados: [], traspasos: [], pedidos: [], gastosInsert: [], gastosAnular: [], sinRev: false, reiniciar: false
   });
 
   // ───────── rutas públicas: ping, setup, login, recuperar
@@ -415,6 +416,69 @@
     };
   }
 
+  // gastos: el vendedor solo ve los que registró la tienda; el Almacén ve todos
+  const gastosVisibles = (filas, rol) => filas.filter((g) => rol === 'local' || g.rol === 'tienda');
+  function resumenGastos(filas, ahora, tz) {
+    const hoyK = diaKey(ahora, tz), mesK = hoyK.slice(0, 7), semK = lunesDe(hoyK);
+    const per = { hoy: (k) => k === hoyK, semana: (k) => k >= semK && k <= hoyK, mes: (k) => k.slice(0, 7) === mesK };
+    const out = {};
+    Object.keys(per).forEach((n) => { out[n] = { total: 0, n: 0, porCat: {}, porPago: {} }; });
+    filas.filter((g) => !g.anulado).forEach((g) => {
+      const k = diaKey(g.ts, tz);
+      Object.keys(per).forEach((n) => {
+        if (!per[n](k)) return;
+        const o = out[n];
+        o.total += g.monto; o.n += 1;
+        o.porCat[g.cat] = (o.porCat[g.cat] || 0) + g.monto;
+        o.porPago[g.pago] = (o.porPago[g.pago] || 0) + g.monto;
+      });
+    });
+    const r2 = (n) => Math.round(n * 100) / 100;
+    Object.keys(out).forEach((n) => {
+      out[n].total = r2(out[n].total);
+      Object.keys(out[n].porCat).forEach((c) => { out[n].porCat[c] = r2(out[n].porCat[c]); });
+      Object.keys(out[n].porPago).forEach((c) => { out[n].porPago[c] = r2(out[n].porPago[c]); });
+    });
+    return out;
+  }
+  async function listarGastos(ctx) {
+    const filas = gastosVisibles(await ctx.repo.gastos(ctx.ahora - 36 * DIA), ctx.rol);
+    const items = filas.slice().sort((a, b) => b.ts - a.ts || (a.id < b.id ? 1 : -1)).slice(0, 400);
+    return { items, resumen: resumenGastos(filas, ctx.ahora, ctx.tz) };
+  }
+
+  async function opGastoCrear(ctx, b, tx) {
+    const monto = Number(b.monto);
+    if (!Number.isFinite(monto) || monto <= 0) throw bad('falta_monto', 'Escribe cuánto se gastó.');
+    if (monto > 10000000) throw bad('numero_invalido', 'Ese monto es demasiado grande.');
+    const cat = CATS_GASTO.includes(b.cat) ? b.cat : 'otro';
+    const concepto = clean(b.concepto, 80);
+    if (cat === 'otro' && !concepto) throw bad('falta_concepto', 'Escribe en qué se gastó.');
+    let ts = ctx.ahora;
+    if (b.dia !== undefined && b.dia !== null && b.dia !== '') {
+      const hoyK = diaKey(ctx.ahora, ctx.tz), dia = String(b.dia);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dia) || dia > hoyK || diaKey(ctx.ahora - 34 * DIA, ctx.tz) > dia) throw bad('dia_invalido', 'Elige un día de los últimos 30 días.');
+      if (dia !== hoyK) { const [y, m, d] = dia.split('-').map(Number); ts = Date.UTC(y, m - 1, d, 12, 0, 0) - ctx.tz * 60000; }
+    }
+    const id = grupoDe(b, 'X');
+    tx.gastosInsert.push({
+      id, ts, rol: ctx.rol, monto: Math.round(monto * 100) / 100, cat, concepto, pago: PAGOS.includes(b.pago) ? b.pago : 'efectivo',
+      anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
+    });
+    return { id, monto: Math.round(monto * 100) / 100 };
+  }
+  async function opGastoAnular(ctx, b, tx) {
+    const motivo = clean(b.motivo, 140);
+    if (motivo.length < 3) throw bad('falta_motivo', 'Escribe el motivo.');
+    const g = await ctx.repo.gasto(clean(b.id, 60));
+    if (!g) throw new ApiError(404, 'no_existe', 'No encontré ese gasto.');
+    if (g.anulado) throw new ApiError(409, 'ya_anulado', 'Ese gasto ya estaba anulado.');
+    if (ctx.rol !== 'local' && g.rol !== ctx.rol) throw new ApiError(403, 'sin_permiso', 'Solo puedes anular gastos de tu tienda.');
+    tx.gastosAnular.push({ id: g.id, ts: ctx.ahora, por: ctx.rol, nota: motivo });
+    tx.guardas.push({ tipo: 'gasto_sin_anular', id: g.id });
+    return { id: g.id };
+  }
+
   // reporte del día de la tienda: cada venta con sus piezas, cobro por forma de pago, envíos y devoluciones
   async function reporteDia(ctx) {
     const q = ctx.req.query || {};
@@ -446,14 +510,18 @@
     devs.forEach((g) => { t.devuelto += g.total; g.lineas.forEach((l) => { t.pzas -= l.pzas; }); });
     t.vendido = redo(t.vendido); t.envios = redo(t.envios); t.devuelto = redo(t.devuelto); t.neto = redo(t.vendido - t.devuelto);
     const prods = await ctx.repo.productos();
-    return { dia, hoy: dia === hoyK, ventas, devoluciones: devs, totales: t, tienda: { pzas: prods.filter((p) => p.activo).reduce((a, p) => a + p.stock_tienda, 0) } };
+    const gastos = (await ctx.repo.gastos(ctx.ahora - 36 * DIA)).filter((g) => g.rol === 'tienda' && !g.anulado && diaKey(g.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
+    t.gastos = redo(gastos.reduce((a, g) => a + g.monto, 0));
+    t.gastosEfectivo = redo(gastos.filter((g) => g.pago === 'efectivo').reduce((a, g) => a + g.monto, 0));
+    t.efectivoNeto = redo((t.porPago.efectivo || 0) - t.gastosEfectivo);
+    return { dia, hoy: dia === hoyK, ventas, devoluciones: devs, gastos, totales: t, tienda: { pzas: prods.filter((p) => p.activo).reduce((a, p) => a + p.stock_tienda, 0) } };
   }
 
   async function armarEstado(ctx) {
     const { repo, ahora, rol } = ctx;
-    const [raw, prods, trasp, peds, ventas, rec] = await Promise.all([
+    const [raw, prods, trasp, peds, ventas, rec, gastosFilas] = await Promise.all([
       repo.config(), repo.productos(), repo.traspasos({ desde: ahora - 30 * DIA }), repo.pedidos({ desde: ahora - 30 * DIA }),
-      repo.ventas(ahora - 35 * DIA), repo.movs({ limite: 40 })
+      repo.ventas(ahora - 35 * DIA), repo.movs({ limite: 40 }), repo.gastos(ahora - 36 * DIA)
     ]);
     const cfg = normalizarCfg(raw);
     const productos = prods.map((p) => {
@@ -463,7 +531,7 @@
     });
     const est = {
       rev: cfg.rev, ahora, rol, version: VERSION, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
-      productos, traspasos: trasp, pedidos: peds, resumen: resumenVentas(ventas, ahora, ctx.tz), recientes: rec.items
+      productos, traspasos: trasp, pedidos: peds, resumen: Object.assign(resumenVentas(ventas, ahora, ctx.tz), { gastos: (({ hoy, semana, mes }) => ({ hoy: hoy.total, semana: semana.total, mes: mes.total }))(resumenGastos(gastosVisibles(gastosFilas, rol), ahora, ctx.tz)) }), recientes: rec.items
     };
     if (ctx.exp && ctx.exp - ahora < (SESION_DIAS / 2) * DIA) est.token = firmar(cfg, rol, ahora);
     return est;
@@ -965,6 +1033,8 @@
     'mov.devolucion': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'devolucion')],
     'mov.merma': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'merma')],
     'mov.regreso': [['local', 'tienda'], opRegreso],
+    'gasto.crear': [['local', 'tienda'], opGastoCrear],
+    'gasto.anular': [['local', 'tienda'], opGastoAnular],
     'mov.conteo': [['local', 'tienda'], opConteo],
     'mov.anular': [['local', 'tienda'], opAnular],
     'traspaso.enviar': [['local'], opEnviar],
@@ -1012,6 +1082,7 @@
       if (path === '/estado' && m === 'GET') return ok(await armarEstado(ctx));
       if (path === '/movs' && m === 'GET') return ok(await listarMovs(ctx));
       if (path === '/reporte-dia' && m === 'GET') return ok(await reporteDia(ctx));
+      if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
       if (path === '/op' && m === 'POST') {
         const resultado = await correrOp(ctx, ctx.req.body);
@@ -1031,7 +1102,7 @@
   // ───────── repo local (localStorage o memoria): mismo contrato que el repo D1
 
   function crearRepoLocal(almacen, clave) {
-    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {}, intentos: {} });
+    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {}, intentos: {}, gastos: [] });
     let S = leer();
     let ids = new Set(S.movs.map((m) => m.id));
     let diferido = false;
@@ -1061,6 +1132,8 @@
 
     return {
       async config() { return clonar(S.config); },
+      async gastos(desde) { return (S.gastos || []).filter((g) => g.ts >= desde).map((g) => Object.assign({}, g)); },
+      async gasto(id) { const g = (S.gastos || []).find((x) => x.id === id); return g ? Object.assign({}, g) : null; },
       // cuenta un intento de PIN de forma atómica (ver reservar en el núcleo)
       async intento(clave, ahora) {
         const m = S.intentos || (S.intentos = {});
@@ -1116,9 +1189,11 @@
           if (g.tipo === 'traspaso_estado' && (!own(S.traspasos, g.id) || S.traspasos[g.id].estado !== g.estado)) throw conflicto();
           if (g.tipo === 'pedido_estado' && (!own(S.pedidos, g.id) || S.pedidos[g.id].estado !== g.estado)) throw conflicto();
           if (g.tipo === 'grupo_sin_anular' && S.movs.some((m) => m.grupo === g.grupo && m.anulado)) throw conflicto();
+          if (g.tipo === 'gasto_sin_anular' && (S.gastos || []).some((x) => x.id === g.id && x.anulado)) throw conflicto();
         });
         if (tx.configInsert) Object.keys(tx.configInsert).forEach((k) => { if (k in S.config) throw new ApiError(409, 'ya_configurado', 'Este inventario ya está configurado.'); });
         tx.movs.forEach((m) => { if (ids.has(m.id)) throw new ApiError(409, 'duplicado', 'Esta operación ya se había guardado.'); });
+        tx.gastosInsert.forEach((g) => { if ((S.gastos || []).some((x) => x.id === g.id)) throw new ApiError(409, 'duplicado', 'Esta operación ya se había guardado.'); });
         const acum = {};
         tx.stock.forEach((s) => { const a = acum[s.id] || (acum[s.id] = [0, 0]); a[0] += s.dl; a[1] += s.dt; });
         Object.keys(acum).forEach((id) => {
@@ -1129,7 +1204,7 @@
         const antes = diferido ? null : JSON.stringify(S);
         try {
           if (tx.reiniciar) {
-            S.movs = []; ids = new Set(); S.traspasos = {}; S.pedidos = {};
+            S.movs = []; ids = new Set(); S.traspasos = {}; S.pedidos = {}; S.gastos = [];
             Object.keys(S.productos).forEach((k) => Object.assign(S.productos[k], { stock_local: 0, stock_tienda: 0, hubo_local: 0, hubo_tienda: 0 }));
           }
           if (tx.configInsert) Object.assign(S.config, tx.configInsert);
@@ -1148,6 +1223,9 @@
             if (m) Object.assign(m, { anulado: 1, anulado_ts: a.ts, anulado_por: a.por, anulado_nota: a.nota });
           });
           tx.movs.forEach((m) => { S.movs.push(Object.assign({}, m)); ids.add(m.id); });
+          S.gastos = S.gastos || [];
+          tx.gastosAnular.forEach((a) => { const g = S.gastos.find((x) => x.id === a.id); if (g) Object.assign(g, { anulado: 1, anulado_ts: a.ts, anulado_por: a.por, anulado_nota: a.nota }); });
+          tx.gastosInsert.forEach((g) => { S.gastos.push(Object.assign({}, g)); });
           tx.traspasos.forEach((x) => { S.traspasos[x.t.id] = Object.assign({}, x.t, { lineas: x.lineas.map((l) => Object.assign({}, l)) }); });
           tx.pedidos.forEach((x) => { S.pedidos[x.p.id] = Object.assign({}, x.p, { lineas: x.lineas.map((l) => Object.assign({}, l)) }); });
           if (!tx.sinRev) S.config.rev = (S.config.rev | 0) + 1;

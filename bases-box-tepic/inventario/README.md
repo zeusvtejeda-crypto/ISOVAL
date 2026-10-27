@@ -22,6 +22,8 @@ Almacén (fábrica)  ──envío──▶  En camino  ──confirma recibo─�
 | Alertas de stock bajo, tablero, historial, exportar CSV | ✅ | ✅ |
 | Ventas por día, semana y mes · reporte del día (WhatsApp / CSV) | ✅ | ✅ |
 | Entrega en la venta: recoge (−$200 por base), envío Tepic ($200), Xalisco y La Cantera ($250); tarifas editables | Cambia tarifas | Cobra |
+| Gastos (salidas de dinero): registrar, anular y ver por día, semana y mes; el vendedor solo ve los de la tienda | ✅ (todos) | ✅ (los suyos) |
+| Mover piezas de la tienda al almacén | ✅ | ✅ |
 | Dejar todo en cero (con PIN y frase de confirmación) | ✅ | — |
 
 Todo movimiento queda en el historial con fecha, lugar y responsable (Almacén o Tienda). Las piezas en camino no cuentan como existencias de ninguno de los dos hasta que la tienda confirma que llegaron.

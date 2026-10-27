@@ -197,6 +197,17 @@ select.inp{background-image:linear-gradient(45deg,transparent 50%,currentColor 5
 .vtas-c b{font:700 20px/1.1 var(--f-etiqueta);margin-top:6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .vtas-c i{font-style:normal;font-size:12px;opacity:.75;margin-top:4px;line-height:1.25}
 @media (min-width:520px){.vtas-c b{font-size:26px}}
+.gastos-b{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radio-lg);text-align:left;color:inherit;min-height:64px}
+.gastos-b:hover{border-color:var(--line-2);box-shadow:var(--sombra)}
+.gastos-b b{display:block;font-size:16px}
+.gastos-b small{display:block;margin-top:2px;font-size:13px;color:var(--muted)}
+.gastos-mas{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--surface-2);flex:none}
+.gs-monto{display:flex;width:100%;height:56px}
+.precio.gs-monto input{width:auto;flex:1;min-width:0;border:0;background:none;color:inherit;font:700 28px var(--f-etiqueta);text-align:right;outline:none}
+.gs-monto:focus-within{outline:2px solid var(--accent);outline-offset:-2px}
+button.gs-fila{background:none;border:0;border-bottom:1px solid var(--line);text-align:left;width:100%;color:inherit}
+.gs-fila.anulado{opacity:.55}
+.gs-fila.anulado .n,.gs-fila.anulado .v{text-decoration:line-through}
 .vt-seg{display:flex;gap:8px;margin-bottom:14px}
 .vt-seg .chip{flex:1;justify-content:center}
 .vt-lista{display:flex;flex-direction:column;margin:6px 0 16px}

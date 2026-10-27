@@ -768,6 +768,62 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.ok(h.length >= 4 && h.every((m) => m.tipo === 'regreso'));
     });
 
+    test('gastos: registro por ambos usuarios, visibilidad, resumen, reporte del día, anulación y reinicio', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      assert.equal((await tienda.op({ op: 'gasto.crear', monto: 0, cat: 'comida' })).json.error.code, 'falta_monto');
+      assert.equal((await tienda.op({ op: 'gasto.crear', monto: -5, cat: 'comida' })).json.error.code, 'falta_monto');
+      assert.equal((await tienda.op({ op: 'gasto.crear', monto: 'abc', cat: 'comida' })).json.error.code, 'falta_monto');
+      assert.equal((await tienda.op({ op: 'gasto.crear', monto: 50, cat: 'otro' })).json.error.code, 'falta_concepto');
+      assert.equal((await tienda.op({ op: 'gasto.crear', monto: 50, cat: 'comida', dia: '2020-01-01' })).json.error.code, 'dia_invalido');
+      const g1 = await tienda.op({ op: 'gasto.crear', monto: 120.5, cat: 'comida', concepto: 'Comida del equipo', pago: 'efectivo' });
+      assert.equal(g1.status, 200, JSON.stringify(g1.json));
+      const g2 = await tienda.op({ op: 'gasto.crear', monto: 300, cat: 'transporte', concepto: 'Gasolina camioneta', pago: 'tarjeta' });
+      const g3 = await local.op({ op: 'gasto.crear', monto: 5000, cat: 'materiales', concepto: 'Madera y tela', pago: 'transferencia' });
+      assert.equal(g3.status, 200);
+      // el vendedor solo ve los gastos de la tienda; el Almacén ve todos
+      const lt = (await tienda.call('GET', '/gastos')).json, ll = (await local.call('GET', '/gastos')).json;
+      assert.equal(lt.items.length, 2);
+      assert.equal(ll.items.length, 3);
+      assert.equal(lt.resumen.hoy.total, 420.5);
+      assert.equal(ll.resumen.hoy.total, 5420.5);
+      assert.equal(ll.resumen.mes.porCat.materiales, 5000);
+      assert.equal(ll.resumen.hoy.porPago.efectivo, 120.5);
+      assert.equal((await tienda.estado()).resumen.gastos.hoy, 420.5);
+      assert.equal((await local.estado()).resumen.gastos.mes, 5420.5);
+      // un gasto de ayer entra al mes pero no al día de hoy
+      const ayerK = new Date(Date.now() - DIA).toISOString().slice(0, 10);
+      const g4 = await tienda.op({ op: 'gasto.crear', monto: 80, cat: 'comida', dia: ayerK });
+      assert.equal(g4.status, 200, JSON.stringify(g4.json));
+      assert.equal((await tienda.call('GET', '/gastos', null, { tz: '0' })).json.resumen.hoy.total, 420.5);
+      // reporte del día: gastos de la tienda y efectivo neto
+      const a = prod(await local.estado(), 'Base Queen · Gris');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 5 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 5 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      await tienda.op({ op: 'mov.venta', pago: 'efectivo', lineas: [{ id: a.id, cant: 1, precio: 1000 }] });
+      const rep = (await tienda.call('GET', '/reporte-dia', null, { tz: '0' })).json;
+      assert.equal(rep.gastos.length, 2);
+      assert.equal(rep.totales.gastos, 420.5);
+      assert.equal(rep.totales.gastosEfectivo, 120.5);
+      assert.equal(rep.totales.efectivoNeto, 1000 - 120.5);
+      // anular: el vendedor solo lo suyo, con motivo; no se anula dos veces; no cuenta en los totales
+      assert.equal((await tienda.op({ op: 'gasto.anular', id: g3.json.resultado.id, motivo: 'no era mío' })).status, 403);
+      assert.equal((await tienda.op({ op: 'gasto.anular', id: g1.json.resultado.id, motivo: '' })).json.error.code, 'falta_motivo');
+      assert.equal((await tienda.op({ op: 'gasto.anular', id: 'no-existe', motivo: 'prueba' })).status, 404);
+      assert.equal((await tienda.op({ op: 'gasto.anular', id: g1.json.resultado.id, motivo: 'Me equivoqué' })).status, 200);
+      assert.equal((await tienda.op({ op: 'gasto.anular', id: g1.json.resultado.id, motivo: 'otra vez' })).json.error.code, 'ya_anulado');
+      assert.equal((await tienda.call('GET', '/gastos', null, { tz: '0' })).json.resumen.hoy.total, 300);
+      assert.equal((await local.op({ op: 'gasto.anular', id: g2.json.resultado.id, motivo: 'Lo pagó el dueño' })).status, 200);
+      // el mismo id no se registra dos veces (reintento de red)
+      const cid = 'gasto-reintento-1';
+      assert.equal((await tienda.op({ op: 'gasto.crear', cid, monto: 10, cat: 'comida' })).status, 200);
+      assert.equal((await tienda.op({ op: 'gasto.crear', cid, monto: 10, cat: 'comida' })).json.error.code, 'duplicado');
+      // dejar todo en cero también borra los gastos
+      const pin = '482159';
+      assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: pin, confirmacion: 'BORRAR TODO' })).status, 200);
+      assert.equal((await local.call('GET', '/gastos')).json.items.length, 0);
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });

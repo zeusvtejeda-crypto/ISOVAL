@@ -33,6 +33,10 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS pedidos (
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, estado TEXT NOT NULL, nota TEXT NOT NULL DEFAULT '', traspaso TEXT NOT NULL DEFAULT '')`,
   `CREATE TABLE IF NOT EXISTS pedido_lineas (pedido_id TEXT NOT NULL, prod TEXT NOT NULL, cant INTEGER NOT NULL, PRIMARY KEY (pedido_id, prod))`,
+  `CREATE TABLE IF NOT EXISTS gastos (
+    id TEXT PRIMARY KEY, ts INTEGER NOT NULL, rol TEXT NOT NULL, monto REAL NOT NULL CHECK (monto > 0), cat TEXT NOT NULL, concepto TEXT NOT NULL DEFAULT '',
+    pago TEXT NOT NULL DEFAULT 'efectivo', anulado INTEGER NOT NULL DEFAULT 0, anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '')`,
+  `CREATE INDEX IF NOT EXISTS gastos_ts ON gastos (ts DESC)`,
   `CREATE TABLE IF NOT EXISTS intentos (k TEXT PRIMARY KEY, n INTEGER NOT NULL, b INTEGER NOT NULL, hasta INTEGER NOT NULL, adm INTEGER NOT NULL)`,
   // tabla trampa: insertar aquí rompe el CHECK y deshace todo el batch (ver guardas)
   `CREATE TABLE IF NOT EXISTS guardas (g INTEGER NOT NULL CHECK (g = 0))`
@@ -40,6 +44,7 @@ const SCHEMA = [
 
 const COLS_PRODUCTO = ['id', 'nombre', 'cat', 'medida', 'tono', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'activo', 'stock_local', 'stock_tienda', 'hubo_local', 'hubo_tienda', 'creado', 'actualizado'];
 const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'envio', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
+const COLS_GASTO = ['id', 'ts', 'rol', 'monto', 'cat', 'concepto', 'pago', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
 const COLS_EDITABLES = ['nombre', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'medida', 'tono', 'activo', 'actualizado'];
 
 const insertarJson = (tabla, cols) =>
@@ -57,7 +62,7 @@ export async function crearRepoD1(db) {
         try { await db.prepare(`ALTER TABLE movs ADD COLUMN envio REAL NOT NULL DEFAULT 0`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
       }
     }
-    await db.prepare(SCHEMA.find((x) => x.includes('TABLE IF NOT EXISTS intentos'))).run();
+    for (const sql of SCHEMA.filter((x) => /TABLE IF NOT EXISTS (intentos|gastos)|INDEX IF NOT EXISTS gastos_ts/.test(x))) await db.prepare(sql).run();
     migradas.add(db);
   }
   const q = (sql, ...args) => db.prepare(sql).bind(...args);
@@ -76,10 +81,11 @@ export async function crearRepoD1(db) {
     tx.guardas.forEach((g) => {
       if (g.tipo === 'traspaso_estado') st.push(q(`INSERT INTO guardas (g) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM traspasos WHERE id = ?1 AND estado = ?2)`, g.id, g.estado));
       else if (g.tipo === 'pedido_estado') st.push(q(`INSERT INTO guardas (g) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM pedidos WHERE id = ?1 AND estado = ?2)`, g.id, g.estado));
+      else if (g.tipo === 'gasto_sin_anular') st.push(q(`INSERT INTO guardas (g) SELECT 1 WHERE EXISTS (SELECT 1 FROM gastos WHERE id = ?1 AND anulado = 1)`, g.id));
       else if (g.tipo === 'grupo_sin_anular') st.push(q(`INSERT INTO guardas (g) SELECT 1 WHERE EXISTS (SELECT 1 FROM movs WHERE grupo = ?1 AND anulado = 1)`, g.grupo));
     });
     if (tx.reiniciar) {
-      ['movs', 'traspaso_lineas', 'traspasos', 'pedido_lineas', 'pedidos'].forEach((t) => st.push(q(`DELETE FROM ${t}`)));
+      ['gastos', 'movs', 'traspaso_lineas', 'traspasos', 'pedido_lineas', 'pedidos'].forEach((t) => st.push(q(`DELETE FROM ${t}`)));
       st.push(q(`UPDATE productos SET stock_local = 0, stock_tienda = 0, hubo_local = 0, hubo_tienda = 0`));
     }
     if (tx.configInsert) Object.keys(tx.configInsert).forEach((k) => st.push(q(`INSERT INTO config (k, v) VALUES (?1, ?2)`, k, JSON.stringify(tx.configInsert[k]))));
@@ -115,6 +121,11 @@ export async function crearRepoD1(db) {
         JSON.stringify(tx.movsAnulados.map((m) => m.id)), a.ts, a.por, a.nota));
     }
     if (tx.movs.length) st.push(q(insertarJson('movs', COLS_MOV), JSON.stringify(tx.movs)));
+    if (tx.gastosAnular.length) {
+      const a = tx.gastosAnular[0];
+      st.push(q(`UPDATE gastos SET anulado = 1, anulado_ts = ?2, anulado_por = ?3, anulado_nota = ?4 WHERE id IN (SELECT value FROM json_each(?1))`, JSON.stringify(tx.gastosAnular.map((x) => x.id)), a.ts, a.por, a.nota));
+    }
+    if (tx.gastosInsert.length) st.push(q(insertarJson('gastos', COLS_GASTO), JSON.stringify(tx.gastosInsert)));
     tx.traspasos.forEach(({ t, lineas }) => {
       st.push(q(
         `INSERT INTO traspasos (id, ts, estado, nota, pedido, recibido_ts, nota_recibo, dif) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
@@ -192,6 +203,8 @@ export async function crearRepoD1(db) {
       const last = items[items.length - 1];
       return { items, siguiente: filas.length > f.limite && last ? last.ts + '_' + last.id : null };
     },
+    gastos(desde) { return todas(`SELECT * FROM gastos WHERE ts >= ?1 ORDER BY ts DESC`, desde); },
+    async gasto(id) { return (await q(`SELECT * FROM gastos WHERE id = ?1`, id).first()) || null; },
     ventas(desde) {
       return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
     },

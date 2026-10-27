@@ -45,7 +45,9 @@ const ico = (n, cls) => raw('<svg class="i' + (cls ? ' ' + cls : '') + '" aria-h
 /* ───────── formatos ───────── */
 const nf = new Intl.NumberFormat('es-MX');
 const mf = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0, maximumFractionDigits: 2 });
-const dinero = (n) => mf.format(n || 0);
+const mf2 = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// sin centavos cuando es exacto ($1,800); con dos cuando los hay ($180.50)
+const dinero = (n) => ((n || 0) % 1 ? mf2 : mf).format(n || 0);
 const num = (n) => nf.format(n || 0);
 const plural = (n, uno, varios) => num(n) + ' ' + (n === 1 ? uno : varios);
 const DIA = 86400000;
@@ -497,6 +499,11 @@ function pintarInicio() {
       <span class="vtas-t"><span class="t-sec">Ventas</span><span class="vtas-ver">Ver reporte ${ico('der')}</span></span>
       <span class="vtas-g">${[['Hoy', r.hoy], ['Semana', r.semana], ['Mes', r.mes]].map(([t, v]) => html`<span class="vtas-c"><small>${t}</small><b class="cifras">${dinero(v.total)}</b><i>${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pza', 'pzas')}</i></span>`)}</span>
     </button>
+    <button type="button" class="gastos-b" data-act="gastos" aria-label="Ver gastos">
+      <span class="ico-c warn">${ico('salida')}</span>
+      <span class="grow"><b>Gastos</b><small>Hoy ${dinero((r.gastos || {}).hoy || 0)} · semana ${dinero((r.gastos || {}).semana || 0)} · mes ${dinero((r.gastos || {}).mes || 0)}</small></span>
+      <span class="gastos-mas">${ico('plus')}</span>
+    </button>
     ${S.rol === 'local' ? html`<div class="acciones-fab"><button type="button" class="btn btn-p" data-act="prod-nuevo">${ico('plus')}Agregar producto</button><button type="button" class="btn btn-g" data-act="variantes">${ico('capas')}Agregar bases</button></div>` : ''}
     ${S.rol === 'tienda' ? html`<button type="button" class="btn btn-p btn-b" data-act="reporte-dia" style="min-height:52px">${ico('tabla')}Reporte del día</button>` : ''}
     <section class="grid-kpi" aria-label="Resumen">
@@ -687,8 +694,8 @@ VISTAS.mover = {
     const e = S.est;
     const enT = e.traspasos.filter((t) => t.estado === 'en_transito');
     const acc = S.rol === 'local'
-      ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['regreso', 'entrada', 'Regresar de tienda', 'Mueve piezas de la tienda al almacén'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
-      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['reporte', 'tabla', 'Reporte del día', 'Total vendido, por forma de pago'], ['pedido', 'pedido', 'Pedir al almacén', 'Avisa qué bases hacen falta'], ['regreso', 'entrada', 'Regresar al almacén', 'Mueve piezas de la tienda al almacén'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
+      ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['regreso', 'entrada', 'Regresar de tienda', 'Mueve piezas de la tienda al almacén'], ['gasto', 'salida', 'Registrar gasto', 'Salida de dinero: material, comida, gasolina…'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
+      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['reporte', 'tabla', 'Reporte del día', 'Total vendido, por forma de pago'], ['pedido', 'pedido', 'Pedir al almacén', 'Avisa qué bases hacen falta'], ['regreso', 'entrada', 'Regresar al almacén', 'Mueve piezas de la tienda al almacén'], ['gasto', 'salida', 'Registrar gasto', 'Salida de dinero de la tienda'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
     poner($('#mv-acc'), html`<div class="atajos">${acc.map(([k, ic, t, s, pri]) => html`<button type="button" class="atajo ${pri ? 'pri' : ''}" data-act="forma" data-tipo="${k}"><span class="ico-c ${pri ? '' : 'acc'}">${ico(ic)}</span><b>${t}</b><span>${s}</span></button>`)}</div>`);
 
     const cerr = (arr, n) => arr.filter((x) => x.estado !== 'en_transito' && x.estado !== 'pendiente').slice(0, n);
@@ -1089,6 +1096,109 @@ async function abrirVentas(inicial) {
   }
 }
 
+/* ───────── gastos (salidas de dinero) ───────── */
+const GASTO_CATS = { materiales: 'Materiales', sueldos: 'Sueldos', renta: 'Renta', servicios: 'Luz, agua, internet', transporte: 'Gasolina y transporte', comida: 'Comida', mantenimiento: 'Mantenimiento', publicidad: 'Publicidad', retiro: 'Retiro del dueño', otro: 'Otro' };
+const fechaLocal = (ts) => fechaISO(ts).slice(0, 10);
+function enPeriodo(ts, per) {
+  const hoy = new Date(), k = fechaLocal(ts), kh = fechaLocal(hoy.getTime());
+  if (per === 'hoy') return k === kh;
+  if (per === 'mes') return k.slice(0, 7) === kh.slice(0, 7);
+  const dow = (hoy.getDay() + 6) % 7, lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - dow);
+  return k >= fechaLocal(lunes.getTime()) && k <= kh;
+}
+async function abrirGastos(inicial) {
+  let per = inicial || 'hoy', datos = null;
+  const d = dialogo({
+    titulo: 'Gastos',
+    clase: 'ancho',
+    cuerpo: html`<div class="vt-seg" id="gs-seg" role="group" aria-label="Periodo"></div><div id="gs-cont"><p class="t-peq">Cargando…</p></div>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="gs-nuevo">${ico('plus')}Registrar gasto</button>`,
+    enfocar: false
+  });
+  const pintar = () => {
+    poner($('#gs-seg', d.el), html`${PERIODOS.map(([k, t]) => html`<button type="button" class="chip" data-per="${k}" aria-pressed="${String(per === k)}">${t}</button>`)}`);
+    if (!datos) return;
+    const res = datos.resumen[per];
+    const items = datos.items.filter((g) => enPeriodo(g.ts, per));
+    const cats = Object.keys(res.porCat).sort((a, b) => res.porCat[b] - res.porCat[a]);
+    poner($('#gs-cont', d.el), html`
+      <div class="total-b"><span>Gastado</span><b>${dinero(res.total)}</b></div>
+      <p class="t-peq" style="margin:-6px 0 14px">${plural(res.n, 'gasto', 'gastos')}${S.rol === 'local' ? '' : ' de la tienda'}</p>
+      ${cats.length ? html`<h3 class="t-sec">Por categoría</h3><div class="vt-lista">${cats.map((c) => html`<div class="vt-fila"><span class="n">${GASTO_CATS[c] || c}</span><span class="v">${dinero(res.porCat[c])}</span></div>`)}</div>` : ''}
+      ${items.length ? html`<h3 class="t-sec">Detalle</h3><div class="vt-lista">${items.map((g) => html`<button type="button" class="vt-fila gs-fila ${g.anulado ? 'anulado' : ''}" data-gasto="${g.id}"><span class="n">${per === 'hoy' ? fmtHora.format(g.ts) : mayus(fmtDiaCorto.format(new Date(g.ts)).replace('.', '')) + ' ' + fmtHora.format(g.ts)} · ${GASTO_CATS[g.cat] || g.cat}</span><span class="v">${g.anulado ? '' : '-'}${dinero(g.monto)}</span><small>${g.concepto || ''}${g.concepto ? ' · ' : ''}${PAGOS[g.pago] || ''}${S.rol === 'local' ? ' · ' + ROLES[g.rol].corto : ''}${g.anulado ? ' · ANULADO: ' + g.anulado_nota : ''}</small></button>`)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-s btn-g" id="gs-csv">Descargar CSV</button></div>`
+        : html`<div class="vacio" style="padding:18px 8px"><b>Sin gastos en este periodo</b><span>Registra una salida de dinero con el botón de abajo.</span></div>`}`);
+    const csv = $('#gs-csv', d.el);
+    if (csv) csv.addEventListener('click', () => {
+      const filas = [['Fecha', 'Categoría', 'Concepto', 'Forma de pago', 'Monto', 'Registró', 'Anulado', 'Motivo de anulación']];
+      items.slice().reverse().forEach((g) => filas.push([fechaISO(g.ts), GASTO_CATS[g.cat] || g.cat, g.concepto, PAGOS[g.pago] || '', g.monto, ROLES[g.rol].corto, g.anulado ? 'Sí' : '', g.anulado_nota]));
+      descargar('gastos-' + per + '-bases-box-' + fechaArchivo() + '.csv', aCsv(filas), 'text/csv;charset=utf-8');
+    });
+  };
+  const cargar = async () => {
+    try {
+      const r = await llamar('GET', '/gastos');
+      if (!r.json.ok) throw new ErrorApi(r.json.error);
+      datos = r.json;
+      pintar();
+    } catch (e) { poner($('#gs-cont', d.el), html`<p class="err">${e.message || 'No se pudo cargar.'}</p>`); }
+  };
+  $('#gs-seg', d.el).addEventListener('click', (ev) => { const b = ev.target.closest('[data-per]'); if (b) { per = b.dataset.per; pintar(); } });
+  $('#gs-nuevo', d.el).addEventListener('click', () => formGasto(cargar));
+  d.el.addEventListener('click', async (ev) => {
+    const b = ev.target.closest('[data-gasto]');
+    if (!b || !datos) return;
+    const g = datos.items.find((x) => x.id === b.dataset.gasto);
+    if (!g || g.anulado || (S.rol !== 'local' && g.rol !== S.rol)) return;
+    const motivo = await confirmar({ titulo: 'Anular gasto', texto: (GASTO_CATS[g.cat] || g.cat) + ' · ' + dinero(g.monto) + (g.concepto ? ' · ' + g.concepto : '') + '. Dejará de contar en los totales y queda marcado como anulado.', ok: 'Anular gasto', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Motivo', min: 3, ayuda: 'Ej. me equivoqué de monto' } });
+    if (!motivo) return;
+    try { await op({ op: 'gasto.anular', id: g.id, motivo }); toast('Gasto anulado.'); cargar(); } catch (e) { toast(e.message, { tipo: 'error' }); }
+  });
+  cargar();
+  return d;
+}
+function formGasto(alGuardar) {
+  const cid = nuevoCid();
+  let cat = '', pago = 'efectivo';
+  const hoy = fechaArchivo(), min = new Date(); min.setDate(min.getDate() - 30);
+  const minK = min.getFullYear() + '-' + String(min.getMonth() + 1).padStart(2, '0') + '-' + String(min.getDate()).padStart(2, '0');
+  const d = dialogo({
+    titulo: 'Registrar gasto',
+    clase: 'ancho',
+    cuerpo: html`<label class="campo"><span class="lbl">Monto</span><span class="precio gs-monto"><span class="muted">$</span><input id="gs-monto" type="text" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Monto del gasto"></span></label>
+      <div class="campo"><span class="lbl">¿En qué fue?</span><div class="opciones" id="gs-cats">${Object.keys(GASTO_CATS).map((k) => html`<button type="button" class="opcion" data-cat="${k}" aria-pressed="false" style="padding:0 12px">${GASTO_CATS[k]}</button>`)}</div></div>
+      <label class="campo"><span class="lbl" id="gs-lbl-con">Detalle (opcional)</span><input class="inp" id="gs-concepto" maxlength="80" placeholder="Ej. gasolina camioneta, tela, comida del equipo" autocomplete="off"></label>
+      <div class="campo"><span class="lbl">Cómo se pagó</span><div class="opciones g4" id="gs-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>
+      <label class="campo" style="max-width:220px"><span class="lbl">Día</span><input class="inp" type="date" id="gs-dia" value="${hoy}" max="${hoy}" min="${minK}"></label>
+      <p class="err" id="gs-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="gs-ok">Guardar gasto</button>`
+  });
+  const marca = (sel, attr, fn) => $(sel, d.el).addEventListener('click', (ev) => {
+    const b = ev.target.closest('[' + attr + ']');
+    if (!b) return;
+    fn(b.getAttribute(attr));
+    $$('button', $(sel, d.el)).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  });
+  marca('#gs-cats', 'data-cat', (v) => { cat = v; $('#gs-lbl-con', d.el).textContent = v === 'otro' ? 'Detalle (obligatorio)' : 'Detalle (opcional)'; });
+  marca('#gs-pagos', 'data-pago', (v) => { pago = v; });
+  const btn = $('#gs-ok', d.el), err = $('#gs-err', d.el);
+  const enviar = () => guardando(btn, err, async () => {
+    const monto = decimal($('#gs-monto', d.el).value);
+    if (!(monto > 0)) throw new ErrorApi({ mensaje: 'Escribe cuánto se gastó.' });
+    if (!cat) throw new ErrorApi({ mensaje: 'Elige en qué fue el gasto.' });
+    const concepto = $('#gs-concepto', d.el).value.trim();
+    if (cat === 'otro' && !concepto) throw new ErrorApi({ mensaje: 'Escribe en qué se gastó.' });
+    const dia = $('#gs-dia', d.el).value;
+    const res = await op({ op: 'gasto.crear', cid, monto, cat, concepto, pago, dia: dia && dia !== hoy ? dia : undefined });
+    d.cerrar();
+    toast('Gasto guardado · ' + dinero(res.monto), { accion: { texto: 'Deshacer', fn: async () => { try { await op({ op: 'gasto.anular', id: res.id, motivo: 'Deshecho al momento' }); toast('Gasto deshecho.'); if (alGuardar) alGuardar(); } catch (e) { toast(e.message, { tipo: 'error' }); } } } });
+    if (alGuardar) alGuardar();
+  });
+  btn.addEventListener('click', enviar);
+  d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && ev.target.matches('input')) enviar(); });
+  return d;
+}
+
 /* ───────── reporte del día (el vendedor lo entrega al cierre) ───────── */
 const hoyLocal = () => fechaArchivo();
 function textoReporteDia(r) {
@@ -1099,7 +1209,9 @@ function textoReporteDia(r) {
   L.push('Ventas: ' + t.ventas + ' · ' + plural(t.pzas, 'pieza', 'piezas'));
   L.push('Vendido: ' + dinero(t.vendido) + (t.envios ? ' (incluye envíos ' + dinero(t.envios) + ')' : ''));
   if (t.devuelto) L.push('Devoluciones: -' + dinero(t.devuelto));
-  L.push('TOTAL DEL DÍA: ' + dinero(t.neto), '');
+  if (t.gastos) L.push('Gastos: -' + dinero(t.gastos) + (t.gastosEfectivo ? ' (en efectivo ' + dinero(t.gastosEfectivo) + ')' : ''));
+  L.push('TOTAL DEL DÍA: ' + dinero(t.neto));
+  L.push('EFECTIVO EN CAJA (ventas en efectivo − gastos en efectivo): ' + dinero(t.efectivoNeto), '');
   const pagos = Object.keys(t.porPago);
   if (pagos.length) { L.push('Por forma de pago:'); pagos.forEach((k) => L.push('• ' + (PAGOS[k] || k) + ': ' + dinero(t.porPago[k]))); L.push(''); }
   if (r.ventas.length) {
@@ -1117,6 +1229,11 @@ function textoReporteDia(r) {
     r.devoluciones.forEach((v) => L.push('• ' + fmtHora.format(v.ts) + ' · ' + v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ') + ' — -' + dinero(v.total)));
     L.push('');
   }
+  if (r.gastos.length) {
+    L.push('Gastos:');
+    r.gastos.forEach((g) => L.push('• ' + fmtHora.format(g.ts) + ' · ' + (GASTO_CATS[g.cat] || g.cat) + (g.concepto ? ' · ' + g.concepto : '') + ' · ' + (PAGOS[g.pago] || '') + ' — -' + dinero(g.monto)));
+    L.push('');
+  }
   L.push('Existencias en tienda: ' + plural(r.tienda.pzas, 'pieza', 'piezas'));
   return L.join('\n');
 }
@@ -1124,6 +1241,7 @@ function csvReporteDia(r) {
   const filas = [['Día', 'Hora', 'Tipo', 'Cliente', 'Pago', 'Entrega', 'Producto', 'Piezas', 'Precio', 'Importe', 'Envío', 'Total de la venta']];
   r.ventas.forEach((v) => v.lineas.forEach((l, i) => filas.push([r.dia, fmtHora.format(v.ts), 'Venta', v.cliente, PAGOS[v.pago] || '', ENTREGA_T[v.entrega] || '', nombreProd(l.id), l.pzas, l.precio, l.pzas * l.precio, i === 0 ? v.envio : '', i === 0 ? v.total : ''])));
   r.devoluciones.forEach((v) => v.lineas.forEach((l, i) => filas.push([r.dia, fmtHora.format(v.ts), 'Devolución', '', '', '', nombreProd(l.id), -l.pzas, l.precio, -l.pzas * l.precio, '', i === 0 ? -v.total : ''])));
+  r.gastos.forEach((g) => filas.push([r.dia, fmtHora.format(g.ts), 'Gasto', g.concepto, PAGOS[g.pago] || '', GASTO_CATS[g.cat] || g.cat, '', '', '', -g.monto, '', -g.monto]));
   filas.push([r.dia, '', 'TOTAL DEL DÍA', '', '', '', '', r.totales.pzas, '', '', r.totales.envios, r.totales.neto]);
   return aCsv(filas);
 }
@@ -1146,6 +1264,8 @@ async function abrirReporteDia() {
       <p class="t-peq" style="margin:-6px 0 14px">${plural(t.ventas, 'venta', 'ventas')} · ${plural(t.pzas, 'pieza', 'piezas')}${t.envios ? ' · envíos ' + dinero(t.envios) : ''}${t.devuelto ? ' · devoluciones -' + dinero(t.devuelto) : ''}</p>
       ${Object.keys(t.porPago).length ? html`<h3 class="t-sec">Por forma de pago</h3><div class="vt-lista">${Object.keys(t.porPago).map((k) => html`<div class="vt-fila"><span class="n">${PAGOS[k] || k}</span><span class="v">${dinero(t.porPago[k])}</span></div>`)}</div>` : ''}
       ${datos.ventas.length ? html`<h3 class="t-sec">Ventas</h3><div class="vt-lista">${datos.ventas.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)} · ${v.cliente || 'Mostrador'}</span><span class="v">${dinero(v.total)}</span><small>${v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}<br>${PAGOS[v.pago] || 'Efectivo'}${ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''}${v.envio ? ' (envío ' + dinero(v.envio) + ')' : ''}</small></div>`)}</div>` : html`<div class="vacio" style="padding:18px 8px"><b>Sin ventas este día</b><span>Cuando registres ventas aparecerán aquí.</span></div>`}
+      ${t.gastos || t.efectivoNeto ? html`<h3 class="t-sec">Caja</h3><div class="vt-lista"><div class="vt-fila"><span class="n">Efectivo vendido</span><span class="v">${dinero(t.porPago.efectivo || 0)}</span></div><div class="vt-fila"><span class="n">Gastos en efectivo</span><span class="v">-${dinero(t.gastosEfectivo)}</span></div><div class="vt-fila"><span class="n">Efectivo en caja</span><span class="v">${dinero(t.efectivoNeto)}</span></div></div>` : ''}
+      ${datos.gastos.length ? html`<h3 class="t-sec">Gastos</h3><div class="vt-lista">${datos.gastos.map((g) => html`<div class="vt-fila"><span class="n">${fmtHora.format(g.ts)} · ${GASTO_CATS[g.cat] || g.cat}</span><span class="v">-${dinero(g.monto)}</span><small>${g.concepto || ''}${g.concepto ? ' · ' : ''}${PAGOS[g.pago] || ''}</small></div>`)}</div>` : ''}
       ${datos.devoluciones.length ? html`<h3 class="t-sec">Devoluciones</h3><div class="vt-lista">${datos.devoluciones.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)}</span><span class="v">-${dinero(v.total)}</span><small>${v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}</small></div>`)}</div>` : ''}
       <p class="t-peq">Existencias en tienda: ${plural(datos.tienda.pzas, 'pieza', 'piezas')}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn btn-s btn-g" id="rd-copiar">Copiar texto</button><button type="button" class="btn btn-s btn-g" id="rd-csv">Descargar CSV</button></div>`);
@@ -1730,6 +1850,7 @@ VISTAS.mas = {
         ${fila('capas', 'Tonos', plural(e.tonos.length, 'tono', 'tonos'), 'tonos')}
       </ul></div></section>` : ''}
       <section class="sec-mas"><span class="t-sec">Datos</span><div class="card flat"><ul class="lista">
+        ${fila('salida', 'Gastos', 'Salidas de dinero: registrar y ver por día, semana y mes', 'gastos')}
         ${fila('bajar', 'Exportar inventario', 'Hoja de cálculo (CSV) con las existencias de hoy', 'exportar-inv')}
         ${fila('bajar', 'Exportar movimientos', 'Todo el historial en CSV', 'exportar-movs')}
         ${local ? fila('bajar', 'Respaldo completo', 'Archivo JSON con productos y movimientos', 'respaldo') : ''}
@@ -1768,8 +1889,9 @@ const A = {
   'filtro-cat': (b) => { S.filtro.cat = b.dataset.cat; VISTAS.inventario.actualizar(); },
   'filtro-bajo': () => { S.filtro.bajo = !S.filtro.bajo; VISTAS.inventario.actualizar(); },
   'filtro-arch': () => { S.filtro.archivados = !S.filtro.archivados; VISTAS.inventario.actualizar(); },
-  forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : b.dataset.tipo === 'reporte' ? abrirReporteDia() : abrirForma(b.dataset.tipo)),
+  forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : b.dataset.tipo === 'reporte' ? abrirReporteDia() : b.dataset.tipo === 'gasto' ? formGasto() : abrirForma(b.dataset.tipo)),
   'reporte-dia': () => abrirReporteDia(),
+  gastos: () => abrirGastos(),
   'recibir-ya': () => recibirYa(),
   traspaso: (b) => abrirTraspaso(b.dataset.id),
   'pedido-det': (b) => abrirPedido(b.dataset.id),
