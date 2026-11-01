@@ -16,7 +16,7 @@
   const ROLES = ['local', 'tienda', 'dueno']; // dueno: solo lectura (resumen del negocio)
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
-  const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'retiro', 'otro'];
+  const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'comisiones', 'retiro', 'otro'];
   const MAX_LINEAS = 60;
   const SESION_DIAS = 14;
   const TZ_DEFECTO = -420; // Tepic, Nayarit: UTC−7 todo el año

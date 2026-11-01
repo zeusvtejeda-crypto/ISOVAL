@@ -1332,7 +1332,7 @@ async function descargarPdfSemanal(sem, btn) {
 }
 
 /* ───────── gastos (salidas de dinero) ───────── */
-const GASTO_CATS = { materiales: 'Materiales', sueldos: 'Sueldos', renta: 'Renta', servicios: 'Luz, agua, internet', transporte: 'Gasolina y transporte', comida: 'Comida', mantenimiento: 'Mantenimiento', publicidad: 'Publicidad', retiro: 'Retiro del dueño', otro: 'Otro' };
+const GASTO_CATS = { materiales: 'Materiales', sueldos: 'Sueldos', renta: 'Renta', servicios: 'Luz, agua, internet', transporte: 'Gasolina y transporte', comida: 'Comida', mantenimiento: 'Mantenimiento', publicidad: 'Publicidad', comisiones: 'Comisiones (Mercado Pago, banco)', retiro: 'Retiro del dueño', otro: 'Otro' };
 const fechaLocal = (ts) => fechaISO(ts).slice(0, 10);
 function enPeriodo(ts, per) {
   const hoy = new Date(), k = fechaLocal(ts), kh = fechaLocal(hoy.getTime());

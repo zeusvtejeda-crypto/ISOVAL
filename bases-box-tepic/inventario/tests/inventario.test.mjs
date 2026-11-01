@@ -775,6 +775,9 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await tienda.op({ op: 'gasto.crear', monto: 'abc', cat: 'comida' })).json.error.code, 'falta_monto');
       assert.equal((await tienda.op({ op: 'gasto.crear', monto: 50, cat: 'otro' })).json.error.code, 'falta_concepto');
       assert.equal((await tienda.op({ op: 'gasto.crear', monto: 50, cat: 'comida', dia: '2020-01-01' })).json.error.code, 'dia_invalido');
+      const gc = await local.op({ op: 'gasto.crear', monto: 208.5, cat: 'comisiones', concepto: 'Comisión Mercado Pago', pago: 'otro' });
+      assert.equal(gc.status, 200, JSON.stringify(gc.json));
+      assert.equal((await local.op({ op: 'gasto.anular', id: gc.json.resultado.id, motivo: 'solo prueba' })).status, 200);
       const g1 = await tienda.op({ op: 'gasto.crear', monto: 120.5, cat: 'comida', concepto: 'Comida del equipo', pago: 'efectivo' });
       assert.equal(g1.status, 200, JSON.stringify(g1.json));
       const g2 = await tienda.op({ op: 'gasto.crear', monto: 300, cat: 'transporte', concepto: 'Gasolina camioneta', pago: 'tarjeta' });
