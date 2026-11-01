@@ -904,6 +904,57 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await cliente(repo, local.now).login('dueno', '951357')).status, 200);
     });
 
+    test('reporte semanal: semana en curso y pasada, sueldos, gastos, producción y reglas de acceso', async () => {
+      const { repo, local, tienda } = await iniciar(fabrica);
+      await local.op({ op: 'pin.dueno', pinActual: '482159', pinNuevo: '615243' });
+      const dueno = cliente(repo, local.now); await dueno.login('dueno', '615243');
+      const est0 = await local.estado();
+      const a = prod(est0, 'Base Queen · Gris');
+      await local.op({ op: 'producto.editar', id: a.id, costo: 1249, precio: 2000 });
+      await local.op({ op: 'mov.entrada', motivo: 'produccion', lineas: [{ id: a.id, cant: 10 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 6 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      await tienda.op({ op: 'mov.venta', pago: 'efectivo', entrega: 'tepic', lineas: [{ id: a.id, cant: 2, precio: 1800 }] });
+      await local.op({ op: 'gasto.crear', monto: 3500, cat: 'sueldos', concepto: 'Sueldo Juan', pago: 'transferencia' });
+      await local.op({ op: 'gasto.crear', monto: 2800, cat: 'sueldos', concepto: 'Sueldo Pedro', pago: 'efectivo' });
+      await tienda.op({ op: 'gasto.crear', monto: 400, cat: 'comida', concepto: 'Comida' });
+      const r = (await dueno.call('GET', '/reporte-semana', null, { tz: '0' })).json;
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.equal(r.sem, 0);
+      assert.ok(r.desde <= r.hoy && r.hoy <= r.hasta);
+      assert.equal(new Date(r.desde + 'T00:00:00Z').getUTCDay(), 1, 'la semana empieza en lunes');
+      assert.equal(new Date(r.hasta + 'T00:00:00Z').getUTCDay(), 0, 'y termina en domingo');
+      assert.equal(r.dias.length, 7);
+      assert.equal(r.ventas.bruto, 3800);
+      assert.equal(r.ventas.envios, 200);
+      assert.equal(r.gastos.total, 6700);
+      assert.equal(r.sueldos.length, 2);
+      assert.equal(r.sueldosTotal, 6300);
+      assert.equal(r.listaGastos.length, 3);
+      assert.equal(r.egresos, 6700);
+      assert.equal(r.resultado, 3800 - 6700);
+      assert.equal(r.produccion.pzas, 10);
+      assert.equal(r.produccion.costo, 12490);
+      assert.equal(r.masVendido[0].id, a.id);
+      assert.equal(r.dias.reduce((t, d) => t + d.gastos, 0), 6700);
+      assert.equal(r.dias.reduce((t, d) => t + d.ventas, 0), 3800);
+      assert.equal(r.inventario.pzasAlmacen + r.inventario.pzasTienda, 8);
+      // el mismo reporte lo ve el Almacén; la semana pasada está vacía; el vendedor no tiene acceso
+      assert.deepEqual((await local.call('GET', '/reporte-semana', null, { tz: '0' })).json.sueldos, r.sueldos);
+      const pasada = (await dueno.call('GET', '/reporte-semana', null, { tz: '0', sem: '1' })).json;
+      assert.equal(pasada.sem, 1);
+      assert.equal(pasada.hasta < r.desde, true);
+      assert.equal(pasada.ventas.bruto, 0);
+      assert.equal(pasada.sueldos.length, 0);
+      assert.equal((await tienda.call('GET', '/reporte-semana')).status, 403);
+      assert.equal((await dueno.call('GET', '/reporte-semana', null, { sem: '9' })).status, 400);
+      assert.equal((await dueno.call('GET', '/reporte-semana', null, { sem: 'x' })).status, 400);
+      // dentro de ocho días, esos sueldos caen en la semana pasada o anterior, nunca se pierden ni se duplican
+      local.avanzar(8 * DIA);
+      const luego = [(await dueno.call('GET', '/reporte-semana', null, { tz: '0', sem: '0' })).json, (await dueno.call('GET', '/reporte-semana', null, { tz: '0', sem: '1' })).json, (await dueno.call('GET', '/reporte-semana', null, { tz: '0', sem: '2' })).json];
+      assert.equal(luego.reduce((t, x) => t + x.sueldosTotal, 0), 6300);
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });

@@ -1077,6 +1077,7 @@ async function abrirVentas(inicial) {
     const vacio = !v.dias.length;
     poner($('#vt-cont', d.el), html`
       <p class="t-peq" style="margin-bottom:10px">${etiquetaPeriodo(per, v)}</p>
+      ${S.rol !== 'tienda' ? html`<div class="acciones-fab" style="margin-bottom:14px"><button type="button" class="btn btn-s btn-p" data-act="pdf-semana" data-sem="0">${ico('bajar')}PDF semanal con gráficas</button><button type="button" class="btn btn-s btn-g" data-act="pdf-semana" data-sem="1">Semana pasada</button></div>` : ''}
       <div class="total-b"><span>Vendido</span><b>${dinero(v.total)}</b></div>
       <p class="t-peq" style="margin:-6px 0 14px">${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pieza', 'piezas')}</p>
       ${vacio ? html`<div class="vacio" style="padding:18px 8px"><b>Sin ventas en este periodo</b><span>Cuando la tienda registre ventas aparecerán aquí.</span></div>` : html`
@@ -1129,6 +1130,7 @@ function htmlResumen(d, per) {
       <div class="kpi"><span class="t-sec">Egresos</span><span class="num-g cifras">${dinero(p.egresos)}</span><small>Gastos + devoluciones ${dinero(v.devuelto)}</small></div>
       <div class="kpi"><span class="t-sec">Producción</span><span class="num-g cifras">${num(pr.pzas)}</span><small>${pr.pzas === 1 ? 'pieza' : 'piezas'} · costo ${dinero(pr.costo)}${pr.compras ? ' · compras ' + num(pr.compras) + ' pzas (' + dinero(pr.comprasCosto) + ')' : ''}</small></div>
     </div>
+    <div class="acciones-fab" aria-label="Reporte en PDF"><button type="button" class="btn btn-p" data-act="pdf-semana" data-sem="0">${ico('bajar')}PDF de esta semana</button><button type="button" class="btn btn-g" data-act="pdf-semana" data-sem="1">PDF de la semana pasada</button></div>
     ${pagos.length ? html`<section class="card" aria-label="Ventas por forma de pago"><h2 class="t-sec">Ventas por forma de pago</h2><div class="vt-lista">${pagos.map((k) => html`<div class="vt-fila"><span class="n">${PAGOS[k] || k}</span><span class="v">${dinero(v.porPago[k])}</span></div>`)}</div></section>` : ''}
     ${cats.length ? html`<section class="card" aria-label="Gastos por categoría"><h2 class="t-sec">Gastos por categoría</h2><div class="vt-lista">${cats.map((c) => html`<div class="vt-fila"><span class="n">${GASTO_CATS[c] || c}</span><span class="v">${dinero(g.porCat[c])}</span></div>`)}</div></section>` : ''}
     ${pr.porProducto.length ? html`<section class="card" aria-label="Producción"><h2 class="t-sec">Producción por producto</h2><div class="vt-lista">${pr.porProducto.map((x) => html`<div class="vt-fila"><span class="n">${nombreProd(x.id)}</span><span class="v">${plural(x.pzas, 'pza', 'pzas')}</span></div>`)}</div></section>` : ''}
@@ -1186,6 +1188,147 @@ async function abrirResumen() {
   pintar();
   enVivo(d, cargar);
   await cargar();
+}
+
+/* ───────── PDF semanal: ventas, gastos, sueldos, producción y cómo quedó el inventario ───────── */
+const COL_PDF = { tinta: [26, 26, 26], gris: [107, 114, 128], linea: [222, 220, 214], fondo: [244, 242, 237], acento: [241, 90, 34], ven: [55, 65, 81], gas: [180, 35, 24], ok: [31, 122, 77], blanco: [255, 255, 255] };
+function pdfSemanal(d) {
+  const neg = S.est.negocio.nombre;
+  const fk = (k) => fechaDeKey(k);
+  const fLargo = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  const fDia = new Intl.DateTimeFormat('es-MX', { weekday: 'short', day: 'numeric' });
+  const fCorta = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' });
+  const rango = 'Semana del ' + fLargo.format(fk(d.desde)).replace(/\./g, '') + ' al ' + fLargo.format(fk(d.hasta)).replace(/\./g, '');
+  const P = new BBPdf.Doc({ titulo: neg + ' · Resumen semanal · ' + d.desde });
+  const L = 40, R = P.w - 40, ANCHO = R - L;
+  let y = 0;
+  const pie = () => { P.line(L, P.h - 34, R, P.h - 34, { color: COL_PDF.linea }); P.text(L, P.h - 20, neg + ' · Resumen semanal · ' + rango, { size: 8, color: COL_PDF.gris }); P.text(R, P.h - 20, 'Página ' + P.numPaginas, { size: 8, color: COL_PDF.gris, align: 'right' }); };
+  const pagina = (titulo) => {
+    P.page(); pie();
+    if (titulo) { P.rect(0, 0, P.w, 44, { fill: COL_PDF.tinta }); P.text(L, 28, titulo, { size: 14, bold: true, color: COL_PDF.blanco }); P.text(R, 28, rango, { size: 9, color: [210, 210, 210], align: 'right' }); y = 66; }
+  };
+  const asegura = (alto, titulo) => { if (y + alto > P.h - 50) pagina(titulo || neg + ' · Resumen semanal (continuación)'); };
+  const titulo = (t, espacio) => { asegura(espacio || 40); P.text(L, y, t.toUpperCase(), { size: 10, bold: true, color: COL_PDF.gris }); P.line(L, y + 5, R, y + 5, { color: COL_PDF.linea }); y += 22; };
+  const corto = (n) => (Math.abs(n) >= 1000 ? (Math.round(n / 100) / 10) + 'k' : String(Math.round(n)));
+
+  // ── portada
+  P.page(); pie();
+  P.rect(0, 0, P.w, 96, { fill: COL_PDF.tinta });
+  P.rect(0, 96, P.w, 4, { fill: COL_PDF.acento });
+  P.text(L, 44, neg.toUpperCase(), { size: 11, bold: true, color: COL_PDF.acento });
+  P.text(L, 70, 'Resumen semanal', { size: 24, bold: true, color: COL_PDF.blanco });
+  P.text(L, 88, rango + (d.sem === 0 ? ' (en curso)' : ''), { size: 10, color: [210, 210, 210] });
+  P.text(R, 70, 'Generado ' + new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d.ahora)), { size: 8, color: [190, 190, 190], align: 'right' });
+  y = 124;
+  // tarjetas
+  const tarjetas = [
+    ['VENDIDO', dinero(d.ventas.bruto), plural(d.ventas.n, 'venta', 'ventas') + ' · ' + plural(d.ventas.pzas, 'pieza', 'piezas'), COL_PDF.tinta],
+    ['EGRESOS', dinero(d.egresos), 'Gastos ' + dinero(d.gastos.total) + ' + devol. ' + dinero(d.ventas.devuelto), COL_PDF.gas],
+    ['RESULTADO', dinero(d.resultado), 'Vendido − egresos', d.resultado < 0 ? COL_PDF.gas : COL_PDF.ok],
+    ['PRODUCCIÓN', num(d.produccion.pzas) + ' pzas', 'Costo ' + dinero(d.produccion.costo), COL_PDF.tinta]
+  ];
+  const tw = (ANCHO - 3 * 10) / 4;
+  tarjetas.forEach(([et, val, sub, col], i) => {
+    const x = L + i * (tw + 10);
+    P.rect(x, y, tw, 62, { fill: COL_PDF.fondo });
+    P.rect(x, y, 3, 62, { fill: col });
+    P.text(x + 12, y + 17, et, { size: 7.5, bold: true, color: COL_PDF.gris });
+    P.text(x + 12, y + 38, P.ajustar(val, 15, true, tw - 18), { size: 15, bold: true, color: col });
+    P.text(x + 12, y + 53, P.ajustar(sub, 7, false, tw - 18), { size: 7, color: COL_PDF.gris });
+  });
+  y += 82;
+  P.text(L, y, 'Sueldos pagados: ' + dinero(d.sueldosTotal) + '   ·   Envíos cobrados: ' + dinero(d.ventas.envios) + '   ·   Compras de material: ' + num(d.produccion.compras) + ' pzas', { size: 9, color: COL_PDF.tinta });
+  y += 28;
+
+  // ── gráfica 1: ventas y gastos por día (barras agrupadas)
+  titulo('Ventas y gastos por día');
+  const gx = L + 6, gw = ANCHO - 12, gh = 120, base = y + gh;
+  const max = Math.max(1, ...d.dias.map((x) => Math.max(x.ventas, x.gastos)));
+  [0, 0.5, 1].forEach((f) => { const yy = base - gh * f; P.line(gx, yy, gx + gw, yy, { color: COL_PDF.linea, lw: 0.5 }); P.text(gx - 3, yy + 3, corto(max * f), { size: 6.5, color: COL_PDF.gris, align: 'right' }); });
+  const paso = gw / 7, bw = Math.min(26, paso / 2 - 4);
+  d.dias.forEach((x, i) => {
+    const cx = gx + paso * i + paso / 2;
+    const hv = Math.max(0, x.ventas) / max * gh, hg = x.gastos / max * gh;
+    if (hv > 0) P.rect(cx - bw - 1, base - hv, bw, hv, { fill: COL_PDF.ven });
+    if (hg > 0) P.rect(cx + 1, base - hg, bw, hg, { fill: COL_PDF.gas });
+    if (x.ventas > 0) P.text(cx - bw / 2 - 1, base - hv - 3, corto(x.ventas), { size: 6.5, color: COL_PDF.ven, align: 'center' });
+    if (x.gastos > 0) P.text(cx + bw / 2 + 1, base - hg - 3, corto(x.gastos), { size: 6.5, color: COL_PDF.gas, align: 'center' });
+    P.text(cx, base + 12, mayus(fDia.format(fk(x.k)).replace('.', '')), { size: 8, color: COL_PDF.tinta, align: 'center' });
+  });
+  P.rect(L + 6, base + 26, 8, 8, { fill: COL_PDF.ven }); P.text(L + 18, base + 33, 'Ventas', { size: 8, color: COL_PDF.tinta });
+  P.rect(L + 66, base + 26, 8, 8, { fill: COL_PDF.gas }); P.text(L + 78, base + 33, 'Gastos', { size: 8, color: COL_PDF.tinta });
+  y = base + 56;
+
+  // ── barras horizontales (categorías de gasto y formas de pago)
+  const barras = (tit, pares, col) => {
+    titulo(tit);
+    if (!pares.length) { P.text(L, y, 'Sin movimientos esta semana.', { size: 9, color: COL_PDF.gris }); y += 22; return; }
+    const m = Math.max(...pares.map((x) => x[1])), lw = 150, aw = ANCHO - lw - 80;
+    pares.forEach(([nom, val]) => {
+      asegura(20);
+      P.text(L, y + 8, P.ajustar(nom, 9, false, lw - 6), { size: 9, color: COL_PDF.tinta });
+      P.rect(L + lw, y, aw, 11, { fill: COL_PDF.fondo });
+      P.rect(L + lw, y, Math.max(1, aw * val / m), 11, { fill: col });
+      P.text(R, y + 9, dinero(val), { size: 9, bold: true, color: COL_PDF.tinta, align: 'right' });
+      y += 18;
+    });
+    y += 16;
+  };
+  barras('Gastos por categoría', Object.keys(d.gastos.porCat).sort((a, b) => d.gastos.porCat[b] - d.gastos.porCat[a]).map((c) => [GASTO_CATS[c] || c, d.gastos.porCat[c]]), COL_PDF.gas);
+  barras('Ventas por forma de pago', Object.keys(d.ventas.porPago).sort((a, b) => d.ventas.porPago[b] - d.ventas.porPago[a]).map((c) => [PAGOS[c] || c, d.ventas.porPago[c]]), COL_PDF.ven);
+
+  // ── tablas
+  const tabla = (cols, filas, opc) => {
+    opc = opc || {};
+    const cabecera = () => { P.rect(L, y - 11, ANCHO, 17, { fill: COL_PDF.fondo }); cols.forEach((c) => P.text(c.align === 'right' ? c.x + c.w : c.x, y + 1, c.t, { size: 8, bold: true, color: COL_PDF.gris, align: c.align })); y += 18; };
+    asegura(70); cabecera();
+    filas.forEach((f, i) => {
+      if (y + 16 > P.h - 50) { pagina(neg + ' · Resumen semanal (continuación)'); cabecera(); }
+      if (i % 2) P.rect(L, y - 10, ANCHO, 15, { fill: [250, 249, 246] });
+      cols.forEach((c, j) => P.text(c.align === 'right' ? c.x + c.w : c.x, y + 1, P.ajustar(f[j], 8.5, false, c.w - 4), { size: 8.5, color: COL_PDF.tinta, align: c.align }));
+      y += 15;
+    });
+    if (opc.total) { asegura(24); P.line(L, y - 8, R, y - 8, { color: COL_PDF.tinta, lw: 1 }); P.text(L, y + 5, opc.total[0], { size: 9.5, bold: true, color: COL_PDF.tinta }); P.text(R, y + 5, opc.total[1], { size: 9.5, bold: true, color: COL_PDF.tinta, align: 'right' }); y += 22; }
+    y += 6;
+  };
+  const fh = new Intl.DateTimeFormat('es-MX', { weekday: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const filaGasto = (g) => [mayus(fh.format(new Date(g.ts)).replace(/\./g, '')), GASTO_CATS[g.cat] || g.cat, g.concepto || '', PAGOS[g.pago] || '', ROLES[g.rol] ? ROLES[g.rol].corto : '', dinero(g.monto)];
+  const colsG = [{ t: 'Fecha', x: L, w: 78 }, { t: 'Categoría', x: L + 80, w: 100 }, { t: 'Concepto', x: L + 182, w: 140 }, { t: 'Pago', x: L + 324, w: 70 }, { t: 'Registró', x: L + 396, w: 50 }, { t: 'Monto', x: R - 66, w: 66, align: 'right' }];
+
+  pagina(neg + ' · Sueldos, gastos y producción');
+  titulo('Sueldos pagados', 110);
+  if (d.sueldos.length) tabla(colsG, d.sueldos.map(filaGasto), { total: ['Total de sueldos de la semana', dinero(d.sueldosTotal)] });
+  else { P.text(L, y, 'No se registraron sueldos esta semana.', { size: 9.5, color: COL_PDF.gris }); y += 28; }
+  titulo('Detalle de todos los gastos', 110);
+  if (d.listaGastos.length) tabla(colsG, d.listaGastos.map(filaGasto), { total: ['Total de gastos (incluye sueldos)', dinero(d.gastos.total)] });
+  else { P.text(L, y, 'No se registraron gastos esta semana.', { size: 9.5, color: COL_PDF.gris }); y += 28; }
+
+  titulo('Producción de la semana', 110);
+  if (d.produccion.porProducto.length) tabla([{ t: 'Producto', x: L, w: 330 }, { t: 'Piezas', x: R - 80, w: 80, align: 'right' }], d.produccion.porProducto.map((x) => [nombreProd(x.id), num(x.pzas)]), { total: ['Total producido · costo ' + dinero(d.produccion.costo), plural(d.produccion.pzas, 'pieza', 'piezas')] });
+  else { P.text(L, y, 'No se registró producción esta semana.', { size: 9.5, color: COL_PDF.gris }); y += 28; }
+  if (d.produccion.compras) { P.text(L, y, 'Compras de material: ' + plural(d.produccion.compras, 'pieza', 'piezas') + ' · ' + dinero(d.produccion.comprasCosto), { size: 9, color: COL_PDF.tinta }); y += 22; }
+
+  titulo('Lo más vendido', 110);
+  if (d.masVendido.length) tabla([{ t: 'Producto', x: L, w: 300 }, { t: 'Piezas', x: R - 150, w: 60, align: 'right' }, { t: 'Vendido', x: R - 80, w: 80, align: 'right' }], d.masVendido.map((x) => [nombreProd(x.id), num(x.pzas), dinero(x.total)]));
+  else { P.text(L, y, 'No hubo ventas esta semana.', { size: 9.5, color: COL_PDF.gris }); y += 28; }
+
+  titulo('Cómo quedó el inventario (al generar este reporte)', 170);
+  const inv = d.inventario;
+  [['En el almacén', plural(inv.pzasAlmacen, 'pieza', 'piezas')], ['En la tienda', plural(inv.pzasTienda, 'pieza', 'piezas')], ['En camino', plural(inv.pzasCamino, 'pieza', 'piezas')], ['Valor a costo', dinero(inv.valorCosto)], ['Valor a precio de venta', dinero(inv.valorVenta)], ['Productos con stock bajo', String(inv.bajos)], ['Pedidos por surtir', String(inv.pedidosPendientes)]].forEach(([k, v]) => {
+    asegura(18); P.text(L, y, k, { size: 9.5, color: COL_PDF.gris }); P.text(L + 200, y, v, { size: 9.5, bold: true, color: COL_PDF.tinta }); y += 17;
+  });
+  y += 10; asegura(50);
+  P.text(L, y, 'Resultado = lo vendido (con envíos) menos gastos (incluye sueldos) y devoluciones. La producción se muestra a costo solo como dato:', { size: 7.5, color: COL_PDF.gris });
+  P.text(L, y + 11, 'el material y los sueldos ya cuentan como gastos cuando se registran, por eso no se restan dos veces.', { size: 7.5, color: COL_PDF.gris });
+  return P.bytes();
+}
+async function descargarPdfSemanal(sem, btn) {
+  if (btn) btn.setAttribute('aria-busy', 'true');
+  try {
+    const r = await llamar('GET', '/reporte-semana', null, { sem: sem || 0 });
+    if (!r.json.ok) throw new ErrorApi(r.json.error);
+    await descargar('resumen-semanal-bases-box-' + r.json.desde + '.pdf', pdfSemanal(r.json), 'application/pdf');
+  } catch (e) { toast(e.message || 'No se pudo armar el PDF.', { tipo: 'error' }); } finally { if (btn) btn.removeAttribute('aria-busy'); }
 }
 
 /* ───────── gastos (salidas de dinero) ───────── */
@@ -2019,6 +2162,7 @@ const A = {
   forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : b.dataset.tipo === 'reporte' ? abrirReporteDia() : b.dataset.tipo === 'gasto' ? formGasto() : abrirForma(b.dataset.tipo)),
   'reporte-dia': () => abrirReporteDia(),
   gastos: () => abrirGastos(),
+  'pdf-semana': (b) => descargarPdfSemanal(Number(b.dataset.sem) || 0, b),
   'venta-nueva': () => abrirForma('venta'),
   resumen: () => abrirResumen(),
   'pin-dueno': () => formPinDueno(),

@@ -560,6 +560,89 @@
     };
   }
 
+  // Reporte de una semana (lunes a domingo) para el PDF del Dueño y del Almacén: todo lo que pasó y cómo quedó.
+  async function reporteSemana(ctx) {
+    const { repo, ahora, tz } = ctx;
+    const off = entero((ctx.req.query || {}).sem, 0, 3, 0);
+    const hoyK = diaKey(ahora, tz);
+    const lunes0 = lunesDe(hoyK);
+    const sumaDias = (k, n) => { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+    const desdeK = sumaDias(lunes0, -7 * off), hastaK = sumaDias(desdeK, 6);
+    const en = (k) => k >= desdeK && k <= hastaK;
+    const [filasV, gastosF, prods, prodRows, trasp, peds] = await Promise.all([
+      repo.ventas(ahora - 45 * DIA), repo.gastos(ahora - 45 * DIA), repo.productos(), repo.producciones(ahora - 45 * DIA),
+      repo.traspasos({ desde: ahora - 60 * DIA }), repo.pedidos({ desde: ahora - 60 * DIA })
+    ]);
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const costoDe = {};
+    prods.forEach((p) => { costoDe[p.id] = p.costo || 0; });
+    const dias = [];
+    for (let i = 0; i < 7; i++) dias.push({ k: sumaDias(desdeK, i), ventas: 0, gastos: 0, n: 0, g: new Set() });
+    const idx = {};
+    dias.forEach((d, i) => { idx[d.k] = i; });
+    const ventas = { bruto: 0, devuelto: 0, neto: 0, pzas: 0, n: 0, envios: 0, porPago: {} };
+    const grupos = new Set(), porProd = {};
+    filasV.forEach((r) => {
+      const k = diaKey(r.ts, tz);
+      if (!en(k)) return;
+      const pz = Math.abs(r.delta), monto = pz * (r.precio || 0), env = r.envio || 0, d = dias[idx[k]];
+      if (r.tipo === 'venta') {
+        ventas.bruto += monto + env; ventas.envios += env; ventas.pzas += pz; grupos.add(r.grupo); d.g.add(r.grupo);
+        const pg = r.pago || 'efectivo';
+        ventas.porPago[pg] = (ventas.porPago[pg] || 0) + monto + env;
+        d.ventas += monto + env;
+        const t = porProd[r.prod] || (porProd[r.prod] = { id: r.prod, pzas: 0, total: 0 });
+        t.pzas += pz; t.total += monto;
+      } else {
+        ventas.devuelto += monto; ventas.pzas -= pz; d.ventas -= monto;
+        const t = porProd[r.prod] || (porProd[r.prod] = { id: r.prod, pzas: 0, total: 0 });
+        t.pzas -= pz; t.total -= monto;
+      }
+    });
+    ventas.n = grupos.size;
+    ventas.bruto = r2(ventas.bruto); ventas.devuelto = r2(ventas.devuelto); ventas.envios = r2(ventas.envios); ventas.neto = r2(ventas.bruto - ventas.devuelto);
+    Object.keys(ventas.porPago).forEach((c) => { ventas.porPago[c] = r2(ventas.porPago[c]); });
+    const gastos = gastosF.filter((g) => !g.anulado && en(diaKey(g.ts, tz))).sort((a, b) => a.ts - b.ts)
+      .map((g) => ({ ts: g.ts, cat: g.cat, concepto: g.concepto, pago: g.pago, rol: g.rol, monto: g.monto }));
+    const gTot = { total: 0, n: gastos.length, porCat: {}, porPago: {} };
+    gastos.forEach((g) => {
+      gTot.total += g.monto; dias[idx[diaKey(g.ts, tz)]].gastos += g.monto;
+      gTot.porCat[g.cat] = (gTot.porCat[g.cat] || 0) + g.monto;
+      gTot.porPago[g.pago] = (gTot.porPago[g.pago] || 0) + g.monto;
+    });
+    gTot.total = r2(gTot.total);
+    Object.keys(gTot.porCat).forEach((c) => { gTot.porCat[c] = r2(gTot.porCat[c]); });
+    Object.keys(gTot.porPago).forEach((c) => { gTot.porPago[c] = r2(gTot.porPago[c]); });
+    const sueldos = gastos.filter((g) => g.cat === 'sueldos');
+    const produccion = { pzas: 0, costo: 0, compras: 0, comprasCosto: 0, porProducto: {} };
+    prodRows.forEach((r) => {
+      if (!en(diaKey(r.ts, tz))) return;
+      const costo = r.delta * (costoDe[r.prod] || 0);
+      if (r.motivo === 'produccion') { produccion.pzas += r.delta; produccion.costo += costo; produccion.porProducto[r.prod] = (produccion.porProducto[r.prod] || 0) + r.delta; }
+      else if (r.motivo === 'compra') { produccion.compras += r.delta; produccion.comprasCosto += costo; }
+    });
+    produccion.costo = r2(produccion.costo); produccion.comprasCosto = r2(produccion.comprasCosto);
+    produccion.porProducto = Object.keys(produccion.porProducto).map((id) => ({ id, pzas: produccion.porProducto[id] })).sort((a, b) => b.pzas - a.pzas);
+    const egresos = r2(gTot.total + ventas.devuelto);
+    const act = prods.filter((p) => p.activo);
+    const enT = trasp.filter((t) => t.estado === 'en_transito');
+    return {
+      ahora, sem: off, desde: desdeK, hasta: hastaK, hoy: hoyK,
+      ventas, gastos: gTot, listaGastos: gastos, sueldos, sueldosTotal: r2(sueldos.reduce((a, g) => a + g.monto, 0)),
+      egresos, resultado: r2(ventas.bruto - egresos), produccion,
+      dias: dias.map((d) => ({ k: d.k, ventas: r2(d.ventas), gastos: r2(d.gastos), n: d.g.size })),
+      masVendido: Object.values(porProd).filter((t) => t.pzas > 0).sort((a, b) => b.pzas - a.pzas).slice(0, 10).map((t) => ({ id: t.id, pzas: t.pzas, total: r2(t.total) })),
+      inventario: {
+        pzasAlmacen: act.reduce((a, p) => a + p.stock_local, 0), pzasTienda: act.reduce((a, p) => a + p.stock_tienda, 0),
+        pzasCamino: enT.reduce((a, t) => a + t.lineas.reduce((b, l) => b + l.cant, 0), 0),
+        valorCosto: r2(act.reduce((a, p) => a + (p.stock_local + p.stock_tienda) * (p.costo || 0), 0)),
+        valorVenta: r2(act.reduce((a, p) => a + (p.stock_local + p.stock_tienda) * (p.precio || 0), 0)),
+        bajos: act.filter((p) => (p.min_local > 0 && p.hubo_local && p.stock_local <= p.min_local) || (p.min_tienda > 0 && p.hubo_tienda && p.stock_tienda <= p.min_tienda)).length,
+        pedidosPendientes: peds.filter((p) => p.estado === 'pendiente').length
+      }
+    };
+  }
+
   // reporte del día de la tienda: cada venta con sus piezas, cobro por forma de pago, envíos y devoluciones
   async function reporteDia(ctx) {
     const q = ctx.req.query || {};
@@ -1181,6 +1264,10 @@
       if (path === '/resumen' && m === 'GET') {
         if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El resumen del negocio es del dueño y del almacén.');
         return ok(await resumenDueno(ctx));
+      }
+      if (path === '/reporte-semana' && m === 'GET') {
+        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del dueño y del almacén.');
+        return ok(await reporteSemana(ctx));
       }
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });

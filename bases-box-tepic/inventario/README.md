@@ -22,6 +22,7 @@ Almacén (fábrica)  ──envío──▶  En camino  ──confirma recibo─�
 | Alertas de stock bajo, tablero, historial, exportar CSV | ✅ | ✅ |
 | Ventas por día, semana y mes · reporte del día (WhatsApp / CSV) | ✅ | ✅ |
 | Entrega en la venta: recoge (−$200 por base), envío Tepic ($200), Xalisco y La Cantera ($250); tarifas editables | Cambia tarifas | Cobra |
+| PDF semanal con gráficas (ventas, gastos, sueldos pagados, producción, inventario), semana en curso o pasada | ✅ | — (Dueño ✅) |
 | Resumen del negocio: producción, ventas, gastos, egresos, resultado e inventario | ✅ | — (el Dueño lo ve de inicio) |
 | Gastos (salidas de dinero): registrar, anular y ver por día, semana y mes; todos ven los mismos y se actualizan solos | ✅ | ✅ (anula solo los suyos) |
 | Mover piezas de la tienda al almacén | ✅ | ✅ |
@@ -89,6 +90,7 @@ El comando se puede repetir: para actualizar la app después de cambiar el códi
 inventario/
 ├── public/                   ← lo que se publica
 │   ├── index.html            interfaz (HTML + CSS)
+│   ├── pdf.js                generador de PDF propio (sin librerías), usado por el reporte semanal
 │   ├── app.js                lógica de la interfaz (sin scripts en línea por seguridad)
 │   ├── fonts.css, fonts/     tipografías propias
 │   ├── core.js               reglas del negocio: permisos, stock, traspasos, PIN… (lo usan el servidor y el modo local)
