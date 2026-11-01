@@ -355,13 +355,13 @@ function agrupar(movs) {
   });
   return out;
 }
-const nombreProd = (id) => (S.idx[id] ? S.idx[id].nombre : 'Producto eliminado');
+const nombreProd = (id) => (S.idx[id] ? S.idx[id].nombre : id === '' ? 'Solo monto (sin producto)' : 'Producto eliminado');
 function tituloOp(g) {
   const t = TIPOS[g.tipo] ? TIPOS[g.tipo].t : g.tipo;
   if (g.tipo === 'entrada' || g.tipo === 'salida') return t + (g.motivo && g.motivo !== 'otro' ? ' · ' + MOTIVOS[g.motivo] : '');
   return t;
 }
-const resumenOp = (g) => plural(g.lineas.length, 'producto', 'productos') + ' · ' + plural(g.piezas, 'pieza', 'piezas');
+const resumenOp = (g) => (g.motivo === 'monto' && g.tipo === 'venta' ? 'Solo monto, sin producto' : plural(g.lineas.length, 'producto', 'productos') + ' · ' + plural(g.piezas, 'pieza', 'piezas'));
 const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'].includes(g.tipo) && (S.rol === 'local' || g.rol === S.rol);
 
 /* ───────── armazón de la app ───────── */
@@ -1461,6 +1461,7 @@ function textoReporteDia(r) {
     L.push('Detalle:');
     r.ventas.forEach((v, i) => {
       L.push((i + 1) + ') ' + fmtHora.format(v.ts) + ' · ' + (v.cliente || 'Mostrador') + ' · ' + (PAGOS[v.pago] || 'Efectivo') + (ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''));
+      if (v.soloMonto) L.push('   Solo monto, sin producto');
       v.lineas.forEach((l) => L.push('   ' + l.pzas + ' × ' + nombreProd(l.id) + ' — ' + dinero(l.pzas * l.precio)));
       if (v.envio) L.push('   Envío — ' + dinero(v.envio));
       L.push('   Total: ' + dinero(v.total));
@@ -1506,7 +1507,7 @@ async function abrirReporteDia() {
       <div class="total-b"><span>Total del día</span><b>${dinero(t.neto)}</b></div>
       <p class="t-peq" style="margin:-6px 0 14px">${plural(t.ventas, 'venta', 'ventas')} · ${plural(t.pzas, 'pieza', 'piezas')}${t.envios ? ' · envíos ' + dinero(t.envios) : ''}${t.devuelto ? ' · devoluciones -' + dinero(t.devuelto) : ''}</p>
       ${Object.keys(t.porPago).length ? html`<h3 class="t-sec">Por forma de pago</h3><div class="vt-lista">${Object.keys(t.porPago).map((k) => html`<div class="vt-fila"><span class="n">${PAGOS[k] || k}</span><span class="v">${dinero(t.porPago[k])}</span></div>`)}</div>` : ''}
-      ${datos.ventas.length ? html`<h3 class="t-sec">Ventas</h3><div class="vt-lista">${datos.ventas.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)} · ${v.cliente || 'Mostrador'}</span><span class="v">${dinero(v.total)}</span><small>${v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}<br>${PAGOS[v.pago] || 'Efectivo'}${ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''}${v.envio ? ' (envío ' + dinero(v.envio) + ')' : ''}</small></div>`)}</div>` : html`<div class="vacio" style="padding:18px 8px"><b>Sin ventas este día</b><span>Cuando registres ventas aparecerán aquí.</span></div>`}
+      ${datos.ventas.length ? html`<h3 class="t-sec">Ventas</h3><div class="vt-lista">${datos.ventas.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)} · ${v.cliente || 'Mostrador'}</span><span class="v">${dinero(v.total)}</span><small>${v.soloMonto ? 'Solo monto, sin producto' : v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}<br>${PAGOS[v.pago] || 'Efectivo'}${ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''}${v.envio ? ' (envío ' + dinero(v.envio) + ')' : ''}</small></div>`)}</div>` : html`<div class="vacio" style="padding:18px 8px"><b>Sin ventas este día</b><span>Cuando registres ventas aparecerán aquí.</span></div>`}
       ${t.gastos || t.efectivoNeto ? html`<h3 class="t-sec">Caja</h3><div class="vt-lista"><div class="vt-fila"><span class="n">Efectivo vendido</span><span class="v">${dinero(t.porPago.efectivo || 0)}</span></div><div class="vt-fila"><span class="n">Gastos en efectivo</span><span class="v">-${dinero(t.gastosEfectivo)}</span></div><div class="vt-fila"><span class="n">Efectivo en caja</span><span class="v">${dinero(t.efectivoNeto)}</span></div></div>` : ''}
       ${datos.gastos.length ? html`<h3 class="t-sec">Gastos</h3><div class="vt-lista">${datos.gastos.map((g) => html`<div class="vt-fila"><span class="n">${fmtHora.format(g.ts)} · ${GASTO_CATS[g.cat] || g.cat}</span><span class="v">-${dinero(g.monto)}</span><small>${g.concepto || ''}${g.concepto ? ' · ' : ''}${PAGOS[g.pago] || ''}</small></div>`)}</div>` : ''}
       ${datos.devoluciones.length ? html`<h3 class="t-sec">Devoluciones</h3><div class="vt-lista">${datos.devoluciones.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)}</span><span class="v">-${dinero(v.total)}</span><small>${v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}</small></div>`)}</div>` : ''}

@@ -347,6 +347,9 @@
 
   // ───────── estado para el cliente
 
+  // una venta “solo monto” (cobro sin producto, p. ej. de antes de usar la app) guarda su importe en `envio` con motivo 'monto'
+  const soloMonto = (r) => r.motivo === 'monto';
+
   // lunes de la semana de una fecha 'YYYY-MM-DD' (semana lunes–domingo)
   function lunesDe(k) {
     const [y, m, d] = k.split('-').map(Number);
@@ -371,11 +374,11 @@
       Object.keys(per).forEach((n) => {
         if (!per[n].test(k)) return;
         const o = out[n];
-        o.total += monto + env; o.envios += env; o.pzas += pzas;
+        o.total += monto + env; o.envios += soloMonto(r) ? 0 : env; o.pzas += pzas;
         const pr = o.prods[r.prod] || (o.prods[r.prod] = { id: r.prod, pzas: 0, total: 0 });
         pr.pzas += pzas; pr.total += monto;
         const d = o.dias[k] || (o.dias[k] = { k, pzas: 0, total: 0, envios: 0, g: new Set() });
-        d.pzas += pzas; d.total += monto + env; d.envios += env;
+        d.pzas += pzas; d.total += monto + env; d.envios += soloMonto(r) ? 0 : env;
         if (r.tipo === 'venta') { o.g.add(r.grupo); d.g.add(r.grupo); }
       });
     });
@@ -504,7 +507,7 @@
         if (!per[n](k)) return;
         const v = periodos[n].ventas;
         if (r.tipo === 'venta') {
-          v.bruto += monto + env; v.envios += env; v.pzas += pz; grupos[n].add(r.grupo);
+          v.bruto += monto + env; v.envios += soloMonto(r) ? 0 : env; v.pzas += pz; grupos[n].add(r.grupo);
           const pg = r.pago || 'efectivo';
           v.porPago[pg] = (v.porPago[pg] || 0) + monto + env;
         } else { v.devuelto += monto; v.pzas -= pz; }
@@ -587,7 +590,7 @@
       if (!en(k)) return;
       const pz = Math.abs(r.delta), monto = pz * (r.precio || 0), env = r.envio || 0, d = dias[idx[k]];
       if (r.tipo === 'venta') {
-        ventas.bruto += monto + env; ventas.envios += env; ventas.pzas += pz; grupos.add(r.grupo); d.g.add(r.grupo);
+        ventas.bruto += monto + env; ventas.envios += soloMonto(r) ? 0 : env; ventas.pzas += pz; grupos.add(r.grupo); d.g.add(r.grupo);
         const pg = r.pago || 'efectivo';
         ventas.porPago[pg] = (ventas.porPago[pg] || 0) + monto + env;
         d.ventas += monto + env;
@@ -655,8 +658,9 @@
     const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
     const grupos = Object.create(null), orden = [];
     filas.forEach((r) => {
-      const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', pago: r.pago || '', entrega: r.tipo === 'venta' ? r.motivo || '' : '', envio: 0, lineas: [], total: 0 });
+      const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', pago: r.pago || '', entrega: r.tipo === 'venta' && !soloMonto(r) ? r.motivo || '' : '', envio: 0, soloMonto: soloMonto(r), lineas: [], total: 0 });
       if (!orden.includes(g)) orden.push(g);
+      if (soloMonto(r)) { g.total += r.envio || 0; return; }
       const pzas = Math.abs(r.delta);
       g.lineas.push({ id: r.prod, pzas, precio: r.precio || 0 });
       g.envio += r.envio || 0;
@@ -806,6 +810,30 @@
     return { grupo, total: Math.round((total + envio) * 100) / 100, piezas, envio };
   }
 
+  // Registra un cobro SIN producto (p. ej. una venta de antes de usar la app): suma al dinero vendido, no mueve inventario.
+  // Solo el Almacén; puede llevar fecha y hora pasadas (hasta 34 días atrás).
+  async function opVentaMonto(ctx, b, tx) {
+    const monto = Number(b.monto);
+    if (!Number.isFinite(monto) || monto <= 0) throw bad('falta_monto', 'Escribe el monto cobrado.');
+    if (monto > 10000000) throw bad('numero_invalido', 'Ese monto es demasiado grande.');
+    let ts = ctx.ahora;
+    if (b.dia !== undefined && b.dia !== null && b.dia !== '') {
+      const hoyK = diaKey(ctx.ahora, ctx.tz), dia = String(b.dia);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dia) || dia > hoyK || diaKey(ctx.ahora - 34 * DIA, ctx.tz) > dia) throw bad('dia_invalido', 'Elige un día de los últimos 30 días.');
+      const hm = /^(\d{1,2}):(\d{2})$/.exec(String(b.hora || '12:00'));
+      if (!hm || +hm[1] > 23 || +hm[2] > 59) throw bad('hora_invalida', 'La hora debe ser como 13:38.');
+      const [y, m, d] = dia.split('-').map(Number);
+      ts = Date.UTC(y, m - 1, d, +hm[1], +hm[2]) - ctx.tz * 60000;
+      if (ts > ctx.ahora) ts = ctx.ahora;
+    }
+    const grupo = grupoDe(b, 'M');
+    const total = Math.round(monto * 100) / 100;
+    tx.movs.push(nuevoMov(ctx, grupo, 0, { id: '' }, 'tienda', 0, 'venta', {
+      ts, precio: 0, envio: total, motivo: 'monto', nota: clean(b.nota, 200), cliente: clean(b.cliente, 60), pago: PAGOS.includes(b.pago) ? b.pago : 'efectivo'
+    }));
+    return { grupo, total };
+  }
+
   // Regresa piezas de la tienda al almacén de inmediato (una sola operación: sale de la tienda y entra al almacén).
   async function opRegreso(ctx, b, tx) {
     const ls = lineas(b.lineas);
@@ -862,7 +890,7 @@
     });
     const nuevo = uid('A');
     orig.forEach((m, i) => {
-      tx.stock.push(deltaStock(m.prod, m.loc, -m.delta));
+      if (m.delta) tx.stock.push(deltaStock(m.prod, m.loc, -m.delta)); // una venta “solo monto” no mueve inventario
       tx.movs.push({
         id: nuevo + '-' + i, ts: ctx.ahora, prod: m.prod, loc: m.loc, delta: -m.delta, tipo: 'anulacion', motivo: '', nota: motivo,
         rol: ctx.rol, precio: m.precio, cliente: '', pago: '', envio: 0, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
@@ -1211,6 +1239,7 @@
     'mov.devolucion': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'devolucion')],
     'mov.merma': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'merma')],
     'mov.regreso': [['local', 'tienda'], opRegreso],
+    'mov.venta_monto': [['local'], opVentaMonto],
     'gasto.crear': [['local', 'tienda'], opGastoCrear],
     'gasto.anular': [['local', 'tienda'], opGastoAnular],
     'mov.conteo': [['local', 'tienda'], opConteo],

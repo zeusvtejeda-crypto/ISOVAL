@@ -955,6 +955,55 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(luego.reduce((t, x) => t + x.sueldosTotal, 0), 6300);
     });
 
+    test('venta solo monto: con fecha pasada, sin producto ni inventario, cuenta en los reportes sin llamarse envío', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      const a = prod(await local.estado(), 'Base Queen · Gris');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 5 }] });
+      const stock0 = (await local.estado()).productos.map((p) => [p.id, p.stock_local, p.stock_tienda]);
+      // solo el Almacén; monto, día y hora válidos
+      assert.equal((await tienda.op({ op: 'mov.venta_monto', monto: 2800, pago: 'tarjeta' })).status, 403);
+      assert.equal((await local.op({ op: 'mov.venta_monto', monto: 0 })).json.error.code, 'falta_monto');
+      assert.equal((await local.op({ op: 'mov.venta_monto', monto: 100, dia: '2020-01-01' })).json.error.code, 'dia_invalido');
+      assert.equal((await local.op({ op: 'mov.venta_monto', monto: 100, dia: '2999-01-01' })).json.error.code, 'dia_invalido');
+      assert.equal((await local.op({ op: 'mov.venta_monto', monto: 100, dia: new Date(Date.now() - DIA).toISOString().slice(0, 10), hora: '25:99' })).json.error.code, 'hora_invalida');
+      // ayer a las 13:38 (hora del cliente: tz=0), pagado con tarjeta
+      const ayer = new Date(Date.now() - DIA).toISOString().slice(0, 10);
+      const r = await local.call('POST', '/op', { op: 'mov.venta_monto', monto: 2800, pago: 'tarjeta', dia: ayer, hora: '13:38', nota: 'Venta del Point, antes de la app' }, { tz: '0' });
+      assert.equal(r.status, 200, JSON.stringify(r.json));
+      assert.equal(r.json.resultado.total, 2800);
+      // el inventario no cambia
+      assert.deepEqual(r.json.estado.productos.map((p) => [p.id, p.stock_local, p.stock_tienda]), stock0);
+      // cae en el día correcto, a la hora correcta
+      const hist = (await local.call('GET', '/movs', null, { limite: '5', tipos: 'venta' })).json.items[0];
+      assert.equal(new Date(hist.ts).toISOString(), ayer + 'T13:38:00.000Z');
+      assert.equal(hist.motivo, 'monto');
+      const dia = (await local.call('GET', '/reporte-dia', null, { tz: '0', dia: ayer })).json;
+      assert.equal(dia.totales.ventas, 1);
+      assert.equal(dia.totales.vendido, 2800);
+      assert.equal(dia.totales.pzas, 0);
+      assert.equal(dia.totales.envios, 0, 'no se cuenta como envío');
+      assert.equal(dia.totales.porPago.tarjeta, 2800);
+      assert.equal(dia.ventas[0].soloMonto, true);
+      assert.equal((await local.call('GET', '/reporte-dia', null, { tz: '0' })).json.totales.vendido, 0, 'hoy no se cuenta');
+      // reportes de periodo
+      const v = (await local.call('GET', '/ventas', null, { tz: '0' })).json.ventas;
+      assert.equal(v.mes.total >= 0, true);
+      const sem = (await local.call('GET', '/reporte-semana', null, { tz: '0', sem: '0' })).json;
+      const sem1 = (await local.call('GET', '/reporte-semana', null, { tz: '0', sem: '1' })).json;
+      const bruto = sem.ventas.bruto + sem1.ventas.bruto;
+      assert.equal(bruto, 2800, 'cae en una de las dos semanas, una sola vez');
+      assert.equal(sem.ventas.envios + sem1.ventas.envios, 0);
+      assert.equal(sem.ventas.pzas + sem1.ventas.pzas, 0);
+      assert.equal(sem.ventas.porPago.tarjeta || sem1.ventas.porPago.tarjeta, 2800);
+      const res = (await local.call('GET', '/resumen', null, { tz: '0' })).json;
+      assert.equal(res.periodos.mes.ventas.envios, 0);
+      // se puede anular y deja todo en cero otra vez
+      const an = await local.op({ op: 'mov.anular', grupo: r.json.resultado.grupo, motivo: 'Prueba' });
+      assert.equal(an.status, 200, JSON.stringify(an.json));
+      assert.equal((await local.call('GET', '/reporte-dia', null, { tz: '0', dia: ayer })).json.totales.vendido, 0);
+      assert.deepEqual(an.json.estado.productos.map((p) => [p.id, p.stock_local, p.stock_tienda]), stock0);
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });
