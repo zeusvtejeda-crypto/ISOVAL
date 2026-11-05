@@ -255,7 +255,7 @@
 
   const nuevaTx = () => ({
     config: {}, configInsert: null, guardas: [], productosInsert: [], productosUpdate: [], stock: [], movs: [],
-    movsAnulados: [], traspasos: [], pedidos: [], gastosInsert: [], gastosAnular: [], sinRev: false, reiniciar: false
+    movsAnulados: [], traspasos: [], pedidos: [], gastosInsert: [], gastosAnular: [], agendaUpsert: [], sinRev: false, reiniciar: false
   });
 
   // ───────── rutas públicas: ping, setup, login, recuperar
@@ -687,9 +687,9 @@
 
   async function armarEstado(ctx) {
     const { repo, ahora, rol } = ctx;
-    const [raw, prods, trasp, peds, ventas, rec, gastosFilas] = await Promise.all([
+    const [raw, prods, trasp, peds, ventas, rec, gastosFilas, agendaAbierta] = await Promise.all([
       repo.config(), repo.productos(), repo.traspasos({ desde: ahora - 30 * DIA }), repo.pedidos({ desde: ahora - 30 * DIA }),
-      repo.ventas(ahora - 35 * DIA), repo.movs({ limite: 40 }), repo.gastos(ahora - 36 * DIA)
+      repo.ventas(ahora - 35 * DIA), repo.movs({ limite: 40 }), repo.gastos(ahora - 36 * DIA), repo.agendaAbierta()
     ]);
     const cfg = normalizarCfg(raw);
     const productos = prods.map((p) => {
@@ -698,7 +698,7 @@
       return o;
     });
     const est = {
-      rev: cfg.rev, ahora, rol, version: VERSION, dueno: !!cfg.acceso.dueno, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
+      rev: cfg.rev, ahora, hoy: diaKey(ahora, ctx.tz), agenda: agendaAbierta.slice(0, 300), rol, version: VERSION, dueno: !!cfg.acceso.dueno, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
       productos, traspasos: trasp, pedidos: peds, resumen: Object.assign(resumenVentas(ventas, ahora, ctx.tz), { gastos: (({ hoy, semana, mes }) => ({ hoy: hoy.total, semana: semana.total, mes: mes.total }))(resumenGastos(gastosVisibles(gastosFilas), ahora, ctx.tz)) }), recientes: rec.items
     };
     if (ctx.exp && ctx.exp - ahora < (SESION_DIAS / 2) * DIA) est.token = firmar(cfg, rol, ahora);
@@ -832,6 +832,72 @@
       ts, precio: 0, envio: total, motivo: 'monto', nota: clean(b.nota, 200), cliente: clean(b.cliente, 60), pago: PAGOS.includes(b.pago) ? b.pago : 'efectivo'
     }));
     return { grupo, total };
+  }
+
+  // ───────── agenda: pedidos de clientes (qué hay que tener hecho y entregar, y para qué día)
+  const ENTREGAS_AG = ['', 'recoge', 'tepic', 'xalisco', 'cantera'];
+  const ESTADOS_AG = ['pendiente', 'listo', 'entregado', 'cancelado'];
+  const sumaDiasKey = (k, n) => { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+
+  async function datosPedidoCliente(ctx, b, previo) {
+    const cliente = clean(b.cliente, 60);
+    if (!cliente) throw bad('falta_cliente', 'Escribe el nombre del cliente.');
+    const hoyK = diaKey(ctx.ahora, ctx.tz), dia = String(b.dia || '');
+    // se puede registrar un pedido de días pasados (por si no alcanzaron a meterlo) y programar hasta seis meses adelante
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dia) || Number.isNaN(Date.parse(dia + 'T00:00:00Z')) || dia < sumaDiasKey(hoyK, -35) || dia > sumaDiasKey(hoyK, 190)) throw bad('dia_invalido', 'Elige un día entre hace 35 días y los próximos 6 meses.');
+    const hora = b.hora === undefined || b.hora === null || b.hora === '' ? '' : String(b.hora);
+    if (hora && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(hora)) throw bad('hora_invalida', 'La hora debe ser como 16:30.');
+    const detalle = clean(b.detalle, 200);
+    let ls = [];
+    if (Array.isArray(b.lineas) && b.lineas.length) {
+      const prods = indexar(await ctx.repo.productos());
+      ls = lineas(b.lineas).map((l) => {
+        const p = prods[l.id];
+        if (!p) throw new ApiError(404, 'producto_no_existe', 'Un producto ya no existe. Actualiza la pantalla.');
+        return { id: p.id, cant: l.cant, precio: numero(l.precio == null || l.precio === '' ? p.precio : l.precio, 0, 1e6, 0) };
+      });
+    }
+    if (!ls.length && !detalle) throw bad('falta_detalle', 'Agrega los productos del pedido o escribe qué pidió.');
+    const entrega = b.entrega === undefined || b.entrega === null ? '' : String(b.entrega);
+    if (!ENTREGAS_AG.includes(entrega)) throw bad('entrega_invalida', 'Elige cómo se entrega.');
+    return {
+      cliente, tel: String(b.tel || '').replace(/\D/g, '').slice(0, 15), dia, hora, lineas: ls, detalle, entrega, direccion: clean(b.direccion, 120),
+      anticipo: numero(b.anticipo, 0, 1e7, 0), nota: clean(b.nota, 200)
+    };
+  }
+  async function opAgendaCrear(ctx, b, tx) {
+    const d = await datosPedidoCliente(ctx, b);
+    const id = grupoDe(b, 'Q');
+    if (await ctx.repo.pedidoCliente(id)) throw new ApiError(409, 'duplicado', 'Este pedido ya se había guardado.');
+    tx.agendaUpsert.push(Object.assign({ id, ts: ctx.ahora, rol: ctx.rol, estado: 'pendiente', estado_ts: ctx.ahora, estado_por: ctx.rol, estado_nota: '', venta: '', actualizado: ctx.ahora }, d));
+    return { id };
+  }
+  async function opAgendaEditar(ctx, b, tx) {
+    const prev = await ctx.repo.pedidoCliente(clean(b.id, 60));
+    if (!prev) throw new ApiError(404, 'no_existe', 'No encontré ese pedido.');
+    if (prev.estado === 'entregado' || prev.estado === 'cancelado') throw new ApiError(409, 'pedido_cerrado', 'Ese pedido ya está ' + prev.estado + '. Reábrelo para editarlo.');
+    const d = await datosPedidoCliente(ctx, b, prev);
+    tx.agendaUpsert.push(Object.assign({}, prev, d, { actualizado: ctx.ahora }));
+    return { id: prev.id };
+  }
+  async function opAgendaEstado(ctx, b, tx) {
+    const prev = await ctx.repo.pedidoCliente(clean(b.id, 60));
+    if (!prev) throw new ApiError(404, 'no_existe', 'No encontré ese pedido.');
+    const estado = String(b.estado || '');
+    if (!ESTADOS_AG.includes(estado)) throw bad('estado_invalido', 'Estado desconocido.');
+    const cerrado = prev.estado === 'entregado' || prev.estado === 'cancelado';
+    if (cerrado && ctx.rol !== 'local') throw new ApiError(403, 'sin_permiso', 'Solo el Almacén puede reabrir un pedido cerrado.');
+    const nota = clean(b.nota, 140);
+    if (estado === 'cancelado' && nota.length < 3) throw bad('falta_motivo', 'Escribe el motivo de la cancelación.');
+    tx.agendaUpsert.push(Object.assign({}, prev, { estado, estado_ts: ctx.ahora, estado_por: ctx.rol, estado_nota: nota, venta: estado === 'entregado' ? clean(b.venta, 60) : '', actualizado: ctx.ahora }));
+    return { id: prev.id, estado };
+  }
+  async function listarAgenda(ctx) {
+    const q = ctx.req.query || {};
+    const re = /^\d{4}-\d{2}-\d{2}$/;
+    if (!re.test(String(q.desde)) || !re.test(String(q.hasta)) || String(q.hasta) < String(q.desde)) throw bad('rango_invalido', 'Elige un rango de fechas.');
+    if (Date.parse(q.hasta + 'T00:00:00Z') - Date.parse(q.desde + 'T00:00:00Z') > 100 * DIA) throw bad('rango_invalido', 'El rango es demasiado largo (máximo 100 días).');
+    return { items: await ctx.repo.agenda(String(q.desde), String(q.hasta)), hoy: diaKey(ctx.ahora, ctx.tz) };
   }
 
   // Regresa piezas de la tienda al almacén de inmediato (una sola operación: sale de la tienda y entra al almacén).
@@ -1239,6 +1305,9 @@
     'mov.devolucion': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'devolucion')],
     'mov.merma': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'merma')],
     'mov.regreso': [['local', 'tienda'], opRegreso],
+    'agenda.crear': [['local', 'tienda'], opAgendaCrear],
+    'agenda.editar': [['local', 'tienda'], opAgendaEditar],
+    'agenda.estado': [['local', 'tienda'], opAgendaEstado],
     'mov.venta_monto': [['local'], opVentaMonto],
     'gasto.crear': [['local', 'tienda'], opGastoCrear],
     'gasto.anular': [['local', 'tienda'], opGastoAnular],
@@ -1298,6 +1367,7 @@
         if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del dueño y del almacén.');
         return ok(await reporteSemana(ctx));
       }
+      if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
       if (path === '/op' && m === 'POST') {
@@ -1318,7 +1388,7 @@
   // ───────── repo local (localStorage o memoria): mismo contrato que el repo D1
 
   function crearRepoLocal(almacen, clave) {
-    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {}, intentos: {}, gastos: [] });
+    const vacio = () => ({ v: 1, config: {}, productos: {}, movs: [], traspasos: {}, pedidos: {}, intentos: {}, gastos: [], agenda: [] });
     let S = leer();
     let ids = new Set(S.movs.map((m) => m.id));
     let diferido = false;
@@ -1348,6 +1418,9 @@
 
     return {
       async config() { return clonar(S.config); },
+      async agenda(desde, hasta) { return (S.agenda || []).filter((a) => a.dia >= desde && a.dia <= hasta).sort((a, b) => (a.dia + (a.hora || '99:99')).localeCompare(b.dia + (b.hora || '99:99')) || a.ts - b.ts).map((a) => clonar(a)); },
+      async agendaAbierta() { return (S.agenda || []).filter((a) => a.estado === 'pendiente' || a.estado === 'listo').sort((a, b) => (a.dia + (a.hora || '99:99')).localeCompare(b.dia + (b.hora || '99:99')) || a.ts - b.ts).map((a) => clonar(a)); },
+      async pedidoCliente(id) { const a = (S.agenda || []).find((x) => x.id === id); return a ? clonar(a) : null; },
       async producciones(desde) { return S.movs.filter((m) => m.tipo === 'entrada' && !m.anulado && m.ts >= desde).map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, motivo: m.motivo })); },
       async gastos(desde) { return (S.gastos || []).filter((g) => g.ts >= desde).map((g) => Object.assign({}, g)); },
       async gasto(id) { const g = (S.gastos || []).find((x) => x.id === id); return g ? Object.assign({}, g) : null; },
@@ -1443,6 +1516,8 @@
           S.gastos = S.gastos || [];
           tx.gastosAnular.forEach((a) => { const g = S.gastos.find((x) => x.id === a.id); if (g) Object.assign(g, { anulado: 1, anulado_ts: a.ts, anulado_por: a.por, anulado_nota: a.nota }); });
           tx.gastosInsert.forEach((g) => { S.gastos.push(Object.assign({}, g)); });
+          S.agenda = S.agenda || [];
+          tx.agendaUpsert.forEach((a) => { const i = S.agenda.findIndex((x) => x.id === a.id); const copia = clonar(a); if (i >= 0) S.agenda[i] = copia; else S.agenda.push(copia); });
           tx.traspasos.forEach((x) => { S.traspasos[x.t.id] = Object.assign({}, x.t, { lineas: x.lineas.map((l) => Object.assign({}, l)) }); });
           tx.pedidos.forEach((x) => { S.pedidos[x.p.id] = Object.assign({}, x.p, { lineas: x.lineas.map((l) => Object.assign({}, l)) }); });
           if (!tx.sinRev) S.config.rev = (S.config.rev | 0) + 1;

@@ -12,7 +12,7 @@ test('base anterior sin columna envio: se migra y conserva las ventas', async ()
   const c0 = { token: '', repo: await crearRepoD1(viejo) };
   const s = await Core.handle(c0.repo, { method: 'POST', path: '/setup', body: { nombre: 'X', pinLocal: '48215959', pinTienda: '73051818', catalogo: { bases: true } } }, { now: Date.now() });
   assert.equal(s.status, 200);
-  viejo.db.exec('ALTER TABLE movs DROP COLUMN envio; DROP TABLE gastos; DROP TABLE intentos;'); // deja el esquema como estaba antes
+  viejo.db.exec('ALTER TABLE movs DROP COLUMN envio; DROP TABLE gastos; DROP TABLE intentos; DROP TABLE agenda;'); // deja el esquema como estaba antes
   assert.throws(() => viejo.db.prepare('SELECT envio FROM movs').all());
   // otro "isolate" abre la misma base
   const nuevo = new D1Falsa(); nuevo.db = viejo.db;
@@ -27,4 +27,7 @@ test('base anterior sin columna envio: se migra y conserva las ventas', async ()
   const g = await Core.handle(repo, { method: 'POST', path: '/op', body: { op: 'gasto.crear', monto: 50, cat: 'comida' }, token: tok }, { now: Date.now() });
   assert.equal(g.status, 200, JSON.stringify(g.json));
   assert.equal((await Core.handle(repo, { method: 'GET', path: '/gastos', token: tok }, { now: Date.now() })).json.items.length, 1);
+  const hoy = new Date().toISOString().slice(0, 10);
+  const a = await Core.handle(repo, { method: 'POST', path: '/op', body: { op: 'agenda.crear', cliente: 'Ana', dia: hoy, detalle: '2 bases' }, token: tok }, { now: Date.now() });
+  assert.equal(a.status, 200, JSON.stringify(a.json));
 });

@@ -37,6 +37,12 @@ const SCHEMA = [
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, rol TEXT NOT NULL, monto REAL NOT NULL CHECK (monto > 0), cat TEXT NOT NULL, concepto TEXT NOT NULL DEFAULT '',
     pago TEXT NOT NULL DEFAULT 'efectivo', anulado INTEGER NOT NULL DEFAULT 0, anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '')`,
   `CREATE INDEX IF NOT EXISTS gastos_ts ON gastos (ts DESC)`,
+  `CREATE TABLE IF NOT EXISTS agenda (
+    id TEXT PRIMARY KEY, ts INTEGER NOT NULL, rol TEXT NOT NULL, cliente TEXT NOT NULL, tel TEXT NOT NULL DEFAULT '', dia TEXT NOT NULL, hora TEXT NOT NULL DEFAULT '',
+    lineas TEXT NOT NULL DEFAULT '[]', detalle TEXT NOT NULL DEFAULT '', entrega TEXT NOT NULL DEFAULT '', direccion TEXT NOT NULL DEFAULT '', anticipo REAL NOT NULL DEFAULT 0,
+    nota TEXT NOT NULL DEFAULT '', estado TEXT NOT NULL DEFAULT 'pendiente', estado_ts INTEGER NOT NULL DEFAULT 0, estado_por TEXT NOT NULL DEFAULT '', estado_nota TEXT NOT NULL DEFAULT '',
+    venta TEXT NOT NULL DEFAULT '', actualizado INTEGER NOT NULL DEFAULT 0)`,
+  `CREATE INDEX IF NOT EXISTS agenda_dia ON agenda (dia)`,
   `CREATE TABLE IF NOT EXISTS intentos (k TEXT PRIMARY KEY, n INTEGER NOT NULL, b INTEGER NOT NULL, hasta INTEGER NOT NULL, adm INTEGER NOT NULL)`,
   // tabla trampa: insertar aquí rompe el CHECK y deshace todo el batch (ver guardas)
   `CREATE TABLE IF NOT EXISTS guardas (g INTEGER NOT NULL CHECK (g = 0))`
@@ -45,11 +51,13 @@ const SCHEMA = [
 const COLS_PRODUCTO = ['id', 'nombre', 'cat', 'medida', 'tono', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'activo', 'stock_local', 'stock_tienda', 'hubo_local', 'hubo_tienda', 'creado', 'actualizado'];
 const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'envio', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
 const COLS_GASTO = ['id', 'ts', 'rol', 'monto', 'cat', 'concepto', 'pago', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
+const COLS_AGENDA = ['id', 'ts', 'rol', 'cliente', 'tel', 'dia', 'hora', 'lineas', 'detalle', 'entrega', 'direccion', 'anticipo', 'nota', 'estado', 'estado_ts', 'estado_por', 'estado_nota', 'venta', 'actualizado'];
 const COLS_EDITABLES = ['nombre', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'medida', 'tono', 'activo', 'actualizado'];
 
 const insertarJson = (tabla, cols) =>
   `INSERT INTO ${tabla} (${cols.join(', ')}) SELECT ${cols.map((c) => `json_extract(value, '$.${c}')`).join(', ')} FROM json_each(?1)`;
 
+const filaAgenda = (f) => Object.assign({}, f, { lineas: (() => { try { const l = JSON.parse(f.lineas); return Array.isArray(l) ? l : []; } catch (e) { return []; } })() });
 const migradas = new WeakSet();
 
 export async function crearRepoD1(db) {
@@ -62,7 +70,7 @@ export async function crearRepoD1(db) {
         try { await db.prepare(`ALTER TABLE movs ADD COLUMN envio REAL NOT NULL DEFAULT 0`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
       }
     }
-    for (const sql of SCHEMA.filter((x) => /TABLE IF NOT EXISTS (intentos|gastos)|INDEX IF NOT EXISTS gastos_ts/.test(x))) await db.prepare(sql).run();
+    for (const sql of SCHEMA.filter((x) => /TABLE IF NOT EXISTS (intentos|gastos|agenda)|INDEX IF NOT EXISTS (gastos_ts|agenda_dia)/.test(x))) await db.prepare(sql).run();
     migradas.add(db);
   }
   const q = (sql, ...args) => db.prepare(sql).bind(...args);
@@ -124,6 +132,10 @@ export async function crearRepoD1(db) {
     if (tx.gastosAnular.length) {
       const a = tx.gastosAnular[0];
       st.push(q(`UPDATE gastos SET anulado = 1, anulado_ts = ?2, anulado_por = ?3, anulado_nota = ?4 WHERE id IN (SELECT value FROM json_each(?1))`, JSON.stringify(tx.gastosAnular.map((x) => x.id)), a.ts, a.por, a.nota));
+    }
+    if (tx.agendaUpsert.length) {
+      const sets = COLS_AGENDA.filter((c) => c !== 'id').map((c) => `${c} = excluded.${c}`).join(', ');
+      st.push(q(`INSERT INTO agenda (${COLS_AGENDA.join(', ')}) SELECT ${COLS_AGENDA.map((c) => (c === 'lineas' ? `json_extract(value, '$.lineas')` : `json_extract(value, '$.${c}')`)).join(', ')} FROM json_each(?1) WHERE true ON CONFLICT(id) DO UPDATE SET ${sets}`, JSON.stringify(tx.agendaUpsert)));
     }
     if (tx.gastosInsert.length) st.push(q(insertarJson('gastos', COLS_GASTO), JSON.stringify(tx.gastosInsert)));
     tx.traspasos.forEach(({ t, lineas }) => {
@@ -204,6 +216,9 @@ export async function crearRepoD1(db) {
       return { items, siguiente: filas.length > f.limite && last ? last.ts + '_' + last.id : null };
     },
     producciones(desde) { return todas(`SELECT ts, prod, delta, motivo FROM movs WHERE tipo = 'entrada' AND anulado = 0 AND ts >= ?1`, desde); },
+    async agenda(desde, hasta) { return (await todas(`SELECT * FROM agenda WHERE dia >= ?1 AND dia <= ?2 ORDER BY dia, CASE WHEN hora = '' THEN '99:99' ELSE hora END, ts`, desde, hasta)).map(filaAgenda); },
+    async agendaAbierta() { return (await todas(`SELECT * FROM agenda WHERE estado IN ('pendiente', 'listo') ORDER BY dia, CASE WHEN hora = '' THEN '99:99' ELSE hora END, ts LIMIT 400`)).map(filaAgenda); },
+    async pedidoCliente(id) { const f = await q(`SELECT * FROM agenda WHERE id = ?1`, id).first(); return f ? filaAgenda(f) : null; },
     gastos(desde) { return todas(`SELECT * FROM gastos WHERE ts >= ?1 ORDER BY ts DESC`, desde); },
     async gasto(id) { return (await q(`SELECT * FROM gastos WHERE id = ?1`, id).first()) || null; },
     ventas(desde) {

@@ -249,6 +249,7 @@ function aplicarEstado(e) {
   S.camino = {};
   e.traspasos.filter((t) => t.estado === 'en_transito').forEach((t) => t.lineas.forEach((l) => { S.camino[l.id] = (S.camino[l.id] || 0) + l.cant; }));
   pintar();
+  if (!S.avisoAgenda && (e.rol === 'tienda' || e.rol === 'local')) { S.avisoAgenda = true; setTimeout(mostrarAvisoAgenda, 700); }
   document.dispatchEvent(new Event('bb:estado')); // las hojas abiertas (gastos, ventas, reporte) se vuelven a cargar
 }
 
@@ -508,6 +509,7 @@ function pintarInicio() {
       <span class="vtas-t"><span class="t-sec">Ventas</span><span class="vtas-ver">Ver reporte ${ico('der')}</span></span>
       <span class="vtas-g">${[['Hoy', r.hoy], ['Semana', r.semana], ['Mes', r.mes]].map(([t, v]) => html`<span class="vtas-c"><small>${t}</small><b class="cifras">${dinero(v.total)}</b><i>${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pza', 'pzas')}</i></span>`)}</span>
     </button>
+    ${tarjetaAgenda()}
     <button type="button" class="gastos-b" data-act="gastos" aria-label="Ver gastos">
       <span class="ico-c warn">${ico('salida')}</span>
       <span class="grow"><b>Gastos</b><small>Hoy ${dinero((r.gastos || {}).hoy || 0)} · semana ${dinero((r.gastos || {}).semana || 0)} · mes ${dinero((r.gastos || {}).mes || 0)}</small></span>
@@ -703,8 +705,8 @@ VISTAS.mover = {
     const e = S.est;
     const enT = e.traspasos.filter((t) => t.estado === 'en_transito');
     const acc = S.rol === 'local'
-      ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['regreso', 'entrada', 'Regresar de tienda', 'Mueve piezas de la tienda al almacén'], ['gasto', 'salida', 'Registrar gasto', 'Salida de dinero: material, comida, gasolina…'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
-      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['reporte', 'tabla', 'Reporte del día', 'Total vendido, por forma de pago'], ['pedido', 'pedido', 'Pedir al almacén', 'Avisa qué bases hacen falta'], ['regreso', 'entrada', 'Regresar al almacén', 'Mueve piezas de la tienda al almacén'], ['gasto', 'salida', 'Registrar gasto', 'Salida de dinero de la tienda'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
+      ? [['envio', 'camion', 'Enviar a tienda', 'Arma el envío y la tienda lo confirma', true], ['entrada', 'entrada', 'Registrar entrada', 'Producción o compra de material'], ['salida', 'salida', 'Registrar salida', 'Uso, merma u otra baja'], ['regreso', 'entrada', 'Regresar de tienda', 'Mueve piezas de la tienda al almacén'], ['gasto', 'salida', 'Registrar gasto', 'Salida de dinero: material, comida, gasolina…'], ['agenda', 'reloj', 'Pedidos de clientes', 'Agenda de entregas y pedidos por día'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']]
+      : [['venta', 'recibo', 'Registrar venta', 'Descuenta y suma al total del día', true], ['recibir', 'camion', 'Recibir mercancía', enT.length ? plural(enT.length, 'envío en camino', 'envíos en camino') : 'No hay envíos en camino'], ['reporte', 'tabla', 'Reporte del día', 'Total vendido, por forma de pago'], ['pedido', 'pedido', 'Pedir al almacén', 'Avisa qué bases hacen falta'], ['regreso', 'entrada', 'Regresar al almacén', 'Mueve piezas de la tienda al almacén'], ['gasto', 'salida', 'Registrar gasto', 'Salida de dinero de la tienda'], ['agenda', 'reloj', 'Pedidos de clientes', 'Agenda de entregas y pedidos por día'], ['devolucion', 'devolver', 'Devolución', 'Un cliente regresa una base'], ['merma', 'basura', 'Merma', 'Daño o pérdida en tienda'], ['conteo', 'conteo', 'Conteo físico', 'Ajusta el sistema a lo que contaste']];
     poner($('#mv-acc'), html`<div class="atajos">${acc.map(([k, ic, t, s, pri]) => html`<button type="button" class="atajo ${pri ? 'pri' : ''}" data-act="forma" data-tipo="${k}"><span class="ico-c ${pri ? '' : 'acc'}">${ico(ic)}</span><b>${t}</b><span>${s}</span></button>`)}</div>`);
 
     const cerr = (arr, n) => arr.filter((x) => x.estado !== 'en_transito' && x.estado !== 'pendiente').slice(0, n);
@@ -953,7 +955,7 @@ function abrirForma(tipo, o) {
   const f = FORMAS[tipo];
   if (!f) return;
   const cid = nuevoCid();
-  let motivo = f.motivos ? f.motivos[0] : '', pago = 'efectivo', entrega = '';
+  let motivo = f.motivos ? f.motivos[0] : '', pago = 'efectivo', entrega = o.entrega || '';
   const neg = S.est.negocio;
   const tarifaDe = (e) => (e === 'tepic' ? neg.envioTepic : e === 'xalisco' || e === 'cantera' ? neg.envioFuera : 0);
   const envioMonto = () => (tarifaDe(entrega) ? decimal(($('#f-envio') || {}).value) : 0);
@@ -981,9 +983,9 @@ function abrirForma(tipo, o) {
       ${f.precio ? html`<div class="total-b"><span>Total</span><b id="f-total">${dinero(0)}</b></div><p class="t-peq" id="f-total-sub" style="margin:-6px 0 14px"></p>` : ''}
       ${f.venta ? html`<div class="campo"><span class="lbl">Entrega</span><div class="opciones" id="f-entrega">${ENTREGAS.map(([k, t]) => html`<button type="button" class="opcion" data-entrega="${k}" aria-pressed="${String(k === entrega)}" style="padding:0 12px">${t}</button>`)}</div><p class="t-peq" id="f-entrega-ayuda" style="margin-top:8px"></p></div>
         <label class="campo" id="f-envio-campo" hidden><span class="lbl">Cobro de envío</span><span class="precio" style="max-width:160px"><span class="muted">$</span><input id="f-envio" type="text" inputmode="decimal" value="" aria-label="Cobro de envío"></span></label>
-        <label class="campo"><span class="lbl">Cliente (opcional)</span><input class="inp" id="f-cliente" maxlength="60" placeholder="Nombre o referencia" autocomplete="off"></label>
+        <label class="campo"><span class="lbl">Cliente (opcional)</span><input class="inp" id="f-cliente" maxlength="60" placeholder="Nombre o referencia" autocomplete="off" value="${o.cliente || ''}"></label>
         <div class="campo"><span class="lbl">Forma de pago</span><div class="opciones g4" id="f-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>` : ''}
-      <label class="campo"><span class="lbl">${f.notaEt || 'Nota (opcional)'}</span><textarea class="inp" id="f-nota" rows="2" maxlength="200" placeholder="${tipo === 'envio' ? 'Ej. sale en la camioneta de las 4' : 'Escribe algo que ayude a recordar'}"></textarea></label>
+      <label class="campo"><span class="lbl">${f.notaEt || 'Nota (opcional)'}</span><textarea class="inp" id="f-nota" rows="2" maxlength="200" placeholder="${tipo === 'envio' ? 'Ej. sale en la camioneta de las 4' : 'Escribe algo que ayude a recordar'}">${o.nota || ''}</textarea></label>
       <p class="err" id="f-err" hidden></p>`,
     pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="f-ok">${f.ok}</button>`
   });
@@ -1012,6 +1014,7 @@ function abrirForma(tipo, o) {
     ed.repreciar();
     refrescarTotal();
   });
+  if (entrega && tarifaDe(entrega)) { const campo = $('#f-envio-campo', d.el); if (campo) { campo.hidden = false; $('#f-envio', d.el).value = String(tarifaDe(entrega)); } refrescarTotal(); }
   const envInp = $('#f-envio', d.el);
   if (envInp) envInp.addEventListener('input', refrescarTotal);
   const btn = $('#f-ok', d.el), err = $('#f-err', d.el);
@@ -1029,6 +1032,7 @@ function abrirForma(tipo, o) {
     const res = await op(cuerpo);
     d.cerrar();
     exitoForma(tipo, res, cuerpo);
+    if (o.alExito) o.alExito(res);
   }));
   return d;
 }
@@ -1110,6 +1114,231 @@ async function abrirVentas(inicial) {
   await cargar();
 }
 
+/* ───────── agenda: pedidos de clientes ───────── */
+const AG_EST = { pendiente: ['Pendiente', 'warn'], listo: ['Listo', 'ok'], entregado: ['Entregado', 'info'], cancelado: ['Cancelado', 'bad'] };
+const AG_ENT = { '': 'Entrega sin definir', recoge: 'Recoge en tienda', tepic: 'Envío Tepic', xalisco: 'Envío Xalisco', cantera: 'Envío La Cantera' };
+const hoyK = () => (S.est && S.est.hoy) || fechaArchivo();
+const sumaK = (k, n) => { const d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const fmtDiaAg = new Intl.DateTimeFormat('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+const fmtDiaAgLargo = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+const fmtMesAg = new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' });
+const etiquetaDiaAg = (k) => { const h = hoyK(); return k === h ? 'Hoy' : k === sumaK(h, 1) ? 'Mañana' : k === sumaK(h, -1) ? 'Ayer' : mayus(fmtDiaAg.format(fechaDeKey(k)).replace(/\./g, '')); };
+const resumenPedido = (a) => (a.lineas.length ? a.lineas.map((l) => l.cant + ' × ' + nombreProd(l.id).replace(/^Base /, '')).join(', ') : '') + (a.detalle ? (a.lineas.length ? ' · ' : '') + a.detalle : '');
+const totalPedido = (a) => a.lineas.reduce((t, l) => t + l.cant * (l.precio || 0), 0);
+function conteoAgenda() {
+  const h = hoyK(), m = sumaK(h, 1), fin = sumaK(h, 7);
+  const ab = (S.est && S.est.agenda) || [];
+  return { atrasados: ab.filter((a) => a.dia < h), hoy: ab.filter((a) => a.dia === h), manana: ab.filter((a) => a.dia === m), semana: ab.filter((a) => a.dia > m && a.dia <= fin), total: ab.length };
+}
+function tarjetaAgenda() {
+  const c = conteoAgenda();
+  const urg = c.atrasados.length + c.hoy.length;
+  const partes = [];
+  if (c.atrasados.length) partes.push(c.atrasados.length + ' atrasado' + (c.atrasados.length === 1 ? '' : 's'));
+  partes.push('Hoy ' + c.hoy.length, 'Mañana ' + c.manana.length, 'Próx. 7 días ' + c.semana.length);
+  return html`<button type="button" class="gastos-b agenda-b ${urg ? 'urgente' : ''}" data-act="agenda" aria-label="Ver pedidos de clientes">
+    <span class="ico-c ${urg ? 'bad' : 'info'}">${ico('reloj')}</span>
+    <span class="grow"><b>Pedidos de clientes</b><small>${c.total ? partes.join(' · ') : 'Sin pedidos programados'}</small></span>
+    ${S.rol === 'dueno' ? '' : html`<span class="gastos-mas">${ico('plus')}</span>`}
+  </button>`;
+}
+// aviso al entrar: lo que hay que tener hecho hoy, mañana o ya se pasó
+function mostrarAvisoAgenda() {
+  const c = conteoAgenda();
+  const lista = [['Atrasados', c.atrasados, 'bad'], ['Hoy', c.hoy, 'warn'], ['Mañana', c.manana, 'info']].filter((x) => x[1].length);
+  if (!lista.length || $('dialog.sheet[open]')) return;
+  const d = dialogo({
+    titulo: 'Pedidos de clientes',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:12px">${c.atrasados.length ? 'Hay pedidos que ya se pasaron de fecha. ' : ''}Esto es lo que hay que tener listo y entregar.</p>
+      ${lista.map(([t, arr, cl]) => html`<h3 class="t-sec" style="margin-top:10px">${t} · ${arr.length}</h3><div class="vt-lista">${arr.map((a) => html`<div class="vt-fila"><span class="n">${a.hora ? a.hora + ' · ' : ''}${a.cliente}${cl === 'bad' ? html` <span class="pill bad">${etiquetaDiaAg(a.dia)}</span>` : ''}</span><span class="v"><span class="pill ${AG_EST[a.estado][1]}">${AG_EST[a.estado][0]}</span></span><small>${resumenPedido(a)} · ${AG_ENT[a.entrega]}</small></div>`)}</div>`)}`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Entendido</button><button type="button" class="btn btn-p" id="av-ver">Ver agenda</button>`,
+    enfocar: false
+  });
+  $('#av-ver', d.el).addEventListener('click', () => { d.cerrar(); abrirAgenda(); });
+}
+
+async function abrirAgenda(inicial) {
+  let vista = (inicial && inicial.vista) || 'proximos', mes = hoyK().slice(0, 7), sel = hoyK(), cerrados = false, datos = [];
+  const puede = S.rol !== 'dueno';
+  const d = dialogo({
+    titulo: 'Pedidos de clientes',
+    clase: 'ancho',
+    cuerpo: html`<div class="vt-seg" id="ag-seg" role="group" aria-label="Vista"></div><div id="ag-cont"><p class="t-peq">Cargando…</p></div>`,
+    pie: puede ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="ag-nuevo">${ico('plus')}Nuevo pedido</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`,
+    enfocar: false
+  });
+  const rango = () => {
+    if (vista === 'calendario') { const [y, m] = mes.split('-').map(Number); const ini = mes + '-01', fin = y + '-' + String(m).padStart(2, '0') + '-' + String(new Date(y, m, 0).getDate()).padStart(2, '0'); return [ini, fin]; }
+    return [sumaK(hoyK(), -35), sumaK(hoyK(), 60)];
+  };
+  const filaPedido = (a) => html`<button type="button" class="ag-item ${a.estado}" data-pedido="${a.id}">
+      <span class="ag-hora">${a.hora || '—'}</span>
+      <span class="ag-main"><b>${a.cliente}</b><small>${resumenPedido(a) || 'Sin detalle'}</small><small>${AG_ENT[a.entrega]}${a.direccion ? ' · ' + a.direccion : ''}${a.anticipo ? ' · anticipo ' + dinero(a.anticipo) : ''}${totalPedido(a) ? ' · total ' + dinero(totalPedido(a)) : ''}</small></span>
+      <span class="pill ${AG_EST[a.estado][1]}">${AG_EST[a.estado][0]}</span></button>`;
+  const visibles = () => datos.filter((a) => cerrados || a.estado === 'pendiente' || a.estado === 'listo');
+  const pintarProximos = () => {
+    const h = hoyK(), v = visibles();
+    const grupos = [];
+    const atras = v.filter((a) => a.dia < h && (a.estado === 'pendiente' || a.estado === 'listo'));
+    if (atras.length) grupos.push(['Atrasados (ya pasó la fecha)', atras, true]);
+    const dias = [...new Set(v.filter((a) => a.dia >= h).map((a) => a.dia))].sort();
+    dias.forEach((k) => grupos.push([etiquetaDiaAg(k) + (k === h || k === sumaK(h, 1) ? ' · ' + mayus(fmtDiaAg.format(fechaDeKey(k)).replace(/\./g, '')) : ''), v.filter((a) => a.dia === k), false]));
+    if (cerrados) { const pas = v.filter((a) => a.dia < h && !(a.estado === 'pendiente' || a.estado === 'listo')); if (pas.length) grupos.push(['Anteriores (entregados / cancelados)', pas, false]); }
+    return grupos.length ? html`${grupos.map(([t, arr, mal]) => html`<h3 class="t-sec ${mal ? 'ag-mal' : ''}" style="margin:14px 0 6px">${t} · ${arr.length}</h3><div class="ag-lista">${arr.map(filaPedido)}</div>`)}`
+      : html`<div class="vacio" style="padding:22px 8px"><b>No hay pedidos programados</b><span>${puede ? 'Toca “Nuevo pedido” para apuntar uno, aunque sea de ayer.' : 'Cuando se apunte un pedido aparecerá aquí.'}</span></div>`;
+  };
+  const pintarCalendario = () => {
+    const [y, m] = mes.split('-').map(Number);
+    const primero = new Date(y, m - 1, 1), dow = (primero.getDay() + 6) % 7, dias = new Date(y, m, 0).getDate();
+    const celdas = [];
+    for (let i = 0; i < dow; i++) celdas.push(null);
+    for (let n = 1; n <= dias; n++) celdas.push(mes + '-' + String(n).padStart(2, '0'));
+    const porDia = {};
+    visibles().forEach((a) => { (porDia[a.dia] || (porDia[a.dia] = [])).push(a); });
+    const h = hoyK();
+    const delDia = (porDia[sel] || []);
+    return html`<div class="cal-nav"><button type="button" class="icon-btn" data-mes="-1" aria-label="Mes anterior">${ico('der', 'izq')}</button><b>${mayus(fmtMesAg.format(primero))}</b><button type="button" class="icon-btn" data-mes="1" aria-label="Mes siguiente">${ico('der')}</button></div>
+      <div class="cal"><span class="cal-h">L</span><span class="cal-h">M</span><span class="cal-h">M</span><span class="cal-h">J</span><span class="cal-h">V</span><span class="cal-h">S</span><span class="cal-h">D</span>
+      ${celdas.map((k) => (k ? html`<button type="button" class="cal-d ${k === h ? 'hoy' : ''} ${k === sel ? 'sel' : ''} ${porDia[k] ? 'con' : ''}" data-dia="${k}" aria-label="${mayus(fmtDiaAgLargo.format(fechaDeKey(k)))}${porDia[k] ? ', ' + porDia[k].length + ' pedidos' : ''}"><span>${Number(k.slice(8))}</span>${porDia[k] ? html`<i class="cal-n ${porDia[k].some((a) => a.estado === 'pendiente' && k <= h) ? 'urg' : ''}">${porDia[k].length}</i>` : ''}</button>` : html`<span></span>`))}</div>
+      <h3 class="t-sec" style="margin:16px 0 6px">${mayus(fmtDiaAgLargo.format(fechaDeKey(sel)))} · ${delDia.length}</h3>
+      ${delDia.length ? html`<div class="ag-lista">${delDia.map(filaPedido)}</div>` : html`<p class="t-peq">Sin pedidos este día.</p>`}
+      ${puede ? html`<div style="margin-top:12px"><button type="button" class="btn btn-s btn-g" id="ag-nuevo-dia">${ico('plus')}Pedido para este día</button></div>` : ''}`;
+  };
+  const pintar = () => {
+    poner($('#ag-seg', d.el), html`<button type="button" class="chip" data-vista="proximos" aria-pressed="${String(vista === 'proximos')}">Próximos</button><button type="button" class="chip" data-vista="calendario" aria-pressed="${String(vista === 'calendario')}">Calendario</button><button type="button" class="chip" data-cerrados="1" aria-pressed="${String(cerrados)}">Entregados</button>`);
+    poner($('#ag-cont', d.el), vista === 'calendario' ? pintarCalendario() : pintarProximos());
+    const nd = $('#ag-nuevo-dia', d.el);
+    if (nd) nd.addEventListener('click', () => formPedidoCliente(null, sel, cargar));
+  };
+  const cargar = async () => {
+    try {
+      const [desde, hasta] = rango();
+      const r = await llamar('GET', '/agenda', null, { desde, hasta });
+      if (!r.json.ok) throw new ErrorApi(r.json.error);
+      // los abiertos más viejos que el rango también cuentan como atrasados
+      const extra = ((S.est && S.est.agenda) || []).filter((a) => a.dia < desde && vista === 'proximos');
+      datos = [...extra, ...r.json.items.filter((a) => !extra.some((x) => x.id === a.id))];
+      pintar();
+    } catch (e) { poner($('#ag-cont', d.el), html`<p class="err">${e.message || 'No se pudo cargar la agenda.'}</p>`); }
+  };
+  d.el.addEventListener('click', (ev) => {
+    const v = ev.target.closest('[data-vista]'), c = ev.target.closest('[data-cerrados]'), m = ev.target.closest('[data-mes]'), k = ev.target.closest('[data-dia]'), p = ev.target.closest('[data-pedido]');
+    if (v) { vista = v.dataset.vista; cargar(); } else if (c) { cerrados = !cerrados; pintar(); } else if (m) {
+      const [y, mm] = mes.split('-').map(Number); const nd = new Date(y, mm - 1 + Number(m.dataset.mes), 1); mes = nd.getFullYear() + '-' + String(nd.getMonth() + 1).padStart(2, '0'); sel = mes + '-01'; cargar();
+    } else if (k) { sel = k.dataset.dia; pintar(); } else if (p) { const a = datos.find((x) => x.id === p.dataset.pedido); if (a) abrirPedidoCliente(a, cargar); }
+  });
+  const nuevo = $('#ag-nuevo', d.el);
+  if (nuevo) nuevo.addEventListener('click', () => formPedidoCliente(null, vista === 'calendario' ? sel : sumaK(hoyK(), 1), cargar));
+  enVivo(d, cargar);
+  pintar();
+  await cargar();
+  return d;
+}
+
+function abrirPedidoCliente(a, alCambiar) {
+  const puede = S.rol !== 'dueno', abierto = a.estado === 'pendiente' || a.estado === 'listo';
+  const tot = totalPedido(a);
+  const d = dialogo({
+    titulo: a.cliente,
+    cuerpo: html`<div class="sep" style="margin-bottom:12px"><span class="t-peq">${mayus(fmtDiaAgLargo.format(fechaDeKey(a.dia)))}${a.hora ? ' · ' + a.hora : ''}</span><span class="pill ${AG_EST[a.estado][1]}">${AG_EST[a.estado][0]}</span></div>
+      ${a.lineas.length ? html`<div class="card flat" style="margin-bottom:14px"><ul class="lista">${a.lineas.map((l) => html`<li class="item" style="min-height:48px"><span class="prod-ico" style="width:36px;height:36px">${S.idx[l.id] ? iconoProd(S.idx[l.id], 26) : ''}</span><div class="grow"><div class="item-t">${nombreProd(l.id)}</div><div class="item-s">${dinero(l.precio)} c/u</div></div><b class="cifras">× ${l.cant}</b></li>`)}</ul></div>` : ''}
+      <dl class="kv">
+        ${a.detalle ? html`<dt>Detalle</dt><dd>${a.detalle}</dd>` : ''}
+        <dt>Entrega</dt><dd>${AG_ENT[a.entrega]}${a.direccion ? ' · ' + a.direccion : ''}</dd>
+        ${a.tel ? html`<dt>Teléfono</dt><dd><a href="tel:${a.tel}">${a.tel}</a> · <a href="${waLink(a.tel.length === 10 ? '52' + a.tel : a.tel, 'Hola ' + a.cliente + ', te escribimos de ' + S.est.negocio.nombre + ' sobre tu pedido.')}" target="_blank" rel="noopener">WhatsApp</a></dd>` : ''}
+        ${tot ? html`<dt>Total estimado</dt><dd>${dinero(tot)}</dd>` : ''}
+        ${a.anticipo ? html`<dt>Anticipo</dt><dd>${dinero(a.anticipo)}${tot ? ' · saldo ' + dinero(Math.max(0, tot - a.anticipo)) : ''}</dd>` : ''}
+        ${a.nota ? html`<dt>Nota</dt><dd>${a.nota}</dd>` : ''}
+        <dt>Apuntó</dt><dd>${ROLES[a.rol] ? ROLES[a.rol].nombre : a.rol} · ${hace(a.ts)}</dd>
+        ${a.estado === 'entregado' || a.estado === 'cancelado' ? html`<dt>${AG_EST[a.estado][0]}</dt><dd>${hace(a.estado_ts)}${a.estado_nota ? ' · ' + a.estado_nota : ''}</dd>` : ''}
+      </dl>`,
+    pie: !puede ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+      : abierto ? html`<button type="button" class="btn btn-g" id="pc-cerrar-p" data-cerrar>Cerrar</button><button type="button" class="btn btn-g" id="pc-editar">${ico('editar')}Editar</button>${a.estado === 'pendiente' ? html`<button type="button" class="btn btn-g" id="pc-listo">Marcar listo</button>` : ''}<button type="button" class="btn btn-p" id="pc-entregar">${S.rol === 'tienda' && a.lineas.length ? 'Entregar y cobrar' : 'Marcar entregado'}</button>`
+        : S.rol === 'local' ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pc-reabrir">Reabrir</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+  });
+  const ir = (sel, fn) => { const b = $(sel, d.el); if (b) b.addEventListener('click', fn); };
+  const cambiar = async (estado, extra) => { await op(Object.assign({ op: 'agenda.estado', id: a.id, estado }, extra)); if (alCambiar) alCambiar(); };
+  ir('#pc-editar', () => { d.cerrar(); formPedidoCliente(a, null, alCambiar); });
+  ir('#pc-listo', async () => { try { await cambiar('listo'); d.cerrar(); toast('Marcado como listo.'); } catch (e) { toast(e.message, { tipo: 'error' }); } });
+  ir('#pc-reabrir', async () => { try { await cambiar('pendiente'); d.cerrar(); toast('Pedido reabierto.'); } catch (e) { toast(e.message, { tipo: 'error' }); } });
+  ir('#pc-entregar', async () => {
+    d.cerrar();
+    if (S.rol === 'tienda' && a.lineas.length) {
+      abrirForma('venta', {
+        inicial: a.lineas.map((l) => ({ id: l.id, cant: l.cant, precio: l.precio ? String(l.precio) : '' })), cliente: a.cliente, entrega: a.entrega === 'recoge' || a.entrega === 'tepic' || a.entrega === 'xalisco' || a.entrega === 'cantera' ? a.entrega : '',
+        nota: 'Pedido de cliente' + (a.anticipo ? ' · anticipo ' + dinero(a.anticipo) : ''),
+        alExito: async (res) => { try { await cambiar('entregado', { venta: res.grupo }); } catch (e) { toast(e.message, { tipo: 'error' }); } }
+      });
+    } else { try { await cambiar('entregado'); toast('Marcado como entregado.'); } catch (e) { toast(e.message, { tipo: 'error' }); } }
+  });
+  const cancelar = $('#pc-cerrar-p', d.el);
+  if (cancelar && puede && abierto) {
+    const c = document.createElement('button');
+    c.type = 'button'; c.className = 'btn btn-s btn-g'; c.style.cssText = 'color:var(--bad);margin-right:auto'; c.textContent = 'Cancelar pedido';
+    cancelar.replaceWith(c);
+    c.addEventListener('click', async () => {
+      const motivo = await confirmar({ titulo: 'Cancelar pedido', texto: a.cliente + ' · ' + mayus(fmtDiaAg.format(fechaDeKey(a.dia))) + '. Queda marcado como cancelado en la agenda.', ok: 'Cancelar pedido', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Motivo', min: 3, ayuda: 'Ej. el cliente ya no lo quiere' } });
+      if (!motivo) return;
+      try { await cambiar('cancelado', { nota: motivo }); d.cerrar(); toast('Pedido cancelado.'); } catch (e) { toast(e.message, { tipo: 'error' }); }
+    });
+  }
+}
+
+function formPedidoCliente(a, diaInicial, alGuardar) {
+  const edit = !!a, cid = nuevoCid();
+  const h = hoyK();
+  let entrega = a ? a.entrega : '';
+  const ed = editorLineas({
+    modo: 'sumar', loc: null, precio: true, cand: () => true, inicial: a ? a.lineas.map((l) => ({ id: l.id, cant: l.cant, precio: l.precio ? String(l.precio) : '' })) : [], vacio: 'Agrega las bases del pedido (o escribe el detalle abajo).',
+    alCambiar: () => { const t = $('#pc-total'); if (t) t.textContent = ed ? dinero(ed.total()) : ''; }
+  });
+  const sab = (() => { const dd = new Date(h + 'T12:00:00'); const falta = (6 - dd.getDay() + 7) % 7; return sumaK(h, falta === 0 ? 7 : falta); })();
+  const d = dialogo({
+    titulo: edit ? 'Editar pedido' : 'Nuevo pedido de cliente',
+    clase: 'ancho',
+    cuerpo: html`<label class="campo"><span class="lbl">Cliente</span><input class="inp" id="pc-cliente" maxlength="60" autocomplete="off" placeholder="Nombre o referencia" value="${a ? a.cliente : ''}"></label>
+      <label class="campo"><span class="lbl">Teléfono (opcional)</span><input class="inp" id="pc-tel" inputmode="tel" maxlength="20" autocomplete="off" placeholder="311 123 4567" value="${a ? a.tel : ''}"></label>
+      <div class="campo"><span class="lbl">¿Para qué día?</span>
+        <div class="opciones" id="pc-atajos" style="margin-bottom:8px"><button type="button" class="opcion" data-atajo="${h}" style="padding:0 14px">Hoy</button><button type="button" class="opcion" data-atajo="${sumaK(h, 1)}" style="padding:0 14px">Mañana</button><button type="button" class="opcion" data-atajo="${sab}" style="padding:0 14px">Sábado</button></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><input class="inp" type="date" id="pc-dia" value="${a ? a.dia : diaInicial || sumaK(h, 1)}" min="${sumaK(h, -35)}" max="${sumaK(h, 190)}" style="max-width:200px" aria-label="Día de entrega"><input class="inp" type="time" id="pc-hora" value="${a ? a.hora : ''}" style="max-width:140px" aria-label="Hora (opcional)"></div>
+        <span class="ayuda">Puedes elegir un día pasado si no alcanzaron a apuntarlo. La hora es opcional.</span></div>
+      <div id="pc-ed"></div>
+      <div class="total-b"><span>Total estimado</span><b id="pc-total">${dinero(0)}</b></div>
+      <label class="campo"><span class="lbl">Detalle (si no está en el catálogo)</span><textarea class="inp" id="pc-detalle" rows="2" maxlength="200" placeholder="Ej. 5 matrimoniales negras con cabecera">${a ? a.detalle : ''}</textarea></label>
+      <div class="campo"><span class="lbl">Entrega</span><div class="opciones" id="pc-entrega">${[['', 'Sin definir'], ['recoge', 'Recoge'], ['tepic', 'Envío Tepic'], ['xalisco', 'Xalisco'], ['cantera', 'La Cantera']].map(([k, t]) => html`<button type="button" class="opcion" data-entrega="${k}" aria-pressed="${String(k === entrega)}" style="padding:0 12px">${t}</button>`)}</div></div>
+      <label class="campo"><span class="lbl">Dirección o referencia (opcional)</span><input class="inp" id="pc-dir" maxlength="120" autocomplete="off" value="${a ? a.direccion : ''}"></label>
+      <label class="campo" style="max-width:220px"><span class="lbl">Anticipo (opcional)</span><span class="precio"><span class="muted">$</span><input id="pc-anticipo" type="text" inputmode="decimal" placeholder="0" value="${a && a.anticipo ? a.anticipo : ''}" aria-label="Anticipo"></span></label>
+      <label class="campo"><span class="lbl">Nota (opcional)</span><textarea class="inp" id="pc-nota" rows="2" maxlength="200">${a ? a.nota : ''}</textarea></label>
+      <p class="err" id="pc-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="pc-ok">${edit ? 'Guardar cambios' : 'Guardar pedido'}</button>`
+  });
+  $('#pc-ed', d.el).appendChild(ed.el);
+  $('#pc-total', d.el).textContent = dinero(ed.total());
+  $('#pc-atajos', d.el).addEventListener('click', (ev) => { const b = ev.target.closest('[data-atajo]'); if (b) $('#pc-dia', d.el).value = b.dataset.atajo; });
+  $('#pc-entrega', d.el).addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-entrega]');
+    if (!b) return;
+    entrega = b.dataset.entrega;
+    $$('#pc-entrega button', d.el).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  });
+  const btn = $('#pc-ok', d.el), err = $('#pc-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const cliente = $('#pc-cliente', d.el).value.trim(), dia = $('#pc-dia', d.el).value, detalle = $('#pc-detalle', d.el).value.trim();
+    if (!cliente) throw new ErrorApi({ mensaje: 'Escribe el nombre del cliente.' });
+    if (!dia) throw new ErrorApi({ mensaje: 'Elige para qué día es el pedido.' });
+    const ls = ed.lineas();
+    if (!ls.length && !detalle) throw new ErrorApi({ mensaje: 'Agrega las bases del pedido o escribe el detalle.' });
+    if (ls.some((l) => !(l.cant >= 1))) throw new ErrorApi({ mensaje: 'Pon la cantidad de cada producto.' });
+    const cuerpo = { op: edit ? 'agenda.editar' : 'agenda.crear', cliente, tel: $('#pc-tel', d.el).value, dia, hora: $('#pc-hora', d.el).value, lineas: ls.map((l) => ({ id: l.id, cant: l.cant, precio: l.precio || 0 })), detalle, entrega, direccion: $('#pc-dir', d.el).value.trim(), anticipo: decimal($('#pc-anticipo', d.el).value), nota: $('#pc-nota', d.el).value.trim() };
+    if (edit) cuerpo.id = a.id; else cuerpo.cid = cid;
+    await op(cuerpo);
+    d.cerrar();
+    toast('Pedido guardado para ' + etiquetaDiaAg(dia).toLowerCase() + '.');
+    if (alGuardar) alGuardar();
+  }));
+  return d;
+}
+
 /* ───────── resumen del negocio (Dueño; el Almacén también lo puede abrir) ───────── */
 async function cargarResumen() {
   const r = await llamar('GET', '/resumen');
@@ -1152,6 +1381,7 @@ async function pintarResumenDueno() {
   if (!$('#res-cont', cont)) {
     poner(cont, html`
       <div class="cabecera"><div><h1 class="t-pant">Resumen</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · ${S.est.negocio.nombre}</p></div></div>
+      ${tarjetaAgenda()}
       <div id="res-seg"></div>
       <div class="pila" id="res-cont"><p class="t-peq">Cargando…</p></div>
       <div class="acciones-fab"><button type="button" class="btn btn-g" data-act="ventas">Ver ventas</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button></div>`);
@@ -2119,6 +2349,7 @@ VISTAS.mas = {
       </ul></div></section>` : ''}
       <section class="sec-mas"><span class="t-sec">Datos</span><div class="card flat"><ul class="lista">
         ${local ? fila('tabla', 'Resumen del negocio', 'Producción, ventas, gastos y egresos', 'resumen') : ''}
+        ${fila('reloj', 'Pedidos de clientes', 'Agenda de entregas: apuntar, programar y ver por calendario', 'agenda')}
         ${fila('salida', 'Gastos', S.rol === 'dueno' ? 'Salidas de dinero por día, semana y mes' : 'Salidas de dinero: registrar y ver por día, semana y mes', 'gastos')}
         ${fila('bajar', 'Exportar inventario', 'Hoja de cálculo (CSV) con las existencias de hoy', 'exportar-inv')}
         ${fila('bajar', 'Exportar movimientos', 'Todo el historial en CSV', 'exportar-movs')}
@@ -2160,9 +2391,11 @@ const A = {
   'filtro-cat': (b) => { S.filtro.cat = b.dataset.cat; VISTAS.inventario.actualizar(); },
   'filtro-bajo': () => { S.filtro.bajo = !S.filtro.bajo; VISTAS.inventario.actualizar(); },
   'filtro-arch': () => { S.filtro.archivados = !S.filtro.archivados; VISTAS.inventario.actualizar(); },
-  forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : b.dataset.tipo === 'reporte' ? abrirReporteDia() : b.dataset.tipo === 'gasto' ? formGasto() : abrirForma(b.dataset.tipo)),
+  forma: (b) => (b.dataset.tipo === 'recibir' ? recibirYa() : b.dataset.tipo === 'reporte' ? abrirReporteDia() : b.dataset.tipo === 'gasto' ? formGasto() : b.dataset.tipo === 'agenda' ? abrirAgenda() : abrirForma(b.dataset.tipo)),
   'reporte-dia': () => abrirReporteDia(),
   gastos: () => abrirGastos(),
+  agenda: () => abrirAgenda(),
+  'pedido-cliente-nuevo': () => formPedidoCliente(null, sumaK(hoyK(), 1)),
   'pdf-semana': (b) => descargarPdfSemanal(Number(b.dataset.sem) || 0, b),
   'venta-nueva': () => abrirForma('venta'),
   resumen: () => abrirResumen(),
@@ -2260,7 +2493,7 @@ function enlazarCopiar(raiz, codigo) {
 /* ───────── sesión ───────── */
 function salir(msg) {
   $$('dialog.sheet').forEach((d) => d.close());
-  S.token = ''; S.est = null; S.rol = ''; S.idx = {};
+  S.token = ''; S.est = null; S.rol = ''; S.idx = {}; S.avisoAgenda = false;
   store.del(CLAVE_SESION); sesionTmp.del(CLAVE_SESION); store.del(CLAVE_CACHE);
   pantallaLogin(msg);
 }

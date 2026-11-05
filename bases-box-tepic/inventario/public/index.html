@@ -227,6 +227,28 @@ button.gs-fila{background:none;border:0;border-bottom:1px solid var(--line);text
 i.ven{background:var(--bar)}
 i.gas{background:var(--bad)}
 i.pt{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:middle}
+.agenda-b.urgente{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad) inset}
+.ag-lista{display:flex;flex-direction:column;gap:8px}
+.ag-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radio-lg);text-align:left;color:inherit;min-height:64px}
+.ag-item:hover{border-color:var(--line-2)}
+.ag-item.entregado,.ag-item.cancelado{opacity:.6}
+.ag-hora{flex:none;min-width:44px;font:700 15px var(--f-etiqueta);color:var(--muted);text-align:center}
+.ag-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ag-main b{font-size:16px}
+.ag-main small{color:var(--muted);font-size:13px;line-height:1.3;overflow-wrap:anywhere}
+.ag-mal{color:var(--bad)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav b{font:700 18px var(--f-etiqueta);letter-spacing:.04em}
+.cal-nav .i.izq{transform:rotate(180deg)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-h{text-align:center;font:700 12px var(--f-etiqueta);color:var(--muted);padding:4px 0}
+.cal-d{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;aspect-ratio:1/1;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;font:600 15px var(--f-cuerpo)}
+.cal-d.hoy{border-color:var(--accent);border-width:2px}
+.cal-d.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cal-d.con{font-weight:700}
+.cal-n{font:700 11px/1 var(--f-etiqueta);font-style:normal;min-width:18px;padding:3px 5px;border-radius:99px;background:var(--accent);color:var(--accent-ink)}
+.cal-n.urg{background:var(--bad);color:#fff}
+.cal-d.sel .cal-n{background:var(--bg);color:var(--ink)}
 .vt-seg{display:flex;gap:8px;margin-bottom:14px}
 .vt-seg .chip{flex:1;justify-content:center}
 .vt-lista{display:flex;flex-direction:column;margin:6px 0 16px}

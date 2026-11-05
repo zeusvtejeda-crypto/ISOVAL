@@ -1008,6 +1008,76 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.deepEqual(an.json.estado.productos.map((p) => [p.id, p.stock_local, p.stock_tienda]), stock0);
     });
 
+    test('pedidos de clientes (agenda): registrar, programar, pasados, estados, alertas y permisos', async () => {
+      const { repo, local, tienda } = await iniciar(fabrica);
+      await local.op({ op: 'pin.dueno', pinActual: '482159', pinNuevo: '615243' });
+      const dueno = cliente(repo, local.now); await dueno.login('dueno', '615243');
+      const est0 = await local.estado();
+      const a = prod(est0, 'Base Queen · Gris'), b = prod(est0, 'Base Individual · Rosa');
+      const hoyK = est0.hoy;
+      const suma = (k, n) => new Date(Date.parse(k + 'T00:00:00Z') + n * DIA).toISOString().slice(0, 10);
+      const Q = (extra) => tienda.call('POST', '/op', Object.assign({ op: 'agenda.crear', cliente: 'Ana López', dia: suma(hoyK, 1) }, extra), {});
+      // validaciones
+      assert.equal((await Q({ cliente: '', detalle: 'x' })).json.error.code, 'falta_cliente');
+      assert.equal((await Q({})).json.error.code, 'falta_detalle');
+      assert.equal((await Q({ detalle: 'x', dia: 'mañana' })).json.error.code, 'dia_invalido');
+      assert.equal((await Q({ detalle: 'x', dia: suma(hoyK, -400) })).json.error.code, 'dia_invalido');
+      assert.equal((await Q({ detalle: 'x', dia: suma(hoyK, 400) })).json.error.code, 'dia_invalido');
+      assert.equal((await Q({ detalle: 'x', hora: '25:00' })).json.error.code, 'hora_invalida');
+      assert.equal((await Q({ detalle: 'x', entrega: 'luna' })).json.error.code, 'entrega_invalida');
+      assert.equal((await Q({ lineas: [{ id: 'no-existe', cant: 1 }] })).json.error.code, 'producto_no_existe');
+      assert.equal((await Q({ lineas: [{ id: a.id, cant: 0 }] })).json.error.code, 'cantidad_invalida');
+      assert.equal((await Q({ detalle: 'x', anticipo: -5 })).json.error.code, 'numero_invalido');
+      // para mañana, para el sábado de esta semana, y uno de AYER que no alcanzaron a meter
+      const m1 = await Q({ lineas: [{ id: a.id, cant: 2, precio: 1800 }, { id: b.id, cant: 1 }], entrega: 'tepic', direccion: 'Col. Centro', tel: '311-555-1234', hora: '16:30', anticipo: 500, nota: 'Llamar antes' });
+      assert.equal(m1.status, 200, JSON.stringify(m1.json));
+      const m2 = await Q({ cliente: 'Hotel Cielo', dia: suma(hoyK, 5), detalle: '5 bases matrimoniales negras' });
+      const m3 = await Q({ cliente: 'Carla', dia: suma(hoyK, -1), lineas: [{ id: b.id, cant: 3 }] });
+      assert.equal(m2.status, 200); assert.equal(m3.status, 200, 'se pueden registrar pedidos de días pasados');
+      // la lista por rango, con el Almacén y el Dueño viendo lo mismo
+      const rango = (c, d, h) => c.call('GET', '/agenda', null, { desde: d, hasta: h }).then((r) => r.json);
+      const lista = await rango(local, suma(hoyK, -3), suma(hoyK, 10));
+      assert.equal(lista.ok, true);
+      assert.deepEqual(lista.items.map((x) => x.cliente), ['Carla', 'Ana López', 'Hotel Cielo'], 'ordenados por fecha');
+      assert.deepEqual((await rango(dueno, suma(hoyK, -3), suma(hoyK, 10))).items.map((x) => x.id), lista.items.map((x) => x.id));
+      const ana = lista.items.find((x) => x.cliente === 'Ana López');
+      assert.equal(ana.tel, '3115551234'); assert.equal(ana.anticipo, 500); assert.equal(ana.hora, '16:30'); assert.equal(ana.lineas.length, 2); assert.equal(ana.lineas[0].precio, 1800); assert.equal(ana.estado, 'pendiente');
+      assert.equal(ana.lineas[1].precio, b.precio, 'sin precio usa el de lista');
+      assert.equal((await rango(local, suma(hoyK, 10), suma(hoyK, 1))).ok, false);
+      assert.equal((await rango(local, suma(hoyK, 0), suma(hoyK, 300))).ok, false, 'rango máximo');
+      // alerta: el estado trae los pedidos abiertos para que cada perfil sepa qué toca hoy y mañana
+      const ab = (await tienda.estado()).agenda;
+      assert.equal(ab.length, 3);
+      assert.equal((await local.estado()).agenda.length, 3);
+      assert.equal((await dueno.estado()).agenda.length, 3);
+      // editar: solo abiertos; el dueño no puede nada
+      const ed = await tienda.op({ op: 'agenda.editar', id: ana.id, cliente: 'Ana López', dia: suma(hoyK, 2), detalle: '', lineas: [{ id: a.id, cant: 3, precio: 1800 }], anticipo: 800 });
+      assert.equal(ed.status, 200, JSON.stringify(ed.json));
+      assert.equal((await rango(local, suma(hoyK, 0), suma(hoyK, 5))).items.find((x) => x.id === ana.id).dia, suma(hoyK, 2));
+      for (const op of ['agenda.crear', 'agenda.editar', 'agenda.estado']) assert.equal((await dueno.op({ op, id: ana.id, cliente: 'X', dia: suma(hoyK, 1), detalle: 'x', estado: 'listo' })).status, 403, op);
+      // estados: listo → entregado (con la venta); cancelar pide motivo; cerrados solo los reabre el Almacén
+      assert.equal((await tienda.op({ op: 'agenda.estado', id: ana.id, estado: 'listo' })).status, 200);
+      assert.equal((await rango(local, suma(hoyK, 0), suma(hoyK, 5))).items.find((x) => x.id === ana.id).estado, 'listo');
+      assert.equal((await tienda.op({ op: 'agenda.estado', id: ana.id, estado: 'raro' })).json.error.code, 'estado_invalido');
+      assert.equal((await tienda.op({ op: 'agenda.estado', id: m2.json.resultado.id, estado: 'cancelado' })).json.error.code, 'falta_motivo');
+      assert.equal((await tienda.op({ op: 'agenda.estado', id: m2.json.resultado.id, estado: 'cancelado', nota: 'El cliente ya no lo quiere' })).status, 200);
+      assert.equal((await tienda.op({ op: 'agenda.estado', id: ana.id, estado: 'entregado', venta: 'V123456789' })).status, 200);
+      const cerrados = (await rango(local, suma(hoyK, -3), suma(hoyK, 10))).items;
+      assert.equal(cerrados.find((x) => x.id === ana.id).venta, 'V123456789');
+      assert.equal(cerrados.find((x) => x.cliente === 'Hotel Cielo').estado_nota, 'El cliente ya no lo quiere');
+      assert.equal((await local.estado()).agenda.length, 1, 'solo queda abierto el pedido de ayer');
+      assert.equal((await tienda.op({ op: 'agenda.editar', id: ana.id, cliente: 'Ana', dia: suma(hoyK, 1), detalle: 'x' })).json.error.code, 'pedido_cerrado');
+      assert.equal((await tienda.op({ op: 'agenda.estado', id: ana.id, estado: 'pendiente' })).status, 403);
+      assert.equal((await local.op({ op: 'agenda.estado', id: ana.id, estado: 'pendiente' })).status, 200, 'el Almacén reabre');
+      assert.equal((await local.estado()).agenda.length, 2);
+      // idempotente (reintento de red) y fuera de dejar-todo-en-cero
+      const cid = 'pedido-reintento-1';
+      assert.equal((await Q({ cid, detalle: 'x' })).status, 200);
+      assert.equal((await Q({ cid, detalle: 'x' })).json.error.code, 'duplicado');
+      assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: '482159', confirmacion: 'BORRAR TODO' })).status, 200);
+      assert.equal((await local.estado()).agenda.length, 3, 'los pedidos de clientes se conservan al dejar el inventario en cero');
+    });
+
     test('datos de demostración: se generan, cuadran y el tablero tiene vida', async () => {
       const repo = await fabrica();
       const pins = await Core.sembrarDemo(repo, { now: Date.now() });
