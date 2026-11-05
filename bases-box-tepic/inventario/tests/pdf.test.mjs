@@ -41,3 +41,12 @@ test('texto: caracteres especiales, escape de paréntesis y recorte con puntos s
   assert.ok(d.textWidth('iii', 10) < d.textWidth('WWW', 10));
   assert.ok(d.textWidth('Hola', 10, true) > d.textWidth('Hola', 10, false));
 });
+
+test('aplicar dos veces la conversión (recortar y luego escribir) no daña guiones, comillas ni viñetas', () => {
+  const d = new Doc(); d.page();
+  const recortado = d.ajustar('Base \u2013 \u201cGris\u201d \u2022 $1,250 \u20ac', 9, false, 400);
+  assert.equal(recortado, 'Base \x96 \x93Gris\x94 \x95 $1,250 \x80');
+  assert.equal(aWin(recortado), recortado);
+  d.text(10, 10, recortado);
+  assert.ok(Buffer.from(d.bytes()).toString('latin1').includes('(Base \x96 \x93Gris\x94 \x95 $1,250 \x80)'));
+});

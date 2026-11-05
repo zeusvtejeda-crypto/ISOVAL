@@ -24,7 +24,7 @@
       const c = ch.codePointAt(0);
       if (c === 10 || c === 13 || c === 9) o += ' ';
       else if (c >= 32 && c < 127) o += ch;
-      else if (c >= 160 && c <= 255) o += ch;
+      else if ((c >= 160 && c <= 255) || (c >= 0x80 && c <= 0x9F)) o += ch; // ya en WinAnsi (aWin se puede aplicar dos veces sin dañar el texto)
       else if (ESPECIALES[c]) o += String.fromCharCode(ESPECIALES[c]);
       else o += '?';
     }
