@@ -249,7 +249,7 @@ function aplicarEstado(e) {
   S.camino = {};
   e.traspasos.filter((t) => t.estado === 'en_transito').forEach((t) => t.lineas.forEach((l) => { S.camino[l.id] = (S.camino[l.id] || 0) + l.cant; }));
   pintar();
-  if (!S.avisoAgenda && (e.rol === 'tienda' || e.rol === 'local')) { S.avisoAgenda = true; setTimeout(mostrarAvisoAgenda, 700); }
+  if (!S.avisoAgenda && e.rol === 'tienda') { S.avisoAgenda = true; setTimeout(mostrarAvisoAgenda, 700); }
   document.dispatchEvent(new Event('bb:estado')); // las hojas abiertas (gastos, ventas, reporte) se vuelven a cargar
 }
 
@@ -509,6 +509,7 @@ function pintarInicio() {
       <span class="vtas-t"><span class="t-sec">Ventas</span><span class="vtas-ver">Ver reporte ${ico('der')}</span></span>
       <span class="vtas-g">${[['Hoy', r.hoy], ['Semana', r.semana], ['Mes', r.mes]].map(([t, v]) => html`<span class="vtas-c"><small>${t}</small><b class="cifras">${dinero(v.total)}</b><i>${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pza', 'pzas')}</i></span>`)}</span>
     </button>
+    ${S.rol === 'local' ? html`<div id="card-cuentas"></div>` : ''}
     ${tarjetaAgenda()}
     <button type="button" class="gastos-b" data-act="gastos" aria-label="Ver gastos">
       <span class="ico-c warn">${ico('salida')}</span>
@@ -543,6 +544,7 @@ function pintarInicio() {
       </div>
     </div>`);
   dibujarGrafica();
+  if (S.rol === 'local') { pintarCardCuentas(); cargarCuentas(); }
 }
 
 function filaOperacion(g) {
@@ -1114,6 +1116,105 @@ async function abrirVentas(inicial) {
   await cargar();
 }
 
+/* ───────── revisión de cuentas: ¿está todo claro? ───────── */
+async function cargarCuentas(forzar) {
+  if (!S.est || (S.rol !== 'local' && S.rol !== 'dueno')) return;
+  if (!forzar && S.cuentasTs && Date.now() - S.cuentasTs < 8000) return;
+  S.cuentasTs = Date.now();
+  try {
+    const r = await llamar('GET', '/cuentas');
+    if (!r.json.ok) return;
+    S.cuentas = r.json;
+    pintarCardCuentas();
+    if (!S.avisoCuentas) { S.avisoCuentas = true; if (r.json.estado === 'error') setTimeout(mostrarAvisoCuentas, 600); }
+  } catch (e) { /* sin red: se queda lo último que se vio */ }
+}
+const CU_TXT = { claras: ['Cuentas claras', 'ok'], revisar: ['Hay cosas por revisar', 'warn'], error: ['Hay un error en las cuentas', 'bad'] };
+function pintarCardCuentas() {
+  const el = $('#card-cuentas');
+  if (!el) return;
+  const c = S.cuentas;
+  const [t, cl] = c ? CU_TXT[c.estado] : ['Revisando las cuentas…', 'info'];
+  const n = c ? c.hallazgos.length : 0, errores = c ? c.hallazgos.filter((h) => h.nivel === 'error').length : 0;
+  poner(el, html`<button type="button" class="gastos-b cuentas-b ${c ? c.estado : ''}" data-act="cuentas" aria-label="Revisar cuentas">
+    <span class="ico-c ${cl}">${ico(c && c.estado !== 'claras' ? 'alerta' : 'check')}</span>
+    <span class="grow"><b>${t}</b><small>${!c ? 'Un momento' : c.estado === 'claras' ? 'Todo cuadra con los registros de esta semana' : errores ? plural(errores, 'error', 'errores') + (n > errores ? ' y ' + plural(n - errores, 'aviso', 'avisos') : '') + ' · toca para ver' : plural(n, 'aviso', 'avisos') + ' · toca para ver'}</small></span>
+  </button>`);
+}
+function textoCuentas(c) {
+  const L = [S.est.negocio.nombre + ' · Revisión de cuentas', c.desde + ' al ' + c.hasta, ''];
+  L.push(c.estado === 'claras' ? 'CUENTAS CLARAS' : c.estado === 'error' ? 'HAY UN ERROR EN LAS CUENTAS' : 'HAY COSAS POR REVISAR', '');
+  L.push('Efectivo esperado en caja: ' + dinero(c.efectivo.esperado) + (c.efectivo.contado !== null ? ' · contado ' + dinero(c.efectivo.contado) : ''));
+  L.push('Tarjeta + transferencias: ' + dinero(c.digital.sistema) + (c.digital.reportado !== null ? ' · reportado ' + dinero(c.digital.reportado) : ''), '');
+  c.hallazgos.forEach((h) => L.push((h.nivel === 'error' ? 'ERROR: ' : 'Aviso: ') + h.titulo + ' — ' + h.detalle));
+  return L.join('\n');
+}
+function mostrarAvisoCuentas() {
+  const c = S.cuentas;
+  if (!c || c.estado !== 'error' || $('dialog.sheet[open]')) return;
+  const errores = c.hallazgos.filter((h) => h.nivel === 'error');
+  const d = dialogo({
+    titulo: 'Hay un error en las cuentas',
+    cuerpo: html`<div class="aviso warn" style="margin-bottom:12px">${ico('alerta')}<span class="grow">La revisión automática encontró ${plural(errores.length, 'error', 'errores')}. Conviene revisarlo antes de cerrar la semana.</span></div>${errores.map((h) => html`<div class="cu-h error"><b>${h.titulo}</b><span>${h.detalle}</span></div>`)}`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Después</button><button type="button" class="btn btn-p" id="cu-ver">Ver detalle</button>`,
+    enfocar: false
+  });
+  $('#cu-ver', d.el).addEventListener('click', () => { d.cerrar(); abrirCuentas(); });
+}
+async function abrirCuentas() {
+  const hoy = hoyK();
+  const lunes = (() => { const dd = new Date(hoy + 'T12:00:00'); return sumaK(hoy, -((dd.getDay() + 6) % 7)); })();
+  let desde = lunes, hasta = hoy, datos = null, err = '';
+  const d = dialogo({
+    titulo: 'Revisar cuentas',
+    clase: 'ancho',
+    cuerpo: html`<div class="vt-seg" id="cu-seg" role="group" aria-label="Periodo"></div><div id="cu-cont"><p class="t-peq">Revisando…</p></div>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="cu-wa" hidden>${ico('mensaje')}Enviar aviso por WhatsApp</button>`,
+    enfocar: false
+  });
+  const cargar = async () => {
+    const q = { desde, hasta };
+    const ec = $('#cu-contado', d.el), ed = $('#cu-digital', d.el);
+    if (ec && ec.value.trim()) q.contado = decimal(ec.value);
+    if (ed && ed.value.trim()) q.digital = decimal(ed.value);
+    err = '';
+    try { const r = await llamar('GET', '/cuentas', null, q); if (!r.json.ok) throw new ErrorApi(r.json.error); datos = r.json; } catch (e) { err = e.message || 'No se pudo revisar.'; }
+    pintar(ec ? ec.value : '', ed ? ed.value : '');
+    if (datos && !err) { S.cuentas = datos.desde === lunes && !('contado' in q) && !('digital' in q) ? datos : S.cuentas; pintarCardCuentas(); }
+  };
+  const pintar = (vc, vd) => {
+    poner($('#cu-seg', d.el), html`<button type="button" class="chip" data-cp="hoy" aria-pressed="${String(desde === hoy)}">Hoy</button><button type="button" class="chip" data-cp="semana" aria-pressed="${String(desde === lunes && hasta === hoy)}">Esta semana</button><button type="button" class="chip" data-cp="mes" aria-pressed="${String(desde === hoy.slice(0, 7) + '-01')}">Este mes</button>`);
+    const wa = $('#cu-wa', d.el);
+    if (err) { poner($('#cu-cont', d.el), html`<p class="err">${err}</p>`); if (wa) wa.hidden = true; return; }
+    const c = datos, [t, cl] = CU_TXT[c.estado];
+    if (wa) wa.hidden = c.estado === 'claras';
+    poner($('#cu-cont', d.el), html`
+      <div class="cu-banner ${c.estado}"><span class="ico-c ${cl}" style="width:44px;height:44px">${ico(c.estado === 'claras' ? 'check' : 'alerta')}</span><div><b>${c.estado === 'claras' ? 'Las cuentas están claras' : t}</b><span>${c.estado === 'claras' ? 'No encontré errores en los registros de este periodo.' : c.hallazgos.filter((h) => h.nivel === 'error').length ? 'Hay al menos un error que conviene corregir.' : 'No hay errores, pero hay cosas que conviene revisar.'}</span></div></div>
+      <div class="campo" style="margin-top:14px"><span class="lbl">Desde</span><input class="inp" type="date" id="cu-desde" value="${desde}" max="${hoy}" min="${sumaK(hoy, -35)}" style="max-width:200px" aria-label="Desde"></div>
+      <h3 class="t-sec" style="margin-top:6px">Efectivo en caja</h3>
+      <div class="vt-lista"><div class="vt-fila"><span class="n">Vendido en efectivo</span><span class="v">${dinero(c.efectivo.vendido)}</span></div><div class="vt-fila"><span class="n">Gastos pagados en efectivo</span><span class="v">-${dinero(c.efectivo.gastos)}</span></div><div class="vt-fila"><span class="n"><b>Debe haber en caja</b></span><span class="v">${dinero(c.efectivo.esperado)}</span></div>${c.efectivo.diferencia !== null ? html`<div class="vt-fila"><span class="n">Diferencia contra lo contado</span><span class="v ${Math.abs(c.efectivo.diferencia) > 0.009 ? 'mal' : 'bien'}">${c.efectivo.diferencia > 0 ? '+' : ''}${dinero(c.efectivo.diferencia)}</span></div>` : ''}</div>
+      <label class="campo"><span class="lbl">¿Cuánto efectivo contaste en la caja? (opcional)</span><span class="precio" style="max-width:220px"><span class="muted">$</span><input id="cu-contado" type="text" inputmode="decimal" placeholder="0" value="${vc || ''}" aria-label="Efectivo contado"></span></label>
+      <h3 class="t-sec" style="margin-top:6px">Tarjeta, link y transferencias</h3>
+      <div class="vt-lista"><div class="vt-fila"><span class="n">Tarjeta / link de pago</span><span class="v">${dinero(c.digital.tarjeta)}</span></div><div class="vt-fila"><span class="n">Transferencias</span><span class="v">${dinero(c.digital.transferencia)}</span></div><div class="vt-fila"><span class="n"><b>Total según el sistema</b></span><span class="v">${dinero(c.digital.sistema)}</span></div>${c.digital.diferencia !== null ? html`<div class="vt-fila"><span class="n">Diferencia contra lo reportado</span><span class="v ${Math.abs(c.digital.diferencia) > 0.009 ? 'mal' : 'bien'}">${c.digital.diferencia > 0 ? '+' : ''}${dinero(c.digital.diferencia)}</span></div>` : ''}</div>
+      <label class="campo"><span class="lbl">¿Cuánto entró en banco y Mercado Pago? (opcional)</span><span class="precio" style="max-width:220px"><span class="muted">$</span><input id="cu-digital" type="text" inputmode="decimal" placeholder="0" value="${vd || ''}" aria-label="Cobros digitales reportados"></span></label>
+      <div style="margin-bottom:14px"><button type="button" class="btn btn-s btn-p" id="cu-comprobar">Comprobar</button></div>
+      <h3 class="t-sec">${c.hallazgos.length ? 'Lo que encontré' : 'Revisiones hechas'}</h3>
+      ${c.hallazgos.length ? html`<div>${c.hallazgos.map((h) => html`<div class="cu-h ${h.nivel}"><b>${h.nivel === 'error' ? 'Error · ' : 'Aviso · '}${h.titulo}</b><span>${h.detalle}</span></div>`)}</div>`
+        : html`<ul class="cu-ok"><li>El efectivo esperado no es negativo</li><li>Las existencias coinciden con todos los movimientos</li><li>No hay ventas sin precio ni repetidas</li><li>No hay devoluciones sin venta</li><li>No hay envíos viejos sin confirmar ni pedidos atrasados</li></ul>`}`);
+  };
+  d.el.addEventListener('click', (ev) => {
+    const p = ev.target.closest('[data-cp]');
+    if (p) { desde = p.dataset.cp === 'hoy' ? hoy : p.dataset.cp === 'mes' ? hoy.slice(0, 7) + '-01' : lunes; hasta = hoy; cargar(); return; }
+    if (ev.target.closest('#cu-comprobar')) { const x = $('#cu-desde', d.el); if (x && x.value) desde = x.value; cargar(); }
+  });
+  d.el.addEventListener('change', (ev) => { if (ev.target.id === 'cu-desde' && ev.target.value) { desde = ev.target.value; cargar(); } });
+  d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && ev.target.matches('#cu-contado, #cu-digital')) cargar(); });
+  $('#cu-wa', d.el).addEventListener('click', () => { if (datos) window.open(waLink('', textoCuentas(datos)), '_blank', 'noopener'); });
+  enVivo(d, cargar);
+  await cargar();
+  return d;
+}
+
 /* ───────── agenda: pedidos de clientes ───────── */
 const AG_EST = { pendiente: ['Pendiente', 'warn'], listo: ['Listo', 'ok'], entregado: ['Entregado', 'info'], cancelado: ['Cancelado', 'bad'] };
 const AG_ENT = { '': 'Entrega sin definir', recoge: 'Recoge en tienda', tepic: 'Envío Tepic', xalisco: 'Envío Xalisco', cantera: 'Envío La Cantera' };
@@ -1381,6 +1482,7 @@ async function pintarResumenDueno() {
   if (!$('#res-cont', cont)) {
     poner(cont, html`
       <div class="cabecera"><div><h1 class="t-pant">Resumen</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · ${S.est.negocio.nombre}</p></div></div>
+      <div id="card-cuentas"></div>
       ${tarjetaAgenda()}
       <div id="res-seg"></div>
       <div class="pila" id="res-cont"><p class="t-peq">Cargando…</p></div>
@@ -1388,6 +1490,7 @@ async function pintarResumenDueno() {
     cont.addEventListener('click', (ev) => { const b = ev.target.closest('[data-res-per]'); if (b) { S.perRes = b.dataset.resPer; pintarResumenDueno(); } });
   }
   const per = S.perRes || 'hoy';
+  pintarCardCuentas(); cargarCuentas();
   poner($('#res-seg', cont), chipsPeriodo(per));
   if (S.resumenDueno) poner($('#res-cont', cont), htmlResumen(S.resumenDueno, per));
   try {
@@ -2349,6 +2452,7 @@ VISTAS.mas = {
       </ul></div></section>` : ''}
       <section class="sec-mas"><span class="t-sec">Datos</span><div class="card flat"><ul class="lista">
         ${local ? fila('tabla', 'Resumen del negocio', 'Producción, ventas, gastos y egresos', 'resumen') : ''}
+        ${local || S.rol === 'dueno' ? fila('check', 'Revisar cuentas', 'Comprueba que el efectivo y los cobros cuadren y que no haya errores', 'cuentas') : ''}
         ${fila('reloj', 'Pedidos de clientes', 'Agenda de entregas: apuntar, programar y ver por calendario', 'agenda')}
         ${fila('salida', 'Gastos', S.rol === 'dueno' ? 'Salidas de dinero por día, semana y mes' : 'Salidas de dinero: registrar y ver por día, semana y mes', 'gastos')}
         ${fila('bajar', 'Exportar inventario', 'Hoja de cálculo (CSV) con las existencias de hoy', 'exportar-inv')}
@@ -2395,6 +2499,7 @@ const A = {
   'reporte-dia': () => abrirReporteDia(),
   gastos: () => abrirGastos(),
   agenda: () => abrirAgenda(),
+  cuentas: () => abrirCuentas(),
   'pedido-cliente-nuevo': () => formPedidoCliente(null, sumaK(hoyK(), 1)),
   'pdf-semana': (b) => descargarPdfSemanal(Number(b.dataset.sem) || 0, b),
   'venta-nueva': () => abrirForma('venta'),
@@ -2493,7 +2598,7 @@ function enlazarCopiar(raiz, codigo) {
 /* ───────── sesión ───────── */
 function salir(msg) {
   $$('dialog.sheet').forEach((d) => d.close());
-  S.token = ''; S.est = null; S.rol = ''; S.idx = {}; S.avisoAgenda = false;
+  S.token = ''; S.est = null; S.rol = ''; S.idx = {}; S.avisoAgenda = false; S.cuentas = null; S.avisoCuentas = false;
   store.del(CLAVE_SESION); sesionTmp.del(CLAVE_SESION); store.del(CLAVE_CACHE);
   pantallaLogin(msg);
 }

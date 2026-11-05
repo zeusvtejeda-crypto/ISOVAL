@@ -215,6 +215,7 @@ export async function crearRepoD1(db) {
       const last = items[items.length - 1];
       return { items, siguiente: filas.length > f.limite && last ? last.ts + '_' + last.id : null };
     },
+    sumaMovs() { return todas(`SELECT prod, loc, SUM(delta) AS d FROM movs GROUP BY prod, loc`); },
     producciones(desde) { return todas(`SELECT ts, prod, delta, motivo FROM movs WHERE tipo = 'entrada' AND anulado = 0 AND ts >= ?1`, desde); },
     async agenda(desde, hasta) { return (await todas(`SELECT * FROM agenda WHERE dia >= ?1 AND dia <= ?2 ORDER BY dia, CASE WHEN hora = '' THEN '99:99' ELSE hora END, ts`, desde, hasta)).map(filaAgenda); },
     async agendaAbierta() { return (await todas(`SELECT * FROM agenda WHERE estado IN ('pendiente', 'listo') ORDER BY dia, CASE WHEN hora = '' THEN '99:99' ELSE hora END, ts LIMIT 400`)).map(filaAgenda); },

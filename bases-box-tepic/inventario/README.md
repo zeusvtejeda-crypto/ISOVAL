@@ -24,6 +24,7 @@ Almacén (fábrica)  ──envío──▶  En camino  ──confirma recibo─�
 | Entrega en la venta: recoge (−$200 por base), envío Tepic ($200), Xalisco y La Cantera ($250); tarifas editables | Cambia tarifas | Cobra |
 | PDF semanal con gráficas (ventas, gastos, sueldos pagados, producción, inventario), semana en curso o pasada | ✅ | — (Dueño ✅) |
 | Pedidos de clientes: apuntar (también de días pasados), programar por día/semana/calendario, marcar listo, entregar y cobrar, cancelar; aviso al entrar | ✅ | ✅ (el Dueño solo consulta) |
+| Revisar cuentas: cuadre de efectivo y cobros digitales contra lo contado, y detección de errores (existencias, ventas sin precio o repetidas, devoluciones, envíos y pedidos atrasados); avisa al entrar si hay un error | ✅ | — (Dueño ✅) |
 | Resumen del negocio: producción, ventas, gastos, egresos, resultado e inventario | ✅ | — (el Dueño lo ve de inicio) |
 | Gastos (salidas de dinero): registrar, anular y ver por día, semana y mes; todos ven los mismos y se actualizan solos | ✅ | ✅ (anula solo los suyos) |
 | Mover piezas de la tienda al almacén | ✅ | ✅ |

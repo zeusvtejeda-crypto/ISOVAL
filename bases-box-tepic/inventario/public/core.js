@@ -563,6 +563,79 @@
     };
   }
 
+  // Revisión de cuentas: ¿todo cuadra? Compara efectivo y cobros digitales contra lo que se cuenta y revisa que los registros no se contradigan.
+  async function revisarCuentas(ctx) {
+    const { repo, ahora, tz } = ctx, q = ctx.req.query || {};
+    const hoyK = diaKey(ahora, tz), re = /^\d{4}-\d{2}-\d{2}$/;
+    const desde = q.desde ? String(q.desde) : lunesDe(hoyK), hasta = q.hasta ? String(q.hasta) : hoyK;
+    if (!re.test(desde) || !re.test(hasta) || desde > hasta || hasta > hoyK || desde < sumaDiasKey(hoyK, -35)) throw bad('rango_invalido', 'Elige fechas dentro de los últimos 35 días.');
+    const cant = (v) => { if (v === undefined || v === null || v === '') return null; const n = Number(v); if (!Number.isFinite(n) || n < 0 || n > 1e8) throw bad('numero_invalido', 'Revisa el monto que escribiste.'); return Math.round(n * 100) / 100; };
+    const contado = cant(q.contado), reportado = cant(q.digital);
+    const en = (k) => k >= desde && k <= hasta;
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const fm = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+    const [filasV, gastosF, prods, sumas, trasp, abiertos] = await Promise.all([
+      repo.ventas(ahora - 45 * DIA), repo.gastos(ahora - 45 * DIA), repo.productos(), repo.sumaMovs(), repo.traspasos({ desde: ahora - 60 * DIA }), repo.agendaAbierta()
+    ]);
+    const hallazgos = [];
+    const add = (nivel, codigo, titulo, detalle, extra) => hallazgos.push(Object.assign({ nivel, codigo, titulo, detalle }, extra));
+    const nombre = {}; prods.forEach((p) => { nombre[p.id] = p.nombre; });
+    // dinero del periodo
+    const pago = { efectivo: 0, tarjeta: 0, transferencia: 0, otro: 0 };
+    let devuelto = 0, gEf = 0;
+    const ventasP = filasV.filter((r) => en(diaKey(r.ts, tz)));
+    ventasP.forEach((r) => {
+      const m = Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0);
+      if (r.tipo === 'venta') pago[r.pago in pago ? r.pago : 'efectivo'] += m; else devuelto += Math.abs(r.delta) * (r.precio || 0);
+    });
+    gastosF.filter((g) => !g.anulado && en(diaKey(g.ts, tz)) && g.pago === 'efectivo').forEach((g) => { gEf += g.monto; });
+    const esperado = r2(pago.efectivo - gEf);
+    const digital = r2(pago.tarjeta + pago.transferencia);
+    const efectivo = { vendido: r2(pago.efectivo), gastos: r2(gEf), esperado, contado, diferencia: contado === null ? null : r2(contado - esperado) };
+    const dig = { tarjeta: r2(pago.tarjeta), transferencia: r2(pago.transferencia), otro: r2(pago.otro), sistema: digital, reportado, diferencia: reportado === null ? null : r2(reportado - digital) };
+    if (efectivo.diferencia !== null && Math.abs(efectivo.diferencia) > 0.009) {
+      add('error', 'efectivo_no_cuadra', 'El efectivo en caja no cuadra', 'Debería haber ' + fm(esperado) + ' en caja y se contaron ' + fm(contado) + ': ' + (efectivo.diferencia < 0 ? 'faltan ' : 'sobran ') + fm(Math.abs(efectivo.diferencia)) + '. Revisa ventas en efectivo sin registrar, gastos mal capturados o cambio mal dado.', { monto: efectivo.diferencia });
+    }
+    if (dig.diferencia !== null && Math.abs(dig.diferencia) > 0.009) {
+      add('error', 'digital_no_cuadra', 'Tarjeta y transferencias no cuadran', 'El sistema tiene ' + fm(digital) + ' y se reportaron ' + fm(reportado) + ': ' + (dig.diferencia < 0 ? 'faltan ' : 'sobran ') + fm(Math.abs(dig.diferencia)) + ' por registrar o por revisar en el banco / terminal.', { monto: dig.diferencia });
+    }
+    if (esperado < -0.009) add('aviso', 'efectivo_negativo', 'Más gastos en efectivo que ventas en efectivo', 'En el periodo se pagaron ' + fm(r2(gEf)) + ' en efectivo pero solo se vendieron ' + fm(r2(pago.efectivo)) + ' en efectivo. Puede faltar registrar ventas, o algún gasto se pagó con otra forma de pago.', { monto: esperado });
+    if (devuelto > 0) add('aviso', 'devoluciones', 'Hay devoluciones en el periodo', 'Se devolvieron ' + fm(r2(devuelto)) + ' a clientes. Si se pagaron en efectivo, réstalas del efectivo esperado en caja.', { monto: r2(devuelto) });
+    // contabilidad: las existencias deben ser exactamente la suma de los movimientos
+    const mapa = {}; sumas.forEach((x) => { mapa[x.prod + '|' + x.loc] = x.d; });
+    const desc = [];
+    prods.forEach((p) => {
+      [['local', p.stock_local], ['tienda', p.stock_tienda]].forEach(([loc, st]) => {
+        const e = mapa[p.id + '|' + loc] || 0;
+        if (e !== st) desc.push({ id: p.id, nombre: p.nombre, loc, existencia: st, segunMovimientos: e });
+      });
+    });
+    if (desc.length) add('error', 'existencias_descuadradas', 'Las existencias no coinciden con los movimientos', desc.length + ' producto(s) tienen una existencia distinta a la que dicen sus movimientos (' + desc.slice(0, 3).map((x) => x.nombre + ' en ' + (x.loc === 'local' ? 'almacén' : 'tienda') + ': ' + x.existencia + ' vs ' + x.segunMovimientos).join('; ') + (desc.length > 3 ? '…' : '') + '). Esto no debería pasar: la existencia cambió sin un movimiento que la respalde. Avisa a soporte; un conteo físico ajusta las existencias pero esta alerta se queda hasta que se revise.', { productos: desc.slice(0, 20) });
+    // ventas sospechosas
+    const sinPrecio = ventasP.filter((r) => r.tipo === 'venta' && r.motivo !== 'monto' && !(r.precio > 0));
+    if (sinPrecio.length) add('error', 'venta_sin_precio', 'Hay ventas registradas sin precio', sinPrecio.length + ' línea(s) de venta quedaron en $0 (' + [...new Set(sinPrecio.map((r) => nombre[r.prod] || r.prod))].slice(0, 3).join(', ') + '). El dinero de esas ventas no está contado.', { grupos: [...new Set(sinPrecio.map((r) => r.grupo))].slice(0, 20) });
+    const costoDe = {}; prods.forEach((p) => { costoDe[p.id] = p.costo || 0; });
+    const bajoCosto = ventasP.filter((r) => r.tipo === 'venta' && r.motivo !== 'monto' && r.precio > 0 && costoDe[r.prod] > 0 && r.precio < costoDe[r.prod]);
+    if (bajoCosto.length) add('aviso', 'venta_bajo_costo', 'Ventas por debajo del costo', bajoCosto.length + ' línea(s) se vendieron a un precio menor que su costo de producción (' + [...new Set(bajoCosto.map((r) => nombre[r.prod] || r.prod))].slice(0, 3).join(', ') + ').', { grupos: [...new Set(bajoCosto.map((r) => r.grupo))].slice(0, 20) });
+    const gr = {};
+    ventasP.filter((r) => r.tipo === 'venta' && r.motivo !== 'monto').forEach((r) => { const g = gr[r.grupo] || (gr[r.grupo] = { ts: r.ts, rol: r.rol, total: 0, firma: [] }); g.total += Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0); g.firma.push(r.prod + ':' + Math.abs(r.delta)); });
+    const lista = Object.keys(gr).map((k) => Object.assign({ grupo: k }, gr[k], { firma: gr[k].firma.sort().join(',') })).sort((a, b) => a.ts - b.ts);
+    const dup = [];
+    for (let i = 1; i < lista.length; i++) for (let j = i - 1; j >= 0 && lista[i].ts - lista[j].ts <= 10 * 60000; j--) if (lista[i].firma === lista[j].firma && lista[i].total === lista[j].total) { dup.push(lista[i].grupo); break; }
+    if (dup.length) add('aviso', 'venta_duplicada', 'Posibles ventas repetidas', dup.length + ' venta(s) son idénticas a otra hecha minutos antes (mismos productos y total). Revisa que no se hayan registrado dos veces.', { grupos: dup.slice(0, 20) });
+    const vend = {}, dev = {};
+    filasV.forEach((r) => { (r.tipo === 'venta' ? vend : dev)[r.prod] = ((r.tipo === 'venta' ? vend : dev)[r.prod] || 0) + Math.abs(r.delta); });
+    const devMas = Object.keys(dev).filter((k) => dev[k] > (vend[k] || 0));
+    if (devMas.length) add('aviso', 'devolucion_sin_venta', 'Devoluciones sin venta que las respalde', devMas.length + ' producto(s) tienen más piezas devueltas que vendidas (' + devMas.slice(0, 3).map((k) => nombre[k] || k).join(', ') + ').', { productos: devMas.slice(0, 20) });
+    // pendientes viejos
+    const viejos = trasp.filter((t) => t.estado === 'en_transito' && t.ts < ahora - 3 * DIA);
+    if (viejos.length) add('aviso', 'envio_sin_confirmar', 'Envíos sin confirmar en la tienda', viejos.length + ' envío(s) llevan más de 3 días en camino sin que la tienda los reciba.', { envios: viejos.map((t) => t.id).slice(0, 20) });
+    const atrasados = abiertos.filter((a) => a.dia < hoyK);
+    if (atrasados.length) add('aviso', 'pedidos_atrasados', 'Pedidos de clientes atrasados', atrasados.length + ' pedido(s) ya pasaron de fecha y siguen sin entregarse o cancelarse.', { pedidos: atrasados.map((a) => a.id).slice(0, 20) });
+    const estado = hallazgos.some((h) => h.nivel === 'error') ? 'error' : hallazgos.length ? 'revisar' : 'claras';
+    return { ahora, hoy: hoyK, desde, hasta, estado, efectivo, digital: dig, devuelto: r2(devuelto), hallazgos };
+  }
+
   // Reporte de una semana (lunes a domingo) para el PDF del Dueño y del Almacén: todo lo que pasó y cómo quedó.
   async function reporteSemana(ctx) {
     const { repo, ahora, tz } = ctx;
@@ -1367,6 +1440,10 @@
         if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del dueño y del almacén.');
         return ok(await reporteSemana(ctx));
       }
+      if (path === '/cuentas' && m === 'GET') {
+        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'La revisión de cuentas es del dueño y del almacén.');
+        return ok(await revisarCuentas(ctx));
+      }
       if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
@@ -1421,6 +1498,7 @@
       async agenda(desde, hasta) { return (S.agenda || []).filter((a) => a.dia >= desde && a.dia <= hasta).sort((a, b) => (a.dia + (a.hora || '99:99')).localeCompare(b.dia + (b.hora || '99:99')) || a.ts - b.ts).map((a) => clonar(a)); },
       async agendaAbierta() { return (S.agenda || []).filter((a) => a.estado === 'pendiente' || a.estado === 'listo').sort((a, b) => (a.dia + (a.hora || '99:99')).localeCompare(b.dia + (b.hora || '99:99')) || a.ts - b.ts).map((a) => clonar(a)); },
       async pedidoCliente(id) { const a = (S.agenda || []).find((x) => x.id === id); return a ? clonar(a) : null; },
+      async sumaMovs() { const m = {}; S.movs.forEach((x) => { const k = x.prod + '|' + x.loc; m[k] = (m[k] || 0) + x.delta; }); return Object.keys(m).map((k) => { const i = k.lastIndexOf('|'); return { prod: k.slice(0, i), loc: k.slice(i + 1), d: m[k] }; }); },
       async producciones(desde) { return S.movs.filter((m) => m.tipo === 'entrada' && !m.anulado && m.ts >= desde).map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, motivo: m.motivo })); },
       async gastos(desde) { return (S.gastos || []).filter((g) => g.ts >= desde).map((g) => Object.assign({}, g)); },
       async gasto(id) { const g = (S.gastos || []).find((x) => x.id === id); return g ? Object.assign({}, g) : null; },
