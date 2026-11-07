@@ -1065,6 +1065,30 @@
     return { grupo: nuevo, anulada: grupo, antes, pago };
   }
 
+  // Repone una venta que se anuló solo para corregirla (p. ej. “el pago fue con tarjeta”): la vuelve a registrar
+  // con su fecha, cliente, precios y envío originales y la forma de pago correcta. Solo el Almacén; una sola vez por venta.
+  async function opVentaReponer(ctx, b, tx) {
+    const grupo = clean(b.grupo, 60), pago = String(b.pago || '');
+    if (!PAGOS.includes(pago)) throw bad('pago_invalido', 'Elige la forma de pago correcta.');
+    const orig = (await ctx.repo.movsGrupo(grupo)).filter((m) => m.tipo !== 'anulacion');
+    if (!orig.length) throw new ApiError(404, 'no_existe', 'No encontré esa venta.');
+    if (orig.some((m) => m.tipo !== 'venta')) throw bad('no_es_venta', 'Solo se puede reponer una venta.');
+    if (orig.some((m) => !m.anulado)) throw new ApiError(409, 'no_anulada', 'Esa venta no está anulada; usa “Cambiar pago”.');
+    if (diaKey(orig[0].ts, ctx.tz) < diaKey(ctx.ahora - 34 * DIA, ctx.tz)) throw bad('dia_invalido', 'Solo se pueden reponer ventas de los últimos 30 días.');
+    const nuevo = 'R' + grupo;
+    if ((await ctx.repo.movsGrupo(nuevo)).length) throw new ApiError(409, 'ya_repuesta', 'Esa venta ya se había repuesto.');
+    const prods = indexar(await ctx.repo.productos());
+    const acum = {};
+    orig.forEach((m) => { if (m.delta) acum[m.prod] = (acum[m.prod] || 0) + m.delta; });
+    Object.keys(acum).forEach((id) => revisarStock(activoOError(prods[id]), 'tienda', acum[id]));
+    const nota = (orig[0].nota ? orig[0].nota + ' · ' : '') + 'Repuesta con pago ' + pago;
+    orig.forEach((m, i) => {
+      if (m.delta) tx.stock.push(deltaStock(m.prod, m.loc, m.delta));
+      tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago, grupo: nuevo, ref: m.id, nota: clean(nota, 200), anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
+    });
+    return { grupo: nuevo, repuesta: grupo, pago };
+  }
+
   async function opEnviar(ctx, b, tx) {
     const ls = lineas(b.lineas);
     const prods = indexar(await ctx.repo.productos());
@@ -1412,6 +1436,7 @@
     'mov.conteo': [['local', 'tienda'], opConteo],
     'mov.anular': [['local', 'tienda'], opAnular],
     'venta.pago': [['local', 'tienda'], opVentaPago],
+    'venta.reponer': [['local'], opVentaReponer],
     'traspaso.enviar': [['local'], opEnviar],
     'traspaso.recibir': [['tienda'], opRecibir],
     'traspaso.cancelar': [['local'], opCancelar],

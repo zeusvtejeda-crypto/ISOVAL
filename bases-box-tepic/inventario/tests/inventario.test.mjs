@@ -324,6 +324,30 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(r2.status, 200, JSON.stringify(r2.json));
     });
 
+    test('reponer una venta anulada para corregir el pago: misma fecha, una sola vez, solo Almacén', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      const b = prod(await local.estado(), 'Base Individual · Rosa');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: b.id, cant: 2 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: b.id, cant: 2 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      const v = await tienda.op({ op: 'mov.venta', pago: 'efectivo', cliente: 'Luis', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      const g = v.json.resultado.grupo;
+      assert.equal((await local.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' })).json.error.code, 'no_anulada');
+      local.avanzar(2 * 86400000);
+      await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'el pago fue con tarjeta' });
+      assert.equal((await tienda.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' })).status, 403);
+      const r = await local.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' });
+      assert.equal(r.status, 200, JSON.stringify(r.json));
+      assert.equal(prod(r.json.estado, 'Base Individual · Rosa').stock_tienda, 1);
+      const hist = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
+      const orig = hist.find((m) => m.grupo === g), nueva = hist.find((m) => m.grupo === r.json.resultado.grupo);
+      assert.equal(nueva.ts, orig.ts);
+      assert.equal(nueva.pago, 'tarjeta');
+      assert.equal(nueva.cliente, 'Luis');
+      assert.equal(nueva.anulado, 0);
+      assert.equal((await local.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' })).json.error.code, 'ya_repuesta');
+    });
+
     test('no se puede anular una entrada si ya salieron las piezas', async () => {
       const { local } = await iniciar(fabrica);
       const id = prod(await local.estado(), 'Triplay').id;
