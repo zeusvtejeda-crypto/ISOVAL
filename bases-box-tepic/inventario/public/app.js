@@ -2082,7 +2082,29 @@ function abrirOperacion(grupo) {
         ${g.nota ? html`<dt>Nota</dt><dd>${g.nota}</dd>` : ''}
         ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Almacén' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
       </dl>`,
-    pie: puedeAnular(g) ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+    pie: puedeAnular(g) ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+  });
+  const cp = $('#o-pago', d.el);
+  if (cp) cp.addEventListener('click', () => {
+    const actual = g.pago || 'efectivo';
+    let pago = '';
+    const s = dialogo({
+      titulo: 'Cambiar forma de pago',
+      cuerpo: html`<p class="t-peq" style="margin:0 0 12px">Ahora: <b>${PAGOS[actual] || actual}</b>. La venta conserva su día y hora; el cambio queda anotado en el historial.</p>
+        <div class="campo"><span class="lbl">Forma de pago correcta</span><div class="opciones g4" id="cp-pagos">${Object.keys(PAGOS).filter((k) => k !== actual).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="false" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>`,
+      pie: html`<button type="button" class="btn btn-g" data-cerrar>Volver</button><button type="button" class="btn btn-p" id="cp-ok" disabled>Guardar</button>`
+    });
+    const ok = $('#cp-ok', s.el);
+    $('#cp-pagos', s.el).addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pago]'); if (!b) return;
+      pago = b.dataset.pago; ok.disabled = false;
+      s.el.querySelectorAll('#cp-pagos [data-pago]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    });
+    ok.addEventListener('click', async () => {
+      if (!pago) return;
+      ok.disabled = true;
+      try { await op({ op: 'venta.pago', grupo, pago }); s.cerrar(); d.cerrar(); toast('Forma de pago corregida: ' + PAGOS[pago] + '.'); S.hist.rev = null; if (S.tab === 'historial') cargarHistorial(true); } catch (e) { ok.disabled = false; toast(e.message, { tipo: 'error' }); }
+    });
   });
   const an = $('#o-anular', d.el);
   if (an) an.addEventListener('click', async () => {

@@ -287,6 +287,43 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await tienda.op({ op: 'mov.anular', grupo: ent.json.resultado.grupo, motivo: 'no es mío' })).status, 403);
     });
 
+    test('cambiar la forma de pago de una venta conserva su día, el inventario y deja rastro', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      const est0 = await local.estado();
+      const b = prod(est0, 'Base Individual · Rosa');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: b.id, cant: 3 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: b.id, cant: 3 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      const v = await tienda.op({ op: 'mov.venta', pago: 'efectivo', cliente: 'Luis', entrega: 'tepic', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      const g = v.json.resultado.grupo;
+      const tsVenta = (await local.call('GET', '/movs', null, { limite: '10' })).json.items.find((m) => m.grupo === g).ts;
+      local.avanzar(2 * 86400000); // dos días después
+      assert.equal((await local.op({ op: 'venta.pago', grupo: g, pago: 'efectivo' })).json.error.code, 'mismo_pago');
+      assert.equal((await local.op({ op: 'venta.pago', grupo: g, pago: 'bitcoin' })).json.error.code, 'pago_invalido');
+      assert.equal((await local.op({ op: 'venta.pago', grupo: env.json.resultado.id, pago: 'tarjeta' })).status, 400);
+      const r = await local.op({ op: 'venta.pago', grupo: g, pago: 'tarjeta' });
+      assert.equal(r.status, 200, JSON.stringify(r.json));
+      assert.equal(prod(r.json.estado, 'Base Individual · Rosa').stock_tienda, 2, 'el inventario no cambia');
+      const hist = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
+      const nueva = hist.filter((m) => m.grupo === r.json.resultado.grupo);
+      assert.equal(nueva.length, 1);
+      assert.equal(nueva[0].pago, 'tarjeta');
+      assert.equal(nueva[0].ts, tsVenta, 'conserva la fecha y hora de la venta');
+      assert.equal(nueva[0].cliente, 'Luis');
+      assert.equal(nueva[0].envio, 200);
+      assert.ok(hist.some((m) => m.grupo === g && m.anulado === 1 && /efectivo → tarjeta/.test(m.anulado_nota)));
+      assert.equal((await local.op({ op: 'venta.pago', grupo: g, pago: 'transferencia' })).json.error.code, 'ya_anulado');
+      // el reporte de aquel día ya la cuenta con tarjeta, una sola vez
+      const dia = new Date(tsVenta).toISOString().slice(0, 10);
+      const rep = (await local.call('GET', '/reporte-dia', null, { dia, tz: '0' })).json;
+      assert.equal(rep.totales.ventas, 1, JSON.stringify(rep.totales));
+      assert.equal(rep.totales.porPago.tarjeta, 1800);
+      assert.equal(rep.totales.porPago.efectivo || 0, 0);
+      // la tienda no puede corregir ventas que no son suyas: aquí sí es suya y puede volver a cambiarla
+      const r2 = await tienda.op({ op: 'venta.pago', grupo: r.json.resultado.grupo, pago: 'transferencia' });
+      assert.equal(r2.status, 200, JSON.stringify(r2.json));
+    });
+
     test('no se puede anular una entrada si ya salieron las piezas', async () => {
       const { local } = await iniciar(fabrica);
       const id = prod(await local.estado(), 'Triplay').id;
