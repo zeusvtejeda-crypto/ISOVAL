@@ -23,6 +23,26 @@ async function arrancar(fabrica) {
   return { repo, local, tienda, prod, avanzar: (ms) => { off += ms; }, hoy: est.hoy };
 }
 
+for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.almacenMemoria(), 'cuentas-ini')], ['d1', async () => crearRepoD1(new D1Falsa())]]) {
+  test('revisión de cuentas · ' + nombre + ': la caja empieza con lo que quedó de los días anteriores', async () => {
+    const { local, tienda, prod, avanzar } = await arrancar(fabrica);
+    const a = prod('Base Queen · Gris');
+    await local.op({ op: 'mov.entrada', motivo: 'produccion', lineas: [{ id: a.id, cant: 3 }] });
+    const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 3 }] });
+    await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+    await tienda.op({ op: 'mov.venta', pago: 'efectivo', lineas: [{ id: a.id, cant: 1, precio: 2000 }] });
+    await tienda.op({ op: 'gasto.crear', monto: 500, cat: 'comida', concepto: 'Comida', pago: 'efectivo' });
+    avanzar(DIA);
+    await tienda.op({ op: 'mov.venta', pago: 'efectivo', lineas: [{ id: a.id, cant: 1, precio: 2000 }] });
+    await tienda.op({ op: 'gasto.crear', monto: 3000, cat: 'retiro', concepto: 'Sobre', pago: 'efectivo' });
+    const hoy = (await local.call('GET', '/cuentas', null, { tz: '0' })).json.hoy;
+    const r = (await local.call('GET', '/cuentas', null, { tz: '0', desde: hoy, contado: '500' })).json;
+    assert.equal(r.efectivo.inicial, 1500);
+    assert.equal(r.efectivo.esperado, 500, '1500 + 2000 − 3000');
+    assert.equal(r.estado, 'claras', JSON.stringify(r.hallazgos));
+  });
+}
+
 for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.almacenMemoria(), 'cuentas')], ['d1', async () => crearRepoD1(new D1Falsa())]]) {
   test('revisión de cuentas · ' + nombre + ': claras, efectivo y digital contra lo contado, ventas raras, y solo Almacén/Dueño', async () => {
     const { local, tienda, prod } = await arrancar(fabrica);
@@ -58,6 +78,7 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     r = await C({ contado: '2500', digital: '3000' });
     assert.equal(r.hallazgos.find((x) => x.codigo === 'digital_no_cuadra').monto, -300);
     assert.equal((await C({ contado: '2600' })).hallazgos[0].monto, 100, 'sobrante');
+
     assert.equal((await local.call('GET', '/cuentas', null, { tz: '0', contado: 'abc' })).status, 400);
     assert.equal((await local.call('GET', '/cuentas', null, { tz: '0', desde: '2020-01-01' })).status, 400);
     assert.equal((await local.call('GET', '/cuentas', null, { tz: '0', desde: '2999-01-01' })).status, 400);

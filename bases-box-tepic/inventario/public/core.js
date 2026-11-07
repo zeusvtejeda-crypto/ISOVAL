@@ -589,9 +589,14 @@
       if (r.tipo === 'venta') pago[r.pago in pago ? r.pago : 'efectivo'] += m; else devuelto += Math.abs(r.delta) * (r.precio || 0);
     });
     gastosF.filter((g) => !g.anulado && en(diaKey(g.ts, tz)) && g.pago === 'efectivo').forEach((g) => { gEf += g.monto; });
-    const esperado = r2(pago.efectivo - gEf);
+    // caja al empezar el periodo: lo que quedó en efectivo de los días anteriores (ventas en efectivo − gastos en efectivo)
+    let inicial = 0;
+    filasV.forEach((r) => { if (r.tipo === 'venta' && (r.pago || 'efectivo') === 'efectivo' && diaKey(r.ts, tz) < desde) inicial += Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0); });
+    gastosF.forEach((g) => { if (!g.anulado && g.pago === 'efectivo' && diaKey(g.ts, tz) < desde) inicial -= g.monto; });
+    inicial = r2(inicial);
+    const esperado = r2(inicial + pago.efectivo - gEf);
     const digital = r2(pago.tarjeta + pago.transferencia);
-    const efectivo = { vendido: r2(pago.efectivo), gastos: r2(gEf), esperado, contado, diferencia: contado === null ? null : r2(contado - esperado) };
+    const efectivo = { inicial, vendido: r2(pago.efectivo), gastos: r2(gEf), esperado, contado, diferencia: contado === null ? null : r2(contado - esperado) };
     const dig = { tarjeta: r2(pago.tarjeta), transferencia: r2(pago.transferencia), otro: r2(pago.otro), sistema: digital, reportado, diferencia: reportado === null ? null : r2(reportado - digital) };
     if (efectivo.diferencia !== null && Math.abs(efectivo.diferencia) > 0.009) {
       add('error', 'efectivo_no_cuadra', 'El efectivo en caja no cuadra', 'Debería haber ' + fm(esperado) + ' en caja y se contaron ' + fm(contado) + ': ' + (efectivo.diferencia < 0 ? 'faltan ' : 'sobran ') + fm(Math.abs(efectivo.diferencia)) + '. Revisa ventas en efectivo sin registrar, gastos mal capturados o cambio mal dado.', { monto: efectivo.diferencia });
@@ -599,7 +604,7 @@
     if (dig.diferencia !== null && Math.abs(dig.diferencia) > 0.009) {
       add('error', 'digital_no_cuadra', 'Tarjeta y transferencias no cuadran', 'El sistema tiene ' + fm(digital) + ' y se reportaron ' + fm(reportado) + ': ' + (dig.diferencia < 0 ? 'faltan ' : 'sobran ') + fm(Math.abs(dig.diferencia)) + ' por registrar o por revisar en el banco / terminal.', { monto: dig.diferencia });
     }
-    if (esperado < -0.009) add('aviso', 'efectivo_negativo', 'Más gastos en efectivo que ventas en efectivo', 'En el periodo se pagaron ' + fm(r2(gEf)) + ' en efectivo pero solo se vendieron ' + fm(r2(pago.efectivo)) + ' en efectivo. Puede faltar registrar ventas, o algún gasto se pagó con otra forma de pago.', { monto: esperado });
+    if (esperado < -0.009) add('aviso', 'efectivo_negativo', 'Más gastos en efectivo que dinero en caja', 'En el periodo se pagaron ' + fm(r2(gEf)) + ' en efectivo pero solo había ' + fm(r2(inicial + pago.efectivo)) + ' (caja al empezar ' + fm(inicial) + ' + ventas en efectivo ' + fm(r2(pago.efectivo)) + '). Puede faltar registrar ventas, o algún gasto se pagó con otra forma de pago.', { monto: esperado });
     if (devuelto > 0) add('aviso', 'devoluciones', 'Hay devoluciones en el periodo', 'Se devolvieron ' + fm(r2(devuelto)) + ' a clientes. Si se pagaron en efectivo, réstalas del efectivo esperado en caja.', { monto: r2(devuelto) });
     // contabilidad: las existencias deben ser exactamente la suma de los movimientos
     const mapa = {}; sumas.forEach((x) => { mapa[x.prod + '|' + x.loc] = x.d; });
