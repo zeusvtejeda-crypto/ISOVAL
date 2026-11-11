@@ -185,6 +185,18 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
 .bf-perk{background:var(--graphite);color:var(--paper);padding:20px 22px;display:flex;gap:14px;align-items:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:18px}
 .bf-perk svg{width:30px;height:30px;color:var(--orange);flex:none}
 .bf-note{font-size:14px;color:var(--muted);margin-top:16px}
+.bf{padding-top:38px}
+.bf .tag{position:absolute;top:-2px;left:-2px;background:var(--orange);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:12px;padding:5px 10px}
+.bf .tag.hot{background:var(--yellow);color:var(--graphite)}
+.bf .sub{font-size:13px;color:var(--steel);font-weight:600}
+.bf.star{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange) inset}
+.bf-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:var(--graphite);color:var(--paper);padding:26px 30px;margin-bottom:26px;position:relative;overflow:hidden;background-image:repeating-linear-gradient(-45deg,transparent 0 18px,rgba(242,89,31,.08) 18px 36px)}
+.bf-hero .big{font-family:'Anton',sans-serif;font-size:58px;line-height:.9;text-transform:uppercase}
+.bf-hero .big span{color:var(--orange)}
+.bf-hero ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.bf-hero li{border:2px solid var(--orange);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:15px;padding:6px 12px}
+.bf-hero .stamp{position:absolute;right:-30px;top:12px;transform:rotate(18deg);background:var(--yellow);color:var(--graphite);font-family:'Anton',sans-serif;padding:4px 44px;font-size:16px;letter-spacing:1px}
+@media(max-width:560px){.bf-hero{padding:22px 16px}.bf-hero .big{font-size:40px}.bf-hero .stamp{display:none}.bf .tag{font-size:10px;padding:4px 7px}.bf{padding-top:34px}}
 @media(max-width:900px){.bf-grid{grid-template-columns:1fr 1fr}.bf-perks{grid-template-columns:1fr}}
 @media(max-width:560px){.bf-grid{gap:10px}.bf{padding:16px 12px}.bf .name{font-size:22px}.bf .price{font-size:32px}.bf .price small{display:none}.bf .btn{font-size:13px;padding:10px 8px;letter-spacing:1px}.promo-bar{font-size:13px}}
 </style>
@@ -275,14 +287,19 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <h2>Buen Fin en <span class="o">bases box</span></h2>
       <p>Precios especiales en todas las medidas estándar. Elige tu tono favorito y apártala por WhatsApp.</p>
     </div>
+    <div class="bf-hero">
+      <div class="big">Buen <span>Fin</span><br/>Promociones</div>
+      <ul><li>🚚 Envío gratis</li><li>🎁 Patas de cortesía</li><li>🛡️ 1 año de garantía</li><li>🎨 8 tonos</li></ul>
+      <div class="stamp">OFERTA</div>
+    </div>
     <div class="bf-grid">
-      <div class="bf"><div class="k">Base Individual</div><div class="name">1 Plaza</div><div class="price">$1,750<small>MXN</small></div>
+      <div class="bf"><span class="tag">Precio Buen Fin</span><div class="k">Base Individual</div><div class="name">1 Plaza</div><div class="price">$1,750<small>MXN</small></div>
         <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20la%20base%20individual%20del%20Buen%20Fin" target="_blank" rel="noopener">Apartar la mía</a></div>
-      <div class="bf"><div class="k">Base Matrimonial</div><div class="name">Full</div><div class="price">$1,950<small>MXN</small></div>
+      <div class="bf star"><span class="tag hot">⭐ Más vendida</span><div class="k">Base Matrimonial</div><div class="name">Full</div><div class="price">$1,950<small>MXN</small></div>
         <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20la%20base%20matrimonial%20del%20Buen%20Fin" target="_blank" rel="noopener">Apartar la mía</a></div>
-      <div class="bf"><div class="k">Base Queen</div><div class="name">Queen Size</div><div class="price">$2,150<small>MXN</small></div>
+      <div class="bf"><span class="tag">Precio Buen Fin</span><div class="k">Base Queen</div><div class="name">Queen Size</div><div class="price">$2,150<small>MXN</small></div>
         <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20la%20base%20queen%20del%20Buen%20Fin" target="_blank" rel="noopener">Apartar la mía</a></div>
-      <div class="bf"><div class="k">Base King</div><div class="name">King Size</div><div class="price">$3,350<small>MXN</small></div>
+      <div class="bf"><span class="tag">Precio Buen Fin</span><div class="k">Base King</div><div class="name">King Size</div><div class="price">$3,350<small>MXN</small></div><div class="sub">Incluye 2 bases individuales</div>
         <a class="btn btn-primary" href="https://wa.me/523111083374?text=Hola%2C%20quiero%20la%20base%20king%20del%20Buen%20Fin" target="_blank" rel="noopener">Apartar la mía</a></div>
     </div>
     <div class="bf-perks">
@@ -290,7 +307,7 @@ footer{background:#0E0E0E;color:#b7b5af;padding:50px 0 30px}
       <div class="bf-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8l-1 7H9zM10 10v11M14 10v11"/></svg>Patas de cortesía</div>
       <div class="bf-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>1 año de garantía</div>
     </div>
-    <p class="bf-note">Envío gratis en Tepic. Colores y existencias sujetos a disponibilidad.</p>
+    <p class="bf-note">Precios Buen Fin en MXN. La base King se compone de 2 bases individuales. Envío gratis en Tepic. Colores y existencias sujetos a disponibilidad.</p>
   </div>
 </section>
 
