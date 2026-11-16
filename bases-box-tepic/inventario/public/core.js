@@ -14,7 +14,8 @@
   const VERSION = '1.0.0';
   const DIA = 86400000;
   const ROLES = ['local', 'tienda', 'dueno', 'ruben']; // dueno: solo lectura (resumen del negocio); ruben: solo registra ventas
-  const SOLO_VENTAS = ['tienda', 'ruben']; // no ven resumen, reporte semanal ni revisión de cuentas
+  const SOLO_VENTAS = ['ruben']; // no ven resumen, reporte semanal ni revisión de cuentas
+  const ADMIN = ['local', 'tienda']; // tienda = Zeus: acceso a todo, igual que el Almacén
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
   const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'comisiones', 'retiro', 'otro'];
@@ -478,7 +479,7 @@
     const g = await ctx.repo.gasto(clean(b.id, 60));
     if (!g) throw new ApiError(404, 'no_existe', 'No encontré ese gasto.');
     if (g.anulado) throw new ApiError(409, 'ya_anulado', 'Ese gasto ya estaba anulado.');
-    if (ctx.rol !== 'local' && g.rol !== ctx.rol) throw new ApiError(403, 'sin_permiso', 'Solo puedes anular gastos de tu tienda.');
+    if (!ADMIN.includes(ctx.rol) && g.rol !== ctx.rol) throw new ApiError(403, 'sin_permiso', 'Solo puedes anular gastos de tu tienda.');
     tx.gastosAnular.push({ id: g.id, ts: ctx.ahora, por: ctx.rol, nota: motivo });
     tx.guardas.push({ tipo: 'gasto_sin_anular', id: g.id });
     return { id: g.id };
@@ -847,7 +848,7 @@
   }
 
   // quién hizo la venta (nombre del vendedor); si no lo mandan, queda el usuario que la registró
-  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Rubén' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Vendedor tienda' : 'Almacén'));
+  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Rubén' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Zeus' : 'Almacén'));
 
   // entrega de una venta → tarifa de envío en la configuración del negocio (null = sin cargo)
   const ENTREGAS = { recoge: null, tepic: 'envioTepic', xalisco: 'envioFuera', cantera: 'envioFuera' };
@@ -969,7 +970,7 @@
     const estado = String(b.estado || '');
     if (!ESTADOS_AG.includes(estado)) throw bad('estado_invalido', 'Estado desconocido.');
     const cerrado = prev.estado === 'entregado' || prev.estado === 'cancelado';
-    if (cerrado && ctx.rol !== 'local') throw new ApiError(403, 'sin_permiso', 'Solo el Almacén puede reabrir un pedido cerrado.');
+    if (cerrado && !ADMIN.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo el Almacén puede reabrir un pedido cerrado.');
     const nota = clean(b.nota, 140);
     if (estado === 'cancelado' && nota.length < 3) throw bad('falta_motivo', 'Escribe el motivo de la cancelación.');
     tx.agendaUpsert.push(Object.assign({}, prev, { estado, estado_ts: ctx.ahora, estado_por: ctx.rol, estado_nota: nota, venta: estado === 'entregado' ? clean(b.venta, 60) : '', actualizado: ctx.ahora }));
@@ -1026,8 +1027,8 @@
     if (!orig.length) throw new ApiError(404, 'no_existe', 'No encontré esa operación.');
     if (orig.some((m) => m.anulado)) throw new ApiError(409, 'ya_anulado', 'Esa operación ya estaba anulada.');
     if (orig.some((m) => NO_ANULABLES.includes(m.tipo))) throw new ApiError(409, 'no_anulable', 'Los traspasos se cancelan desde su tarjeta y el inventario inicial se corrige con un conteo.');
-    if (ctx.rol !== 'local' && orig.some((m) => m.rol !== ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo puedes anular operaciones de tu tienda.');
-    if (ctx.rol !== 'local' && orig.some((m) => m.tipo === 'venta')) throw new ApiError(403, 'solo_almacen', 'Una venta solo la puede anular el Almacén. Si se cobró distinto, usa “Cambiar pago”.');
+    if (!ADMIN.includes(ctx.rol) && orig.some((m) => m.rol !== ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo puedes anular operaciones de tu tienda.');
+    if (!ADMIN.includes(ctx.rol) && orig.some((m) => m.tipo === 'venta')) throw new ApiError(403, 'solo_almacen', 'Una venta solo la puede anular el Almacén. Si se cobró distinto, usa “Cambiar pago”.');
     const prods = indexar(await ctx.repo.productos());
     const acum = {};
     orig.forEach((m) => { const k = m.prod + '|' + m.loc; acum[k] = (acum[k] || 0) - m.delta; });
@@ -1060,7 +1061,7 @@
     if (!orig.length) throw new ApiError(404, 'no_existe', 'No encontré esa venta.');
     if (orig.some((m) => m.tipo !== 'venta')) throw bad('no_es_venta', 'Solo se puede cambiar la forma de pago de una venta.');
     if (orig.some((m) => m.anulado)) throw new ApiError(409, 'ya_anulado', 'Esa venta está anulada.');
-    if (ctx.rol !== 'local' && orig.some((m) => m.rol !== ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo puedes corregir ventas de tu tienda.');
+    if (!ADMIN.includes(ctx.rol) && orig.some((m) => m.rol !== ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo puedes corregir ventas de tu tienda.');
     const antes = orig[0].pago || 'efectivo';
     if (antes === pago) throw bad('mismo_pago', 'La venta ya está registrada con esa forma de pago.');
     const nombre = { efectivo: 'efectivo', transferencia: 'transferencia', tarjeta: 'tarjeta', otro: 'otro' };
@@ -1515,6 +1516,7 @@
   };
 
   // Ejecuta una operación ya autenticada y la guarda de forma atómica.
+  Object.keys(OPS).forEach((k) => { const r = OPS[k][0]; if (r.includes('local') && !r.includes('tienda')) r.push('tienda'); }); // Zeus: acceso a todo
   async function correrOp(ctx, body) {
     const def = body && typeof body.op === 'string' && Object.prototype.hasOwnProperty.call(OPS, body.op) ? OPS[body.op] : null;
     if (!def) throw bad('op_invalida', 'Operación desconocida.');
@@ -1563,7 +1565,7 @@
       if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/push/clave' && m === 'GET') {
-        if (ctx.rol !== 'local' && ctx.rol !== 'dueno') throw new ApiError(403, 'sin_permiso', 'Los avisos al celular son del almacén y del dueño.');
+        if (!ADMIN.includes(ctx.rol) && ctx.rol !== 'dueno') throw new ApiError(403, 'sin_permiso', 'Los avisos al celular son de Zeus, del almacén y del dueño.');
         if (!opts.claveVapid) throw new ApiError(501, 'sin_push', 'Los avisos al celular necesitan la app publicada con su servidor.');
         return ok({ publica: await opts.claveVapid() });
       }

@@ -29,7 +29,7 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     assert.equal((await call('', 'GET', '/ping')).json.ruben, false);
     assert.equal((await call('', 'POST', '/login', { rol: 'ruben', pin: '615243' })).json.error.code, 'pin_incorrecto');
     // el Almacén le pone su PIN (distinto a los demás)
-    assert.equal((await tienda.op({ op: 'pin.ruben', pinActual: '730518', pinNuevo: '615243' })).status, 403);
+    assert.equal((await tienda.op({ op: 'pin.ruben', pinActual: '730518', pinNuevo: '615243' })).json.error.code, 'pin_incorrecto', 'Zeus necesita el PIN del almacén');
     assert.equal((await local.op({ op: 'pin.ruben', pinActual: '482159', pinNuevo: '730518' })).json.error.code, 'pin_igual');
     assert.equal((await local.op({ op: 'pin.ruben', pinActual: '482159', pinNuevo: '615243' })).status, 200);
     assert.equal((await call('', 'GET', '/ping')).json.ruben, true);
@@ -84,9 +84,9 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
 
   test('avisos al celular · ' + nombre + ': suscribir, probar y quitar (solo almacén/dueño)', async () => {
     const avisos = [];
-    const { local, tienda } = await arrancar(fabrica, avisos);
+    const { local, tienda, mk } = await arrancar(fabrica, avisos);
     assert.equal((await local.call('GET', '/push/clave')).json.publica, 'CLAVE');
-    assert.equal((await tienda.call('GET', '/push/clave')).status, 403);
+    assert.equal((await tienda.call('GET', '/push/clave')).json.publica, 'CLAVE', 'Zeus (tienda) también puede activar avisos');
     assert.equal((await local.op({ op: 'push.probar' })).json.error.code, 'sin_avisos');
     const p256dh = 'B' + 'A'.repeat(86), auth = 'Q'.repeat(22);
     assert.equal((await local.op({ op: 'push.suscribir', endpoint: 'http://no-https', p256dh, auth })).json.error.code, 'push_invalido');
@@ -94,7 +94,7 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     assert.equal(s1.json.resultado.avisos, 1); assert.equal(s1.json.estado.avisos, 1);
     // la misma suscripción no se duplica
     assert.equal((await local.op({ op: 'push.suscribir', endpoint: 'https://push.ejemplo.com/abc123', p256dh, auth })).json.resultado.avisos, 1);
-    assert.equal((await tienda.op({ op: 'push.suscribir', endpoint: 'https://push.ejemplo.com/zzz', p256dh, auth })).status, 403);
+    assert.equal((await mk('x').op({ op: 'push.suscribir', endpoint: 'https://push.ejemplo.com/zzz', p256dh, auth })).status, 401);
     avisos.length = 0;
     assert.equal((await local.op({ op: 'push.probar' })).status, 200);
     assert.equal(avisos.length, 1); assert.match(avisos[0].titulo, /Avisos activados/);

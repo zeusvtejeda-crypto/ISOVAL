@@ -107,8 +107,8 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     const ayer = new Date(Date.now() - DIA).toISOString().slice(0, 10);
     await local.op({ op: 'agenda.crear', cliente: 'Carla', dia: ayer, detalle: '3 bases' });
     assert.ok((await C()).hallazgos.some((x) => x.codigo === 'pedidos_atrasados'));
-    // permisos: el vendedor no ve las cuentas
-    assert.equal((await tienda.call('GET', '/cuentas', null, { tz: '0' })).status, 403);
+    // permisos: Zeus (tienda) también ve las cuentas
+    assert.equal((await tienda.call('GET', '/cuentas', null, { tz: '0' })).status, 200);
   });
 }
 

@@ -93,11 +93,12 @@ let sincronizando = false;
 
 const ROLES = {
   local: { nombre: 'Almacén', corto: 'Almacén', desc: 'Bodega y fábrica: materiales, bases en producción y envíos a la tienda.', ic: 'fabrica' },
-  tienda: { nombre: 'Vendedor tienda', corto: 'Tienda', desc: 'Venta al público: ventas, devoluciones, pedidos y recibo de mercancía.', ic: 'tienda' },
+  tienda: { nombre: 'Zeus', corto: 'Zeus', desc: 'Tienda y ventas, con acceso a todo (cuentas, gastos, resumen y ajustes).', ic: 'tienda' },
   dueno: { nombre: 'Dueño', corto: 'Dueño', desc: 'Solo consulta: resumen de producción, ventas, gastos y egresos.', ic: 'usuario' },
   ruben: { nombre: 'Rubén', corto: 'Rubén', desc: 'Solo registra ventas. El almacén recibe un aviso de cada venta.', ic: 'recibo' }
 };
 const esVendedor = () => S.rol === 'tienda' || S.rol === 'ruben';
+const esAdmin = () => S.rol === 'local' || S.rol === 'tienda'; // Zeus (tienda) tiene acceso a todo
 const CATS = { base: 'Bases', material: 'Materiales', accesorio: 'Accesorios' };
 const TIPOS = {
   entrada: { t: 'Entrada al almacén', ic: 'entrada', c: 'ok' },
@@ -365,7 +366,7 @@ function tituloOp(g) {
   return t;
 }
 const resumenOp = (g) => (g.motivo === 'monto' && g.tipo === 'venta' ? 'Solo monto, sin producto' : plural(g.lineas.length, 'producto', 'productos') + ' · ' + plural(g.piezas, 'pieza', 'piezas'));
-const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'].includes(g.tipo) && (S.rol === 'local' || (g.rol === S.rol && g.tipo !== 'venta'));
+const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'].includes(g.tipo) && (esAdmin() || (g.rol === S.rol && g.tipo !== 'venta'));
 // quién hizo la venta (las anteriores a este campo muestran el usuario que la registró)
 const vendedorDe = (g) => g.vendedor || (ROLES[g.rol] ? ROLES[g.rol].nombre : '');
 const VENDEDORES_BASE = ['Tienda', 'Hugo', 'Carlos', 'VILLEDA'];
@@ -517,7 +518,7 @@ function pintarInicio() {
       <span class="vtas-t"><span class="t-sec">Ventas</span><span class="vtas-ver">Ver reporte ${ico('der')}</span></span>
       <span class="vtas-g">${[['Hoy', r.hoy], ['Semana', r.semana], ['Mes', r.mes]].map(([t, v]) => html`<span class="vtas-c"><small>${t}</small><b class="cifras">${dinero(v.total)}</b><i>${plural(v.n, 'venta', 'ventas')} · ${plural(v.pzas, 'pza', 'pzas')}</i></span>`)}</span>
     </button>
-    ${S.rol === 'local' ? html`<div id="card-cuentas"></div>` : ''}
+    ${esAdmin() ? html`<div id="card-cuentas"></div>` : ''}
     ${tarjetaAgenda()}
     <button type="button" class="gastos-b" data-act="gastos" aria-label="Ver gastos">
       <span class="ico-c warn">${ico('salida')}</span>
@@ -552,7 +553,7 @@ function pintarInicio() {
       </div>
     </div>`);
   dibujarGrafica();
-  if (S.rol === 'local') { pintarCardCuentas(); cargarCuentas(); }
+  if (esAdmin()) { pintarCardCuentas(); cargarCuentas(); }
 }
 
 function pintarInicioRuben(cont) {
@@ -1071,7 +1072,7 @@ async function deshacerOp(grupo) {
 }
 function exitoForma(tipo, res, cuerpo) {
   const e = S.est.negocio;
-  const deshacer = res.grupo && (tipo !== 'venta' || S.rol === 'local') ? { texto: 'Deshacer', fn: () => deshacerOp(res.grupo) } : null;
+  const deshacer = res.grupo && (tipo !== 'venta' || esAdmin()) ? { texto: 'Deshacer', fn: () => deshacerOp(res.grupo) } : null;
   if (tipo === 'venta') toast('Venta registrada · ' + dinero(res.total), { accion: deshacer });
   else if (tipo === 'devolucion') toast('Devolución guardada · ' + dinero(res.total), { accion: deshacer });
   else if (tipo === 'entrada' || tipo === 'salida' || tipo === 'merma') toast('Guardado · ' + plural(res.piezas, 'pieza', 'piezas'), { accion: deshacer });
@@ -1145,7 +1146,7 @@ async function abrirVentas(inicial) {
 
 /* ───────── revisión de cuentas: ¿está todo claro? ───────── */
 async function cargarCuentas(forzar) {
-  if (!S.est || (S.rol !== 'local' && S.rol !== 'dueno')) return;
+  if (!S.est || (!esAdmin() && S.rol !== 'dueno')) return;
   if (!forzar && S.cuentasTs && Date.now() - S.cuentasTs < 8000) return;
   S.cuentasTs = Date.now();
   try {
@@ -1382,7 +1383,7 @@ function abrirPedidoCliente(a, alCambiar) {
       </dl>`,
     pie: !puede ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
       : abierto ? html`<button type="button" class="btn btn-g" id="pc-cerrar-p" data-cerrar>Cerrar</button><button type="button" class="btn btn-g" id="pc-editar">${ico('editar')}Editar</button>${a.estado === 'pendiente' ? html`<button type="button" class="btn btn-g" id="pc-listo">Marcar listo</button>` : ''}<button type="button" class="btn btn-p" id="pc-entregar">${S.rol === 'tienda' && a.lineas.length ? 'Entregar y cobrar' : 'Marcar entregado'}</button>`
-        : S.rol === 'local' ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pc-reabrir">Reabrir</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+        : esAdmin() ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pc-reabrir">Reabrir</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
   });
   const ir = (sel, fn) => { const b = $(sel, d.el); if (b) b.addEventListener('click', fn); };
   const cambiar = async (estado, extra) => { await op(Object.assign({ op: 'agenda.estado', id: a.id, estado }, extra)); if (alCambiar) alCambiar(); };
@@ -1752,7 +1753,7 @@ async function abrirGastos(inicial) {
     const b = ev.target.closest('[data-gasto]');
     if (!b || !datos) return;
     const g = datos.items.find((x) => x.id === b.dataset.gasto);
-    if (!g || g.anulado || (S.rol !== 'local' && g.rol !== S.rol)) return;
+    if (!g || g.anulado || (!esAdmin() && g.rol !== S.rol)) return;
     const motivo = await confirmar({ titulo: 'Anular gasto', texto: (GASTO_CATS[g.cat] || g.cat) + ' · ' + dinero(g.monto) + (g.concepto ? ' · ' + g.concepto : '') + '. Dejará de contar en los totales y queda marcado como anulado.', ok: 'Anular gasto', cancelar: 'Volver', peligro: true, campo: { etiqueta: 'Motivo', min: 3, ayuda: 'Ej. me equivoqué de monto' } });
     if (!motivo) return;
     try { await op({ op: 'gasto.anular', id: g.id, motivo }); toast('Gasto anulado.'); cargar(); } catch (e) { toast(e.message, { tipo: 'error' }); }
@@ -2110,7 +2111,7 @@ function abrirOperacion(grupo) {
         ${g.nota ? html`<dt>Nota</dt><dd>${g.nota}</dd>` : ''}
         ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Almacén' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
       </dl>`,
-    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' && !g.anulado && (S.rol === 'local' || (S.rol === 'tienda' && g.rol === 'tienda')) ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}${puedeAnular(g) ? html`<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : ''}`
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' && !g.anulado && esAdmin() ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}${puedeAnular(g) ? html`<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : ''}`
   });
   const cp = $('#o-pago', d.el);
   if (cp) cp.addEventListener('click', () => {
@@ -2160,7 +2161,7 @@ function abrirProducto(id) {
     cuerpo: html`<div class="fila" style="gap:14px;margin-bottom:16px"><span class="prod-ico" style="width:68px;height:68px;border-radius:14px">${iconoProd(p, 52)}</span>
         <div class="grow"><div class="t-peq">${CATS[p.cat].replace(/s$/, '')}${med ? ' · ' + med.nombre + ' ' + med.dims : ''}${tono ? ' · ' + tono.nombre : ''}</div><div class="num-g" style="margin-top:6px">${p.precio ? dinero(p.precio) : 'Sin precio'}</div></div>${p.activo ? '' : html`<span class="pill">Archivado</span>`}</div>
       <div class="grid-kpi" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px">${tile('Almacén', p.stock_local, p.min_local, 'local')}${tile('Tienda', p.stock_tienda, p.min_tienda, 'tienda')}${tile('En camino', cam, 0, null)}</div>
-      <dl class="kv" style="margin-bottom:18px"><dt>Unidad</dt><dd>${p.unidad}</dd>${esLocal || S.rol === 'dueno' ? html`<dt>Costo</dt><dd>${p.costo ? dinero(p.costo) : '—'}</dd>${p.costo && p.precio ? html`<dt>Margen</dt><dd>${Math.round((1 - p.costo / p.precio) * 100)}%</dd>` : ''}` : ''}<dt>Mínimos</dt><dd>Almacén ${num(p.min_local)} · Tienda ${num(p.min_tienda)}</dd></dl>
+      <dl class="kv" style="margin-bottom:18px"><dt>Unidad</dt><dd>${p.unidad}</dd>${esAdmin() || S.rol === 'dueno' ? html`<dt>Costo</dt><dd>${p.costo ? dinero(p.costo) : '—'}</dd>${p.costo && p.precio ? html`<dt>Margen</dt><dd>${Math.round((1 - p.costo / p.precio) * 100)}%</dd>` : ''}` : ''}<dt>Mínimos</dt><dd>Almacén ${num(p.min_local)} · Tienda ${num(p.min_tienda)}</dd></dl>
       <h3 class="t-sec" style="margin-bottom:8px">Últimos movimientos</h3>
       <div class="card flat"><ul class="lista" id="pd-movs"><li class="item t-peq">Cargando…</li></ul></div>`,
     pie
@@ -2538,7 +2539,7 @@ VISTAS.mas = {
   actualizar() {
     const cont = $('#v-mas');
     if (!cont) return;
-    const e = S.est, local = S.rol === 'local', tema = store.get(CLAVE_TEMA) || 'auto';
+    const e = S.est, local = esAdmin(), tema = store.get(CLAVE_TEMA) || 'auto';
     const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const fila = (ic, t, s, act) => html`<li><button type="button" class="item" data-act="${act}"><span class="ico-c">${ico(ic)}</span><div class="grow"><div class="item-t">${t}</div>${s ? html`<div class="item-s">${s}</div>` : ''}</div>${ico('der', 'der')}</button></li>`;
@@ -2547,7 +2548,7 @@ VISTAS.mas = {
       ${S.modo === 'local' ? html`<div class="aviso warn">${ico('alerta')}<div><b>Los datos están solo en este equipo.</b> La otra persona (almacén o vendedor) no los verá. Para compartir el inventario entre los dos hay que publicar la app con su servidor (mira el archivo README).</div></div>` : ''}
       <section class="sec-mas"><span class="t-sec">Mi cuenta</span><div class="card flat"><ul class="lista">
         ${fila('candado', 'Cambiar mi PIN', 'Cierra tu sesión en los demás equipos', 'pin-propio')}
-        ${local ? fila('tienda', 'Reiniciar el PIN del vendedor', 'Si el vendedor lo olvidó', 'pin-tienda') : ''}
+        ${local ? fila('tienda', 'Reiniciar el PIN de Zeus (tienda)', 'Si se olvidó; se pide el PIN del almacén', 'pin-tienda') : ''}
         ${local ? fila('recibo', 'PIN de Rubén', e.ruben ? 'Cambiar el PIN con el que entra Rubén (solo ventas)' : 'Crea el acceso de Rubén: solo registra ventas', 'pin-ruben') : ''}
         ${local ? fila('alerta', 'Avisos al celular', e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + ' · cada venta de Rubén te llega como notificación' : 'Recibe una notificación cada vez que Rubén registre una venta', 'avisos') : ''}
         ${local ? fila('usuario', 'PIN del dueño', e.dueno ? 'Cambiar el PIN con el que entra el dueño' : 'Crea el acceso del dueño (solo consulta)', 'pin-dueno') : ''}

@@ -156,15 +156,16 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
     test('permisos por rol', async () => {
       const { local, tienda } = await iniciar(fabrica, { bases: false, extras: false });
       const crear = { op: 'producto.crear', nombre: 'Tela', cat: 'material', unidad: 'm' };
-      assert.equal((await tienda.op(crear)).status, 403);
+      // Zeus (tienda) también tiene acceso a todo; el dueño es el que solo consulta
       assert.equal((await local.op(crear)).status, 200);
       const est = await local.estado();
       const id = prod(est, 'Tela').id;
-      assert.equal((await tienda.op({ op: 'mov.entrada', lineas: [{ id, cant: 1 }] })).status, 403);
+      assert.equal((await tienda.op({ op: 'mov.entrada', lineas: [{ id, cant: 1 }] })).status, 200, 'Zeus (tienda) también registra entradas');
+      await local.op({ op: 'mov.salida', lineas: [{ id, cant: 1 }] });
       assert.equal((await local.op({ op: 'mov.venta', lineas: [{ id, cant: 1 }] })).status, 403);
-      assert.equal((await tienda.op({ op: 'traspaso.enviar', lineas: [{ id, cant: 1 }] })).status, 403);
+      assert.notEqual((await tienda.op({ op: 'traspaso.enviar', lineas: [{ id, cant: 1 }] })).status, 403, 'Zeus (tienda) puede enviar');
       assert.equal((await local.op({ op: 'traspaso.recibir', id: 'x' })).status, 403);
-      assert.equal((await tienda.op({ op: 'config.guardar', negocio: { nombre: 'X' } })).status, 403);
+      assert.equal((await tienda.op({ op: 'config.guardar', negocio: { nombre: 'Bases Box Tepic' } })).status, 200, 'Zeus (tienda) puede cambiar ajustes');
       assert.equal((await local.op({ op: 'no.existe' })).status, 400);
     });
 
@@ -172,7 +173,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const { local, tienda } = await iniciar(fabrica, { bases: false, extras: false });
       await local.op({ op: 'producto.crear', nombre: 'Base de prueba', cat: 'base', precio: 3000, costo: 1800, stock_local: 2 });
       assert.equal((await local.estado()).productos[0].costo, 1800);
-      assert.equal('costo' in (await tienda.estado()).productos[0], false);
+      assert.equal('costo' in (await tienda.estado()).productos[0], true, 'Zeus (tienda) ve costos');
     });
 
     test('entradas y salidas del local respetan el stock', async () => {
@@ -271,10 +272,8 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       // anular exige motivo y respeta el rol
       const g = v.json.resultado.grupo;
       assert.equal((await local.op({ op: 'mov.anular', grupo: g, motivo: '' })).json.error.code, 'falta_motivo');
-      // el vendedor de tienda ya no puede anular una venta: solo el Almacén
-      const nt = await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'Se cobró mal' });
-      assert.equal(nt.status, 403); assert.equal(nt.json.error.code, 'solo_almacen');
-      const r = await local.op({ op: 'mov.anular', grupo: g, motivo: 'Se cobró mal' });
+      // Zeus (tienda) sí puede anular una venta
+      const r = await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'Se cobró mal' });
       assert.equal(r.status, 200, JSON.stringify(r.json));
       est = r.json.estado;
       assert.equal(prod(est, 'Base Queen · Gris').stock_tienda, 5);
@@ -287,7 +286,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       // el local no puede anular un traspaso; la tienda no puede anular algo del local
       assert.equal((await local.op({ op: 'mov.anular', grupo: env.json.resultado.id, motivo: 'prueba' })).json.error.code, 'no_anulable');
       const ent = await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 1 }] });
-      assert.equal((await tienda.op({ op: 'mov.anular', grupo: ent.json.resultado.grupo, motivo: 'no es mío' })).status, 403);
+      assert.equal((await tienda.op({ op: 'mov.anular', grupo: ent.json.resultado.grupo, motivo: 'Zeus puede anular todo' })).status, 200);
     });
 
     test('cambiar la forma de pago de una venta conserva su día, el inventario y deja rastro', async () => {
@@ -337,16 +336,15 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const v2 = await tienda.op({ op: 'mov.venta', pago: 'tarjeta', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
       const hist = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
       assert.equal(hist.find((m) => m.grupo === v1.json.resultado.grupo).vendedor, 'Hugo');
-      assert.equal(hist.find((m) => m.grupo === v2.json.resultado.grupo).vendedor, 'Vendedor tienda', 'sin nombre queda el usuario que la registró');
+      assert.equal(hist.find((m) => m.grupo === v2.json.resultado.grupo).vendedor, 'Zeus', 'sin nombre queda el usuario que la registró (tienda = Zeus)');
       const rep = (await tienda.call('GET', '/reporte-dia')).json;
-      assert.deepEqual(rep.ventas.map((v) => v.vendedor).sort(), ['Hugo', 'Vendedor tienda']);
+      assert.deepEqual(rep.ventas.map((v) => v.vendedor).sort(), ['Hugo', 'Zeus']);
       // cambiar el pago conserva el vendedor
       const c = await tienda.op({ op: 'venta.pago', grupo: v1.json.resultado.grupo, pago: 'transferencia' });
       const h2 = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
       assert.equal(h2.find((m) => m.grupo === c.json.resultado.grupo).vendedor, 'Hugo');
-      // la tienda no puede anular ventas; el Almacén sí
-      assert.equal((await tienda.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'error' })).json.error.code, 'solo_almacen');
-      assert.equal((await local.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'error' })).status, 200);
+      // Zeus (tienda) y el Almacén pueden anular ventas (Rubén no: ver ruben.test.mjs)
+      assert.equal((await tienda.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'error' })).status, 200);
     });
 
     test('reponer una venta anulada para corregir el pago: misma fecha, una sola vez, solo Almacén', async () => {
@@ -360,7 +358,6 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await local.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' })).json.error.code, 'no_anulada');
       local.avanzar(2 * 86400000);
       await local.op({ op: 'mov.anular', grupo: g, motivo: 'el pago fue con tarjeta' });
-      assert.equal((await tienda.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' })).status, 403);
       const r = await local.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' });
       assert.equal(r.status, 200, JSON.stringify(r.json));
       assert.equal(prod(r.json.estado, 'Base Individual · Rosa').stock_tienda, 1);
@@ -536,7 +533,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await cliente(repo, local.now).login('tienda', '391752')).status, 200);
       const t2 = cliente(repo, local.now);
       await t2.login('tienda', '391752');
-      assert.equal((await t2.op({ op: 'pin.reiniciar', pinActual: '391752', pinNuevo: '284613' })).status, 403);
+      assert.equal((await t2.op({ op: 'pin.reiniciar', pinActual: '391752', pinNuevo: '284613' })).json.error.code, 'pin_incorrecto', 'necesita el PIN del almacén');
     });
 
     test('recuperar PIN con el código y rotarlo', async () => {
@@ -555,7 +552,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
 
     test('código de recuperación nuevo: pide PIN y el anterior deja de servir', async () => {
       const { local, tienda, repo } = await iniciar(fabrica);
-      assert.equal((await tienda.op({ op: 'recup.nueva', pinActual: '730518' })).status, 403);
+      assert.equal((await tienda.op({ op: 'recup.nueva', pinActual: '730518' })).json.error.code, 'pin_incorrecto', 'necesita el PIN del almacén');
       assert.equal((await local.op({ op: 'recup.nueva', pinActual: '0000' })).json.error.code, 'pin_incorrecto');
       const r = await local.op({ op: 'recup.nueva', pinActual: '482159' });
       assert.equal(r.status, 200);
@@ -713,7 +710,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       await local.op({ op: 'traspaso.enviar', lineas: [{ id: a.id, cant: 1 }] });
 
       // solo Almacén, con su PIN y la frase exacta
-      assert.equal((await tienda.op({ op: 'sistema.reiniciar', pinActual: '730518', confirmacion: 'BORRAR TODO' })).status, 403);
+      assert.equal((await tienda.op({ op: 'sistema.reiniciar', pinActual: '730518', confirmacion: 'BORRAR TODO' })).json.error.code, 'pin_incorrecto', 'necesita el PIN del almacén');
       assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: '000999', confirmacion: 'BORRAR TODO' })).json.error.code, 'pin_incorrecto');
       assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: '482159', confirmacion: 'borrar' })).json.error.code, 'falta_confirmacion');
       assert.equal((await local.op({ op: 'sistema.reiniciar', pinActual: '482159' })).json.error.code, 'falta_confirmacion');
@@ -894,7 +891,6 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(rep.totales.gastosEfectivo, 120.5);
       assert.equal(rep.totales.efectivoNeto, 1000 - 120.5);
       // anular: el vendedor solo lo suyo, con motivo; no se anula dos veces; no cuenta en los totales
-      assert.equal((await tienda.op({ op: 'gasto.anular', id: g3.json.resultado.id, motivo: 'no era mío' })).status, 403);
       assert.equal((await tienda.op({ op: 'gasto.anular', id: g1.json.resultado.id, motivo: '' })).json.error.code, 'falta_motivo');
       assert.equal((await tienda.op({ op: 'gasto.anular', id: 'no-existe', motivo: 'prueba' })).status, 404);
       assert.equal((await tienda.op({ op: 'gasto.anular', id: g1.json.resultado.id, motivo: 'Me equivoqué' })).status, 200);
@@ -921,7 +917,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await c0.call('GET', '/ping')).json.dueno, false);
       assert.equal((await c0.login('dueno', '482150')).status, 401, 'sin PIN de dueño no entra nadie');
       // solo el Almacén crea el PIN del dueño, con su propio PIN; no puede repetir el de otro usuario
-      assert.equal((await tienda.op({ op: 'pin.dueno', pinActual: '730518', pinNuevo: '615243' })).status, 403);
+      assert.equal((await tienda.op({ op: 'pin.dueno', pinActual: '730518', pinNuevo: '615243' })).json.error.code, 'pin_incorrecto', 'necesita el PIN del almacén');
       assert.equal((await local.op({ op: 'pin.dueno', pinActual: '000999', pinNuevo: '615243' })).json.error.code, 'pin_incorrecto');
       assert.equal((await local.op({ op: 'pin.dueno', pinActual: '482159', pinNuevo: '730518' })).json.error.code, 'pin_igual');
       assert.equal((await local.op({ op: 'pin.dueno', pinActual: '482159', pinNuevo: '123456' })).json.error.code, 'pin_debil');
@@ -977,11 +973,11 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(r.top[0].id, a.id);
       // el Almacén ve el mismo resumen; el vendedor no
       assert.deepEqual((await local.call('GET', '/resumen', null, { tz: '0' })).json.periodos, r.periodos);
-      assert.equal((await tienda.call('GET', '/resumen')).status, 403);
+      assert.equal((await tienda.call('GET', '/resumen')).status, 200, 'Zeus (tienda) también ve el resumen');
 
       // el dueño ve los costos; el vendedor no
       assert.equal((await dueno.estado()).productos.find((p) => p.id === a.id).costo, 1000);
-      assert.equal('costo' in (await tienda.estado()).productos[0], false);
+      assert.equal('costo' in (await tienda.estado()).productos[0], true, 'Zeus (tienda) ve costos');
       // lee gastos, ventas y reporte, pero no puede hacer NADA (ninguna operación, salvo cambiar su propio PIN)
       assert.equal((await dueno.call('GET', '/gastos')).json.items.length, 2);
       assert.equal((await dueno.call('GET', '/ventas')).status, 200);
@@ -1036,7 +1032,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(pasada.hasta < r.desde, true);
       assert.equal(pasada.ventas.bruto, 0);
       assert.equal(pasada.sueldos.length, 0);
-      assert.equal((await tienda.call('GET', '/reporte-semana')).status, 403);
+      assert.equal((await tienda.call('GET', '/reporte-semana')).status, 200, 'Zeus (tienda) ve el reporte semanal');
       assert.equal((await dueno.call('GET', '/reporte-semana', null, { sem: '9' })).status, 400);
       assert.equal((await dueno.call('GET', '/reporte-semana', null, { sem: 'x' })).status, 400);
       // dentro de ocho días, esos sueldos caen en la semana pasada o anterior, nunca se pierden ni se duplican
@@ -1051,7 +1047,6 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       await local.op({ op: 'mov.entrada', lineas: [{ id: a.id, cant: 5 }] });
       const stock0 = (await local.estado()).productos.map((p) => [p.id, p.stock_local, p.stock_tienda]);
       // solo el Almacén; monto, día y hora válidos
-      assert.equal((await tienda.op({ op: 'mov.venta_monto', monto: 2800, pago: 'tarjeta' })).status, 403);
       assert.equal((await local.op({ op: 'mov.venta_monto', monto: 0 })).json.error.code, 'falta_monto');
       assert.equal((await local.op({ op: 'mov.venta_monto', monto: 100, dia: '2020-01-01' })).json.error.code, 'dia_invalido');
       assert.equal((await local.op({ op: 'mov.venta_monto', monto: 100, dia: '2999-01-01' })).json.error.code, 'dia_invalido');
@@ -1153,8 +1148,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(cerrados.find((x) => x.cliente === 'Hotel Cielo').estado_nota, 'El cliente ya no lo quiere');
       assert.equal((await local.estado()).agenda.length, 1, 'solo queda abierto el pedido de ayer');
       assert.equal((await tienda.op({ op: 'agenda.editar', id: ana.id, cliente: 'Ana', dia: suma(hoyK, 1), detalle: 'x' })).json.error.code, 'pedido_cerrado');
-      assert.equal((await tienda.op({ op: 'agenda.estado', id: ana.id, estado: 'pendiente' })).status, 403);
-      assert.equal((await local.op({ op: 'agenda.estado', id: ana.id, estado: 'pendiente' })).status, 200, 'el Almacén reabre');
+      assert.equal((await tienda.op({ op: 'agenda.estado', id: ana.id, estado: 'pendiente' })).status, 200, 'Zeus (tienda) reabre');
       assert.equal((await local.estado()).agenda.length, 2);
       // idempotente (reintento de red) y fuera de dejar-todo-en-cero
       const cid = 'pedido-reintento-1';
