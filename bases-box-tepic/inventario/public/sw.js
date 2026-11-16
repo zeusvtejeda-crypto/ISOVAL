@@ -1,6 +1,6 @@
 // Service worker: guarda la app para abrirla aunque no haya internet.
 // Los datos (/api) nunca se guardan aquí: siempre van a la red.
-const VERSION = 'bb-inv-v5';
+const VERSION = 'bb-inv-v6';
 const BASE = ['./', 'index.html', 'core.js', 'pdf.js', 'app.js', 'fonts.css', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'fonts/anton-400.woff2', 'fonts/barlow-400.woff2', 'fonts/barlow-500.woff2', 'fonts/barlow-600.woff2', 'fonts/barlow-700.woff2',
   'fonts/barlow-condensed-500.woff2', 'fonts/barlow-condensed-600.woff2', 'fonts/barlow-condensed-700.woff2'];
@@ -29,4 +29,20 @@ self.addEventListener('fetch', (e) => {
       })
       .catch(() => caches.match(r).then((m) => m || (r.mode === 'navigate' ? caches.match('index.html') : Response.error())))
   );
+});
+
+// Avisos al celular: cada venta de Rubén llega como notificación (el servidor la manda cifrada).
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { titulo: 'Bases Box Tepic', texto: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.titulo || 'Bases Box Tepic', {
+    body: d.texto || '', icon: 'icon-192.png', badge: 'icon-192.png', tag: 'bb-' + Date.now(), data: { url: d.url || './' }
+  }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((ls) => {
+    const abierta = ls.find((c) => 'focus' in c);
+    return abierta ? abierta.focus() : self.clients.openWindow((e.notification.data && e.notification.data.url) || './');
+  }));
 });

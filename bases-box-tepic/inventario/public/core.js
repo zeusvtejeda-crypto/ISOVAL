@@ -13,7 +13,8 @@
 
   const VERSION = '1.0.0';
   const DIA = 86400000;
-  const ROLES = ['local', 'tienda', 'dueno']; // dueno: solo lectura (resumen del negocio)
+  const ROLES = ['local', 'tienda', 'dueno', 'ruben']; // dueno: solo lectura (resumen del negocio); ruben: solo registra ventas
+  const SOLO_VENTAS = ['tienda', 'ruben']; // no ven resumen, reporte semanal ni revisión de cuentas
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
   const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'comisiones', 'retiro', 'otro'];
@@ -264,7 +265,7 @@
     const cfg = await cargarCfg(ctx);
     return ok({
       servidor: ctx.servidor !== false, version: VERSION, configurado: cfg.configurado, negocio: cfg.negocio.nombre,
-      requiereClave: !cfg.configurado && !!ctx.claveInstalacion, dueno: !!(cfg.acceso && cfg.acceso.dueno)
+      requiereClave: !cfg.configurado && !!ctx.claveInstalacion, dueno: !!(cfg.acceso && cfg.acceso.dueno), ruben: !!(cfg.acceso && cfg.acceso.ruben)
     });
   }
 
@@ -733,7 +734,7 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(q.dia)) || String(q.dia) > hoyK || diaKey(ctx.ahora - 34 * DIA, ctx.tz) > String(q.dia)) throw bad('dia_invalido', 'Elige un día de los últimos 30 días.');
       dia = String(q.dia);
     }
-    const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
+    const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia && (ctx.rol !== 'ruben' || r.rol === 'ruben')).sort((a, b) => a.ts - b.ts);
     const grupos = Object.create(null), orden = [];
     filas.forEach((r) => {
       const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', vendedor: r.vendedor || '', pago: r.pago || '', entrega: r.tipo === 'venta' && !soloMonto(r) ? r.motivo || '' : '', envio: 0, soloMonto: soloMonto(r), lineas: [], total: 0 });
@@ -767,16 +768,16 @@
     const { repo, ahora, rol } = ctx;
     const [raw, prods, trasp, peds, ventas, rec, gastosFilas, agendaAbierta] = await Promise.all([
       repo.config(), repo.productos(), repo.traspasos({ desde: ahora - 30 * DIA }), repo.pedidos({ desde: ahora - 30 * DIA }),
-      repo.ventas(ahora - 35 * DIA), repo.movs({ limite: 40 }), repo.gastos(ahora - 36 * DIA), repo.agendaAbierta()
+      repo.ventas(ahora - 35 * DIA), repo.movs(rol === 'ruben' ? { limite: 40, rol: 'ruben' } : { limite: 40 }), repo.gastos(ahora - 36 * DIA), repo.agendaAbierta()
     ]);
     const cfg = normalizarCfg(raw);
     const productos = prods.map((p) => {
       const o = Object.assign({}, p);
-      if (rol === 'tienda') delete o.costo;
+      if (SOLO_VENTAS.includes(rol)) delete o.costo;
       return o;
     });
     const est = {
-      rev: cfg.rev, ahora, hoy: diaKey(ahora, ctx.tz), agenda: agendaAbierta.slice(0, 300), rol, version: VERSION, dueno: !!cfg.acceso.dueno, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
+      rev: cfg.rev, ahora, hoy: diaKey(ahora, ctx.tz), agenda: agendaAbierta.slice(0, 300), rol, version: VERSION, dueno: !!cfg.acceso.dueno, ruben: !!cfg.acceso.ruben, avisos: Array.isArray(raw.push) ? raw.push.length : 0, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
       productos, traspasos: trasp, pedidos: peds, resumen: Object.assign(resumenVentas(ventas, ahora, ctx.tz), { gastos: (({ hoy, semana, mes }) => ({ hoy: hoy.total, semana: semana.total, mes: mes.total }))(resumenGastos(gastosVisibles(gastosFilas), ahora, ctx.tz)) }), recientes: rec.items
     };
     if (ctx.exp && ctx.exp - ahora < (SESION_DIAS / 2) * DIA) est.token = firmar(cfg, rol, ahora);
@@ -792,7 +793,7 @@
       hasta: Number(q.hasta) || 0,
       prods: q.prods ? String(q.prods).split(',').slice(0, 40) : null,
       tipos: q.tipos ? String(q.tipos).split(',').slice(0, 12) : null,
-      rol: ROLES.includes(q.rol) ? q.rol : null,
+      rol: ctx.rol === 'ruben' ? 'ruben' : ROLES.includes(q.rol) ? q.rol : null,
       anulaciones: q.anulaciones === '1'
     });
   }
@@ -846,7 +847,7 @@
   }
 
   // quién hizo la venta (nombre del vendedor); si no lo mandan, queda el usuario que la registró
-  const vendedorDe = (ctx, b) => clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Vendedor tienda' : 'Almacén');
+  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Rubén' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Vendedor tienda' : 'Almacén'));
 
   // entrega de una venta → tarifa de envío en la configuración del negocio (null = sin cargo)
   const ENTREGAS = { recoge: null, tepic: 'envioTepic', xalisco: 'envioFuera', cantera: 'envioFuera' };
@@ -1097,6 +1098,41 @@
       tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago, grupo: nuevo, ref: m.id, nota: clean(nota, 200), anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
     });
     return { grupo: nuevo, repuesta: grupo, pago };
+  }
+
+  // ───────── avisos al celular (Web Push)
+  async function avisoDeRuben(ctx, b, res) {
+    if (!b || !/^mov\./.test(String(b.op))) return null;
+    const idx = indexar(await ctx.repo.productos());
+    const lineas = Array.isArray(b.lineas) ? b.lineas.slice(0, 6).map((l) => (l.cant || 1) + ' × ' + ((idx[l.id] || {}).nombre || 'producto')).join(', ') : '';
+    const pago = { efectivo: 'efectivo', tarjeta: 'tarjeta', transferencia: 'transferencia', otro: 'otro' }[b.pago] || 'efectivo';
+    const total = res && res.total ? '$' + Number(res.total).toLocaleString('en-US') : '';
+    if (b.op === 'mov.venta') return { titulo: 'Rubén registró una venta' + (total ? ' · ' + total : ''), texto: [lineas, pago, b.cliente ? 'cliente ' + clean(b.cliente, 40) : ''].filter(Boolean).join(' · ') };
+    return { titulo: 'Rubén hizo un movimiento', texto: String(b.op) + (lineas ? ' · ' + lineas : '') };
+  }
+  async function opPushSuscribir(ctx, b, tx) {
+    const endpoint = String(b.endpoint || ''), p256dh = String(b.p256dh || ''), auth = String(b.auth || '');
+    if (!/^https:\/\/[^\s]{10,1000}$/.test(endpoint)) throw bad('push_invalido', 'Tu navegador no dio una suscripción válida.');
+    if (!/^[A-Za-z0-9_-]{80,100}$/.test(p256dh) || !/^[A-Za-z0-9_-]{16,32}$/.test(auth)) throw bad('push_invalido', 'Tu navegador no dio una suscripción válida.');
+    const raw = await ctx.repo.config();
+    const lista = (Array.isArray(raw.push) ? raw.push : []).filter((s) => s.endpoint !== endpoint);
+    lista.push({ endpoint, p256dh, auth, rol: ctx.rol, ts: ctx.ahora, equipo: clean(b.equipo, 60) });
+    tx.config = { push: lista.slice(-10) };
+    tx.sinRev = true;
+    return { avisos: tx.config.push.length };
+  }
+  async function opPushQuitar(ctx, b, tx) {
+    const raw = await ctx.repo.config();
+    const endpoint = String(b.endpoint || '');
+    const lista = (Array.isArray(raw.push) ? raw.push : []).filter((s) => (endpoint ? s.endpoint !== endpoint : s.rol !== ctx.rol));
+    tx.config = { push: lista };
+    tx.sinRev = true;
+    return { avisos: lista.length };
+  }
+  async function opPushProbar(ctx) {
+    const raw = await ctx.repo.config();
+    if (!Array.isArray(raw.push) || !raw.push.length) throw bad('sin_avisos', 'Primero activa los avisos en este celular.');
+    return { avisos: raw.push.length };
   }
 
   async function opEnviar(ctx, b, tx) {
@@ -1413,6 +1449,20 @@
     return {};
   }
 
+  async function opPinRuben(ctx, b, tx) {
+    const cfg = ctx.cfg;
+    const it = await reservar(ctx, 'local');
+    const acc = cfg.acceso.local;
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local', 'ruben');
+    const nuevo = String(b.pinNuevo || '');
+    validarPin(nuevo);
+    if (pinEnUso(cfg, 'ruben', nuevo)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
+    const r = cfg.acceso.ruben;
+    tx.config = { acceso: Object.assign({}, cfg.acceso, { ruben: nuevoAcceso(nuevo, ((r && r.v) || 0) + 1) }) };
+    return {};
+  }
+
   // Deja el inventario en cero (borra movimientos, envíos y pedidos; conserva productos, precios, PIN y ajustes).
   async function opReiniciar(ctx, b, tx) {
     const cfg = ctx.cfg;
@@ -1433,7 +1483,7 @@
     'producto.archivar': [['local'], opProductoArchivar],
     'mov.entrada': [['local'], (c, b, t) => opMovLineas(c, b, t, 'entrada')],
     'mov.salida': [['local'], (c, b, t) => opMovLineas(c, b, t, 'salida')],
-    'mov.venta': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'venta')],
+    'mov.venta': [['tienda', 'ruben'], (c, b, t) => opMovLineas(c, b, t, 'venta')],
     'mov.devolucion': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'devolucion')],
     'mov.merma': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'merma')],
     'mov.regreso': [['local', 'tienda'], opRegreso],
@@ -1453,7 +1503,11 @@
     'pedido.crear': [['tienda'], opPedidoCrear],
     'pedido.cancelar': [['local', 'tienda'], opPedidoCancelar],
     'config.guardar': [['local'], opConfigGuardar],
-    'pin.cambiar': [['local', 'tienda', 'dueno'], opPinCambiar],
+    'pin.cambiar': [['local', 'tienda', 'dueno', 'ruben'], opPinCambiar],
+    'pin.ruben': [['local'], opPinRuben],
+    'push.suscribir': [['local', 'dueno'], opPushSuscribir],
+    'push.quitar': [['local', 'dueno'], opPushQuitar],
+    'push.probar': [['local'], opPushProbar],
     'pin.dueno': [['local'], opPinDueno],
     'pin.reiniciar': [['local'], opPinReiniciar],
     'recup.nueva': [['local'], opRecupNueva],
@@ -1494,22 +1548,32 @@
       if (path === '/movs' && m === 'GET') return ok(await listarMovs(ctx));
       if (path === '/reporte-dia' && m === 'GET') return ok(await reporteDia(ctx));
       if (path === '/resumen' && m === 'GET') {
-        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El resumen del negocio es del dueño y del almacén.');
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'El resumen del negocio es del dueño y del almacén.');
         return ok(await resumenDueno(ctx));
       }
       if (path === '/reporte-semana' && m === 'GET') {
-        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del dueño y del almacén.');
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del dueño y del almacén.');
         return ok(await reporteSemana(ctx));
       }
       if (path === '/cuentas' && m === 'GET') {
-        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'La revisión de cuentas es del dueño y del almacén.');
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La revisión de cuentas es del dueño y del almacén.');
         return ok(await revisarCuentas(ctx));
       }
+      if (ctx.rol === 'ruben' && (path === '/agenda' || path === '/gastos')) throw new ApiError(403, 'sin_permiso', 'Tu perfil solo registra ventas.');
       if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
+      if (path === '/push/clave' && m === 'GET') {
+        if (ctx.rol !== 'local' && ctx.rol !== 'dueno') throw new ApiError(403, 'sin_permiso', 'Los avisos al celular son del almacén y del dueño.');
+        if (!opts.claveVapid) throw new ApiError(501, 'sin_push', 'Los avisos al celular necesitan la app publicada con su servidor.');
+        return ok({ publica: await opts.claveVapid() });
+      }
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
       if (path === '/op' && m === 'POST') {
         const resultado = await correrOp(ctx, ctx.req.body);
+        if (opts.avisar) {
+          const aviso = ctx.rol === 'ruben' ? await avisoDeRuben(ctx, ctx.req.body, resultado) : ctx.req.body && ctx.req.body.op === 'push.probar' ? { titulo: 'Avisos activados', texto: 'Así te llegará cada venta que registre Rubén.' } : null;
+          if (aviso) { try { opts.avisar(aviso); } catch (e) { /* el aviso nunca detiene la operación */ } }
+        }
         const extra = {};
         if (resultado.token) { extra.token = resultado.token; delete resultado.token; }
         const est = await armarEstado(ctx);
@@ -1802,7 +1866,7 @@
 
   return {
     VERSION, MAX_LINEAS, MEDIDAS_BASE, TONOS_BASE, EXTRAS_BASE,
-    handle, crearRepoLocal, almacenMemoria, sembrarDemo, ApiError,
+    handle, crearRepoLocal, almacenMemoria, sembrarDemo, ApiError, nuevaTx,
     // expuestos para pruebas
     sha256hex, hmacHex, resumenVentas, diaKey
   };

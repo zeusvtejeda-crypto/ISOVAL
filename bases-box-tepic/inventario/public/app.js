@@ -94,8 +94,10 @@ let sincronizando = false;
 const ROLES = {
   local: { nombre: 'Almacén', corto: 'Almacén', desc: 'Bodega y fábrica: materiales, bases en producción y envíos a la tienda.', ic: 'fabrica' },
   tienda: { nombre: 'Vendedor tienda', corto: 'Tienda', desc: 'Venta al público: ventas, devoluciones, pedidos y recibo de mercancía.', ic: 'tienda' },
-  dueno: { nombre: 'Dueño', corto: 'Dueño', desc: 'Solo consulta: resumen de producción, ventas, gastos y egresos.', ic: 'usuario' }
+  dueno: { nombre: 'Dueño', corto: 'Dueño', desc: 'Solo consulta: resumen de producción, ventas, gastos y egresos.', ic: 'usuario' },
+  ruben: { nombre: 'Rubén', corto: 'Rubén', desc: 'Solo registra ventas. El almacén recibe un aviso de cada venta.', ic: 'recibo' }
 };
+const esVendedor = () => S.rol === 'tienda' || S.rol === 'ruben';
 const CATS = { base: 'Bases', material: 'Materiales', accesorio: 'Accesorios' };
 const TIPOS = {
   entrada: { t: 'Entrada al almacén', ic: 'entrada', c: 'ok' },
@@ -378,7 +380,7 @@ const TABS = [
   { id: 'historial', t: 'Historial', ic: 'reloj' },
   { id: 'mas', t: 'Más', ic: 'mas' }
 ];
-const tabsDe = () => TABS.filter((t) => !(S.rol === 'dueno' && t.id === 'mover')); // el dueño solo consulta
+const tabsDe = () => TABS.filter((t) => !((S.rol === 'dueno' || S.rol === 'ruben') && t.id === 'mover')); // el dueño solo consulta; Rubén solo vende
 const marca = () => html`<div class="marca"><span class="logo"><img src="logo.png" alt="" width="38" height="38"></span><span class="marca-t"><span class="marca-n">Bases Bo<b>x</b></span><span class="marca-s">Tepic · Inventario</span></span></div>`;
 
 function montarApp() {
@@ -400,7 +402,7 @@ function montarApp() {
         <div class="demo-b" id="demo-b" hidden><span>Demostración · datos de ejemplo</span><button type="button" class="btn btn-s btn-g" data-act="salir-demo">Salir de la demo</button></div>
         <main class="main" id="vista" tabindex="-1"><div class="main-in" id="vista-in"></div></main>
       </div>
-      ${S.rol === 'tienda' ? html`<button type="button" class="btn btn-p fab fab-venta" id="fab-venta" data-act="venta-nueva" aria-label="Nueva venta">${ico('recibo')}Nueva venta</button>` : ''}
+      ${esVendedor() ? html`<button type="button" class="btn btn-p fab fab-venta" id="fab-venta" data-act="venta-nueva" aria-label="Nueva venta">${ico('recibo')}Nueva venta</button>` : ''}
       <nav class="tabbar" aria-label="Secciones" style="grid-template-columns:repeat(${tabsDe().length},1fr)">
         ${tabsDe().map((t) => html`<button type="button" class="tab" data-tab="${t.id}">${ico(t.ic)}<span>${t.t}</span><span class="badge" hidden></span></button>`)}
       </nav>
@@ -488,6 +490,7 @@ function pintarInicio() {
   const cont = $('#v-inicio');
   if (!cont) return;
   if (S.rol === 'dueno') return pintarResumenDueno();
+  if (S.rol === 'ruben') return pintarInicioRuben(cont);
   const e = S.est, r = e.resumen, hoy = new Date();
   const bases = e.productos.filter((p) => p.cat === 'base' && p.activo);
   const bLocal = sumar(bases, (p) => p.stock_local), bTienda = sumar(bases, (p) => p.stock_tienda), bCamino = sumar(bases, (p) => S.camino[p.id] || 0);
@@ -550,6 +553,21 @@ function pintarInicio() {
     </div>`);
   dibujarGrafica();
   if (S.rol === 'local') { pintarCardCuentas(); cargarCuentas(); }
+}
+
+function pintarInicioRuben(cont) {
+  const e = S.est, hoy = new Date();
+  const saludo = hoy.getHours() < 12 ? 'Buenos días' : hoy.getHours() < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const mias = agrupar(e.recientes.filter((m) => m.tipo === 'venta' && m.rol === 'ruben'));
+  const deHoy = mias.filter((g) => !g.anulado && new Date(g.ts).toDateString() === hoy.toDateString());
+  const bases = e.productos.filter((p) => p.cat === 'base' && p.activo && p.stock_tienda > 0);
+  poner(cont, html`
+    <div class="cabecera"><div><h1 class="t-pant">${saludo}, Rubén</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · Solo ventas</p></div></div>
+    <button type="button" class="btn btn-p btn-b btn-venta-grande" data-act="venta-nueva">${ico('recibo')}Nueva venta</button>
+    <section class="card" aria-label="Mis ventas de hoy"><div class="card-t"><h2 class="t-sec">Mis ventas de hoy</h2><b class="cifras">${dinero(sumar(deHoy, (g) => g.total))}</b></div>
+      ${deHoy.length ? html`<ul class="lista">${deHoy.map(filaOperacion)}</ul>` : html`<div class="vacio" style="padding:14px 8px"><b>Aún no registras ventas hoy</b><span>Toca “Nueva venta” para empezar.</span></div>`}</section>
+    <section class="card flat" aria-label="Bases en tienda"><div class="card-t" style="padding:14px 16px 0;margin:0"><h2 class="t-sec">Bases disponibles en tienda</h2><span class="t-peq">${plural(sumar(bases, (p) => p.stock_tienda), 'pieza', 'piezas')}</span></div>
+      <p class="t-peq" style="padding:6px 16px 14px">Para vender una base en específico ve a <b>Inventario</b> y toca <b>Vender</b>.</p></section>`);
 }
 
 function filaOperacion(g) {
@@ -650,7 +668,7 @@ VISTAS.inventario = {
     const e = S.est, activos = e.productos.filter((p) => p.activo), bajos = bajosDe(S.rol).length;
     const pzL = sumar(activos, (p) => p.stock_local), pzT = sumar(activos, (p) => p.stock_tienda);
     $('#inv-sub').textContent = (S.rol !== 'tienda' ? num(pzL) + ' pzas en almacén · ' + num(pzT) + ' en tienda' : num(pzT) + ' pzas en tienda') + (bajos ? ' · ' + plural(bajos, 'con stock bajo', 'con stock bajo') : ' · todo en orden');
-    poner($('#inv-acc'), S.rol === 'dueno' ? html`<button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>` : S.rol === 'local' ? html`<button type="button" class="btn btn-p" data-act="prod-nuevo">${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">${ico('capas')}Crear bases</button><button type="button" class="btn btn-g" data-act="gasto-nuevo">${ico('salida')}Gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>` : html`<button type="button" class="btn btn-g" data-act="gasto-nuevo">${ico('salida')}Registrar gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>`);
+    poner($('#inv-acc'), S.rol === 'ruben' ? '' : S.rol === 'dueno' ? html`<button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>` : S.rol === 'local' ? html`<button type="button" class="btn btn-p" data-act="prod-nuevo">${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">${ico('capas')}Crear bases</button><button type="button" class="btn btn-g" data-act="gasto-nuevo">${ico('salida')}Gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>` : html`<button type="button" class="btn btn-g" data-act="gasto-nuevo">${ico('salida')}Registrar gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>`);
     const chips = [['todo', 'Todo'], ['base', 'Bases'], ['material', 'Materiales'], ['accesorio', 'Accesorios']];
     poner($('#inv-chips'), html`${chips.map(([k, t]) => html`<button type="button" class="chip" data-act="filtro-cat" data-cat="${k}" aria-pressed="${String(S.filtro.cat === k)}">${t}</button>`)}<button type="button" class="chip" data-act="filtro-bajo" aria-pressed="${String(S.filtro.bajo)}">${ico('alerta')}Stock bajo${bajos ? ' (' + bajos + ')' : ''}</button>${S.rol === 'local' && e.productos.some((p) => !p.activo) ? html`<button type="button" class="chip" data-act="filtro-arch" aria-pressed="${String(S.filtro.archivados)}">Archivados</button>` : ''}`);
     pintarListaInv();
@@ -661,7 +679,7 @@ function filaProducto(p, corto) {
   const lv = (loc) => nivel(p, loc);
   const cl = (loc) => { const v = lv(loc), st = loc === 'local' ? p.stock_local : p.stock_tienda; return v === 'agotado' ? 'agotado' : v === 'bajo' ? 'bajo' : st === 0 ? 'cero' : ''; };
   const cam = S.camino[p.id] || 0;
-  const vende = S.rol === 'tienda' && p.activo;
+  const vende = esVendedor() && p.activo;
   const stA = html`<span class="st ${cl('local')}"><b>${num(p.stock_local)}</b><i>Almacén</i></span>`;
   const stT = html`<span class="st ${cl('tienda')}"><b>${num(p.stock_tienda)}</b><i>Tienda</i></span>`;
   return html`<div class="prod ${p.activo ? '' : 'arch'}">
@@ -990,7 +1008,7 @@ function abrirForma(tipo, o) {
       ${f.precio ? html`<div class="total-b"><span>Total</span><b id="f-total">${dinero(0)}</b></div><p class="t-peq" id="f-total-sub" style="margin:-6px 0 14px"></p>` : ''}
       ${f.venta ? html`<div class="campo"><span class="lbl">Entrega</span><div class="opciones" id="f-entrega">${ENTREGAS.map(([k, t]) => html`<button type="button" class="opcion" data-entrega="${k}" aria-pressed="${String(k === entrega)}" style="padding:0 12px">${t}</button>`)}</div><p class="t-peq" id="f-entrega-ayuda" style="margin-top:8px"></p></div>
         <label class="campo" id="f-envio-campo" hidden><span class="lbl">Cobro de envío</span><span class="precio" style="max-width:160px"><span class="muted">$</span><input id="f-envio" type="text" inputmode="decimal" value="" aria-label="Cobro de envío"></span></label>
-        <label class="campo"><span class="lbl">Vendedor (quién hizo la venta)</span><input class="inp" id="f-vendedor" maxlength="40" list="f-vendedores" placeholder="Ej. Hugo, Carlos, Tienda" autocomplete="off" value="${o.vendedor || ultimoVendedor()}"><datalist id="f-vendedores">${[...new Set([...VENDEDORES_BASE, ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
+        <label class="campo"><span class="lbl">Vendedor (quién hizo la venta)</span><input class="inp" id="f-vendedor" maxlength="40" list="f-vendedores" placeholder="Ej. Hugo, Carlos, Tienda" autocomplete="off" value="${S.rol === 'ruben' ? 'Rubén' : o.vendedor || ultimoVendedor()}" ${S.rol === 'ruben' ? raw('readonly') : ''}><datalist id="f-vendedores">${[...new Set([...VENDEDORES_BASE, ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
         <label class="campo"><span class="lbl">Cliente (opcional)</span><input class="inp" id="f-cliente" maxlength="60" placeholder="Nombre o referencia" autocomplete="off" value="${o.cliente || ''}"></label>
         <div class="campo"><span class="lbl">Forma de pago</span><div class="opciones g4" id="f-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>` : ''}
       <label class="campo"><span class="lbl">${f.notaEt || 'Nota (opcional)'}</span><textarea class="inp" id="f-nota" rows="2" maxlength="200" placeholder="${tipo === 'envio' ? 'Ej. sale en la camioneta de las 4' : 'Escribe algo que ayude a recordar'}">${o.nota || ''}</textarea></label>
@@ -2092,7 +2110,7 @@ function abrirOperacion(grupo) {
         ${g.nota ? html`<dt>Nota</dt><dd>${g.nota}</dd>` : ''}
         ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Almacén' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
       </dl>`,
-    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' && !g.anulado && (S.rol === 'local' || g.rol === S.rol) ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}${puedeAnular(g) ? html`<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : ''}`
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' && !g.anulado && (S.rol === 'local' || (S.rol === 'tienda' && g.rol === 'tienda')) ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}${puedeAnular(g) ? html`<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : ''}`
   });
   const cp = $('#o-pago', d.el);
   if (cp) cp.addEventListener('click', () => {
@@ -2134,6 +2152,7 @@ function abrirProducto(id) {
   const tile = (et, v, mn, loc) => { const nv = loc ? nivel(p, loc) : 'ok'; return html`<div class="kpi"><span class="t-sec">${et}</span><span class="num-g cifras" style="color:${nv === 'agotado' ? 'var(--bad)' : nv === 'bajo' ? 'var(--warn)' : 'inherit'}">${num(v)}</span><small>${loc ? (nv === 'agotado' ? 'Agotado' : nv === 'bajo' ? 'Stock bajo' : mn > 0 ? 'Mínimo ' + num(mn) : 'Sin mínimo') : 'Sin confirmar'}</small></div>`; };
   const pie = S.rol === 'dueno' ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>` : !p.activo ? (esLocal ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pd-reactivar">Reactivar producto</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`)
     : esLocal ? html`<button type="button" class="btn btn-g" id="pd-editar">${ico('editar')}Editar</button><button type="button" class="btn btn-g" id="pd-entrada">${ico('entrada')}Entrada</button><button type="button" class="btn btn-p" id="pd-enviar">${ico('camion')}Enviar a tienda</button>`
+    : S.rol === 'ruben' ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pd-vender" ${p.stock_tienda > 0 ? '' : raw('disabled')}>${ico('recibo')}Vender</button>`
     : html`<button type="button" class="btn btn-g" id="pd-pedir">${ico('pedido')}Pedir al almacén</button><button type="button" class="btn btn-p" id="pd-vender">${ico('recibo')}Vender</button>`;
   const d = dialogo({
     titulo: p.nombre,
@@ -2377,6 +2396,63 @@ function formPinDueno() {
   btn.addEventListener('click', enviar);
   d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enviar(); });
 }
+function formPinRuben() {
+  const d = dialogo({
+    titulo: 'PIN de Rubén',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Rubén entra con su propio PIN y <b>solo puede registrar ventas</b> (con su nombre). No ve gastos, costos, cuentas ni movimientos de los demás, y no puede anular. Cada venta suya te llega como aviso si activas “Avisos al celular”.</p>
+      <label class="campo"><span class="lbl">Tu PIN (almacén)</span><input class="inp pin" id="pr-act" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">PIN de Rubén (6 a 8 números)</span><input class="inp pin" id="pr-nvo" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">Repite el PIN de Rubén</span><input class="inp pin" id="pr-rep" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <p class="err" id="pr-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="pr-ok">Guardar PIN</button>`
+  });
+  const btn = $('#pr-ok', d.el), err = $('#pr-err', d.el);
+  const enviar = () => guardando(btn, err, async () => {
+    const nvo = $('#pr-nvo', d.el).value;
+    if (nvo !== $('#pr-rep', d.el).value) throw new ErrorApi({ mensaje: 'Los dos PIN nuevos no coinciden.' });
+    await op({ op: 'pin.ruben', pinActual: $('#pr-act', d.el).value, pinNuevo: nvo });
+    d.cerrar();
+    S.hayRuben = true;
+    toast('Listo: Rubén ya puede entrar con su PIN.');
+  });
+  btn.addEventListener('click', enviar);
+  d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enviar(); });
+}
+
+/* ───────── avisos al celular (notificaciones push) ───────── */
+const pushSoportado = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const deB64u = (s) => Uint8Array.from(atob(String(s).replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((String(s).length + 3) % 4)), (c) => c.charCodeAt(0));
+const equipoActual = () => { const u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Navegador'; };
+async function suscribirAvisos() {
+  if (!pushSoportado()) throw new ErrorApi({ mensaje: /iPhone|iPad/.test(navigator.userAgent) ? 'En iPhone primero agrega la app a la pantalla de inicio (Compartir → Agregar a pantalla de inicio), ábrela desde ese ícono y vuelve aquí.' : 'Este navegador no acepta notificaciones. Usa Chrome o Safari actualizados.' });
+  const permiso = await Notification.requestPermission();
+  if (permiso !== 'granted') throw new ErrorApi({ mensaje: 'No diste permiso para notificaciones. Actívalo en los ajustes del navegador para esta app.' });
+  const r = await llamar('GET', '/push/clave');
+  if (!r.json.ok) throw new ErrorApi(r.json.error);
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (sub) { try { await sub.unsubscribe(); } catch (e) { /* se vuelve a crear abajo */ } }
+  try { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: deB64u(r.json.publica) }); } catch (x) {
+    throw new ErrorApi({ mensaje: 'Este navegador no dejó activar las notificaciones' + (/iPhone|iPad/.test(navigator.userAgent) ? ': abre la app desde el ícono de la pantalla de inicio (no desde Safari) y vuelve a intentar.' : ' (no funcionan en modo incógnito). Ábrela en Chrome normal y vuelve a intentar.') });
+  }
+  const j = sub.toJSON();
+  await op({ op: 'push.suscribir', endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, equipo: equipoActual() });
+}
+function abrirAvisos() {
+  const e = S.est;
+  const d = dialogo({
+    titulo: 'Avisos al celular',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Cada vez que Rubén registre una venta te llega una notificación a este celular, aunque no tengas la app abierta.</p>
+      <div class="aviso ${e.avisos ? 'ok' : ''}" style="margin-bottom:14px">${ico(e.avisos ? 'check' : 'info')}<span>${e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + '.' : 'Todavía no están activos en ningún celular.'}</span></div>
+      ${/iPhone|iPad/.test(navigator.userAgent) && !(window.matchMedia && matchMedia('(display-mode: standalone)').matches) ? html`<div class="aviso warn" style="margin-bottom:14px">${ico('alerta')}<span>En iPhone las notificaciones solo funcionan con la app <b>agregada a la pantalla de inicio</b>: toca Compartir → Agregar a pantalla de inicio, ábrela desde ese ícono y activa aquí.</span></div>` : ''}
+      <p class="err" id="av-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${e.avisos ? html`<button type="button" class="btn btn-g" id="av-prueba">Enviar prueba</button>` : ''}<button type="button" class="btn btn-p" id="av-ok">${e.avisos ? 'Activar en este celular' : 'Activar avisos'}</button>`
+  });
+  const err = $('#av-err', d.el), ok = $('#av-ok', d.el), pr = $('#av-prueba', d.el);
+  ok.addEventListener('click', () => guardando(ok, err, async () => { await suscribirAvisos(); d.cerrar(); toast('Avisos activados en este celular.'); try { await op({ op: 'push.probar' }); } catch (x) { /* la prueba es opcional */ } }));
+  if (pr) pr.addEventListener('click', () => guardando(pr, err, async () => { await op({ op: 'push.probar' }); toast('Prueba enviada: debe llegarte en unos segundos.'); }));
+}
+
 function formPin(reiniciarTienda) {
   const d = dialogo({
     titulo: reiniciarTienda ? 'Nuevo PIN para el vendedor' : 'Cambiar mi PIN',
@@ -2472,12 +2548,14 @@ VISTAS.mas = {
       <section class="sec-mas"><span class="t-sec">Mi cuenta</span><div class="card flat"><ul class="lista">
         ${fila('candado', 'Cambiar mi PIN', 'Cierra tu sesión en los demás equipos', 'pin-propio')}
         ${local ? fila('tienda', 'Reiniciar el PIN del vendedor', 'Si el vendedor lo olvidó', 'pin-tienda') : ''}
+        ${local ? fila('recibo', 'PIN de Rubén', e.ruben ? 'Cambiar el PIN con el que entra Rubén (solo ventas)' : 'Crea el acceso de Rubén: solo registra ventas', 'pin-ruben') : ''}
+        ${local ? fila('alerta', 'Avisos al celular', e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + ' · cada venta de Rubén te llega como notificación' : 'Recibe una notificación cada vez que Rubén registre una venta', 'avisos') : ''}
         ${local ? fila('usuario', 'PIN del dueño', e.dueno ? 'Cambiar el PIN con el que entra el dueño' : 'Crea el acceso del dueño (solo consulta)', 'pin-dueno') : ''}
         ${local ? fila('candado', 'Código de recuperación', 'Genera uno nuevo si perdiste el anterior', 'codigo-nuevo') : ''}
         ${local && S.modo !== 'local' ? fila('basura', 'Dejar todo en cero', 'Borra movimientos y existencias para empezar limpio', 'reiniciar') : ''}
         ${fila('x', 'Cerrar sesión', '', 'salir')}
       </ul></div></section>
-      ${local ? html`<section class="sec-mas"><span class="t-sec">Negocio y catálogo</span><div class="card flat"><ul class="lista">
+      ${S.rol === 'ruben' ? '' : html`${local ? html`<section class="sec-mas"><span class="t-sec">Negocio y catálogo</span><div class="card flat"><ul class="lista">
         ${fila('tienda', 'Datos del negocio y WhatsApp', e.negocio.nombre, 'negocio')}
         ${fila('cubo', 'Medidas y precios', plural(e.medidas.length, 'medida', 'medidas'), 'medidas')}
         ${fila('capas', 'Tonos', plural(e.tonos.length, 'tono', 'tonos'), 'tonos')}
@@ -2490,7 +2568,7 @@ VISTAS.mas = {
         ${fila('bajar', 'Exportar inventario', 'Hoja de cálculo (CSV) con las existencias de hoy', 'exportar-inv')}
         ${fila('bajar', 'Exportar movimientos', 'Todo el historial en CSV', 'exportar-movs')}
         ${local ? fila('bajar', 'Respaldo completo', 'Archivo JSON con productos y movimientos', 'respaldo') : ''}
-      </ul></div></section>
+      </ul></div></section>`}
       <section class="sec-mas"><span class="t-sec">Apariencia</span><div class="card"><div class="opciones">${[['auto', 'Automática'], ['claro', 'Clara'], ['oscuro', 'Oscura']].map(([k, t]) => html`<button type="button" class="opcion" data-act="tema" data-v="${k}" aria-pressed="${String(tema === k)}">${t}</button>`)}</div></div></section>
       ${!standalone ? html`<section class="sec-mas"><span class="t-sec">Instalar</span><div class="card">
         ${S.instalar ? html`<div class="sep"><span>Ábrela como una app, sin la barra del navegador.</span><button type="button" class="btn btn-p" data-act="instalar">Instalar app</button></div>`
@@ -2537,6 +2615,8 @@ const A = {
   'venta-nueva': () => abrirForma('venta'),
   resumen: () => abrirResumen(),
   'pin-dueno': () => formPinDueno(),
+  'pin-ruben': () => formPinRuben(),
+  'avisos': () => abrirAvisos(),
   'gasto-nuevo': () => formGasto(),
   'recibir-ya': () => recibirYa(),
   traspaso: (b) => abrirTraspaso(b.dataset.id),
@@ -2646,13 +2726,13 @@ function pinError(p) {
 
 function pantallaLogin(msg) {
   let rol = S.modo === 'local' && S.demo ? null : store.get(CLAVE_ROL);
-  if (!ROLES[rol] || (rol === 'dueno' && !S.hayDueno && !S.demo)) rol = null;
+  if (!ROLES[rol] || (rol === 'dueno' && !S.hayDueno && !S.demo) || (rol === 'ruben' && !S.hayRuben)) rol = null;
   const render = () => {
     poner($('#raiz'), html`<div class="acceso"><div class="acceso-in">
       ${cabeceraMarca()}
       ${msg ? html`<div class="aviso warn">${ico('info')}<span>${msg}</span></div>` : ''}
       ${S.demo ? html`<div class="aviso">${ico('info')}<span><b>Demostración.</b> PIN del almacén: <b>1111</b> · vendedor: <b>2222</b> · dueño: <b>3333</b>.</span></div>` : ''}
-      ${!rol ? html`<div class="pila"><h2 class="t-sec" style="text-align:center">¿Quién entra?</h2>${Object.keys(ROLES).filter((k) => k !== 'dueno' || S.hayDueno || S.demo).map((k) => html`<button type="button" class="rol-btn" data-rol="${k}"><span class="ico-c acc" style="width:48px;height:48px">${ico(ROLES[k].ic, 'g')}</span><span><b>${ROLES[k].nombre}</b><span>${ROLES[k].desc}</span></span></button>`)}</div>`
+      ${!rol ? html`<div class="pila"><h2 class="t-sec" style="text-align:center">¿Quién entra?</h2>${Object.keys(ROLES).filter((k) => (k !== 'dueno' || S.hayDueno || S.demo) && (k !== 'ruben' || S.hayRuben)).map((k) => html`<button type="button" class="rol-btn" data-rol="${k}"><span class="ico-c acc" style="width:48px;height:48px">${ico(ROLES[k].ic, 'g')}</span><span><b>${ROLES[k].nombre}</b><span>${ROLES[k].desc}</span></span></button>`)}</div>`
         : html`<form class="card pila" id="lg-form" novalidate>
           <div class="fila"><span class="ico-c acc">${ico(ROLES[rol].ic)}</span><div class="grow"><div class="item-t">${ROLES[rol].nombre}</div></div><button type="button" class="btn btn-g btn-s" id="lg-cambiar">Cambiar</button></div>
           <label class="campo" style="margin:0"><span class="lbl">Tu PIN</span><input class="inp pin" id="lg-pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" autofocus></label>
@@ -2910,6 +2990,7 @@ async function iniciar() {
   if (!ping.json.ok) return pantallaMensaje('Algo falló', ping.json.error ? ping.json.error.mensaje : 'No se pudo iniciar la app.', [['Reintentar', () => location.reload()]]);
   if (!ping.json.configurado) return pantallaSetup(ping.json);
   S.hayDueno = !!ping.json.dueno;
+  S.hayRuben = !!ping.json.ruben;
   pantallaLogin();
 }
 

@@ -1,4 +1,4 @@
-/* huella:6218368883604b55 */
+/* huella:131b29dcd6a49a7e */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -39,7 +39,8 @@ var require_core = __commonJS({
       "use strict";
       const VERSION = "1.0.0";
       const DIA = 864e5;
-      const ROLES = ["local", "tienda", "dueno"];
+      const ROLES = ["local", "tienda", "dueno", "ruben"];
+      const SOLO_VENTAS = ["tienda", "ruben"];
       const CATS = ["base", "material", "accesorio"];
       const PAGOS = ["efectivo", "transferencia", "tarjeta", "otro"];
       const CATS_GASTO = ["materiales", "sueldos", "renta", "servicios", "transporte", "comida", "mantenimiento", "publicidad", "comisiones", "retiro", "otro"];
@@ -246,7 +247,7 @@ var require_core = __commonJS({
         opad.set(sha256(ipad), 64);
         return hex(sha256(opad));
       }
-      const b64u = (s) => btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const b64u2 = (s) => btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
       const b64uDec = (s) => atob(s.replace(/-/g, "+").replace(/_/g, "/"));
       function igual(a, b) {
         if (a.length !== b.length) return false;
@@ -302,7 +303,7 @@ var require_core = __commonJS({
         return ctx.cfg;
       }
       function firmar(cfg, rol, ahora) {
-        const p = b64u(JSON.stringify({ r: rol, exp: ahora + SESION_DIAS * DIA, pv: cfg.acceso[rol].v }));
+        const p = b64u2(JSON.stringify({ r: rol, exp: ahora + SESION_DIAS * DIA, pv: cfg.acceso[rol].v }));
         return p + "." + hmacHex(cfg.secret, p);
       }
       function verificar(cfg, token, ahora) {
@@ -358,7 +359,8 @@ var require_core = __commonJS({
           configurado: cfg.configurado,
           negocio: cfg.negocio.nombre,
           requiereClave: !cfg.configurado && !!ctx.claveInstalacion,
-          dueno: !!(cfg.acceso && cfg.acceso.dueno)
+          dueno: !!(cfg.acceso && cfg.acceso.dueno),
+          ruben: !!(cfg.acceso && cfg.acceso.ruben)
         });
       }
       function nombreBase(m, t) {
@@ -987,7 +989,7 @@ var require_core = __commonJS({
           if (!/^\d{4}-\d{2}-\d{2}$/.test(String(q.dia)) || String(q.dia) > hoyK || diaKey(ctx.ahora - 34 * DIA, ctx.tz) > String(q.dia)) throw bad("dia_invalido", "Elige un d\xEDa de los \xFAltimos 30 d\xEDas.");
           dia = String(q.dia);
         }
-        const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
+        const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia && (ctx.rol !== "ruben" || r.rol === "ruben")).sort((a, b) => a.ts - b.ts);
         const grupos = /* @__PURE__ */ Object.create(null), orden = [];
         filas.forEach((r) => {
           const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || "", vendedor: r.vendedor || "", pago: r.pago || "", entrega: r.tipo === "venta" && !soloMonto(r) ? r.motivo || "" : "", envio: 0, soloMonto: soloMonto(r), lineas: [], total: 0 });
@@ -1038,14 +1040,14 @@ var require_core = __commonJS({
           repo.traspasos({ desde: ahora - 30 * DIA }),
           repo.pedidos({ desde: ahora - 30 * DIA }),
           repo.ventas(ahora - 35 * DIA),
-          repo.movs({ limite: 40 }),
+          repo.movs(rol === "ruben" ? { limite: 40, rol: "ruben" } : { limite: 40 }),
           repo.gastos(ahora - 36 * DIA),
           repo.agendaAbierta()
         ]);
         const cfg = normalizarCfg(raw);
         const productos = prods.map((p) => {
           const o = Object.assign({}, p);
-          if (rol === "tienda") delete o.costo;
+          if (SOLO_VENTAS.includes(rol)) delete o.costo;
           return o;
         });
         const est = {
@@ -1056,6 +1058,8 @@ var require_core = __commonJS({
           rol,
           version: VERSION,
           dueno: !!cfg.acceso.dueno,
+          ruben: !!cfg.acceso.ruben,
+          avisos: Array.isArray(raw.push) ? raw.push.length : 0,
           negocio: cfg.negocio,
           medidas: cfg.medidas,
           tonos: cfg.tonos,
@@ -1077,7 +1081,7 @@ var require_core = __commonJS({
           hasta: Number(q.hasta) || 0,
           prods: q.prods ? String(q.prods).split(",").slice(0, 40) : null,
           tipos: q.tipos ? String(q.tipos).split(",").slice(0, 12) : null,
-          rol: ROLES.includes(q.rol) ? q.rol : null,
+          rol: ctx.rol === "ruben" ? "ruben" : ROLES.includes(q.rol) ? q.rol : null,
           anulaciones: q.anulaciones === "1"
         });
       }
@@ -1146,7 +1150,7 @@ var require_core = __commonJS({
         if (!p.activo) throw new ApiError2(409, "producto_archivado", p.nombre + " est\xE1 archivado.");
         return p;
       }
-      const vendedorDe = (ctx, b) => clean(b.vendedor, 40) || (ctx.rol === "tienda" ? "Vendedor tienda" : "Almac\xE9n");
+      const vendedorDe = (ctx, b) => ctx.rol === "ruben" ? "Rub\xE9n" : clean(b.vendedor, 40) || (ctx.rol === "tienda" ? "Vendedor tienda" : "Almac\xE9n");
       const ENTREGAS = { recoge: null, tepic: "envioTepic", xalisco: "envioFuera", cantera: "envioFuera" };
       const MOV_DEF = {
         entrada: { loc: "local", signo: 1, motivos: ["produccion", "compra", "otro"] },
@@ -1415,6 +1419,39 @@ var require_core = __commonJS({
           tx.movs.push(Object.assign({}, m, { id: nuevo + "-" + i, pago, grupo: nuevo, ref: m.id, nota: clean(nota, 200), anulado: 0, anulado_ts: 0, anulado_por: "", anulado_nota: "" }));
         });
         return { grupo: nuevo, repuesta: grupo, pago };
+      }
+      async function avisoDeRuben(ctx, b, res) {
+        if (!b || !/^mov\./.test(String(b.op))) return null;
+        const idx = indexar(await ctx.repo.productos());
+        const lineas2 = Array.isArray(b.lineas) ? b.lineas.slice(0, 6).map((l) => (l.cant || 1) + " \xD7 " + ((idx[l.id] || {}).nombre || "producto")).join(", ") : "";
+        const pago = { efectivo: "efectivo", tarjeta: "tarjeta", transferencia: "transferencia", otro: "otro" }[b.pago] || "efectivo";
+        const total = res && res.total ? "$" + Number(res.total).toLocaleString("en-US") : "";
+        if (b.op === "mov.venta") return { titulo: "Rub\xE9n registr\xF3 una venta" + (total ? " \xB7 " + total : ""), texto: [lineas2, pago, b.cliente ? "cliente " + clean(b.cliente, 40) : ""].filter(Boolean).join(" \xB7 ") };
+        return { titulo: "Rub\xE9n hizo un movimiento", texto: String(b.op) + (lineas2 ? " \xB7 " + lineas2 : "") };
+      }
+      async function opPushSuscribir(ctx, b, tx) {
+        const endpoint = String(b.endpoint || ""), p256dh = String(b.p256dh || ""), auth = String(b.auth || "");
+        if (!/^https:\/\/[^\s]{10,1000}$/.test(endpoint)) throw bad("push_invalido", "Tu navegador no dio una suscripci\xF3n v\xE1lida.");
+        if (!/^[A-Za-z0-9_-]{80,100}$/.test(p256dh) || !/^[A-Za-z0-9_-]{16,32}$/.test(auth)) throw bad("push_invalido", "Tu navegador no dio una suscripci\xF3n v\xE1lida.");
+        const raw = await ctx.repo.config();
+        const lista = (Array.isArray(raw.push) ? raw.push : []).filter((s) => s.endpoint !== endpoint);
+        lista.push({ endpoint, p256dh, auth, rol: ctx.rol, ts: ctx.ahora, equipo: clean(b.equipo, 60) });
+        tx.config = { push: lista.slice(-10) };
+        tx.sinRev = true;
+        return { avisos: tx.config.push.length };
+      }
+      async function opPushQuitar(ctx, b, tx) {
+        const raw = await ctx.repo.config();
+        const endpoint = String(b.endpoint || "");
+        const lista = (Array.isArray(raw.push) ? raw.push : []).filter((s) => endpoint ? s.endpoint !== endpoint : s.rol !== ctx.rol);
+        tx.config = { push: lista };
+        tx.sinRev = true;
+        return { avisos: lista.length };
+      }
+      async function opPushProbar(ctx) {
+        const raw = await ctx.repo.config();
+        if (!Array.isArray(raw.push) || !raw.push.length) throw bad("sin_avisos", "Primero activa los avisos en este celular.");
+        return { avisos: raw.push.length };
       }
       async function opEnviar(ctx, b, tx) {
         const ls = lineas(b.lineas);
@@ -1718,6 +1755,19 @@ var require_core = __commonJS({
         tx.config = { acceso: Object.assign({}, cfg.acceso, { dueno: nuevoAcceso(nuevo, (d && d.v || 0) + 1) }) };
         return {};
       }
+      async function opPinRuben(ctx, b, tx) {
+        const cfg = ctx.cfg;
+        const it = await reservar(ctx, "local");
+        const acc = cfg.acceso.local;
+        if (!igual(hashPin(acc.salt, String(b.pinActual || "")), acc.hash)) fallar(it, "pin_incorrecto", "Tu PIN no coincide.");
+        await limpiarIntentos(ctx, "local", "ruben");
+        const nuevo = String(b.pinNuevo || "");
+        validarPin(nuevo);
+        if (pinEnUso(cfg, "ruben", nuevo)) throw bad("pin_igual", "Cada usuario necesita un PIN distinto.");
+        const r = cfg.acceso.ruben;
+        tx.config = { acceso: Object.assign({}, cfg.acceso, { ruben: nuevoAcceso(nuevo, (r && r.v || 0) + 1) }) };
+        return {};
+      }
       async function opReiniciar(ctx, b, tx) {
         const cfg = ctx.cfg;
         const it = await reservar(ctx, "local");
@@ -1736,7 +1786,7 @@ var require_core = __commonJS({
         "producto.archivar": [["local"], opProductoArchivar],
         "mov.entrada": [["local"], (c, b, t) => opMovLineas(c, b, t, "entrada")],
         "mov.salida": [["local"], (c, b, t) => opMovLineas(c, b, t, "salida")],
-        "mov.venta": [["tienda"], (c, b, t) => opMovLineas(c, b, t, "venta")],
+        "mov.venta": [["tienda", "ruben"], (c, b, t) => opMovLineas(c, b, t, "venta")],
         "mov.devolucion": [["tienda"], (c, b, t) => opMovLineas(c, b, t, "devolucion")],
         "mov.merma": [["tienda"], (c, b, t) => opMovLineas(c, b, t, "merma")],
         "mov.regreso": [["local", "tienda"], opRegreso],
@@ -1756,7 +1806,11 @@ var require_core = __commonJS({
         "pedido.crear": [["tienda"], opPedidoCrear],
         "pedido.cancelar": [["local", "tienda"], opPedidoCancelar],
         "config.guardar": [["local"], opConfigGuardar],
-        "pin.cambiar": [["local", "tienda", "dueno"], opPinCambiar],
+        "pin.cambiar": [["local", "tienda", "dueno", "ruben"], opPinCambiar],
+        "pin.ruben": [["local"], opPinRuben],
+        "push.suscribir": [["local", "dueno"], opPushSuscribir],
+        "push.quitar": [["local", "dueno"], opPushQuitar],
+        "push.probar": [["local"], opPushProbar],
         "pin.dueno": [["local"], opPinDueno],
         "pin.reiniciar": [["local"], opPinReiniciar],
         "recup.nueva": [["local"], opRecupNueva],
@@ -1792,22 +1846,37 @@ var require_core = __commonJS({
           if (path === "/movs" && m === "GET") return ok(await listarMovs(ctx));
           if (path === "/reporte-dia" && m === "GET") return ok(await reporteDia(ctx));
           if (path === "/resumen" && m === "GET") {
-            if (ctx.rol === "tienda") throw new ApiError2(403, "sin_permiso", "El resumen del negocio es del due\xF1o y del almac\xE9n.");
+            if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError2(403, "sin_permiso", "El resumen del negocio es del due\xF1o y del almac\xE9n.");
             return ok(await resumenDueno(ctx));
           }
           if (path === "/reporte-semana" && m === "GET") {
-            if (ctx.rol === "tienda") throw new ApiError2(403, "sin_permiso", "El reporte semanal es del due\xF1o y del almac\xE9n.");
+            if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError2(403, "sin_permiso", "El reporte semanal es del due\xF1o y del almac\xE9n.");
             return ok(await reporteSemana(ctx));
           }
           if (path === "/cuentas" && m === "GET") {
-            if (ctx.rol === "tienda") throw new ApiError2(403, "sin_permiso", "La revisi\xF3n de cuentas es del due\xF1o y del almac\xE9n.");
+            if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError2(403, "sin_permiso", "La revisi\xF3n de cuentas es del due\xF1o y del almac\xE9n.");
             return ok(await revisarCuentas(ctx));
           }
+          if (ctx.rol === "ruben" && (path === "/agenda" || path === "/gastos")) throw new ApiError2(403, "sin_permiso", "Tu perfil solo registra ventas.");
           if (path === "/agenda" && m === "GET") return ok(await listarAgenda(ctx));
           if (path === "/gastos" && m === "GET") return ok(await listarGastos(ctx));
+          if (path === "/push/clave" && m === "GET") {
+            if (ctx.rol !== "local" && ctx.rol !== "dueno") throw new ApiError2(403, "sin_permiso", "Los avisos al celular son del almac\xE9n y del due\xF1o.");
+            if (!opts.claveVapid) throw new ApiError2(501, "sin_push", "Los avisos al celular necesitan la app publicada con su servidor.");
+            return ok({ publica: await opts.claveVapid() });
+          }
           if (path === "/ventas" && m === "GET") return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
           if (path === "/op" && m === "POST") {
             const resultado = await correrOp(ctx, ctx.req.body);
+            if (opts.avisar) {
+              const aviso = ctx.rol === "ruben" ? await avisoDeRuben(ctx, ctx.req.body, resultado) : ctx.req.body && ctx.req.body.op === "push.probar" ? { titulo: "Avisos activados", texto: "As\xED te llegar\xE1 cada venta que registre Rub\xE9n." } : null;
+              if (aviso) {
+                try {
+                  opts.avisar(aviso);
+                } catch (e) {
+                }
+              }
+            }
             const extra = {};
             if (resultado.token) {
               extra.token = resultado.token;
@@ -2188,6 +2257,7 @@ var require_core = __commonJS({
         almacenMemoria,
         sembrarDemo,
         ApiError: ApiError2,
+        nuevaTx,
         // expuestos para pruebas
         sha256hex,
         hmacHex,
@@ -2198,8 +2268,8 @@ var require_core = __commonJS({
   }
 });
 
-// ../../../../../tmp/bb-empaquetar-OvYW9E/archivos.js
-var archivos_default = { "/app.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"085abc8f92499bfef607"' }, "texto": `(function () {
+// ../../../../../tmp/bb-empaquetar-nidtcw/archivos.js
+var archivos_default = { "/app.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"288c1af96c37dde85468"' }, "texto": `(function () {
 'use strict';
 const Core = window.BBCore;
 
@@ -2295,8 +2365,10 @@ let sincronizando = false;
 const ROLES = {
   local: { nombre: 'Almac\xE9n', corto: 'Almac\xE9n', desc: 'Bodega y f\xE1brica: materiales, bases en producci\xF3n y env\xEDos a la tienda.', ic: 'fabrica' },
   tienda: { nombre: 'Vendedor tienda', corto: 'Tienda', desc: 'Venta al p\xFAblico: ventas, devoluciones, pedidos y recibo de mercanc\xEDa.', ic: 'tienda' },
-  dueno: { nombre: 'Due\xF1o', corto: 'Due\xF1o', desc: 'Solo consulta: resumen de producci\xF3n, ventas, gastos y egresos.', ic: 'usuario' }
+  dueno: { nombre: 'Due\xF1o', corto: 'Due\xF1o', desc: 'Solo consulta: resumen de producci\xF3n, ventas, gastos y egresos.', ic: 'usuario' },
+  ruben: { nombre: 'Rub\xE9n', corto: 'Rub\xE9n', desc: 'Solo registra ventas. El almac\xE9n recibe un aviso de cada venta.', ic: 'recibo' }
 };
+const esVendedor = () => S.rol === 'tienda' || S.rol === 'ruben';
 const CATS = { base: 'Bases', material: 'Materiales', accesorio: 'Accesorios' };
 const TIPOS = {
   entrada: { t: 'Entrada al almac\xE9n', ic: 'entrada', c: 'ok' },
@@ -2579,7 +2651,7 @@ const TABS = [
   { id: 'historial', t: 'Historial', ic: 'reloj' },
   { id: 'mas', t: 'M\xE1s', ic: 'mas' }
 ];
-const tabsDe = () => TABS.filter((t) => !(S.rol === 'dueno' && t.id === 'mover')); // el due\xF1o solo consulta
+const tabsDe = () => TABS.filter((t) => !((S.rol === 'dueno' || S.rol === 'ruben') && t.id === 'mover')); // el due\xF1o solo consulta; Rub\xE9n solo vende
 const marca = () => html\`<div class="marca"><span class="logo"><img src="logo.png" alt="" width="38" height="38"></span><span class="marca-t"><span class="marca-n">Bases Bo<b>x</b></span><span class="marca-s">Tepic \xB7 Inventario</span></span></div>\`;
 
 function montarApp() {
@@ -2601,7 +2673,7 @@ function montarApp() {
         <div class="demo-b" id="demo-b" hidden><span>Demostraci\xF3n \xB7 datos de ejemplo</span><button type="button" class="btn btn-s btn-g" data-act="salir-demo">Salir de la demo</button></div>
         <main class="main" id="vista" tabindex="-1"><div class="main-in" id="vista-in"></div></main>
       </div>
-      \${S.rol === 'tienda' ? html\`<button type="button" class="btn btn-p fab fab-venta" id="fab-venta" data-act="venta-nueva" aria-label="Nueva venta">\${ico('recibo')}Nueva venta</button>\` : ''}
+      \${esVendedor() ? html\`<button type="button" class="btn btn-p fab fab-venta" id="fab-venta" data-act="venta-nueva" aria-label="Nueva venta">\${ico('recibo')}Nueva venta</button>\` : ''}
       <nav class="tabbar" aria-label="Secciones" style="grid-template-columns:repeat(\${tabsDe().length},1fr)">
         \${tabsDe().map((t) => html\`<button type="button" class="tab" data-tab="\${t.id}">\${ico(t.ic)}<span>\${t.t}</span><span class="badge" hidden></span></button>\`)}
       </nav>
@@ -2689,6 +2761,7 @@ function pintarInicio() {
   const cont = $('#v-inicio');
   if (!cont) return;
   if (S.rol === 'dueno') return pintarResumenDueno();
+  if (S.rol === 'ruben') return pintarInicioRuben(cont);
   const e = S.est, r = e.resumen, hoy = new Date();
   const bases = e.productos.filter((p) => p.cat === 'base' && p.activo);
   const bLocal = sumar(bases, (p) => p.stock_local), bTienda = sumar(bases, (p) => p.stock_tienda), bCamino = sumar(bases, (p) => S.camino[p.id] || 0);
@@ -2751,6 +2824,21 @@ function pintarInicio() {
     </div>\`);
   dibujarGrafica();
   if (S.rol === 'local') { pintarCardCuentas(); cargarCuentas(); }
+}
+
+function pintarInicioRuben(cont) {
+  const e = S.est, hoy = new Date();
+  const saludo = hoy.getHours() < 12 ? 'Buenos d\xEDas' : hoy.getHours() < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const mias = agrupar(e.recientes.filter((m) => m.tipo === 'venta' && m.rol === 'ruben'));
+  const deHoy = mias.filter((g) => !g.anulado && new Date(g.ts).toDateString() === hoy.toDateString());
+  const bases = e.productos.filter((p) => p.cat === 'base' && p.activo && p.stock_tienda > 0);
+  poner(cont, html\`
+    <div class="cabecera"><div><h1 class="t-pant">\${saludo}, Rub\xE9n</h1><p class="t-peq" style="margin-top:8px">\${mayus(fmtDiaLargo.format(hoy))} \xB7 Solo ventas</p></div></div>
+    <button type="button" class="btn btn-p btn-b btn-venta-grande" data-act="venta-nueva">\${ico('recibo')}Nueva venta</button>
+    <section class="card" aria-label="Mis ventas de hoy"><div class="card-t"><h2 class="t-sec">Mis ventas de hoy</h2><b class="cifras">\${dinero(sumar(deHoy, (g) => g.total))}</b></div>
+      \${deHoy.length ? html\`<ul class="lista">\${deHoy.map(filaOperacion)}</ul>\` : html\`<div class="vacio" style="padding:14px 8px"><b>A\xFAn no registras ventas hoy</b><span>Toca \u201CNueva venta\u201D para empezar.</span></div>\`}</section>
+    <section class="card flat" aria-label="Bases en tienda"><div class="card-t" style="padding:14px 16px 0;margin:0"><h2 class="t-sec">Bases disponibles en tienda</h2><span class="t-peq">\${plural(sumar(bases, (p) => p.stock_tienda), 'pieza', 'piezas')}</span></div>
+      <p class="t-peq" style="padding:6px 16px 14px">Para vender una base en espec\xEDfico ve a <b>Inventario</b> y toca <b>Vender</b>.</p></section>\`);
 }
 
 function filaOperacion(g) {
@@ -2851,7 +2939,7 @@ VISTAS.inventario = {
     const e = S.est, activos = e.productos.filter((p) => p.activo), bajos = bajosDe(S.rol).length;
     const pzL = sumar(activos, (p) => p.stock_local), pzT = sumar(activos, (p) => p.stock_tienda);
     $('#inv-sub').textContent = (S.rol !== 'tienda' ? num(pzL) + ' pzas en almac\xE9n \xB7 ' + num(pzT) + ' en tienda' : num(pzT) + ' pzas en tienda') + (bajos ? ' \xB7 ' + plural(bajos, 'con stock bajo', 'con stock bajo') : ' \xB7 todo en orden');
-    poner($('#inv-acc'), S.rol === 'dueno' ? html\`<button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\` : S.rol === 'local' ? html\`<button type="button" class="btn btn-p" data-act="prod-nuevo">\${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">\${ico('capas')}Crear bases</button><button type="button" class="btn btn-g" data-act="gasto-nuevo">\${ico('salida')}Gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\` : html\`<button type="button" class="btn btn-g" data-act="gasto-nuevo">\${ico('salida')}Registrar gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\`);
+    poner($('#inv-acc'), S.rol === 'ruben' ? '' : S.rol === 'dueno' ? html\`<button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\` : S.rol === 'local' ? html\`<button type="button" class="btn btn-p" data-act="prod-nuevo">\${ico('plus')}Producto</button><button type="button" class="btn btn-g" data-act="variantes">\${ico('capas')}Crear bases</button><button type="button" class="btn btn-g" data-act="gasto-nuevo">\${ico('salida')}Gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\` : html\`<button type="button" class="btn btn-g" data-act="gasto-nuevo">\${ico('salida')}Registrar gasto</button><button type="button" class="btn btn-g" data-act="gastos">Ver gastos</button>\`);
     const chips = [['todo', 'Todo'], ['base', 'Bases'], ['material', 'Materiales'], ['accesorio', 'Accesorios']];
     poner($('#inv-chips'), html\`\${chips.map(([k, t]) => html\`<button type="button" class="chip" data-act="filtro-cat" data-cat="\${k}" aria-pressed="\${String(S.filtro.cat === k)}">\${t}</button>\`)}<button type="button" class="chip" data-act="filtro-bajo" aria-pressed="\${String(S.filtro.bajo)}">\${ico('alerta')}Stock bajo\${bajos ? ' (' + bajos + ')' : ''}</button>\${S.rol === 'local' && e.productos.some((p) => !p.activo) ? html\`<button type="button" class="chip" data-act="filtro-arch" aria-pressed="\${String(S.filtro.archivados)}">Archivados</button>\` : ''}\`);
     pintarListaInv();
@@ -2862,7 +2950,7 @@ function filaProducto(p, corto) {
   const lv = (loc) => nivel(p, loc);
   const cl = (loc) => { const v = lv(loc), st = loc === 'local' ? p.stock_local : p.stock_tienda; return v === 'agotado' ? 'agotado' : v === 'bajo' ? 'bajo' : st === 0 ? 'cero' : ''; };
   const cam = S.camino[p.id] || 0;
-  const vende = S.rol === 'tienda' && p.activo;
+  const vende = esVendedor() && p.activo;
   const stA = html\`<span class="st \${cl('local')}"><b>\${num(p.stock_local)}</b><i>Almac\xE9n</i></span>\`;
   const stT = html\`<span class="st \${cl('tienda')}"><b>\${num(p.stock_tienda)}</b><i>Tienda</i></span>\`;
   return html\`<div class="prod \${p.activo ? '' : 'arch'}">
@@ -3191,7 +3279,7 @@ function abrirForma(tipo, o) {
       \${f.precio ? html\`<div class="total-b"><span>Total</span><b id="f-total">\${dinero(0)}</b></div><p class="t-peq" id="f-total-sub" style="margin:-6px 0 14px"></p>\` : ''}
       \${f.venta ? html\`<div class="campo"><span class="lbl">Entrega</span><div class="opciones" id="f-entrega">\${ENTREGAS.map(([k, t]) => html\`<button type="button" class="opcion" data-entrega="\${k}" aria-pressed="\${String(k === entrega)}" style="padding:0 12px">\${t}</button>\`)}</div><p class="t-peq" id="f-entrega-ayuda" style="margin-top:8px"></p></div>
         <label class="campo" id="f-envio-campo" hidden><span class="lbl">Cobro de env\xEDo</span><span class="precio" style="max-width:160px"><span class="muted">$</span><input id="f-envio" type="text" inputmode="decimal" value="" aria-label="Cobro de env\xEDo"></span></label>
-        <label class="campo"><span class="lbl">Vendedor (qui\xE9n hizo la venta)</span><input class="inp" id="f-vendedor" maxlength="40" list="f-vendedores" placeholder="Ej. Hugo, Carlos, Tienda" autocomplete="off" value="\${o.vendedor || ultimoVendedor()}"><datalist id="f-vendedores">\${[...new Set([...VENDEDORES_BASE, ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html\`<option value="\${v}"></option>\`)}</datalist></label>
+        <label class="campo"><span class="lbl">Vendedor (qui\xE9n hizo la venta)</span><input class="inp" id="f-vendedor" maxlength="40" list="f-vendedores" placeholder="Ej. Hugo, Carlos, Tienda" autocomplete="off" value="\${S.rol === 'ruben' ? 'Rub\xE9n' : o.vendedor || ultimoVendedor()}" \${S.rol === 'ruben' ? raw('readonly') : ''}><datalist id="f-vendedores">\${[...new Set([...VENDEDORES_BASE, ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html\`<option value="\${v}"></option>\`)}</datalist></label>
         <label class="campo"><span class="lbl">Cliente (opcional)</span><input class="inp" id="f-cliente" maxlength="60" placeholder="Nombre o referencia" autocomplete="off" value="\${o.cliente || ''}"></label>
         <div class="campo"><span class="lbl">Forma de pago</span><div class="opciones g4" id="f-pagos">\${Object.keys(PAGOS).map((k) => html\`<button type="button" class="opcion" data-pago="\${k}" aria-pressed="\${String(k === pago)}" style="padding:0 6px">\${PAGOS[k]}</button>\`)}</div></div>\` : ''}
       <label class="campo"><span class="lbl">\${f.notaEt || 'Nota (opcional)'}</span><textarea class="inp" id="f-nota" rows="2" maxlength="200" placeholder="\${tipo === 'envio' ? 'Ej. sale en la camioneta de las 4' : 'Escribe algo que ayude a recordar'}">\${o.nota || ''}</textarea></label>
@@ -4293,7 +4381,7 @@ function abrirOperacion(grupo) {
         \${g.nota ? html\`<dt>Nota</dt><dd>\${g.nota}</dd>\` : ''}
         \${g.anulado ? html\`<dt>Anulada</dt><dd>\${hace(g.anulado_ts)} \xB7 \${g.anulado_por === 'local' ? 'Almac\xE9n' : 'Tienda'}</dd><dt>Motivo</dt><dd>\${g.anulado_nota}</dd>\` : ''}
       </dl>\`,
-    pie: html\`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>\${g.tipo === 'venta' && !g.anulado && (S.rol === 'local' || g.rol === S.rol) ? html\`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>\` : ''}\${puedeAnular(g) ? html\`<button type="button" class="btn btn-r" id="o-anular">Anular operaci\xF3n</button>\` : ''}\`
+    pie: html\`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>\${g.tipo === 'venta' && !g.anulado && (S.rol === 'local' || (S.rol === 'tienda' && g.rol === 'tienda')) ? html\`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>\` : ''}\${puedeAnular(g) ? html\`<button type="button" class="btn btn-r" id="o-anular">Anular operaci\xF3n</button>\` : ''}\`
   });
   const cp = $('#o-pago', d.el);
   if (cp) cp.addEventListener('click', () => {
@@ -4335,6 +4423,7 @@ function abrirProducto(id) {
   const tile = (et, v, mn, loc) => { const nv = loc ? nivel(p, loc) : 'ok'; return html\`<div class="kpi"><span class="t-sec">\${et}</span><span class="num-g cifras" style="color:\${nv === 'agotado' ? 'var(--bad)' : nv === 'bajo' ? 'var(--warn)' : 'inherit'}">\${num(v)}</span><small>\${loc ? (nv === 'agotado' ? 'Agotado' : nv === 'bajo' ? 'Stock bajo' : mn > 0 ? 'M\xEDnimo ' + num(mn) : 'Sin m\xEDnimo') : 'Sin confirmar'}</small></div>\`; };
   const pie = S.rol === 'dueno' ? html\`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>\` : !p.activo ? (esLocal ? html\`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pd-reactivar">Reactivar producto</button>\` : html\`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>\`)
     : esLocal ? html\`<button type="button" class="btn btn-g" id="pd-editar">\${ico('editar')}Editar</button><button type="button" class="btn btn-g" id="pd-entrada">\${ico('entrada')}Entrada</button><button type="button" class="btn btn-p" id="pd-enviar">\${ico('camion')}Enviar a tienda</button>\`
+    : S.rol === 'ruben' ? html\`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pd-vender" \${p.stock_tienda > 0 ? '' : raw('disabled')}>\${ico('recibo')}Vender</button>\`
     : html\`<button type="button" class="btn btn-g" id="pd-pedir">\${ico('pedido')}Pedir al almac\xE9n</button><button type="button" class="btn btn-p" id="pd-vender">\${ico('recibo')}Vender</button>\`;
   const d = dialogo({
     titulo: p.nombre,
@@ -4578,6 +4667,63 @@ function formPinDueno() {
   btn.addEventListener('click', enviar);
   d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enviar(); });
 }
+function formPinRuben() {
+  const d = dialogo({
+    titulo: 'PIN de Rub\xE9n',
+    cuerpo: html\`<p class="t-peq" style="margin-bottom:14px">Rub\xE9n entra con su propio PIN y <b>solo puede registrar ventas</b> (con su nombre). No ve gastos, costos, cuentas ni movimientos de los dem\xE1s, y no puede anular. Cada venta suya te llega como aviso si activas \u201CAvisos al celular\u201D.</p>
+      <label class="campo"><span class="lbl">Tu PIN (almac\xE9n)</span><input class="inp pin" id="pr-act" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">PIN de Rub\xE9n (6 a 8 n\xFAmeros)</span><input class="inp pin" id="pr-nvo" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">Repite el PIN de Rub\xE9n</span><input class="inp pin" id="pr-rep" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <p class="err" id="pr-err" hidden></p>\`,
+    pie: html\`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="pr-ok">Guardar PIN</button>\`
+  });
+  const btn = $('#pr-ok', d.el), err = $('#pr-err', d.el);
+  const enviar = () => guardando(btn, err, async () => {
+    const nvo = $('#pr-nvo', d.el).value;
+    if (nvo !== $('#pr-rep', d.el).value) throw new ErrorApi({ mensaje: 'Los dos PIN nuevos no coinciden.' });
+    await op({ op: 'pin.ruben', pinActual: $('#pr-act', d.el).value, pinNuevo: nvo });
+    d.cerrar();
+    S.hayRuben = true;
+    toast('Listo: Rub\xE9n ya puede entrar con su PIN.');
+  });
+  btn.addEventListener('click', enviar);
+  d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enviar(); });
+}
+
+/* \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 avisos al celular (notificaciones push) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+const pushSoportado = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const deB64u = (s) => Uint8Array.from(atob(String(s).replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((String(s).length + 3) % 4)), (c) => c.charCodeAt(0));
+const equipoActual = () => { const u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Navegador'; };
+async function suscribirAvisos() {
+  if (!pushSoportado()) throw new ErrorApi({ mensaje: /iPhone|iPad/.test(navigator.userAgent) ? 'En iPhone primero agrega la app a la pantalla de inicio (Compartir \u2192 Agregar a pantalla de inicio), \xE1brela desde ese \xEDcono y vuelve aqu\xED.' : 'Este navegador no acepta notificaciones. Usa Chrome o Safari actualizados.' });
+  const permiso = await Notification.requestPermission();
+  if (permiso !== 'granted') throw new ErrorApi({ mensaje: 'No diste permiso para notificaciones. Act\xEDvalo en los ajustes del navegador para esta app.' });
+  const r = await llamar('GET', '/push/clave');
+  if (!r.json.ok) throw new ErrorApi(r.json.error);
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (sub) { try { await sub.unsubscribe(); } catch (e) { /* se vuelve a crear abajo */ } }
+  try { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: deB64u(r.json.publica) }); } catch (x) {
+    throw new ErrorApi({ mensaje: 'Este navegador no dej\xF3 activar las notificaciones' + (/iPhone|iPad/.test(navigator.userAgent) ? ': abre la app desde el \xEDcono de la pantalla de inicio (no desde Safari) y vuelve a intentar.' : ' (no funcionan en modo inc\xF3gnito). \xC1brela en Chrome normal y vuelve a intentar.') });
+  }
+  const j = sub.toJSON();
+  await op({ op: 'push.suscribir', endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, equipo: equipoActual() });
+}
+function abrirAvisos() {
+  const e = S.est;
+  const d = dialogo({
+    titulo: 'Avisos al celular',
+    cuerpo: html\`<p class="t-peq" style="margin-bottom:14px">Cada vez que Rub\xE9n registre una venta te llega una notificaci\xF3n a este celular, aunque no tengas la app abierta.</p>
+      <div class="aviso \${e.avisos ? 'ok' : ''}" style="margin-bottom:14px">\${ico(e.avisos ? 'check' : 'info')}<span>\${e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + '.' : 'Todav\xEDa no est\xE1n activos en ning\xFAn celular.'}</span></div>
+      \${/iPhone|iPad/.test(navigator.userAgent) && !(window.matchMedia && matchMedia('(display-mode: standalone)').matches) ? html\`<div class="aviso warn" style="margin-bottom:14px">\${ico('alerta')}<span>En iPhone las notificaciones solo funcionan con la app <b>agregada a la pantalla de inicio</b>: toca Compartir \u2192 Agregar a pantalla de inicio, \xE1brela desde ese \xEDcono y activa aqu\xED.</span></div>\` : ''}
+      <p class="err" id="av-err" hidden></p>\`,
+    pie: html\`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>\${e.avisos ? html\`<button type="button" class="btn btn-g" id="av-prueba">Enviar prueba</button>\` : ''}<button type="button" class="btn btn-p" id="av-ok">\${e.avisos ? 'Activar en este celular' : 'Activar avisos'}</button>\`
+  });
+  const err = $('#av-err', d.el), ok = $('#av-ok', d.el), pr = $('#av-prueba', d.el);
+  ok.addEventListener('click', () => guardando(ok, err, async () => { await suscribirAvisos(); d.cerrar(); toast('Avisos activados en este celular.'); try { await op({ op: 'push.probar' }); } catch (x) { /* la prueba es opcional */ } }));
+  if (pr) pr.addEventListener('click', () => guardando(pr, err, async () => { await op({ op: 'push.probar' }); toast('Prueba enviada: debe llegarte en unos segundos.'); }));
+}
+
 function formPin(reiniciarTienda) {
   const d = dialogo({
     titulo: reiniciarTienda ? 'Nuevo PIN para el vendedor' : 'Cambiar mi PIN',
@@ -4673,12 +4819,14 @@ VISTAS.mas = {
       <section class="sec-mas"><span class="t-sec">Mi cuenta</span><div class="card flat"><ul class="lista">
         \${fila('candado', 'Cambiar mi PIN', 'Cierra tu sesi\xF3n en los dem\xE1s equipos', 'pin-propio')}
         \${local ? fila('tienda', 'Reiniciar el PIN del vendedor', 'Si el vendedor lo olvid\xF3', 'pin-tienda') : ''}
+        \${local ? fila('recibo', 'PIN de Rub\xE9n', e.ruben ? 'Cambiar el PIN con el que entra Rub\xE9n (solo ventas)' : 'Crea el acceso de Rub\xE9n: solo registra ventas', 'pin-ruben') : ''}
+        \${local ? fila('alerta', 'Avisos al celular', e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + ' \xB7 cada venta de Rub\xE9n te llega como notificaci\xF3n' : 'Recibe una notificaci\xF3n cada vez que Rub\xE9n registre una venta', 'avisos') : ''}
         \${local ? fila('usuario', 'PIN del due\xF1o', e.dueno ? 'Cambiar el PIN con el que entra el due\xF1o' : 'Crea el acceso del due\xF1o (solo consulta)', 'pin-dueno') : ''}
         \${local ? fila('candado', 'C\xF3digo de recuperaci\xF3n', 'Genera uno nuevo si perdiste el anterior', 'codigo-nuevo') : ''}
         \${local && S.modo !== 'local' ? fila('basura', 'Dejar todo en cero', 'Borra movimientos y existencias para empezar limpio', 'reiniciar') : ''}
         \${fila('x', 'Cerrar sesi\xF3n', '', 'salir')}
       </ul></div></section>
-      \${local ? html\`<section class="sec-mas"><span class="t-sec">Negocio y cat\xE1logo</span><div class="card flat"><ul class="lista">
+      \${S.rol === 'ruben' ? '' : html\`\${local ? html\`<section class="sec-mas"><span class="t-sec">Negocio y cat\xE1logo</span><div class="card flat"><ul class="lista">
         \${fila('tienda', 'Datos del negocio y WhatsApp', e.negocio.nombre, 'negocio')}
         \${fila('cubo', 'Medidas y precios', plural(e.medidas.length, 'medida', 'medidas'), 'medidas')}
         \${fila('capas', 'Tonos', plural(e.tonos.length, 'tono', 'tonos'), 'tonos')}
@@ -4691,7 +4839,7 @@ VISTAS.mas = {
         \${fila('bajar', 'Exportar inventario', 'Hoja de c\xE1lculo (CSV) con las existencias de hoy', 'exportar-inv')}
         \${fila('bajar', 'Exportar movimientos', 'Todo el historial en CSV', 'exportar-movs')}
         \${local ? fila('bajar', 'Respaldo completo', 'Archivo JSON con productos y movimientos', 'respaldo') : ''}
-      </ul></div></section>
+      </ul></div></section>\`}
       <section class="sec-mas"><span class="t-sec">Apariencia</span><div class="card"><div class="opciones">\${[['auto', 'Autom\xE1tica'], ['claro', 'Clara'], ['oscuro', 'Oscura']].map(([k, t]) => html\`<button type="button" class="opcion" data-act="tema" data-v="\${k}" aria-pressed="\${String(tema === k)}">\${t}</button>\`)}</div></div></section>
       \${!standalone ? html\`<section class="sec-mas"><span class="t-sec">Instalar</span><div class="card">
         \${S.instalar ? html\`<div class="sep"><span>\xC1brela como una app, sin la barra del navegador.</span><button type="button" class="btn btn-p" data-act="instalar">Instalar app</button></div>\`
@@ -4738,6 +4886,8 @@ const A = {
   'venta-nueva': () => abrirForma('venta'),
   resumen: () => abrirResumen(),
   'pin-dueno': () => formPinDueno(),
+  'pin-ruben': () => formPinRuben(),
+  'avisos': () => abrirAvisos(),
   'gasto-nuevo': () => formGasto(),
   'recibir-ya': () => recibirYa(),
   traspaso: (b) => abrirTraspaso(b.dataset.id),
@@ -4847,13 +4997,13 @@ function pinError(p) {
 
 function pantallaLogin(msg) {
   let rol = S.modo === 'local' && S.demo ? null : store.get(CLAVE_ROL);
-  if (!ROLES[rol] || (rol === 'dueno' && !S.hayDueno && !S.demo)) rol = null;
+  if (!ROLES[rol] || (rol === 'dueno' && !S.hayDueno && !S.demo) || (rol === 'ruben' && !S.hayRuben)) rol = null;
   const render = () => {
     poner($('#raiz'), html\`<div class="acceso"><div class="acceso-in">
       \${cabeceraMarca()}
       \${msg ? html\`<div class="aviso warn">\${ico('info')}<span>\${msg}</span></div>\` : ''}
       \${S.demo ? html\`<div class="aviso">\${ico('info')}<span><b>Demostraci\xF3n.</b> PIN del almac\xE9n: <b>1111</b> \xB7 vendedor: <b>2222</b> \xB7 due\xF1o: <b>3333</b>.</span></div>\` : ''}
-      \${!rol ? html\`<div class="pila"><h2 class="t-sec" style="text-align:center">\xBFQui\xE9n entra?</h2>\${Object.keys(ROLES).filter((k) => k !== 'dueno' || S.hayDueno || S.demo).map((k) => html\`<button type="button" class="rol-btn" data-rol="\${k}"><span class="ico-c acc" style="width:48px;height:48px">\${ico(ROLES[k].ic, 'g')}</span><span><b>\${ROLES[k].nombre}</b><span>\${ROLES[k].desc}</span></span></button>\`)}</div>\`
+      \${!rol ? html\`<div class="pila"><h2 class="t-sec" style="text-align:center">\xBFQui\xE9n entra?</h2>\${Object.keys(ROLES).filter((k) => (k !== 'dueno' || S.hayDueno || S.demo) && (k !== 'ruben' || S.hayRuben)).map((k) => html\`<button type="button" class="rol-btn" data-rol="\${k}"><span class="ico-c acc" style="width:48px;height:48px">\${ico(ROLES[k].ic, 'g')}</span><span><b>\${ROLES[k].nombre}</b><span>\${ROLES[k].desc}</span></span></button>\`)}</div>\`
         : html\`<form class="card pila" id="lg-form" novalidate>
           <div class="fila"><span class="ico-c acc">\${ico(ROLES[rol].ic)}</span><div class="grow"><div class="item-t">\${ROLES[rol].nombre}</div></div><button type="button" class="btn btn-g btn-s" id="lg-cambiar">Cambiar</button></div>
           <label class="campo" style="margin:0"><span class="lbl">Tu PIN</span><input class="inp pin" id="lg-pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" autofocus></label>
@@ -5111,6 +5261,7 @@ async function iniciar() {
   if (!ping.json.ok) return pantallaMensaje('Algo fall\xF3', ping.json.error ? ping.json.error.mensaje : 'No se pudo iniciar la app.', [['Reintentar', () => location.reload()]]);
   if (!ping.json.configurado) return pantallaSetup(ping.json);
   S.hayDueno = !!ping.json.dueno;
+  S.hayRuben = !!ping.json.ruben;
   pantallaLogin();
 }
 
@@ -5140,7 +5291,7 @@ arrancar().catch((e) => {
   pantallaMensaje('Algo fall\xF3', 'No se pudo iniciar la app. Recarga la p\xE1gina.', [['Recargar', () => location.reload()]]);
 });
 })();
-` }, "/apple-touch-icon.png": { "cabeceras": { "content-type": "image/png", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"1acc6c85a28da7d51980"' }, "b64": "iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAMAAAAKE/YAAAABIFBMVEX///////7//v///v7//v3+///+/v/+/v79/v7+/v3+/vz9/v3//f/+/f7+/f3+/fz+/fv9/f79/f38/f79/fz9/fv8/fz9/P38/P38/Pz8+/z9/Pr7/Pv7+/z7+/v7+/r6+/r8+fP5+PX38+z07eHv6Nnw4MLl3c3q1Kvmy5jUzsPaw5nevHvbtm7arljZq1DYqU3YpkbVrF+6saLVpkrIpmTVo0LSo0jSoEDOoU7PoETOnkLMm0LKmkHMmjzKmT7KmDvJlzzJlTbIlzzHlTrHlDjGkzbGkTHFkzjFkTTFkDCgloTDjSzCjS3AiSishDx1dXVYWFc9PT0uLy4sLCwqKiopKSgnJyclJSUjIyMgICAdHR0bGxsaGhkYGBcUFBRyJDQ5AAAe80lEQVR42u1deX/aVrM+lgoqyZXk6IXrYloal8XggBfCZd8Ra7Bfb2B2f/9vcWfOkYQkJCCpk/aPqO2vXgCP5jzzzDNzFhHy8/p5/bx+Xj+vn9e/+5LPorF4IplKsyuVTCTi0ciZ/G+1NxSJJ1OX19lcoZCDK5+9yd7c3OTgv+ury1QyHgn9u+w9Oosl09dobT4L1/V1lv0Pryu4rqn1V+lk7Ozo32HxcTSRzoK91EiTtYbNzHBqe+46nYge/+MYjiavCoVSVrc2m80DNAp45ShKcjmEx+YCp18m/1G7I4nLclm3OItoLuSvMhB+EH/sSiZTqfTl1c3NxnT87jIR+YecHEuVa6VsHi7wL9h7nU4l4rGtePMEzqJAKOlLgLUBlFwuFfvx7g4lrmrlPLUYDb4CeyN+ZqQgh0KBwHEA/5Nl2edlP47EEqlL8LiG8pvcZSL0g00uNkr5fAn/K5cywGf4U0EOHPslQRQsFy9IYLos4CvO4sAyYDeN0WzhOnH2A00uNcrU4nKtkEnG0GFSSPZJPBrJCYLdanqB6RKSTSyRBhbBmAWz8z/I2754vlXOQwCWarVsKg5/1AsYEMQjnhM8JqOJsHV5fbLsxWhIXuZyyDTZfC2b8H1/m6OZVqVUBptrtQxygDcAFpsvUbS62O55KQBIOUukczmwGs3OxL6zyWepVq1EvdxIxyH8Yci3/Mnxhv0uLpdlHLBUrkC5p1xLfVdoxyutcqVSLjVq6TjiU3ICr2674WRxy2qPDwMzlioAAUFo1Erx7+jmXrUCNqOXkSvATNHdaPOPnX4jA5bj6RqN6FLrezk7VmlV6vVypXUFsQOu2n/xu3/tl4gQv6yV0Oxa6Xsgm08OqmBzpVVLnlEvey1DT4Hsxe+IOS5FQdl8Q0xB6WHeFshZslRjzk6+OY2cpYdocrWHsb7lZeLqU27PYEBIxtK1EgZ3K/3GEIkCNJrNSqOefEcCVorjOc7r4YVvvvzEkyjVSpVKqVaOvilrtBrVer0+BDd7ZWOwec4JvdIh/vaa3gEYiWVaQP0QLm/IIolhtd6sN3sQ4gFHb4muUcdvW8577S8KkVCyATZXSr3kW9mcHFaa7Xq3niCc3/IH+X2o4LhDfskJMkfigI63s/ro07Dabld7xRih6Y/fEW/cxvU7zBUdfhRAfVCu10u91BuUkUepYaXdBjhHGDRES74T2deK3RzRxVCvK3wCQFCtSqVWfgOrweaqCjanQsRvzsMWt4r6D8VvJxEgv3epXuVNfE2x0Rx+IoLfjRJ4iw/5nczh2WG1xJMk5txK79PfjMER+Lk9TBJDzXm3CYLH0Sc2MHh3FQTOVOjzgdX1eqP896IxcVttN6nNPndGIAbp8i7GeQ+VIzJJgNX1yvBvWB1HbLRvzTb7tv8qDPmRXc/B/454B9LeELrxW6/5dcck0avXm5XhN2eZaKeuqu3RJ2YzZ/lT3F5tx3PE+Te8q3oVkUSSvWoDcP2NGf0MqE6tj1Jgs3ioCmIixAW53n2qCl7gO4ZcVm8ARL5JPfGZQRv8nH4n+ezU693QgJ3kjoxY5A4jQNH2lSITqDWa1VbG903E0e63h8UzRwUkmGwz/iC/10qO23sTXkkKZXr1ZvlbgjE2bPfVbj1KZK8rHjgm/hVH4PDbA7E/EBiFRIqtarPS++pa5qzaVjsqBHHA9ofFrb+tmCtu0aAU/vDii7Mr7Bhoym+Adeq2TYnjWPgq4bPLm7yR9bldr+BQqiZ61XplkP5Khr5tdtu9jEzJTrSSA+/oOM/WrXDsBkRxT9G1TSpHARqMX8nWoYqqqt1qFKtBcasN4NWjjrNICWKTqLTW5VzGgXOBC7sDn3BWbNWbjfrXAOTToN5RbxOWCtalMjH7SdqJHonZyn7MidYXiZa74mQS79bVei/1FalwWFfbt2kQo++dDCXmOwG55NPQYVXTkiyzO3Xt4XDGy71b9xgiqVFTrR6eGCGtqGqnHuFl0buNPH5jBS23jqxe1Szx49ShL+BzjViefiLnNjCS76zYbTZbxV8OjUJIK+oowVS/YnGVuN0bdaAPX8hLSCSOPGtpqXIud0AcSMZP4j0AyOjAWDwudjr924wsiVpQ7CCyjdIxDPNh7zwQT10Vsmns9AuyMVacdUQ8jkHKay+SSbrXVDuVw7ruiVG707mNE2njBW4PQ4uWLi6JJjKlQv76ulC4TFJ3y2ZQ4cv5/Z0ImUSbqlofJg6iu2q3075Noc0cZ/44r5WK9RjjNjpJCWG/PJ7KFgrX16VCLnuVzWVTcepu3/6GJEU5b8yBHJNPo2a7XQ0dVK2o/b4atTbs9nZjgEP8AIujGE6GZq/z6OQ0mn19k9Pc7XMnTsfS0SdEKp1GfXSAq48r/Y6KItoxaHi3Ik8KeCgsaq0yztFR/wbhDnDuUHe3z+/bkRM5ExVKEn7rB6UJCDkA1UgdXTV6JG+nFN4N0j5skAMsKq1GKV+uldI4GePBZn8Ep7KydNaQujsgb9+y11yNWZ0CtHcIqn3FQR8d7T+kfNYsxtiLJYuDXr1SadTAOrDW7wfy8Z0Amqm7cZL22kA3d0gXntDaC1DdKb7bJ6Nv253uIGZCNG/+Ygt8UoDOkWfao0612mhV0miYR5uMAaAb7r6mc+LJqE4mhg94F7uR748A1Z367T5hnb4FR6eJfJgQDUDshQAWt4N2tT3sZahNftk2EB7iwZnDm6vL6xvN3cc+E/VoJbPHuzFZ67r5gUDU9nCPRI102t0+KEJZdFGg+vceQZTRydFkcTjq1tvDUYVOhP7iMEdHZw7R3TgvrqHbQ4PSu2fGxn8U7ahgdWRfYlEhGW5SmNNHceAqKeClsOjeDZvNwahDJ0Ltc3TG6PCyn6L78oai+4a5O+DbwdeaRiXpIRQjO0PxFxqGG0mq9fq3xC9mal88Vb2766qd0aj4Sct77MW23intmm3QfXO9IRM/jOjR7pZTfNjpdIu+nZq03R/UI0SyEIYNIf4Qg8Xd3W2/fztqpxlKJc7CMOI25ZjQfXVdMNxNdIltzrPGe8+Kg057FN3dNsAwVByUm7GWAG76z3j69u5uMLi9GxUx9jyyDMXAr3tCF4zT3Q38BymncJU0jZA9Heq6GkNx9GknSXcQHSEH7Uj9QGMvhrC4uwWz26k4yF3ZTwfmf9z4hrNIUElm3F3I0fU4VAj67BNm8DLN+1CZg7jvFuXd6KhSdDhoBOnYg276vzs0Gf7VFiFITvU4tyMbScfM3TkQgvlCTXO333SjmyUBgngUKvaAP6I7uEPt36WI36njjXkvEE8PmMV3VRp7Ib9kZUJxb1eG0wUsoPu6VshnS1raB9IHQtLeyhvhFAB8tJs7+CMz6vfh1wH6Jmy3EJYBOYnG3ieEBfVzGilZCm0Vsh+0ytWxk8ab2086dxdqdIFOPhX7D/F8VDhH/lDVYca1q9TvdgdtC3fQrEUkXFWS0Sy+K1JKDsnmSOO3Cm/O6xxZm0FB7gbNcgXuLtVbOeruoCUgOMHL+wiqJrXt1kyIATpuM9aR5HHAIPb6msX9FOVX/+6Ol3OlI9pf6tMW2ZRruZv/Pjw93sdMVhsOIOlR271WTN71+3eftiZlpaOo7uQMxrokS/ubZPxu1aL/mvwS+gAwSf338WUxm70+f7Za7aVzdZCm3Ukvc9vvQm0ob00CJzSTYfz4kP9obxeR7EpznFk0K2Hw9fmXx/nsZTJ7Gc9nF2arvfivTGJdd1CHqoPBQI2QTTUnagIxeqs7+i94mWT0gbbM5nkvsTlT0b/QfmFOQeEwIeGL+8l6MX5Zr5/mi+f5U0RQPtiSBCbFTvNPZ4V3i50Dn231Bn5NoqkhM7udjKBi4NwBzLtUgtzmF0yCUidHvzwu1tPxbDV/+By9eJw/v34h4W1QD12ZOo6QTjFIc7a3kUhS47tbjEQh5HMA7xZ2pa3qlddL9yA4mVzcP63nk8ni9en+Ai04f3qZP36kDW9ls3QnBOoC5EfcPQ5R4fH2vo+IPB0ySC+D7zeR9J4lKnAvomJRBO+DQXDD54f5ejaertHJhCjhk4/kfj2ZnZMT3RUeypt+qFtVdeQ8m5GG1GKKQ9ZeIdRDwdMgQiqeBpNHlKrPNpmXleg6Lf/qPo0sMPZW0Mnn94+rxWSsOzl8ghAXPq/GC3MoUkUgkVin2x85li98cdjH1OKzART+jIgfG8RkEE11mbcrCG5qtnO5Jzp3WzkFcfHx88PLevb8sl4+fgGwiWE2EEHyeTGZXxig1jCK6WXYHzqWt0Ae/dtiyGNtInl5D/eBXHw5hwEMopKm4L6FuGymYFBFc4OR37UiiA6FEgZWjkHwLSfP8/X4/gLu4HfDsejpFyC9k62ZgcyoM3DMiZEO5kOyXQIFycXidYKjKISxg3ucQP3fGYzUdBwIgMk8Nydjd5U3SFkPvvF4sX5ERwAuJOMdQfKwmD5FiUisnyEDctXOIOqoS6nEk21TJgIXJl9enykpfYSRDR57EdyDu167OWxROYxFk5NAMkpjelthFnyz1fSZBh8qjQ27Adg/gnMmq4etTE5oIdB3bCTEb2kSD9mX9lCjX6aT6XpF/1L4NCSh5KuMetVKo3WFpYvPv2d2SwkSmvmWi/F4vjYFn3H9b5hEHufj9WdyKtgmbpDz+upt3KXxeJdw6Hgwo19XAMPXJwycYBhjEnRfq1Up1Vp5VPHYhXZV0Sz4IPPNnsbLxeMXynAW4IcVuKeH1fP6AYNS/CCYq0ZUHypOATnQNDM64Gj0dPblAVMXjR4EdxAFdTxda1XypVo5FeeJJyR5DEyLG55X0CDMfIvx00wLvnBQn8IARxIt0TzPx/OnczM6tJLrBFAARicdpzspTWss5rV5eh6Dj52/zp5niMcgDi5t4aXyjXI+XyhRcBslqmJSRCz4VvPn8WKhB58ml2mi0bAOnz2ZrO8tiP5gTHX1QGGknBtiA5vGY9xLPT09Rzl2//QK2ma1fKRhFAzJSIGXNdrdvUTm1sGtxSBmvr8w80HwrbTgCyrM3M09AdZXgPWXyWQyuw8rIrFNx0B2GYBD0y5GD2MWo0WPAY/pORAHHeb1cjJZrmlWCJ5ibX2GRVP2Ol/L0gIhIJn2BaBBgAsg5WcWfEFTp06/JyCT8ctytYRPfnm9Jyd2LQ4VebfbcezogZoeDGJQa/G2qpphGsDGoV/gjwC4n2cM3OSjHzswOGORv84WsrR4lLU1QwoCFTLfBHERw+DbzOtyTOVBolmtXsYUcxdwf4CQz5gRfeaa3keiarfvqKgzt90BELjPFLiSKRDRaB2iDzNQOrP1lIHbL/PYcboq5MDsQoYxN2pP5X6xeIHgmzx8/gtxYZ56QycH8Z7m4wkkGqbywvfL8ewpKih2bRptDzouRvcHXWOqZfM+zjB6QwYI7vnzZKUxdzDkoxu5cKtcrkCb0JJ8QqKT6dN89XiPwXcKxcDRJjopoTws15tEo4TDHwVIic+vn+2K2k+izR1Gg6cl03pMq9FGLgj+RsG9Wk7GYBMd+KA/gBMYaZwkyuKMi5f8SqJP0xkNWSWoWNOIRiiYzZ82WPcGhYsZYxDFZnS762y0FogSG0Ri5+lz8ptpcE8ZuJcvz7NXjbn9OFUE4MaNiYVcKhEBoydQiPwaDG44lzAnUyn9/LJiWBdPdRcpysN8/qAIkmLOihJiWnU1GvK7n9/ELevVU55GePD0Q4iZfwHcQGYAbswYfkRJNAkoub66qcXR6PWX4EfNYp+ezS/uH9eLZ0ivQChBzclaGjkl98vZ41/ErGW8KKi7YHTaObkMHGpxzWigPIUpYr1RJGL001AygdvvoxR4k7u+QaNf1rTkY7UTdTKtV6ZP1MnnOECKeVFWEGoXNNpqARjd66jDlKP2AMEUJwHeUXuYML2ZxkUKiFHmBiJmzP07itd38dRNgRq9okaj3tNyNUQCsPZqTCVjMOjbSMr3eHO/PiwWD5byR6T11rDjXG9RoxO4aIm3Lg+wGm1VocE/GLhXAG4tpv5k+Z1hGoz+iG4O62lk+jxZLrVsvtUGDwrnLy8rmsrNncwQFIkdZ8EUhxLxLqn1pjlTQtKNVhx7YAZzT5+m6xl14Knff0Ioe4ypp/VcvVxMnk2svS1m/wR0PK+3KE8GlQeejjsWAbSDELL3bTnNaO3PeLf6W0pYpBQGzD3G/I7gDktykHla+Is5GXUpOvmeOdmpbIAqYDaF5GKbiQDB9OkOMO1UuUQGg/5dWm9OK3TCR9TgsZ5OY6AgFbMANC/7Pz1hGXk5HmvZ5EP4D8T08gtzMhaF09WMSSZINGRr5voEWPTiaTYGkgza3CKTFJRb3YhrYfvOY99tip5eT+DvnWzDcNMhOWGyZLmcPM1epwhubzD2BCYon+9f1vOnZz1Xh4OCYJ0XQtHH3v68HC8eI8oW1klmqHYdV47xxdv+sKp1p83TD7RGhHJfYzXXtgb8XQ825iBrLGcIXPD07AHoAJy8nmm5WvnVITKCTD+uZs/L500VYNhA/iz21KHztFz6jso8n92VihB9gGJrrOvR4PZkOa1hOfEPprmBuZ+XkN8vnqHUAaDPzbnaNLuom6yw3g1Ip/XTBfl9u0EdrXdV52YNbYtBiIa2FiaKhh5lKVsMim59Xs1nWFrNV5PJy4RVOrQoVCw6jDf1emF8XrF3s7iPkj94szDW2mI9te3SFovfqawc36xA02mNkPfAaiumRy8sHOu1MzcD92wxGU+1yvuIkD+Cjh13JEOBVTYzViYErcjg2ZJ7nEp0bkBGhip2zCimRd48SUKUj9QfL8Bq0/WCEu2pYjRDRcvY8JoseZlO5rMHrLwxV3OWhT+MPLTgXQD0UO2dUys42yoj9DSQR9Ol1Yv0MSyeEfuiDuxEwqcz7loDq2lkjOD2Oi5x9UECFB6n88cLwZJGjHvjN0haL2gVgNFCzj9HLEsr2cSB97gI5OG2/gpn5GxVojaKXOSBfWzk8+MSyiNsdtLunlXEbra3KErkcbq8hyxj4Ij3mNdy/K5oMQvRx4aO5qd78od9HkcGYTpwn5NL3qma+rCt5fqNnC9A5DAKoDE5nr2+sG9NMyhkswZJIWD04p5Whfymc6xHSpij0bfGjgQLEqzZV5OFxWgWizKDdHLHlNydbVUNzzqD58+TCYTLQyx8wsA9Y3USyujfHDYyiIR52oHVCWI+iNH3okffh7+E+9fFdPwMYunUvhae5sP2yG1J0JkKoK6cEeubUF2QcwDFBEbyApOw3gBBKaElHPs2a4X89Tijek20LeNVWNGDTb2F3ogQ/wPF4dN4ugL5fbqZIdcmfELFYafTPNs1zazXAdZoRFAsp9RoVmyxEBovVkbC4Tf7RXjD6FPT3BpagYSoRd9yod8xh03e1+kSAbeVL0+gbOnsmGYmCcbUssNSZwTFdP4QE07MZLWe6DJaCFv2Wm88bR6xoB59UOssGLa0El+4eKChbd9VwtGWaXvXgqDIoIOTAUcO86s0caFx1h7dlKaF2QNyGxOBHhs8NNXFc9o7MPqmay2KlU0QE/D6/wZFzmOf7uMzw51LJ/jicOBMehqvWgIbS74LrQHCWGuj4NBoDMRTfCmmHzQZMDaH+n3O+FIMm3MfREpQL404005H7C511MGuRUxUftDZAM4QzmQzukGH+4jZwU0XRutGs3cQbHVEaPTRYjKK0WffmMvgZdpOQr86ZujYtbsoCqQHSfHIvieOLv5wWqqoKY0ldtwZuCk1G0aHTfeG3d6lNiTKziWbZjVzDOio79wagNNyqPTkHftR7PuJwGzxM6sRoTTR1BTFNINHUNxEH6hqZbfJnHnjEmaWeBeXMO3cGYD8oYsm/eNE3nWFElXSWgPkiTZsmdj/eEr0NC5o8QplrzZD9n67ohWd9r1wLLMMm/uWUJ/1O/1uF3un+lIAcccc8gcbuGm7n2UMhabxoIDRN8PoYzJOcfKycf+8ZUxFtkK226w3zvbt2QJ8fILyVp+Rg0/w7FgYz5lkdITKTKgREdwC9TT8aIV43+QgPbCJBcai2wLI5LDZ3LtFB/RHt1uPHPk81ume/RcV9BcPU5wnXM3uLwDTD18eX+dP46XWNPvNbRk552r7WbHVrA/3LUXmoYZU75KOy9wcVv9w5sJaA/eYNv/nLy8vsyW2Rmcs9yluoLDqcd6yMzExxA06/CHL6wfVCC85wMCO762VxGJYY27wLxj9Aj7Xc5/pTbywXdE5cp8vlEFH79+fI+PSTaM9puODuG5k2kqcf+jgHk9meq3wXr9F0c3ErRMfOC/UWYlhvaEWDziMMX7X7ppcTXRNyVvW2Yv6EmP79gYvBfd7bDauWO4L7trhsslZ237xIaKrB+3OOa6wrQwnW3nEcyR8cF+Ox5mLbCpLaPQpu9bvmcowXjBtheZYQZvo1Ztq8fiw/WbNfrcfJfIheyTM33Eb4U7rYEgyYeK+yhjHZrO1nxM2spTev4+PlJqN6oG7P98V2fyoLNi3Hm7tAOI0zPDcZkUcVR5fHr9ciABtEODKrjV85rH08pJ59y0mQ3T0gceLxkfqoDOM0wxjdynNCaLL2kevsazl4XU+fXhczSwrkvSBJ1ZtRNcc2ffTcDKJtZpq9fBttplbtdMtnvl8DjjgLCtHBcelSkFyP396WcyenyZby6iMxWWi/UMsBZ5PCmS6kAwzBx9QEump/TbV1Uf7cszm8AhR72fT+Z7XxeTpebYy5kytG19tO4c2m135zdxhsldt1wdfcY4DCO9upxfH3fm84OYMxyTGqneFrvtZPN5f2JrNvLB1eqFlPw1vADrWaNarX3W0QKjY7YOKjeCZL17zAXLOy+Y5wR5uWA5+Qcojphm33UcleEw7f3wy5MJ6o178qsMWcQsXAiTkrsI4p3V3xspdbOrgeicnkhR3aTv6UnrKR736tachfAKANIfWJU3iniWO7DW8IVZ3aGcrY4vmMwzpRsR4q9KofM2ucW13cLetdjox4rceRMlb1+66VwibJQc7VoLzjsJUJtFSo1ppFL/6JM5ot9lFWBPJ/hd5cz5wkXuCtZI64OINoyUQd108me8bToBJjJqd5jB9rLG1s0+9ewS3w1EIvLBTQGExm+pVARwJ8g1XalQHq1PkWOJ405a+gy9REJRDX8tvghKD8FsAbWx6b3eao6SxVI93EkyGDHlvnbfiuF0Wc/bh4vWBCUEQ1mvfAmgtMdZVVW3CMAV4Y2ClvcukLTNM1qTCOxvtMa0DPibxWg3Pj/rms56jXTS7G98sQDWtfuOdSNrLuxRRPBNL/J5YPCaxCp5n1PobZ2/Gh3W1qapsclHkt2t+fqfU1lMh/ys9fYrAl0c79xGAzaVGpV7u/a1jFRPDapNafbyvFtiBXv4AXFNYgc15sLn0bcRhJr6qWm90rNNHohkS5jLAaoNoXtBsnjdWnO8hwPz8BkcqJoeVRlPtJsg7S1Ph/a4F07x7hUVDzvnUL0jelUa1/ibHQCZHGBrwSV7Ju63dvUaBtxsyous9iexjJIkkapU3O7oyAVzfrPdSISRs64496+CD+NR3QYkHY157p5/gsYSV+psdEopH2NUrvUx0e0W4eFBW5xxkkvUK4MnWeIrs341BE/O16tVGvVuMmxf/2xiCM1KI06nT+DPCC869R+KT8QxZsLncejOboSaotkDCNBpJgUJE2FqAYPaouN292X0BNPC03nqp0njT85wjxV4Zz0ROR4kk2TpYHL8TMvZ1MvY3QgRGUq1yqVxqFd/4OQ2hVK9cgfRagvELmX3L7elhc7v3NvMyoO8KjxfOv/lRzhiOtUalVq60wNnEsvJfFAXnvde8274Xjil+yOqyF9xcLpcqpXIj8T0emxItYqyAs7WjvvdTMm8/6M90ByATeZ9EjhNX9KDvVv47HbwfSrbA1eVyCzckuvLIzoJ90wijYMaT4Et5+KfxHU/dj4Gz8bkG9Ph6s9mc28yGk+20bsDTNmKpQgGfFFDLf78j96mzaw1qNn1QgEf2CfapF2HPoQJ07z/dMB5L5dHkbBmPlv++VyTdKOfxkQxltj1EdiMP0elLmoLwJIRjusski0chZKLk+1/xy1Y5T08wYGe++GXf4SqDHYAU0R59kc3XruO/kB9xvYtf0fDJl2rsKCviNw6r4Zyyi97Gk37xefA4oeRVDp8RdJ3/YY9GoYU6mF3Gp22UcM8Wtdsjy7LE27WR8b2PPRWF4MOubnCDxtVVvnD9g5+dcxzP1Gr644kuU4ko/fOCLAdkvyRZuuOyfMyem/MuGk9e3uTAXvg3l7uM//jHh/GxVKmWo4+BuikUsplUIhYx1r+AqKcbuLz692exRDINlrJnK9EHK/1Dz2o7S2TwKWH4dDD6NLYrfHgcPjsupBnkC51FonHtWVBgsGbxP/cIK+Zu3IujPd0MQos+HSx7dZnBh9+l8DF4l5fXN/SBYdrTq+Cby2T0H38gno8eUaQbTo2/yeWMp5tdm5/K9u94LJuOk1gCAFsomE03m0u9/W96AJ6R4SPxRCpN0WD4+YZC4+oSn332b3vUoAnjIRZ4Ke2CuITADPnIz+vn9fP6ef28fl7/7uv/Ad8j9z2s6t2KAAAAAElFTkSuQmCC" }, "/core.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"59444468dd2dd8b41dab"' }, "texto": `/* N\xFAcleo del inventario de Bases Box Tepic.
+` }, "/apple-touch-icon.png": { "cabeceras": { "content-type": "image/png", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"1acc6c85a28da7d51980"' }, "b64": "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" }, "/core.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"56d2ce1fcc88cd6f2c18"' }, "texto": `/* N\xFAcleo del inventario de Bases Box Tepic.
    Lo comparten el servidor (Cloudflare Pages Function + D1) y el modo local del navegador:
    mismas reglas, mismos permisos y mismo formato de respuesta.
 
@@ -5155,7 +5306,8 @@ arrancar().catch((e) => {
 
   const VERSION = '1.0.0';
   const DIA = 86400000;
-  const ROLES = ['local', 'tienda', 'dueno']; // dueno: solo lectura (resumen del negocio)
+  const ROLES = ['local', 'tienda', 'dueno', 'ruben']; // dueno: solo lectura (resumen del negocio); ruben: solo registra ventas
+  const SOLO_VENTAS = ['tienda', 'ruben']; // no ven resumen, reporte semanal ni revisi\xF3n de cuentas
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
   const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'comisiones', 'retiro', 'otro'];
@@ -5406,7 +5558,7 @@ arrancar().catch((e) => {
     const cfg = await cargarCfg(ctx);
     return ok({
       servidor: ctx.servidor !== false, version: VERSION, configurado: cfg.configurado, negocio: cfg.negocio.nombre,
-      requiereClave: !cfg.configurado && !!ctx.claveInstalacion, dueno: !!(cfg.acceso && cfg.acceso.dueno)
+      requiereClave: !cfg.configurado && !!ctx.claveInstalacion, dueno: !!(cfg.acceso && cfg.acceso.dueno), ruben: !!(cfg.acceso && cfg.acceso.ruben)
     });
   }
 
@@ -5875,7 +6027,7 @@ arrancar().catch((e) => {
       if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(q.dia)) || String(q.dia) > hoyK || diaKey(ctx.ahora - 34 * DIA, ctx.tz) > String(q.dia)) throw bad('dia_invalido', 'Elige un d\xEDa de los \xFAltimos 30 d\xEDas.');
       dia = String(q.dia);
     }
-    const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
+    const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia && (ctx.rol !== 'ruben' || r.rol === 'ruben')).sort((a, b) => a.ts - b.ts);
     const grupos = Object.create(null), orden = [];
     filas.forEach((r) => {
       const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', vendedor: r.vendedor || '', pago: r.pago || '', entrega: r.tipo === 'venta' && !soloMonto(r) ? r.motivo || '' : '', envio: 0, soloMonto: soloMonto(r), lineas: [], total: 0 });
@@ -5909,16 +6061,16 @@ arrancar().catch((e) => {
     const { repo, ahora, rol } = ctx;
     const [raw, prods, trasp, peds, ventas, rec, gastosFilas, agendaAbierta] = await Promise.all([
       repo.config(), repo.productos(), repo.traspasos({ desde: ahora - 30 * DIA }), repo.pedidos({ desde: ahora - 30 * DIA }),
-      repo.ventas(ahora - 35 * DIA), repo.movs({ limite: 40 }), repo.gastos(ahora - 36 * DIA), repo.agendaAbierta()
+      repo.ventas(ahora - 35 * DIA), repo.movs(rol === 'ruben' ? { limite: 40, rol: 'ruben' } : { limite: 40 }), repo.gastos(ahora - 36 * DIA), repo.agendaAbierta()
     ]);
     const cfg = normalizarCfg(raw);
     const productos = prods.map((p) => {
       const o = Object.assign({}, p);
-      if (rol === 'tienda') delete o.costo;
+      if (SOLO_VENTAS.includes(rol)) delete o.costo;
       return o;
     });
     const est = {
-      rev: cfg.rev, ahora, hoy: diaKey(ahora, ctx.tz), agenda: agendaAbierta.slice(0, 300), rol, version: VERSION, dueno: !!cfg.acceso.dueno, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
+      rev: cfg.rev, ahora, hoy: diaKey(ahora, ctx.tz), agenda: agendaAbierta.slice(0, 300), rol, version: VERSION, dueno: !!cfg.acceso.dueno, ruben: !!cfg.acceso.ruben, avisos: Array.isArray(raw.push) ? raw.push.length : 0, negocio: cfg.negocio, medidas: cfg.medidas, tonos: cfg.tonos,
       productos, traspasos: trasp, pedidos: peds, resumen: Object.assign(resumenVentas(ventas, ahora, ctx.tz), { gastos: (({ hoy, semana, mes }) => ({ hoy: hoy.total, semana: semana.total, mes: mes.total }))(resumenGastos(gastosVisibles(gastosFilas), ahora, ctx.tz)) }), recientes: rec.items
     };
     if (ctx.exp && ctx.exp - ahora < (SESION_DIAS / 2) * DIA) est.token = firmar(cfg, rol, ahora);
@@ -5934,7 +6086,7 @@ arrancar().catch((e) => {
       hasta: Number(q.hasta) || 0,
       prods: q.prods ? String(q.prods).split(',').slice(0, 40) : null,
       tipos: q.tipos ? String(q.tipos).split(',').slice(0, 12) : null,
-      rol: ROLES.includes(q.rol) ? q.rol : null,
+      rol: ctx.rol === 'ruben' ? 'ruben' : ROLES.includes(q.rol) ? q.rol : null,
       anulaciones: q.anulaciones === '1'
     });
   }
@@ -5988,7 +6140,7 @@ arrancar().catch((e) => {
   }
 
   // qui\xE9n hizo la venta (nombre del vendedor); si no lo mandan, queda el usuario que la registr\xF3
-  const vendedorDe = (ctx, b) => clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Vendedor tienda' : 'Almac\xE9n');
+  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Rub\xE9n' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Vendedor tienda' : 'Almac\xE9n'));
 
   // entrega de una venta \u2192 tarifa de env\xEDo en la configuraci\xF3n del negocio (null = sin cargo)
   const ENTREGAS = { recoge: null, tepic: 'envioTepic', xalisco: 'envioFuera', cantera: 'envioFuera' };
@@ -6239,6 +6391,41 @@ arrancar().catch((e) => {
       tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago, grupo: nuevo, ref: m.id, nota: clean(nota, 200), anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
     });
     return { grupo: nuevo, repuesta: grupo, pago };
+  }
+
+  // \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 avisos al celular (Web Push)
+  async function avisoDeRuben(ctx, b, res) {
+    if (!b || !/^mov\\./.test(String(b.op))) return null;
+    const idx = indexar(await ctx.repo.productos());
+    const lineas = Array.isArray(b.lineas) ? b.lineas.slice(0, 6).map((l) => (l.cant || 1) + ' \xD7 ' + ((idx[l.id] || {}).nombre || 'producto')).join(', ') : '';
+    const pago = { efectivo: 'efectivo', tarjeta: 'tarjeta', transferencia: 'transferencia', otro: 'otro' }[b.pago] || 'efectivo';
+    const total = res && res.total ? '$' + Number(res.total).toLocaleString('en-US') : '';
+    if (b.op === 'mov.venta') return { titulo: 'Rub\xE9n registr\xF3 una venta' + (total ? ' \xB7 ' + total : ''), texto: [lineas, pago, b.cliente ? 'cliente ' + clean(b.cliente, 40) : ''].filter(Boolean).join(' \xB7 ') };
+    return { titulo: 'Rub\xE9n hizo un movimiento', texto: String(b.op) + (lineas ? ' \xB7 ' + lineas : '') };
+  }
+  async function opPushSuscribir(ctx, b, tx) {
+    const endpoint = String(b.endpoint || ''), p256dh = String(b.p256dh || ''), auth = String(b.auth || '');
+    if (!/^https:\\/\\/[^\\s]{10,1000}$/.test(endpoint)) throw bad('push_invalido', 'Tu navegador no dio una suscripci\xF3n v\xE1lida.');
+    if (!/^[A-Za-z0-9_-]{80,100}$/.test(p256dh) || !/^[A-Za-z0-9_-]{16,32}$/.test(auth)) throw bad('push_invalido', 'Tu navegador no dio una suscripci\xF3n v\xE1lida.');
+    const raw = await ctx.repo.config();
+    const lista = (Array.isArray(raw.push) ? raw.push : []).filter((s) => s.endpoint !== endpoint);
+    lista.push({ endpoint, p256dh, auth, rol: ctx.rol, ts: ctx.ahora, equipo: clean(b.equipo, 60) });
+    tx.config = { push: lista.slice(-10) };
+    tx.sinRev = true;
+    return { avisos: tx.config.push.length };
+  }
+  async function opPushQuitar(ctx, b, tx) {
+    const raw = await ctx.repo.config();
+    const endpoint = String(b.endpoint || '');
+    const lista = (Array.isArray(raw.push) ? raw.push : []).filter((s) => (endpoint ? s.endpoint !== endpoint : s.rol !== ctx.rol));
+    tx.config = { push: lista };
+    tx.sinRev = true;
+    return { avisos: lista.length };
+  }
+  async function opPushProbar(ctx) {
+    const raw = await ctx.repo.config();
+    if (!Array.isArray(raw.push) || !raw.push.length) throw bad('sin_avisos', 'Primero activa los avisos en este celular.');
+    return { avisos: raw.push.length };
   }
 
   async function opEnviar(ctx, b, tx) {
@@ -6555,6 +6742,20 @@ arrancar().catch((e) => {
     return {};
   }
 
+  async function opPinRuben(ctx, b, tx) {
+    const cfg = ctx.cfg;
+    const it = await reservar(ctx, 'local');
+    const acc = cfg.acceso.local;
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local', 'ruben');
+    const nuevo = String(b.pinNuevo || '');
+    validarPin(nuevo);
+    if (pinEnUso(cfg, 'ruben', nuevo)) throw bad('pin_igual', 'Cada usuario necesita un PIN distinto.');
+    const r = cfg.acceso.ruben;
+    tx.config = { acceso: Object.assign({}, cfg.acceso, { ruben: nuevoAcceso(nuevo, ((r && r.v) || 0) + 1) }) };
+    return {};
+  }
+
   // Deja el inventario en cero (borra movimientos, env\xEDos y pedidos; conserva productos, precios, PIN y ajustes).
   async function opReiniciar(ctx, b, tx) {
     const cfg = ctx.cfg;
@@ -6575,7 +6776,7 @@ arrancar().catch((e) => {
     'producto.archivar': [['local'], opProductoArchivar],
     'mov.entrada': [['local'], (c, b, t) => opMovLineas(c, b, t, 'entrada')],
     'mov.salida': [['local'], (c, b, t) => opMovLineas(c, b, t, 'salida')],
-    'mov.venta': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'venta')],
+    'mov.venta': [['tienda', 'ruben'], (c, b, t) => opMovLineas(c, b, t, 'venta')],
     'mov.devolucion': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'devolucion')],
     'mov.merma': [['tienda'], (c, b, t) => opMovLineas(c, b, t, 'merma')],
     'mov.regreso': [['local', 'tienda'], opRegreso],
@@ -6595,7 +6796,11 @@ arrancar().catch((e) => {
     'pedido.crear': [['tienda'], opPedidoCrear],
     'pedido.cancelar': [['local', 'tienda'], opPedidoCancelar],
     'config.guardar': [['local'], opConfigGuardar],
-    'pin.cambiar': [['local', 'tienda', 'dueno'], opPinCambiar],
+    'pin.cambiar': [['local', 'tienda', 'dueno', 'ruben'], opPinCambiar],
+    'pin.ruben': [['local'], opPinRuben],
+    'push.suscribir': [['local', 'dueno'], opPushSuscribir],
+    'push.quitar': [['local', 'dueno'], opPushQuitar],
+    'push.probar': [['local'], opPushProbar],
     'pin.dueno': [['local'], opPinDueno],
     'pin.reiniciar': [['local'], opPinReiniciar],
     'recup.nueva': [['local'], opRecupNueva],
@@ -6636,22 +6841,32 @@ arrancar().catch((e) => {
       if (path === '/movs' && m === 'GET') return ok(await listarMovs(ctx));
       if (path === '/reporte-dia' && m === 'GET') return ok(await reporteDia(ctx));
       if (path === '/resumen' && m === 'GET') {
-        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El resumen del negocio es del due\xF1o y del almac\xE9n.');
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'El resumen del negocio es del due\xF1o y del almac\xE9n.');
         return ok(await resumenDueno(ctx));
       }
       if (path === '/reporte-semana' && m === 'GET') {
-        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del due\xF1o y del almac\xE9n.');
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del due\xF1o y del almac\xE9n.');
         return ok(await reporteSemana(ctx));
       }
       if (path === '/cuentas' && m === 'GET') {
-        if (ctx.rol === 'tienda') throw new ApiError(403, 'sin_permiso', 'La revisi\xF3n de cuentas es del due\xF1o y del almac\xE9n.');
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La revisi\xF3n de cuentas es del due\xF1o y del almac\xE9n.');
         return ok(await revisarCuentas(ctx));
       }
+      if (ctx.rol === 'ruben' && (path === '/agenda' || path === '/gastos')) throw new ApiError(403, 'sin_permiso', 'Tu perfil solo registra ventas.');
       if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
+      if (path === '/push/clave' && m === 'GET') {
+        if (ctx.rol !== 'local' && ctx.rol !== 'dueno') throw new ApiError(403, 'sin_permiso', 'Los avisos al celular son del almac\xE9n y del due\xF1o.');
+        if (!opts.claveVapid) throw new ApiError(501, 'sin_push', 'Los avisos al celular necesitan la app publicada con su servidor.');
+        return ok({ publica: await opts.claveVapid() });
+      }
       if (path === '/ventas' && m === 'GET') return ok({ ahora: ctx.ahora, ventas: detalleVentas(await ctx.repo.ventas(ctx.ahora - 35 * DIA), ctx.ahora, ctx.tz) });
       if (path === '/op' && m === 'POST') {
         const resultado = await correrOp(ctx, ctx.req.body);
+        if (opts.avisar) {
+          const aviso = ctx.rol === 'ruben' ? await avisoDeRuben(ctx, ctx.req.body, resultado) : ctx.req.body && ctx.req.body.op === 'push.probar' ? { titulo: 'Avisos activados', texto: 'As\xED te llegar\xE1 cada venta que registre Rub\xE9n.' } : null;
+          if (aviso) { try { opts.avisar(aviso); } catch (e) { /* el aviso nunca detiene la operaci\xF3n */ } }
+        }
         const extra = {};
         if (resultado.token) { extra.token = resultado.token; delete resultado.token; }
         const est = await armarEstado(ctx);
@@ -6944,7 +7159,7 @@ arrancar().catch((e) => {
 
   return {
     VERSION, MAX_LINEAS, MEDIDAS_BASE, TONOS_BASE, EXTRAS_BASE,
-    handle, crearRepoLocal, almacenMemoria, sembrarDemo, ApiError,
+    handle, crearRepoLocal, almacenMemoria, sembrarDemo, ApiError, nuevaTx,
     // expuestos para pruebas
     sha256hex, hmacHex, resumenVentas, diaKey
   };
@@ -7493,7 +7708,7 @@ dialog.sheet[open]{animation:sube .2s ease-out}
 <script src="app.js" defer></script>
 </body>
 </html>
-` }, "/logo.png": { "cabeceras": { "content-type": "image/png", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"e967e688072e69475b1a"' }, "b64": "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" }, "/manifest.webmanifest": { "cabeceras": { "content-type": "application/manifest+json", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"53e0919fba13bb323d28"' }, "texto": '{\n  "name": "Inventario Bases Box Tepic",\n  "short_name": "Inventario",\n  "description": "Inventario compartido entre el almac\xE9n y el vendedor de la tienda.",\n  "lang": "es-MX",\n  "start_url": "./",\n  "scope": "./",\n  "display": "standalone",\n  "orientation": "any",\n  "background_color": "#F4F2ED",\n  "theme_color": "#1A1A1A",\n  "icons": [\n    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },\n    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },\n    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }\n  ]\n}\n' }, "/pdf.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"fc2137e9e0b9d29f55a9"' }, "texto": "// Generador m\xEDnimo de PDF (sin librer\xEDas ni internet): texto, rect\xE1ngulos y l\xEDneas en varias p\xE1ginas.\n// Usa las tipograf\xEDas est\xE1ndar Helvetica y Helvetica-Bold, que todo lector de PDF trae incluidas.\n// Coordenadas en puntos (1/72 de pulgada) con el origen arriba a la izquierda; y = l\xEDnea base del texto.\n(function (raiz, fabrica) {\n  const api = fabrica();\n  if (typeof module === 'object' && module.exports) module.exports = api;\n  else raiz.BBPdf = api;\n})(typeof self !== 'undefined' ? self : this, function () {\n  'use strict';\n\n  // Anchos de Helvetica (unidades por 1000 em) para ASCII 32..126\n  const W = [278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556,\n    1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556,\n    333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584];\n  const WB = [278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611,\n    975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556,\n    333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584];\n\n  // Unicode \u2192 byte de la codificaci\xF3n WinAnsi (cp1252), que es la que entienden las tipograf\xEDas est\xE1ndar\n  const ESPECIALES = { 0x20AC: 0x80, 0x2026: 0x85, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2122: 0x99, 0x2212: 0x2D };\n  function aWin(str) {\n    let o = '';\n    for (const ch of String(str == null ? '' : str)) {\n      const c = ch.codePointAt(0);\n      if (c === 10 || c === 13 || c === 9) o += ' ';\n      else if (c >= 32 && c < 127) o += ch;\n      else if ((c >= 160 && c <= 255) || (c >= 0x80 && c <= 0x9F)) o += ch; // ya en WinAnsi (aWin se puede aplicar dos veces sin da\xF1ar el texto)\n      else if (ESPECIALES[c]) o += String.fromCharCode(ESPECIALES[c]);\n      else o += '?';\n    }\n    return o;\n  }\n  const escapar = (s) => s.replace(/[\\\\()]/g, (m) => '\\\\' + m);\n  function anchoCar(ch, bold) {\n    const c = ch.charCodeAt(0);\n    if (c >= 32 && c < 127) return (bold ? WB : W)[c - 32];\n    if (c >= 192) { // letras acentuadas: ancho de la letra base\n      const base = ch.normalize('NFD').charAt(0);\n      const b = base.charCodeAt(0);\n      if (b >= 32 && b < 127) return (bold ? WB : W)[b - 32];\n    }\n    return c === 0xB7 ? 278 : c === 0xD7 ? 584 : 556;\n  }\n  const num = (n) => (Math.round(n * 100) / 100).toString();\n  const color = (c) => (c || [0, 0, 0]).map((v) => num(v / 255)).join(' ');\n\n  class Doc {\n    constructor(opts) {\n      opts = opts || {};\n      this.w = opts.w || 612;\n      this.h = opts.h || 792;\n      this.paginas = [];\n      this.titulo = opts.titulo || '';\n      this.actual = null;\n    }\n    page() { this.actual = []; this.paginas.push(this.actual); return this.paginas.length; }\n    get numPaginas() { return this.paginas.length; }\n    textWidth(str, size, bold) {\n      const s = aWin(str);\n      let t = 0;\n      for (let i = 0; i < s.length; i++) t += anchoCar(s[i], bold);\n      return t * size / 1000;\n    }\n    // recorta con \u201C\u2026\u201D para que el texto quepa en un ancho\n    ajustar(str, size, bold, ancho) {\n      let s = aWin(str);\n      if (this.textWidth(s, size, bold) <= ancho) return s;\n      while (s.length > 1 && this.textWidth(s + '...', size, bold) > ancho) s = s.slice(0, -1);\n      return s + '...';\n    }\n    rect(x, y, w, h, o) {\n      o = o || {};\n      const op = [];\n      if (o.fill) op.push(color(o.fill) + ' rg');\n      if (o.stroke) op.push(color(o.stroke) + ' RG', num(o.lw || 0.75) + ' w');\n      op.push(num(x) + ' ' + num(this.h - y - h) + ' ' + num(w) + ' ' + num(h) + ' re ' + (o.fill && o.stroke ? 'B' : o.stroke ? 'S' : 'f'));\n      this.actual.push(op.join('\\n'));\n    }\n    line(x1, y1, x2, y2, o) {\n      o = o || {};\n      this.actual.push(color(o.color || [180, 180, 180]) + ' RG\\n' + num(o.lw || 0.75) + ' w\\n' + num(x1) + ' ' + num(this.h - y1) + ' m ' + num(x2) + ' ' + num(this.h - y2) + ' l S');\n    }\n    text(x, y, str, o) {\n      o = o || {};\n      const size = o.size || 10, s = aWin(str);\n      let px = x;\n      if (o.align === 'right') px = x - this.textWidth(s, size, o.bold);\n      else if (o.align === 'center') px = x - this.textWidth(s, size, o.bold) / 2;\n      this.actual.push('BT\\n' + color(o.color) + ' rg\\n/' + (o.bold ? 'F2' : 'F1') + ' ' + num(size) + ' Tf\\n' + num(px) + ' ' + num(this.h - y) + ' Td\\n(' + escapar(s) + ') Tj\\nET');\n    }\n    // PDF completo como bytes\n    bytes() {\n      const objs = [];\n      const add = (cuerpo) => { objs.push(cuerpo); return objs.length; };\n      add('<< /Type /Catalog /Pages 2 0 R >>'); // 1\n      add(''); // 2 (se completa abajo)\n      const f1 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');\n      const f2 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');\n      const info = add('<< /Title (' + escapar(aWin(this.titulo)) + ') /Producer (Inventario Bases Box) >>');\n      const kids = [];\n      this.paginas.forEach((ops) => {\n        const flujo = ops.join('\\n');\n        const cont = add('<< /Length ' + flujo.length + ' >>\\nstream\\n' + flujo + '\\nendstream');\n        const pag = add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + this.w + ' ' + this.h + '] /Resources << /Font << /F1 ' + f1 + ' 0 R /F2 ' + f2 + ' 0 R >> >> /Contents ' + cont + ' 0 R >>');\n        kids.push(pag + ' 0 R');\n      });\n      objs[1] = '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + kids.length + ' >>';\n      let out = '%PDF-1.4\\n%\xE2\xE3\xCF\xD3\\n';\n      const pos = [];\n      objs.forEach((o, i) => { pos.push(out.length); out += (i + 1) + ' 0 obj\\n' + o + '\\nendobj\\n'; });\n      const xref = out.length;\n      out += 'xref\\n0 ' + (objs.length + 1) + '\\n0000000000 65535 f \\n' + pos.map((p) => String(p).padStart(10, '0') + ' 00000 n \\n').join('');\n      out += 'trailer\\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R /Info ' + info + ' 0 R >>\\nstartxref\\n' + xref + '\\n%%EOF\\n';\n      const u8 = new Uint8Array(out.length);\n      for (let i = 0; i < out.length; i++) u8[i] = out.charCodeAt(i) & 255;\n      return u8;\n    }\n  }\n  return { Doc, aWin };\n});\n" }, "/sw.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"d3a50031718e3a9168d1"' }, "texto": "// Service worker: guarda la app para abrirla aunque no haya internet.\n// Los datos (/api) nunca se guardan aqu\xED: siempre van a la red.\nconst VERSION = 'bb-inv-v5';\nconst BASE = ['./', 'index.html', 'core.js', 'pdf.js', 'app.js', 'fonts.css', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',\n  'fonts/anton-400.woff2', 'fonts/barlow-400.woff2', 'fonts/barlow-500.woff2', 'fonts/barlow-600.woff2', 'fonts/barlow-700.woff2',\n  'fonts/barlow-condensed-500.woff2', 'fonts/barlow-condensed-600.woff2', 'fonts/barlow-condensed-700.woff2'];\n\nself.addEventListener('install', (e) => {\n  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));\n});\n\nself.addEventListener('activate', (e) => {\n  e.waitUntil(\n    caches.keys()\n      .then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k))))\n      .then(() => self.clients.claim())\n  );\n});\n\n// Red primero para que cada cambio de la app llegue en cuanto hay internet; sin red, la copia guardada.\nself.addEventListener('fetch', (e) => {\n  const r = e.request, u = new URL(r.url);\n  if (r.method !== 'GET' || u.origin !== location.origin || u.pathname.includes('/api/')) return;\n  e.respondWith(\n    fetch(r)\n      .then((res) => {\n        if (res.ok) { const copia = res.clone(); caches.open(VERSION).then((c) => c.put(r, copia)); }\n        return res;\n      })\n      .catch(() => caches.match(r).then((m) => m || (r.mode === 'navigate' ? caches.match('index.html') : Response.error())))\n  );\n});\n" } };
+` }, "/logo.png": { "cabeceras": { "content-type": "image/png", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"e967e688072e69475b1a"' }, "b64": "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" }, "/manifest.webmanifest": { "cabeceras": { "content-type": "application/manifest+json", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"53e0919fba13bb323d28"' }, "texto": '{\n  "name": "Inventario Bases Box Tepic",\n  "short_name": "Inventario",\n  "description": "Inventario compartido entre el almac\xE9n y el vendedor de la tienda.",\n  "lang": "es-MX",\n  "start_url": "./",\n  "scope": "./",\n  "display": "standalone",\n  "orientation": "any",\n  "background_color": "#F4F2ED",\n  "theme_color": "#1A1A1A",\n  "icons": [\n    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },\n    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },\n    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }\n  ]\n}\n' }, "/pdf.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "etag": '"fc2137e9e0b9d29f55a9"' }, "texto": "// Generador m\xEDnimo de PDF (sin librer\xEDas ni internet): texto, rect\xE1ngulos y l\xEDneas en varias p\xE1ginas.\n// Usa las tipograf\xEDas est\xE1ndar Helvetica y Helvetica-Bold, que todo lector de PDF trae incluidas.\n// Coordenadas en puntos (1/72 de pulgada) con el origen arriba a la izquierda; y = l\xEDnea base del texto.\n(function (raiz, fabrica) {\n  const api = fabrica();\n  if (typeof module === 'object' && module.exports) module.exports = api;\n  else raiz.BBPdf = api;\n})(typeof self !== 'undefined' ? self : this, function () {\n  'use strict';\n\n  // Anchos de Helvetica (unidades por 1000 em) para ASCII 32..126\n  const W = [278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556,\n    1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556,\n    333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584];\n  const WB = [278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611,\n    975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556,\n    333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584];\n\n  // Unicode \u2192 byte de la codificaci\xF3n WinAnsi (cp1252), que es la que entienden las tipograf\xEDas est\xE1ndar\n  const ESPECIALES = { 0x20AC: 0x80, 0x2026: 0x85, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2122: 0x99, 0x2212: 0x2D };\n  function aWin(str) {\n    let o = '';\n    for (const ch of String(str == null ? '' : str)) {\n      const c = ch.codePointAt(0);\n      if (c === 10 || c === 13 || c === 9) o += ' ';\n      else if (c >= 32 && c < 127) o += ch;\n      else if ((c >= 160 && c <= 255) || (c >= 0x80 && c <= 0x9F)) o += ch; // ya en WinAnsi (aWin se puede aplicar dos veces sin da\xF1ar el texto)\n      else if (ESPECIALES[c]) o += String.fromCharCode(ESPECIALES[c]);\n      else o += '?';\n    }\n    return o;\n  }\n  const escapar = (s) => s.replace(/[\\\\()]/g, (m) => '\\\\' + m);\n  function anchoCar(ch, bold) {\n    const c = ch.charCodeAt(0);\n    if (c >= 32 && c < 127) return (bold ? WB : W)[c - 32];\n    if (c >= 192) { // letras acentuadas: ancho de la letra base\n      const base = ch.normalize('NFD').charAt(0);\n      const b = base.charCodeAt(0);\n      if (b >= 32 && b < 127) return (bold ? WB : W)[b - 32];\n    }\n    return c === 0xB7 ? 278 : c === 0xD7 ? 584 : 556;\n  }\n  const num = (n) => (Math.round(n * 100) / 100).toString();\n  const color = (c) => (c || [0, 0, 0]).map((v) => num(v / 255)).join(' ');\n\n  class Doc {\n    constructor(opts) {\n      opts = opts || {};\n      this.w = opts.w || 612;\n      this.h = opts.h || 792;\n      this.paginas = [];\n      this.titulo = opts.titulo || '';\n      this.actual = null;\n    }\n    page() { this.actual = []; this.paginas.push(this.actual); return this.paginas.length; }\n    get numPaginas() { return this.paginas.length; }\n    textWidth(str, size, bold) {\n      const s = aWin(str);\n      let t = 0;\n      for (let i = 0; i < s.length; i++) t += anchoCar(s[i], bold);\n      return t * size / 1000;\n    }\n    // recorta con \u201C\u2026\u201D para que el texto quepa en un ancho\n    ajustar(str, size, bold, ancho) {\n      let s = aWin(str);\n      if (this.textWidth(s, size, bold) <= ancho) return s;\n      while (s.length > 1 && this.textWidth(s + '...', size, bold) > ancho) s = s.slice(0, -1);\n      return s + '...';\n    }\n    rect(x, y, w, h, o) {\n      o = o || {};\n      const op = [];\n      if (o.fill) op.push(color(o.fill) + ' rg');\n      if (o.stroke) op.push(color(o.stroke) + ' RG', num(o.lw || 0.75) + ' w');\n      op.push(num(x) + ' ' + num(this.h - y - h) + ' ' + num(w) + ' ' + num(h) + ' re ' + (o.fill && o.stroke ? 'B' : o.stroke ? 'S' : 'f'));\n      this.actual.push(op.join('\\n'));\n    }\n    line(x1, y1, x2, y2, o) {\n      o = o || {};\n      this.actual.push(color(o.color || [180, 180, 180]) + ' RG\\n' + num(o.lw || 0.75) + ' w\\n' + num(x1) + ' ' + num(this.h - y1) + ' m ' + num(x2) + ' ' + num(this.h - y2) + ' l S');\n    }\n    text(x, y, str, o) {\n      o = o || {};\n      const size = o.size || 10, s = aWin(str);\n      let px = x;\n      if (o.align === 'right') px = x - this.textWidth(s, size, o.bold);\n      else if (o.align === 'center') px = x - this.textWidth(s, size, o.bold) / 2;\n      this.actual.push('BT\\n' + color(o.color) + ' rg\\n/' + (o.bold ? 'F2' : 'F1') + ' ' + num(size) + ' Tf\\n' + num(px) + ' ' + num(this.h - y) + ' Td\\n(' + escapar(s) + ') Tj\\nET');\n    }\n    // PDF completo como bytes\n    bytes() {\n      const objs = [];\n      const add = (cuerpo) => { objs.push(cuerpo); return objs.length; };\n      add('<< /Type /Catalog /Pages 2 0 R >>'); // 1\n      add(''); // 2 (se completa abajo)\n      const f1 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');\n      const f2 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');\n      const info = add('<< /Title (' + escapar(aWin(this.titulo)) + ') /Producer (Inventario Bases Box) >>');\n      const kids = [];\n      this.paginas.forEach((ops) => {\n        const flujo = ops.join('\\n');\n        const cont = add('<< /Length ' + flujo.length + ' >>\\nstream\\n' + flujo + '\\nendstream');\n        const pag = add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + this.w + ' ' + this.h + '] /Resources << /Font << /F1 ' + f1 + ' 0 R /F2 ' + f2 + ' 0 R >> >> /Contents ' + cont + ' 0 R >>');\n        kids.push(pag + ' 0 R');\n      });\n      objs[1] = '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + kids.length + ' >>';\n      let out = '%PDF-1.4\\n%\xE2\xE3\xCF\xD3\\n';\n      const pos = [];\n      objs.forEach((o, i) => { pos.push(out.length); out += (i + 1) + ' 0 obj\\n' + o + '\\nendobj\\n'; });\n      const xref = out.length;\n      out += 'xref\\n0 ' + (objs.length + 1) + '\\n0000000000 65535 f \\n' + pos.map((p) => String(p).padStart(10, '0') + ' 00000 n \\n').join('');\n      out += 'trailer\\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R /Info ' + info + ' 0 R >>\\nstartxref\\n' + xref + '\\n%%EOF\\n';\n      const u8 = new Uint8Array(out.length);\n      for (let i = 0; i < out.length; i++) u8[i] = out.charCodeAt(i) & 255;\n      return u8;\n    }\n  }\n  return { Doc, aWin };\n});\n" }, "/sw.js": { "cabeceras": { "content-type": "text/javascript; charset=utf-8", "x-content-type-options": "nosniff", "x-frame-options": "DENY", "x-robots-tag": "noindex, nofollow", "referrer-policy": "no-referrer", "strict-transport-security": "max-age=63072000; includeSubDomains", "cross-origin-opener-policy": "same-origin", "cross-origin-resource-policy": "same-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()", "content-security-policy": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", "cache-control": "no-cache", "etag": '"ccf90e9fc29f4d907b84"' }, "texto": "// Service worker: guarda la app para abrirla aunque no haya internet.\n// Los datos (/api) nunca se guardan aqu\xED: siempre van a la red.\nconst VERSION = 'bb-inv-v6';\nconst BASE = ['./', 'index.html', 'core.js', 'pdf.js', 'app.js', 'fonts.css', 'manifest.webmanifest', 'logo.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',\n  'fonts/anton-400.woff2', 'fonts/barlow-400.woff2', 'fonts/barlow-500.woff2', 'fonts/barlow-600.woff2', 'fonts/barlow-700.woff2',\n  'fonts/barlow-condensed-500.woff2', 'fonts/barlow-condensed-600.woff2', 'fonts/barlow-condensed-700.woff2'];\n\nself.addEventListener('install', (e) => {\n  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));\n});\n\nself.addEventListener('activate', (e) => {\n  e.waitUntil(\n    caches.keys()\n      .then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k))))\n      .then(() => self.clients.claim())\n  );\n});\n\n// Red primero para que cada cambio de la app llegue en cuanto hay internet; sin red, la copia guardada.\nself.addEventListener('fetch', (e) => {\n  const r = e.request, u = new URL(r.url);\n  if (r.method !== 'GET' || u.origin !== location.origin || u.pathname.includes('/api/')) return;\n  e.respondWith(\n    fetch(r)\n      .then((res) => {\n        if (res.ok) { const copia = res.clone(); caches.open(VERSION).then((c) => c.put(r, copia)); }\n        return res;\n      })\n      .catch(() => caches.match(r).then((m) => m || (r.mode === 'navigate' ? caches.match('index.html') : Response.error())))\n  );\n});\n\n// Avisos al celular: cada venta de Rub\xE9n llega como notificaci\xF3n (el servidor la manda cifrada).\nself.addEventListener('push', (e) => {\n  let d = {};\n  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { titulo: 'Bases Box Tepic', texto: e.data ? e.data.text() : '' }; }\n  e.waitUntil(self.registration.showNotification(d.titulo || 'Bases Box Tepic', {\n    body: d.texto || '', icon: 'icon-192.png', badge: 'icon-192.png', tag: 'bb-' + Date.now(), data: { url: d.url || './' }\n  }));\n});\nself.addEventListener('notificationclick', (e) => {\n  e.notification.close();\n  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((ls) => {\n    const abierta = ls.find((c) => 'focus' in c);\n    return abierta ? abierta.focus() : self.clients.openWindow((e.notification.data && e.notification.data.url) || './');\n  }));\n});\n" } };
 
 // functions/api/[[path]].js
 var import_core2 = __toESM(require_core());
@@ -7819,6 +8034,77 @@ async function crearRepoD1(db) {
   };
 }
 
+// functions/_push.js
+var enc = new TextEncoder();
+var b64u = (u8) => btoa(String.fromCharCode(...new Uint8Array(u8))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+var deB64u = (s) => Uint8Array.from(atob(String(s).replace(/-/g, "+").replace(/_/g, "/") + "===".slice((String(s).length + 3) % 4)), (c) => c.charCodeAt(0));
+var unir = (...partes) => {
+  const n = partes.reduce((t, p) => t + p.length, 0);
+  const out = new Uint8Array(n);
+  let i = 0;
+  partes.forEach((p) => {
+    out.set(p, i);
+    i += p.length;
+  });
+  return out;
+};
+async function hkdf(salt, ikm, info, largo) {
+  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, largo * 8));
+}
+async function cifrar(texto, p256dh, auth) {
+  const uaPub = deB64u(p256dh), secreto = deB64u(auth);
+  const as = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  const asPub = new Uint8Array(await crypto.subtle.exportKey("raw", as.publicKey));
+  const uaKey = await crypto.subtle.importKey("raw", uaPub, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const compartido = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: uaKey }, as.privateKey, 256));
+  const ikm = await hkdf(secreto, compartido, unir(enc.encode("WebPush: info\0"), uaPub, asPub), 32);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const cek = await hkdf(salt, ikm, enc.encode("Content-Encoding: aes128gcm\0"), 16);
+  const nonce = await hkdf(salt, ikm, enc.encode("Content-Encoding: nonce\0"), 12);
+  const llave = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
+  const cifrado = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, llave, unir(enc.encode(texto), new Uint8Array([2]))));
+  const rs = new Uint8Array([0, 0, 16, 0]);
+  return unir(salt, rs, new Uint8Array([asPub.length]), asPub, cifrado);
+}
+async function llavesVapid(raw) {
+  if (raw && raw.vapid && raw.vapid.publica && raw.vapid.privada) return { nuevas: false, ...raw.vapid };
+  const par = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const publica = b64u(await crypto.subtle.exportKey("raw", par.publicKey));
+  const privada = await crypto.subtle.exportKey("jwk", par.privateKey);
+  return { nuevas: true, publica, privada };
+}
+async function jwtVapid(endpoint, vapid, ahora) {
+  const cab = b64u(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
+  const cuerpo = b64u(enc.encode(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(ahora / 1e3) + 12 * 3600, sub: "mailto:avisos@basesbox.mx" })));
+  const k = await crypto.subtle.importKey("jwk", vapid.privada, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const firma = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, k, enc.encode(cab + "." + cuerpo));
+  return cab + "." + cuerpo + "." + b64u(firma);
+}
+async function enviar(raw, aviso, opts) {
+  opts = opts || {};
+  const subs = Array.isArray(raw && raw.push) ? raw.push : [];
+  if (!subs.length || !(raw.vapid && raw.vapid.privada)) return { enviados: 0, muertas: [] };
+  const ahora = opts.ahora || Date.now(), hacer = opts.fetch || fetch;
+  const texto = JSON.stringify({ titulo: aviso.titulo, texto: aviso.texto, url: aviso.url || "/" });
+  const muertas = [];
+  let enviados = 0;
+  await Promise.all(subs.map(async (s) => {
+    try {
+      const body = await cifrar(texto, s.p256dh, s.auth);
+      const r = await hacer(s.endpoint, {
+        method: "POST",
+        body,
+        headers: { TTL: "86400", Urgency: "high", "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", Authorization: "vapid t=" + await jwtVapid(s.endpoint, raw.vapid, ahora) + ", k=" + raw.vapid.publica }
+      });
+      if (r.status === 404 || r.status === 410) muertas.push(s.endpoint);
+      else if (r.ok) enviados++;
+    } catch (e) {
+    }
+  }));
+  return { enviados, muertas };
+}
+
 // functions/api/[[path]].js
 var CABECERAS = {
   "content-type": "application/json; charset=utf-8",
@@ -7833,7 +8119,7 @@ var CABECERAS = {
 var MAX_CUERPO = 65536;
 var responder = (status, json) => new Response(JSON.stringify(json), { status, headers: CABECERAS });
 var error = (status, code, mensaje) => responder(status, { ok: false, error: { code, mensaje } });
-async function onRequest({ request, env }) {
+async function onRequest({ request, env, waitUntil }) {
   if (request.method !== "GET" && request.method !== "POST") return error(405, "metodo", "M\xE9todo no permitido.");
   if (!env.DB) return error(503, "sin_base_de_datos", 'Falta conectar la base de datos D1 con el nombre "DB".');
   const url = new URL(request.url);
@@ -7863,7 +8149,35 @@ async function onRequest({ request, env }) {
     query: Object.fromEntries(url.searchParams),
     body,
     token: (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "")
-  }, { claveInstalacion: env.SETUP_KEY });
+  }, {
+    claveInstalacion: env.SETUP_KEY,
+    // llave pública para suscribirse a los avisos (se crea la primera vez y se guarda en config)
+    claveVapid: async () => {
+      const v = await llavesVapid(await repo.config());
+      if (v.nuevas) {
+        const tx = import_core2.default.nuevaTx();
+        tx.config = { vapid: { publica: v.publica, privada: v.privada } };
+        tx.sinRev = true;
+        await repo.commit(tx);
+      }
+      return v.publica;
+    },
+    // avisos al celular: se mandan después de responder (no hacen esperar a quien registra)
+    avisar: (aviso) => {
+      const tarea = (async () => {
+        const raw = await repo.config();
+        const r2 = await enviar(raw, aviso);
+        if (r2.muertas.length) {
+          const tx = import_core2.default.nuevaTx();
+          tx.config = { push: (raw.push || []).filter((s) => !r2.muertas.includes(s.endpoint)) };
+          tx.sinRev = true;
+          await repo.commit(tx);
+        }
+      })().catch(() => {
+      });
+      if (waitUntil) waitUntil(tarea);
+    }
+  });
   return responder(r.status, r.json);
 }
 
@@ -7874,9 +8188,9 @@ var cuerpoDe = (ruta, a) => {
   return cuerpos.get(ruta);
 };
 var entrada_worker_default = {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
-    if (pathname === "/api" || pathname.startsWith("/api/")) return onRequest({ request, env });
+    if (pathname === "/api" || pathname.startsWith("/api/")) return onRequest({ request, env, waitUntil: ctx && ctx.waitUntil ? (p) => ctx.waitUntil(p) : null });
     if (request.method !== "GET" && request.method !== "HEAD") {
       return new Response("M\xE9todo no permitido", { status: 405, headers: { allow: "GET, HEAD" } });
     }

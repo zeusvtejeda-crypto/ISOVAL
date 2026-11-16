@@ -4,6 +4,7 @@
 // public/core.js; aquí solo se traduce la petición HTTP y se responde en JSON.
 import BBCore from '../../public/core.js';
 import { crearRepoD1 } from '../_d1.js';
+import { llavesVapid, enviar } from '../_push.js';
 
 const CABECERAS = {
   'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY',
@@ -14,7 +15,7 @@ const MAX_CUERPO = 65536;
 const responder = (status, json) => new Response(JSON.stringify(json), { status, headers: CABECERAS });
 const error = (status, code, mensaje) => responder(status, { ok: false, error: { code, mensaje } });
 
-export async function onRequest({ request, env }) {
+export async function onRequest({ request, env, waitUntil }) {
   if (request.method !== 'GET' && request.method !== 'POST') return error(405, 'metodo', 'Método no permitido.');
   if (!env.DB) return error(503, 'sin_base_de_datos', 'Falta conectar la base de datos D1 con el nombre "DB".');
 
@@ -39,6 +40,23 @@ export async function onRequest({ request, env }) {
     query: Object.fromEntries(url.searchParams),
     body,
     token: (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
-  }, { claveInstalacion: env.SETUP_KEY });
+  }, {
+    claveInstalacion: env.SETUP_KEY,
+    // llave pública para suscribirse a los avisos (se crea la primera vez y se guarda en config)
+    claveVapid: async () => {
+      const v = await llavesVapid(await repo.config());
+      if (v.nuevas) { const tx = BBCore.nuevaTx(); tx.config = { vapid: { publica: v.publica, privada: v.privada } }; tx.sinRev = true; await repo.commit(tx); }
+      return v.publica;
+    },
+    // avisos al celular: se mandan después de responder (no hacen esperar a quien registra)
+    avisar: (aviso) => {
+      const tarea = (async () => {
+        const raw = await repo.config();
+        const r = await enviar(raw, aviso);
+        if (r.muertas.length) { const tx = BBCore.nuevaTx(); tx.config = { push: (raw.push || []).filter((s) => !r.muertas.includes(s.endpoint)) }; tx.sinRev = true; await repo.commit(tx); }
+      })().catch(() => {});
+      if (waitUntil) waitUntil(tarea);
+    }
+  });
   return responder(r.status, r.json);
 }

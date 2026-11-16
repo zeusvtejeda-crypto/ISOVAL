@@ -10,9 +10,9 @@ const cuerpoDe = (ruta, a) => {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
-    if (pathname === '/api' || pathname.startsWith('/api/')) return onRequest({ request, env });
+    if (pathname === '/api' || pathname.startsWith('/api/')) return onRequest({ request, env, waitUntil: ctx && ctx.waitUntil ? (p) => ctx.waitUntil(p) : null });
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       return new Response('Método no permitido', { status: 405, headers: { allow: 'GET, HEAD' } });
     }
