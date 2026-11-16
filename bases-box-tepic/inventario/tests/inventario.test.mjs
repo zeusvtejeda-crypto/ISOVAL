@@ -270,13 +270,16 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
 
       // anular exige motivo y respeta el rol
       const g = v.json.resultado.grupo;
-      assert.equal((await tienda.op({ op: 'mov.anular', grupo: g, motivo: '' })).json.error.code, 'falta_motivo');
-      const r = await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'Se cobró mal' });
+      assert.equal((await local.op({ op: 'mov.anular', grupo: g, motivo: '' })).json.error.code, 'falta_motivo');
+      // el vendedor de tienda ya no puede anular una venta: solo el Almacén
+      const nt = await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'Se cobró mal' });
+      assert.equal(nt.status, 403); assert.equal(nt.json.error.code, 'solo_almacen');
+      const r = await local.op({ op: 'mov.anular', grupo: g, motivo: 'Se cobró mal' });
       assert.equal(r.status, 200, JSON.stringify(r.json));
       est = r.json.estado;
       assert.equal(prod(est, 'Base Queen · Gris').stock_tienda, 5);
       assert.equal(est.resumen.hoy.total, -2000); // solo queda la devolución
-      assert.equal((await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'otra vez' })).json.error.code, 'ya_anulado');
+      assert.equal((await local.op({ op: 'mov.anular', grupo: g, motivo: 'otra vez' })).json.error.code, 'ya_anulado');
       // lo anulado aparece marcado en el historial y las anulaciones no estorban en la lista
       const hist = (await local.call('GET', '/movs', null, { limite: '50' })).json.items;
       assert.ok(hist.some((m) => m.grupo === g && m.anulado === 1 && m.anulado_nota === 'Se cobró mal'));
@@ -324,6 +327,28 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(r2.status, 200, JSON.stringify(r2.json));
     });
 
+    test('cada venta guarda quién la hizo (vendedor) y solo el Almacén la anula', async () => {
+      const { local, tienda } = await iniciar(fabrica);
+      const b = prod(await local.estado(), 'Base Individual · Rosa');
+      await local.op({ op: 'mov.entrada', lineas: [{ id: b.id, cant: 3 }] });
+      const env = await local.op({ op: 'traspaso.enviar', lineas: [{ id: b.id, cant: 3 }] });
+      await tienda.op({ op: 'traspaso.recibir', id: env.json.resultado.id });
+      const v1 = await tienda.op({ op: 'mov.venta', pago: 'efectivo', vendedor: 'Hugo', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      const v2 = await tienda.op({ op: 'mov.venta', pago: 'tarjeta', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
+      const hist = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
+      assert.equal(hist.find((m) => m.grupo === v1.json.resultado.grupo).vendedor, 'Hugo');
+      assert.equal(hist.find((m) => m.grupo === v2.json.resultado.grupo).vendedor, 'Vendedor tienda', 'sin nombre queda el usuario que la registró');
+      const rep = (await tienda.call('GET', '/reporte-dia')).json;
+      assert.deepEqual(rep.ventas.map((v) => v.vendedor).sort(), ['Hugo', 'Vendedor tienda']);
+      // cambiar el pago conserva el vendedor
+      const c = await tienda.op({ op: 'venta.pago', grupo: v1.json.resultado.grupo, pago: 'transferencia' });
+      const h2 = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
+      assert.equal(h2.find((m) => m.grupo === c.json.resultado.grupo).vendedor, 'Hugo');
+      // la tienda no puede anular ventas; el Almacén sí
+      assert.equal((await tienda.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'error' })).json.error.code, 'solo_almacen');
+      assert.equal((await local.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'error' })).status, 200);
+    });
+
     test('reponer una venta anulada para corregir el pago: misma fecha, una sola vez, solo Almacén', async () => {
       const { local, tienda } = await iniciar(fabrica);
       const b = prod(await local.estado(), 'Base Individual · Rosa');
@@ -334,7 +359,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const g = v.json.resultado.grupo;
       assert.equal((await local.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' })).json.error.code, 'no_anulada');
       local.avanzar(2 * 86400000);
-      await tienda.op({ op: 'mov.anular', grupo: g, motivo: 'el pago fue con tarjeta' });
+      await local.op({ op: 'mov.anular', grupo: g, motivo: 'el pago fue con tarjeta' });
       assert.equal((await tienda.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' })).status, 403);
       const r = await local.op({ op: 'venta.reponer', grupo: g, pago: 'tarjeta' });
       assert.equal(r.status, 200, JSON.stringify(r.json));
@@ -588,7 +613,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(r.mes.total, 9000);
 
       // anulada: deja de contar
-      await tienda.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'Error de captura' });
+      await local.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'Error de captura' });
       r = (await tienda.call('GET', '/ventas')).json.ventas;
       assert.equal(r.hoy.total, 6000);
       assert.equal(r.hoy.n, 1);
@@ -630,7 +655,7 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal((await tienda.op({ op: 'mov.venta', entrega: 'cantera', envio: -50, lineas: [{ id: b.id, cant: 1, precio: 1600 }] })).json.error.code, 'numero_invalido');
       const v5 = await tienda.op({ op: 'mov.venta', entrega: 'cantera', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
       assert.equal(v5.json.resultado.envio, 250, 'La Cantera usa la tarifa de fuera de Tepic');
-      await tienda.op({ op: 'mov.anular', grupo: v5.json.resultado.grupo, motivo: 'Cliente canceló' });
+      await local.op({ op: 'mov.anular', grupo: v5.json.resultado.grupo, motivo: 'Cliente canceló' });
 
       const rep = (await tienda.call('GET', '/reporte-dia')).json;
       assert.equal(rep.ok, true, JSON.stringify(rep));

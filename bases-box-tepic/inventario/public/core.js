@@ -736,7 +736,7 @@
     const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
     const grupos = Object.create(null), orden = [];
     filas.forEach((r) => {
-      const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', pago: r.pago || '', entrega: r.tipo === 'venta' && !soloMonto(r) ? r.motivo || '' : '', envio: 0, soloMonto: soloMonto(r), lineas: [], total: 0 });
+      const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', vendedor: r.vendedor || '', pago: r.pago || '', entrega: r.tipo === 'venta' && !soloMonto(r) ? r.motivo || '' : '', envio: 0, soloMonto: soloMonto(r), lineas: [], total: 0 });
       if (!orden.includes(g)) orden.push(g);
       if (soloMonto(r)) { g.total += r.envio || 0; return; }
       const pzas = Math.abs(r.delta);
@@ -831,7 +831,7 @@
   function nuevoMov(ctx, grupo, i, p, loc, delta, tipo, extra) {
     return Object.assign({
       id: grupo + '-' + i, ts: ctx.ahora, prod: p.id, loc, delta, tipo, motivo: '', nota: '', rol: ctx.rol, precio: null,
-      cliente: '', pago: '', envio: 0, grupo, ref: '', anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
+      cliente: '', pago: '', envio: 0, grupo, ref: '', anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '', vendedor: ''
     }, extra);
   }
   async function productoPorId(ctx, id) {
@@ -844,6 +844,9 @@
     if (!p.activo) throw new ApiError(409, 'producto_archivado', p.nombre + ' está archivado.');
     return p;
   }
+
+  // quién hizo la venta (nombre del vendedor); si no lo mandan, queda el usuario que la registró
+  const vendedorDe = (ctx, b) => clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Vendedor tienda' : 'Almacén');
 
   // entrega de una venta → tarifa de envío en la configuración del negocio (null = sin cargo)
   const ENTREGAS = { recoge: null, tepic: 'envioTepic', xalisco: 'envioFuera', cantera: 'envioFuera' };
@@ -865,7 +868,8 @@
       motivo: def.motivos ? (def.motivos.includes(b.motivo) ? b.motivo : 'otro') : '',
       nota: clean(b.nota, 200),
       cliente: tipo === 'venta' ? clean(b.cliente, 60) : '',
-      pago: tipo === 'venta' ? (PAGOS.includes(b.pago) ? b.pago : 'efectivo') : ''
+      pago: tipo === 'venta' ? (PAGOS.includes(b.pago) ? b.pago : 'efectivo') : '',
+      vendedor: tipo === 'venta' ? vendedorDe(ctx, b) : ''
     };
     // entrega de una venta: recoge en tienda, o envío con tarifa por zona (el vendedor puede ajustar el monto)
     let envio = 0;
@@ -907,7 +911,7 @@
     const grupo = grupoDe(b, 'M');
     const total = Math.round(monto * 100) / 100;
     tx.movs.push(nuevoMov(ctx, grupo, 0, { id: '' }, 'tienda', 0, 'venta', {
-      ts, precio: 0, envio: total, motivo: 'monto', nota: clean(b.nota, 200), cliente: clean(b.cliente, 60), pago: PAGOS.includes(b.pago) ? b.pago : 'efectivo'
+      ts, precio: 0, envio: total, motivo: 'monto', nota: clean(b.nota, 200), cliente: clean(b.cliente, 60), pago: PAGOS.includes(b.pago) ? b.pago : 'efectivo', vendedor: vendedorDe(ctx, b)
     }));
     return { grupo, total };
   }
@@ -1022,6 +1026,7 @@
     if (orig.some((m) => m.anulado)) throw new ApiError(409, 'ya_anulado', 'Esa operación ya estaba anulada.');
     if (orig.some((m) => NO_ANULABLES.includes(m.tipo))) throw new ApiError(409, 'no_anulable', 'Los traspasos se cancelan desde su tarjeta y el inventario inicial se corrige con un conteo.');
     if (ctx.rol !== 'local' && orig.some((m) => m.rol !== ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo puedes anular operaciones de tu tienda.');
+    if (ctx.rol !== 'local' && orig.some((m) => m.tipo === 'venta')) throw new ApiError(403, 'solo_almacen', 'Una venta solo la puede anular el Almacén. Si se cobró distinto, usa “Cambiar pago”.');
     const prods = indexar(await ctx.repo.productos());
     const acum = {};
     orig.forEach((m) => { const k = m.prod + '|' + m.loc; acum[k] = (acum[k] || 0) - m.delta; });
@@ -1037,7 +1042,7 @@
       if (m.delta) tx.stock.push(deltaStock(m.prod, m.loc, -m.delta)); // una venta “solo monto” no mueve inventario
       tx.movs.push({
         id: nuevo + '-' + i, ts: ctx.ahora, prod: m.prod, loc: m.loc, delta: -m.delta, tipo: 'anulacion', motivo: '', nota: motivo,
-        rol: ctx.rol, precio: m.precio, cliente: '', pago: '', envio: 0, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
+        rol: ctx.rol, precio: m.precio, cliente: '', pago: '', envio: 0, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '', vendedor: ''
       });
       tx.movsAnulados.push({ id: m.id, ts: ctx.ahora, por: ctx.rol, nota: motivo });
     });
@@ -1605,7 +1610,7 @@
       },
       async ventas(desde) {
         return S.movs.filter((m) => (m.tipo === 'venta' || m.tipo === 'devolucion') && !m.anulado && m.ts >= desde)
-          .map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, precio: m.precio, grupo: m.grupo, tipo: m.tipo, cliente: m.cliente, pago: m.pago, motivo: m.motivo, envio: m.envio || 0, rol: m.rol }));
+          .map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, precio: m.precio, grupo: m.grupo, tipo: m.tipo, cliente: m.cliente, pago: m.pago, motivo: m.motivo, envio: m.envio || 0, rol: m.rol, vendedor: m.vendedor || '' }));
       },
       async commit(tx) {
         // 1) verificar todo antes de tocar nada

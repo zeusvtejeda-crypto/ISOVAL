@@ -342,7 +342,7 @@ function agrupar(movs) {
   movs.forEach((m) => {
     let g = idx[m.grupo];
     if (!g) {
-      g = idx[m.grupo] = { grupo: m.grupo, ts: m.ts, tipo: m.tipo, rol: m.rol, nota: m.nota, motivo: m.motivo, cliente: m.cliente, pago: m.pago, ref: m.ref, anulado: !!m.anulado, anulado_ts: m.anulado_ts, anulado_por: m.anulado_por, anulado_nota: m.anulado_nota, lineas: [] };
+      g = idx[m.grupo] = { grupo: m.grupo, ts: m.ts, tipo: m.tipo, rol: m.rol, nota: m.nota, motivo: m.motivo, cliente: m.cliente, vendedor: m.vendedor || '', pago: m.pago, ref: m.ref, anulado: !!m.anulado, anulado_ts: m.anulado_ts, anulado_por: m.anulado_por, anulado_nota: m.anulado_nota, lineas: [] };
       out.push(g);
     }
     if (m.tipo === 'regreso' && m.delta < 0) return; // un regreso guarda salida de tienda + entrada al almacén; se muestra una sola línea
@@ -363,7 +363,12 @@ function tituloOp(g) {
   return t;
 }
 const resumenOp = (g) => (g.motivo === 'monto' && g.tipo === 'venta' ? 'Solo monto, sin producto' : plural(g.lineas.length, 'producto', 'productos') + ' · ' + plural(g.piezas, 'pieza', 'piezas'));
-const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'].includes(g.tipo) && (S.rol === 'local' || g.rol === S.rol);
+const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado', 'inicial', 'anulacion'].includes(g.tipo) && (S.rol === 'local' || (g.rol === S.rol && g.tipo !== 'venta'));
+// quién hizo la venta (las anteriores a este campo muestran el usuario que la registró)
+const vendedorDe = (g) => g.vendedor || (ROLES[g.rol] ? ROLES[g.rol].nombre : '');
+const VENDEDORES_BASE = ['Tienda', 'Hugo', 'Carlos', 'VILLEDA'];
+const ultimoVendedor = () => { try { return localStorage.getItem('bb-inv:vendedor') || ''; } catch (e) { return ''; } };
+const guardarVendedor = (v) => { try { localStorage.setItem('bb-inv:vendedor', v); } catch (e) { /* sin almacenamiento */ } };
 
 /* ───────── armazón de la app ───────── */
 const TABS = [
@@ -551,7 +556,7 @@ function filaOperacion(g) {
   const t = TIPOS[g.tipo] || { t: g.tipo, ic: 'info', c: '' };
   return html`<li><button type="button" class="item" data-act="op-det" data-grupo="${g.grupo}">
     <span class="ico-c ${g.anulado ? '' : t.c}">${ico(t.ic)}</span>
-    <div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}">${tituloOp(g)}</div><div class="item-s">${resumenOp(g)} · ${ROLES[g.rol].corto} · ${hace(g.ts)}</div></div>
+    <div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}">${tituloOp(g)}</div><div class="item-s">${resumenOp(g)} · ${g.tipo === 'venta' ? 'Vend. ' + vendedorDe(g) : ROLES[g.rol].corto} · ${hace(g.ts)}</div></div>
     ${g.anulado ? html`<span class="pill bad">Anulada</span>` : g.total ? html`<b class="cifras" style="font:700 18px var(--f-etiqueta)">${dinero(g.total)}</b>` : ''}
   </button></li>`;
 }
@@ -985,6 +990,7 @@ function abrirForma(tipo, o) {
       ${f.precio ? html`<div class="total-b"><span>Total</span><b id="f-total">${dinero(0)}</b></div><p class="t-peq" id="f-total-sub" style="margin:-6px 0 14px"></p>` : ''}
       ${f.venta ? html`<div class="campo"><span class="lbl">Entrega</span><div class="opciones" id="f-entrega">${ENTREGAS.map(([k, t]) => html`<button type="button" class="opcion" data-entrega="${k}" aria-pressed="${String(k === entrega)}" style="padding:0 12px">${t}</button>`)}</div><p class="t-peq" id="f-entrega-ayuda" style="margin-top:8px"></p></div>
         <label class="campo" id="f-envio-campo" hidden><span class="lbl">Cobro de envío</span><span class="precio" style="max-width:160px"><span class="muted">$</span><input id="f-envio" type="text" inputmode="decimal" value="" aria-label="Cobro de envío"></span></label>
+        <label class="campo"><span class="lbl">Vendedor (quién hizo la venta)</span><input class="inp" id="f-vendedor" maxlength="40" list="f-vendedores" placeholder="Ej. Hugo, Carlos, Tienda" autocomplete="off" value="${o.vendedor || ultimoVendedor()}"><datalist id="f-vendedores">${[...new Set([...VENDEDORES_BASE, ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
         <label class="campo"><span class="lbl">Cliente (opcional)</span><input class="inp" id="f-cliente" maxlength="60" placeholder="Nombre o referencia" autocomplete="off" value="${o.cliente || ''}"></label>
         <div class="campo"><span class="lbl">Forma de pago</span><div class="opciones g4" id="f-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>` : ''}
       <label class="campo"><span class="lbl">${f.notaEt || 'Nota (opcional)'}</span><textarea class="inp" id="f-nota" rows="2" maxlength="200" placeholder="${tipo === 'envio' ? 'Ej. sale en la camioneta de las 4' : 'Escribe algo que ayude a recordar'}">${o.nota || ''}</textarea></label>
@@ -1026,6 +1032,9 @@ function abrirForma(tipo, o) {
     const cuerpo = { op: f.op, cid, lineas: ed.lineas(), nota: $('#f-nota', d.el).value.trim() };
     if (f.motivos) cuerpo.motivo = motivo;
     if (f.venta) {
+      const vend = $('#f-vendedor', d.el).value.trim();
+      if (!vend) throw new ErrorApi({ mensaje: 'Escribe quién hizo la venta (vendedor).' });
+      cuerpo.vendedor = vend; guardarVendedor(vend);
       cuerpo.cliente = $('#f-cliente', d.el).value.trim(); cuerpo.pago = pago;
       if (entrega) cuerpo.entrega = entrega;
       if (tarifaDe(entrega)) cuerpo.envio = envioMonto();
@@ -1044,7 +1053,7 @@ async function deshacerOp(grupo) {
 }
 function exitoForma(tipo, res, cuerpo) {
   const e = S.est.negocio;
-  const deshacer = res.grupo ? { texto: 'Deshacer', fn: () => deshacerOp(res.grupo) } : null;
+  const deshacer = res.grupo && (tipo !== 'venta' || S.rol === 'local') ? { texto: 'Deshacer', fn: () => deshacerOp(res.grupo) } : null;
   if (tipo === 'venta') toast('Venta registrada · ' + dinero(res.total), { accion: deshacer });
   else if (tipo === 'devolucion') toast('Devolución guardada · ' + dinero(res.total), { accion: deshacer });
   else if (tipo === 'entrada' || tipo === 'salida' || tipo === 'merma') toast('Guardado · ' + plural(res.piezas, 'pieza', 'piezas'), { accion: deshacer });
@@ -1793,7 +1802,7 @@ function textoReporteDia(r) {
   if (r.ventas.length) {
     L.push('Detalle:');
     r.ventas.forEach((v, i) => {
-      L.push((i + 1) + ') ' + fmtHora.format(v.ts) + ' · ' + (v.cliente || 'Mostrador') + ' · ' + (PAGOS[v.pago] || 'Efectivo') + (ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''));
+      L.push((i + 1) + ') ' + fmtHora.format(v.ts) + ' · ' + (v.cliente || 'Mostrador') + ' · Vendedor: ' + (v.vendedor || 'sin registrar') + ' · ' + (PAGOS[v.pago] || 'Efectivo') + (ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''));
       if (v.soloMonto) L.push('   Solo monto, sin producto');
       v.lineas.forEach((l) => L.push('   ' + l.pzas + ' × ' + nombreProd(l.id) + ' — ' + dinero(l.pzas * l.precio)));
       if (v.envio) L.push('   Envío — ' + dinero(v.envio));
@@ -1815,11 +1824,11 @@ function textoReporteDia(r) {
   return L.join('\n');
 }
 function csvReporteDia(r) {
-  const filas = [['Día', 'Hora', 'Tipo', 'Cliente', 'Pago', 'Entrega', 'Producto', 'Piezas', 'Precio', 'Importe', 'Envío', 'Total de la venta']];
-  r.ventas.forEach((v) => v.lineas.forEach((l, i) => filas.push([r.dia, fmtHora.format(v.ts), 'Venta', v.cliente, PAGOS[v.pago] || '', ENTREGA_T[v.entrega] || '', nombreProd(l.id), l.pzas, l.precio, l.pzas * l.precio, i === 0 ? v.envio : '', i === 0 ? v.total : ''])));
-  r.devoluciones.forEach((v) => v.lineas.forEach((l, i) => filas.push([r.dia, fmtHora.format(v.ts), 'Devolución', '', '', '', nombreProd(l.id), -l.pzas, l.precio, -l.pzas * l.precio, '', i === 0 ? -v.total : ''])));
-  r.gastos.forEach((g) => filas.push([r.dia, fmtHora.format(g.ts), 'Gasto', g.concepto, PAGOS[g.pago] || '', GASTO_CATS[g.cat] || g.cat, '', '', '', -g.monto, '', -g.monto]));
-  filas.push([r.dia, '', 'TOTAL DEL DÍA', '', '', '', '', r.totales.pzas, '', '', r.totales.envios, r.totales.neto]);
+  const filas = [['Día', 'Hora', 'Tipo', 'Vendedor', 'Cliente', 'Pago', 'Entrega', 'Producto', 'Piezas', 'Precio', 'Importe', 'Envío', 'Total de la venta']];
+  r.ventas.forEach((v) => v.lineas.forEach((l, i) => filas.push([r.dia, fmtHora.format(v.ts), 'Venta', v.vendedor || '', v.cliente, PAGOS[v.pago] || '', ENTREGA_T[v.entrega] || '', nombreProd(l.id), l.pzas, l.precio, l.pzas * l.precio, i === 0 ? v.envio : '', i === 0 ? v.total : ''])));
+  r.devoluciones.forEach((v) => v.lineas.forEach((l, i) => filas.push([r.dia, fmtHora.format(v.ts), 'Devolución', '', '', '', '', nombreProd(l.id), -l.pzas, l.precio, -l.pzas * l.precio, '', i === 0 ? -v.total : ''])));
+  r.gastos.forEach((g) => filas.push([r.dia, fmtHora.format(g.ts), 'Gasto', '', g.concepto, PAGOS[g.pago] || '', GASTO_CATS[g.cat] || g.cat, '', '', '', -g.monto, '', -g.monto]));
+  filas.push([r.dia, '', 'TOTAL DEL DÍA', '', '', '', '', '', r.totales.pzas, '', '', r.totales.envios, r.totales.neto]);
   return aCsv(filas);
 }
 async function abrirReporteDia() {
@@ -1840,7 +1849,7 @@ async function abrirReporteDia() {
       <div class="total-b"><span>Total del día</span><b>${dinero(t.neto)}</b></div>
       <p class="t-peq" style="margin:-6px 0 14px">${plural(t.ventas, 'venta', 'ventas')} · ${plural(t.pzas, 'pieza', 'piezas')}${t.envios ? ' · envíos ' + dinero(t.envios) : ''}${t.devuelto ? ' · devoluciones -' + dinero(t.devuelto) : ''}</p>
       ${Object.keys(t.porPago).length ? html`<h3 class="t-sec">Por forma de pago</h3><div class="vt-lista">${Object.keys(t.porPago).map((k) => html`<div class="vt-fila"><span class="n">${PAGOS[k] || k}</span><span class="v">${dinero(t.porPago[k])}</span></div>`)}</div>` : ''}
-      ${datos.ventas.length ? html`<h3 class="t-sec">Ventas</h3><div class="vt-lista">${datos.ventas.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)} · ${v.cliente || 'Mostrador'}</span><span class="v">${dinero(v.total)}</span><small>${v.soloMonto ? 'Solo monto, sin producto' : v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}<br>${PAGOS[v.pago] || 'Efectivo'}${ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''}${v.envio ? ' (envío ' + dinero(v.envio) + ')' : ''}</small></div>`)}</div>` : html`<div class="vacio" style="padding:18px 8px"><b>Sin ventas este día</b><span>Cuando registres ventas aparecerán aquí.</span></div>`}
+      ${datos.ventas.length ? html`<h3 class="t-sec">Ventas</h3><div class="vt-lista">${datos.ventas.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)} · ${v.cliente || 'Mostrador'} · <b>${v.vendedor || 'Sin vendedor'}</b></span><span class="v">${dinero(v.total)}</span><small>${v.soloMonto ? 'Solo monto, sin producto' : v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}<br>${PAGOS[v.pago] || 'Efectivo'}${ENTREGA_T[v.entrega] ? ' · ' + ENTREGA_T[v.entrega] : ''}${v.envio ? ' (envío ' + dinero(v.envio) + ')' : ''}</small></div>`)}</div>` : html`<div class="vacio" style="padding:18px 8px"><b>Sin ventas este día</b><span>Cuando registres ventas aparecerán aquí.</span></div>`}
       ${t.gastos || t.efectivoNeto ? html`<h3 class="t-sec">Caja</h3><div class="vt-lista"><div class="vt-fila"><span class="n">Efectivo vendido</span><span class="v">${dinero(t.porPago.efectivo || 0)}</span></div><div class="vt-fila"><span class="n">Gastos en efectivo</span><span class="v">-${dinero(t.gastosEfectivo)}</span></div><div class="vt-fila"><span class="n">Efectivo en caja</span><span class="v">${dinero(t.efectivoNeto)}</span></div></div>` : ''}
       ${datos.gastos.length ? html`<h3 class="t-sec">Gastos</h3><div class="vt-lista">${datos.gastos.map((g) => html`<div class="vt-fila"><span class="n">${fmtHora.format(g.ts)} · ${GASTO_CATS[g.cat] || g.cat}</span><span class="v">-${dinero(g.monto)}</span><small>${g.concepto || ''}${g.concepto ? ' · ' : ''}${PAGOS[g.pago] || ''}</small></div>`)}</div>` : ''}
       ${datos.devoluciones.length ? html`<h3 class="t-sec">Devoluciones</h3><div class="vt-lista">${datos.devoluciones.map((v) => html`<div class="vt-fila"><span class="n">${fmtHora.format(v.ts)}</span><span class="v">-${dinero(v.total)}</span><small>${v.lineas.map((l) => l.pzas + ' × ' + nombreProd(l.id)).join(', ')}</small></div>`)}</div>` : ''}
@@ -2076,13 +2085,14 @@ function abrirOperacion(grupo) {
       <div class="card flat" style="margin-bottom:14px"><ul class="lista">${g.lineas.map((m) => html`<li class="item" style="min-height:52px"><span class="prod-ico" style="width:38px;height:38px">${S.idx[m.prod] ? iconoProd(S.idx[m.prod], 28) : ''}</span><div class="grow"><div class="item-t ${g.anulado ? 'tachado' : ''}">${nombreProd(m.prod)}</div><div class="item-s">${m.loc === 'local' ? 'Almacén' : 'Tienda'}${conPrecio ? ' · ' + dinero(m.precio) + ' c/u' : ''}</div></div><b class="cifras" style="font:700 19px var(--f-etiqueta);color:${m.delta < 0 ? 'var(--bad)' : 'var(--ok)'}">${m.delta > 0 ? '+' : '−'}${num(Math.abs(m.delta))}</b></li>`)}</ul></div>
       <dl class="kv">
         ${conPrecio ? html`<dt>Total</dt><dd>${dinero(g.total)}</dd>` : ''}
+        ${g.tipo === 'venta' ? html`<dt>Vendedor</dt><dd><b>${vendedorDe(g)}</b></dd>` : ''}
         ${g.cliente ? html`<dt>Cliente</dt><dd>${g.cliente}</dd>` : ''}
         ${g.pago && g.tipo === 'venta' ? html`<dt>Pago</dt><dd>${PAGOS[g.pago] || g.pago}</dd>` : ''}
         ${g.tipo === 'venta' && ENTREGA_T[g.motivo] ? html`<dt>Entrega</dt><dd>${ENTREGA_T[g.motivo]}${g.envio ? ' · envío ' + dinero(g.envio) : ''}</dd>` : ''}
         ${g.nota ? html`<dt>Nota</dt><dd>${g.nota}</dd>` : ''}
         ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Almacén' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
       </dl>`,
-    pie: puedeAnular(g) ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' && !g.anulado && (S.rol === 'local' || g.rol === S.rol) ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}${puedeAnular(g) ? html`<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : ''}`
   });
   const cp = $('#o-pago', d.el);
   if (cp) cp.addEventListener('click', () => {
@@ -2431,8 +2441,8 @@ async function exportarMovimientos(btn) {
   if (btn) btn.setAttribute('aria-busy', 'true');
   try {
     const movs = await traerMovimientos();
-    const cab = ['Fecha', 'Operación', 'Producto', 'Lugar', 'Cantidad', 'Precio', 'Responsable', 'Motivo', 'Nota', 'Cliente', 'Pago', 'Entrega', 'Envío', 'Anulada', 'Folio'];
-    const filas = movs.map((m) => [fechaISO(m.ts), (TIPOS[m.tipo] ? TIPOS[m.tipo].t : m.tipo === 'anulacion' ? 'Anulación' : m.tipo), nombreProd(m.prod), m.loc === 'local' ? 'Almacén' : 'Tienda', m.delta, m.precio == null ? '' : m.precio, ROLES[m.rol].corto, MOTIVOS[m.motivo] || '', m.nota, m.cliente, PAGOS[m.pago] || '', ENTREGA_T[m.motivo] || '', m.envio || '', m.anulado ? 'Sí' : '', m.grupo]);
+    const cab = ['Fecha', 'Operación', 'Producto', 'Lugar', 'Cantidad', 'Precio', 'Responsable', 'Motivo', 'Nota', 'Vendedor', 'Cliente', 'Pago', 'Entrega', 'Envío', 'Anulada', 'Folio'];
+    const filas = movs.map((m) => [fechaISO(m.ts), (TIPOS[m.tipo] ? TIPOS[m.tipo].t : m.tipo === 'anulacion' ? 'Anulación' : m.tipo), nombreProd(m.prod), m.loc === 'local' ? 'Almacén' : 'Tienda', m.delta, m.precio == null ? '' : m.precio, ROLES[m.rol].corto, MOTIVOS[m.motivo] || '', m.nota, m.tipo === 'venta' ? (m.vendedor || '') : '', m.cliente, PAGOS[m.pago] || '', ENTREGA_T[m.motivo] || '', m.envio || '', m.anulado ? 'Sí' : '', m.grupo]);
     await descargar('movimientos-bases-box-' + fechaArchivo() + '.csv', aCsv([cab, ...filas]), 'text/csv;charset=utf-8');
   } catch (e) { toast(e.message, { tipo: 'error' }); } finally { if (btn) btn.removeAttribute('aria-busy'); }
 }

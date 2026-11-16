@@ -88,7 +88,7 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     r = await C();
     assert.equal(r.estado, 'error');
     assert.ok(r.hallazgos.some((x) => x.codigo === 'venta_sin_precio'));
-    await tienda.op({ op: 'mov.anular', grupo: cero.json.resultado.grupo, motivo: 'Error de captura' });
+    await local.op({ op: 'mov.anular', grupo: cero.json.resultado.grupo, motivo: 'Error de captura' });
     assert.equal((await C()).estado, 'claras', 'al anular la venta mala vuelve a estar claro');
     await tienda.op({ op: 'mov.venta', pago: 'efectivo', lineas: [{ id: a.id, cant: 1, precio: 100 }] });
     r = await C();

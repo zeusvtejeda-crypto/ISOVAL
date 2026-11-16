@@ -21,7 +21,7 @@ const SCHEMA = [
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, prod TEXT NOT NULL, loc TEXT NOT NULL, delta INTEGER NOT NULL, tipo TEXT NOT NULL,
     motivo TEXT NOT NULL DEFAULT '', nota TEXT NOT NULL DEFAULT '', rol TEXT NOT NULL, precio REAL, cliente TEXT NOT NULL DEFAULT '',
     pago TEXT NOT NULL DEFAULT '', envio REAL NOT NULL DEFAULT 0, grupo TEXT NOT NULL, ref TEXT NOT NULL DEFAULT '', anulado INTEGER NOT NULL DEFAULT 0,
-    anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '')`,
+    anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '', vendedor TEXT)`,
   `CREATE INDEX IF NOT EXISTS movs_ts ON movs (ts DESC, id DESC)`,
   `CREATE INDEX IF NOT EXISTS movs_grupo ON movs (grupo)`,
   `CREATE INDEX IF NOT EXISTS movs_prod ON movs (prod, ts DESC)`,
@@ -49,7 +49,7 @@ const SCHEMA = [
 ];
 
 const COLS_PRODUCTO = ['id', 'nombre', 'cat', 'medida', 'tono', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'activo', 'stock_local', 'stock_tienda', 'hubo_local', 'hubo_tienda', 'creado', 'actualizado'];
-const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'envio', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
+const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'envio', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota', 'vendedor'];
 const COLS_GASTO = ['id', 'ts', 'rol', 'monto', 'cat', 'concepto', 'pago', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
 const COLS_AGENDA = ['id', 'ts', 'rol', 'cliente', 'tel', 'dia', 'hora', 'lineas', 'detalle', 'entrega', 'direccion', 'anticipo', 'nota', 'estado', 'estado_ts', 'estado_por', 'estado_nota', 'venta', 'actualizado'];
 const COLS_EDITABLES = ['nombre', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'medida', 'tono', 'activo', 'actualizado'];
@@ -68,6 +68,10 @@ export async function crearRepoD1(db) {
       // bases creadas antes de existir el cobro de envío: se agrega la columna una sola vez
       try { await db.prepare(`SELECT envio FROM movs LIMIT 0`).all(); } catch (e) {
         try { await db.prepare(`ALTER TABLE movs ADD COLUMN envio REAL NOT NULL DEFAULT 0`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
+      }
+      // quién hizo cada venta (columna nueva)
+      try { await db.prepare(`SELECT vendedor FROM movs LIMIT 0`).all(); } catch (e) {
+        try { await db.prepare(`ALTER TABLE movs ADD COLUMN vendedor TEXT`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
       }
     }
     for (const sql of SCHEMA.filter((x) => /TABLE IF NOT EXISTS (intentos|gastos|agenda)|INDEX IF NOT EXISTS (gastos_ts|agenda_dia)/.test(x))) await db.prepare(sql).run();
@@ -223,7 +227,7 @@ export async function crearRepoD1(db) {
     gastos(desde) { return todas(`SELECT * FROM gastos WHERE ts >= ?1 ORDER BY ts DESC`, desde); },
     async gasto(id) { return (await q(`SELECT * FROM gastos WHERE id = ?1`, id).first()) || null; },
     ventas(desde) {
-      return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
+      return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol, vendedor FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
     },
     // Cuenta un intento de PIN en una sola sentencia atómica (el contador no se pierde aunque lleguen muchas peticiones a la vez).
     async intento(clave, ahora) {
