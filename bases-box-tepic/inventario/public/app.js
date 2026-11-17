@@ -2112,7 +2112,24 @@ function abrirOperacion(grupo) {
         ${g.nota ? html`<dt>Nota</dt><dd>${g.nota}</dd>` : ''}
         ${g.anulado ? html`<dt>Anulada</dt><dd>${hace(g.anulado_ts)} · ${g.anulado_por === 'local' ? 'Almacén' : 'Tienda'}</dd><dt>Motivo</dt><dd>${g.anulado_nota}</dd>` : ''}
       </dl>`,
-    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' && !g.anulado && esAdmin() ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button>` : ''}${puedeAnular(g) ? html`<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : ''}`
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>${g.tipo === 'venta' && !g.anulado && esAdmin() ? html`<button type="button" class="btn btn-g" id="o-pago">Cambiar pago</button><button type="button" class="btn btn-g" id="o-vend">Cambiar vendedor</button>` : ''}${puedeAnular(g) ? html`<button type="button" class="btn btn-r" id="o-anular">Anular operación</button>` : ''}`
+  });
+  const cv = $('#o-vend', d.el);
+  if (cv) cv.addEventListener('click', () => {
+    const s2 = dialogo({
+      titulo: 'Cambiar vendedor',
+      cuerpo: html`<p class="t-peq" style="margin:0 0 12px">Ahora: <b>${vendedorDe(g)}</b>. La venta conserva su día, pago y piezas; el cambio queda anotado en el historial.</p>
+        <label class="campo"><span class="lbl">Vendedor correcto</span><input class="inp" id="cv-nombre" maxlength="40" list="cv-lista" autocomplete="off" placeholder="Ej. Hugo, Carlos, Zeus"><datalist id="cv-lista">${[...new Set([...VENDEDORES_BASE, 'Zeus', 'Rubén', ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
+        <p class="err" id="cv-err" hidden></p>`,
+      pie: html`<button type="button" class="btn btn-g" data-cerrar>Volver</button><button type="button" class="btn btn-p" id="cv-ok">Guardar</button>`
+    });
+    const okb = $('#cv-ok', s2.el), err = $('#cv-err', s2.el);
+    okb.addEventListener('click', () => guardando(okb, err, async () => {
+      const v = $('#cv-nombre', s2.el).value.trim();
+      if (!v) throw new ErrorApi({ mensaje: 'Escribe quién hizo la venta.' });
+      await op({ op: 'venta.pago', grupo, vendedor: v });
+      s2.cerrar(); d.cerrar(); toast('Vendedor corregido: ' + v + '.'); S.hist.rev = null; if (S.tab === 'historial') cargarHistorial(true);
+    }));
   });
   const cp = $('#o-pago', d.el);
   if (cp) cp.addEventListener('click', () => {

@@ -1055,26 +1055,33 @@
   // Corrige la forma de pago de una venta (p. ej. se capturó en efectivo y fue con tarjeta) sin cambiar su día:
   // la venta original queda anulada en el historial y se registra la misma venta, con su fecha y hora, con el pago correcto.
   async function opVentaPago(ctx, b, tx) {
-    const grupo = clean(b.grupo, 60), pago = String(b.pago || '');
-    if (!PAGOS.includes(pago)) throw bad('pago_invalido', 'Elige la forma de pago correcta.');
+    const grupo = clean(b.grupo, 60);
     const orig = (await ctx.repo.movsGrupo(grupo)).filter((m) => m.tipo !== 'anulacion');
     if (!orig.length) throw new ApiError(404, 'no_existe', 'No encontré esa venta.');
     if (orig.some((m) => m.tipo !== 'venta')) throw bad('no_es_venta', 'Solo se puede cambiar la forma de pago de una venta.');
+    // también corrige quién la vendió (solo Zeus y el Almacén)
+    const vendAntes = orig[0].vendedor || '';
+    const vend = b.vendedor === undefined || b.vendedor === null ? null : clean(b.vendedor, 40);
+    if (vend !== null && !vend) throw bad('falta_vendedor', 'Escribe quién hizo la venta.');
+    if (vend !== null && !ADMIN.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo Zeus o el Almacén cambian el vendedor.');
+    const pago = b.pago === undefined || b.pago === null || b.pago === '' ? (vend !== null ? orig[0].pago || 'efectivo' : '') : String(b.pago);
+    if (!PAGOS.includes(pago)) throw bad('pago_invalido', 'Elige la forma de pago correcta.');
     if (orig.some((m) => m.anulado)) throw new ApiError(409, 'ya_anulado', 'Esa venta está anulada.');
     if (!ADMIN.includes(ctx.rol) && orig.some((m) => m.rol !== ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo puedes corregir ventas de tu tienda.');
     const antes = orig[0].pago || 'efectivo';
-    if (antes === pago) throw bad('mismo_pago', 'La venta ya está registrada con esa forma de pago.');
+    const cambiaVend = vend !== null && vend !== vendAntes;
+    if (antes === pago && !cambiaVend) throw bad('mismo_pago', vend !== null ? 'La venta ya tiene ese vendedor.' : 'La venta ya está registrada con esa forma de pago.');
     const nombre = { efectivo: 'efectivo', transferencia: 'transferencia', tarjeta: 'tarjeta', otro: 'otro' };
-    const motivo = 'Cambio de pago: ' + nombre[antes] + ' → ' + nombre[pago];
+    const motivo = [antes !== pago ? 'Cambio de pago: ' + nombre[antes] + ' → ' + nombre[pago] : '', cambiaVend ? 'Cambio de vendedor: ' + (vendAntes || 'sin nombre') + ' → ' + vend : ''].filter(Boolean).join(' · ');
     const anul = uid('A'), nuevo = uid('V');
     orig.forEach((m, i) => {
       tx.movs.push(Object.assign({}, m, { id: anul + '-' + i, ts: ctx.ahora, delta: -m.delta, tipo: 'anulacion', motivo: '', nota: motivo, rol: ctx.rol, cliente: '', pago: '', envio: 0, grupo: anul, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
       tx.movsAnulados.push({ id: m.id, ts: ctx.ahora, por: ctx.rol, nota: motivo });
       // la misma venta, con su fecha y su vendedor; el inventario no cambia (se anula −1 y se registra −1)
-      tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
+      tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago, vendedor: cambiaVend ? vend : m.vendedor, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
     });
     tx.guardas.push({ tipo: 'grupo_sin_anular', grupo });
-    return { grupo: nuevo, anulada: grupo, antes, pago };
+    return { grupo: nuevo, anulada: grupo, antes, pago, vendedor: cambiaVend ? vend : vendAntes };
   }
 
   // Repone una venta que se anuló solo para corregirla (p. ej. “el pago fue con tarjeta”): la vuelve a registrar

@@ -343,6 +343,14 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const c = await tienda.op({ op: 'venta.pago', grupo: v1.json.resultado.grupo, pago: 'transferencia' });
       const h2 = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
       assert.equal(h2.find((m) => m.grupo === c.json.resultado.grupo).vendedor, 'Hugo');
+      // cambiar el vendedor (para comisiones): conserva día, pago y piezas
+      const cv = await tienda.op({ op: 'venta.pago', grupo: c.json.resultado.grupo, vendedor: 'Carlos' });
+      assert.equal(cv.status, 200, JSON.stringify(cv.json)); assert.equal(cv.json.resultado.vendedor, 'Carlos'); assert.equal(cv.json.resultado.pago, 'transferencia');
+      const h3 = (await local.call('GET', '/movs', null, { limite: '30', anulaciones: '1' })).json.items;
+      assert.equal(h3.find((m) => m.grupo === cv.json.resultado.grupo).vendedor, 'Carlos');
+      assert.ok(h3.some((m) => m.tipo === 'anulacion' && /Cambio de vendedor: Hugo → Carlos/.test(m.nota)));
+      assert.equal((await tienda.op({ op: 'venta.pago', grupo: cv.json.resultado.grupo, vendedor: 'Carlos' })).json.error.code, 'mismo_pago');
+      assert.equal((await tienda.op({ op: 'venta.pago', grupo: cv.json.resultado.grupo, vendedor: '  ' })).json.error.code, 'falta_vendedor');
       // Zeus (tienda) y el Almacén pueden anular ventas (Rubén no: ver ruben.test.mjs)
       assert.equal((await tienda.op({ op: 'mov.anular', grupo: v2.json.resultado.grupo, motivo: 'error' })).status, 200);
     });

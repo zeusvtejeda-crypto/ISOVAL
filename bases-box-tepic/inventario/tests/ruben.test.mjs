@@ -136,7 +136,7 @@ test('push: firma VAPID válida, cabeceras correctas y suscripciones vencidas de
   const llamadas = [];
   const r = await enviar(raw, { titulo: 'T', texto: 'X' }, { fetch: async (url, init) => { llamadas.push({ url, init }); return { ok: !url.includes('vencida'), status: url.includes('vencida') ? 410 : 201 }; } });
   assert.deepEqual(r, { enviados: 1, muertas: ['https://web.push.apple.com/vencida'] });
-  const h = llamadas[0].init.headers;
+  const h = llamadas.find((l) => l.url.includes('fcm')).init.headers; // se mandan en paralelo: el orden no está garantizado
   assert.equal(h['Content-Encoding'], 'aes128gcm'); assert.equal(h.TTL, '86400');
   const m = /^vapid t=([^,]+), k=(.+)$/.exec(h.Authorization);
   assert.ok(m); assert.equal(m[2], v.publica);
