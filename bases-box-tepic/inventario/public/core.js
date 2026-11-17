@@ -1561,7 +1561,7 @@
         if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La revisión de cuentas es del dueño y del almacén.');
         return ok(await revisarCuentas(ctx));
       }
-      if (ctx.rol === 'ruben' && (path === '/agenda' || path === '/gastos')) throw new ApiError(403, 'sin_permiso', 'Tu perfil solo registra ventas.');
+      if (ctx.rol === 'ruben' && path === '/gastos') throw new ApiError(403, 'sin_permiso', 'Tu perfil solo registra ventas.'); // Rubén sí ve los pedidos de clientes (solo lectura)
       if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/push/clave' && m === 'GET') {

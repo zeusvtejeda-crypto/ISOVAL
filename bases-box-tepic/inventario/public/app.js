@@ -565,6 +565,7 @@ function pintarInicioRuben(cont) {
   poner(cont, html`
     <div class="cabecera"><div><h1 class="t-pant">${saludo}, Rubén</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · Solo ventas</p></div></div>
     <button type="button" class="btn btn-p btn-b btn-venta-grande" data-act="venta-nueva">${ico('recibo')}Nueva venta</button>
+    <button type="button" class="btn btn-g btn-b" data-act="agenda">${ico('reloj')}Pedidos de clientes${(e.agenda || []).length ? ' · ' + (e.agenda || []).length + ' abiertos' : ''}</button>
     <section class="card" aria-label="Mis ventas de hoy"><div class="card-t"><h2 class="t-sec">Mis ventas de hoy</h2><b class="cifras">${dinero(sumar(deHoy, (g) => g.total))}</b></div>
       ${deHoy.length ? html`<ul class="lista">${deHoy.map(filaOperacion)}</ul>` : html`<div class="vacio" style="padding:14px 8px"><b>Aún no registras ventas hoy</b><span>Toca “Nueva venta” para empezar.</span></div>`}</section>
     <section class="card flat" aria-label="Bases en tienda"><div class="card-t" style="padding:14px 16px 0;margin:0"><h2 class="t-sec">Bases disponibles en tienda</h2><span class="t-peq">${plural(sumar(bases, (p) => p.stock_tienda), 'pieza', 'piezas')}</span></div>
@@ -1288,7 +1289,7 @@ function mostrarAvisoAgenda() {
 
 async function abrirAgenda(inicial) {
   let vista = (inicial && inicial.vista) || 'proximos', mes = hoyK().slice(0, 7), sel = hoyK(), cerrados = false, datos = [];
-  const puede = S.rol !== 'dueno';
+  const puede = S.rol !== 'dueno' && S.rol !== 'ruben'; // el dueño y Rubén solo consultan los pedidos
   const d = dialogo({
     titulo: 'Pedidos de clientes',
     clase: 'ancho',
@@ -1365,7 +1366,7 @@ async function abrirAgenda(inicial) {
 }
 
 function abrirPedidoCliente(a, alCambiar) {
-  const puede = S.rol !== 'dueno', abierto = a.estado === 'pendiente' || a.estado === 'listo';
+  const puede = S.rol !== 'dueno' && S.rol !== 'ruben', abierto = a.estado === 'pendiente' || a.estado === 'listo';
   const tot = totalPedido(a);
   const d = dialogo({
     titulo: a.cliente,
@@ -2556,7 +2557,7 @@ VISTAS.mas = {
         ${local && S.modo !== 'local' ? fila('basura', 'Dejar todo en cero', 'Borra movimientos y existencias para empezar limpio', 'reiniciar') : ''}
         ${fila('x', 'Cerrar sesión', '', 'salir')}
       </ul></div></section>
-      ${S.rol === 'ruben' ? '' : html`${local ? html`<section class="sec-mas"><span class="t-sec">Negocio y catálogo</span><div class="card flat"><ul class="lista">
+      ${S.rol === 'ruben' ? html`<section class="sec-mas"><span class="t-sec">Pedidos</span><div class="card flat"><ul class="lista">${fila('reloj', 'Pedidos de clientes', 'Próximos, por calendario y entregados (solo consulta)', 'agenda')}</ul></div></section>` : html`${local ? html`<section class="sec-mas"><span class="t-sec">Negocio y catálogo</span><div class="card flat"><ul class="lista">
         ${fila('tienda', 'Datos del negocio y WhatsApp', e.negocio.nombre, 'negocio')}
         ${fila('cubo', 'Medidas y precios', plural(e.medidas.length, 'medida', 'medidas'), 'medidas')}
         ${fila('capas', 'Tonos', plural(e.tonos.length, 'tono', 'tonos'), 'tonos')}

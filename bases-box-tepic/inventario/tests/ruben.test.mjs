@@ -63,7 +63,8 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
       { op: 'mov.conteo', loc: 'tienda', lineas: [{ id: b.id, cant: 1 }] }, { op: 'agenda.crear', cliente: 'x', dia: '2026-01-01', detalle: 'x' },
       { op: 'pin.ruben', pinActual: '615243', pinNuevo: '615244' }, { op: 'push.suscribir', endpoint: 'https://x', p256dh: 'x', auth: 'x' }
     ]) assert.equal((await ruben.op(op)).status, 403, op.op);
-    for (const ruta of ['/resumen', '/reporte-semana', '/cuentas', '/gastos', '/agenda', '/push/clave']) assert.equal((await ruben.call('GET', ruta)).status, 403, ruta);
+    for (const ruta of ['/resumen', '/reporte-semana', '/cuentas', '/gastos', '/push/clave']) assert.equal((await ruben.call('GET', ruta)).status, 403, ruta);
+    assert.equal((await ruben.call('GET', '/agenda', null, { desde: '2026-01-01', hasta: '2026-01-31' })).status, 200, 'Rubén ve los pedidos de clientes (solo lectura)');
     assert.equal(avisos.length, 1, 'lo que falla no avisa');
 
     // solo ve sus propios movimientos y su reporte del día
