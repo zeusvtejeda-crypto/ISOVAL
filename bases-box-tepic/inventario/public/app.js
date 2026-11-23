@@ -1393,6 +1393,138 @@ async function abrirAgenda(inicial) {
   return d;
 }
 
+/* ───────── ticket de pedido para el cliente (imagen PNG para mandar por WhatsApp) ───────── */
+const numDe = (s) => Number(String(s).replace(/[^\d.]/g, '')) || 0;
+function datosTicket(a) {
+  const txt = [a.nota || '', a.detalle || ''].join(' · ');
+  const lineas = a.lineas.map((l) => {
+    const n = nombreProd(l.id).replace(/^Base /, '').split(' · ');
+    const p = S.idx[l.id], t = p ? tonoDe(p.tono) : null;
+    return { cant: l.cant, medida: n[0] || '', color: n[1] || '', hex: t ? t.hex : '#8A8D8F', precio: l.precio || 0 };
+  });
+  const sub = lineas.reduce((s, l) => s + l.cant * l.precio, 0);
+  const mEnv = /env[ií]o[^$\d]{0,20}\$?\s*([\d,]+)/i.exec(txt), mTot = /\$\s*([\d,]+)\s*=/.exec(txt) || /total[^$\d]{0,12}\$?\s*([\d,]+)/i.exec(txt);
+  const total = mTot ? numDe(mTot[1]) : sub + (mEnv ? numDe(mEnv[1]) : 0);
+  const mPatas = /patas?\s+(?:de\s+)?([a-záéíóúñ0-9 ]+?)(?=\s*[.,·(]|$)/i.exec(txt);
+  const forma = /tarjeta|terminal/i.test(txt) ? 'Tarjeta' : /transferencia/i.test(txt) ? 'Transferencia bancaria' : /efectivo/i.test(txt) ? 'Efectivo' : '';
+  const dir = (a.direccion || '').trim(), corte = dir.search(/(?<!\b(?:Col|Av|No|Fracc|Esq|Int|Prol|Priv|Edif|Blvd|Sr|Sra|Dr|Lic|Ing|C))\.\s+/i);
+  return {
+    cliente: a.cliente, tel: (a.tel || '').replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3'), lineas, total, anticipo: a.anticipo || 0,
+    saldo: Math.max(0, total - (a.anticipo || 0)), forma, patas: mPatas ? mayus(mPatas[1].trim()) : '',
+    dia: mayus(new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(fechaDeKey(a.dia))),
+    hora: a.hora ? (() => { const [h, m] = a.hora.split(':').map(Number); return (h % 12 || 12) + ':' + String(m).padStart(2, '0') + (h < 12 ? ' a. m.' : ' p. m.'); })() : 'Por confirmar',
+    direccion: corte > 0 ? dir.slice(0, corte) : dir || (a.entrega === 'recoge' ? 'Recoge en tienda' : 'Por confirmar'),
+    referencia: corte > 0 ? dir.slice(corte).replace(/^\.\s+/, '') : '', estado: AG_EST[a.estado] ? AG_EST[a.estado][0] : a.estado, id: a.id
+  };
+}
+function cargarImg(src) { return new Promise((ok, mal) => { const i = new Image(); i.onload = () => ok(i); i.onerror = mal; i.src = src; }); }
+async function dibujarTicket(a) {
+  const D = datosTicket(a), W = 1080, H = 2600, NAR = '#F15A22', TINTA = '#1A1A1A', GRIS = '#5F6368';
+  await Promise.all(['700 40px Anton', '400 40px Anton', '700 40px Barlow', '600 40px Barlow', '400 40px Barlow', '700 40px "Barlow Condensed"'].map((f) => document.fonts.load(f).catch(() => null)));
+  const logo = await cargarImg('logo-ticket.png').catch(() => null);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  const txt = (s, x, y, f, col, al) => { c.font = f; c.fillStyle = col || TINTA; c.textAlign = al || 'left'; c.fillText(s, x, y); };
+  const ajustar = (s, x, y, max, f, col, alto, lim) => { c.font = f; const pal = String(s).split(/\s+/); let l = '', n = 0; for (const p of pal) { const t = l ? l + ' ' + p : p; if (c.measureText(t).width > max && l) { txt(l, x, y + n * alto, f, col); n++; l = p; if (lim && n >= lim) return n; } else l = t; } if (l) { txt(l, x, y + n * alto, f, col); n++; } return n; };
+  const rr = (x, y, w, h, r) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+  // fondo y cabecera
+  c.fillStyle = '#1C1C1C'; c.fillRect(0, 0, W, H);
+  if (logo) { c.save(); c.beginPath(); c.arc(150, 120, 92, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill(); c.clip(); c.drawImage(logo, 58, 28, 184, 184); c.restore(); }
+  c.fillStyle = NAR; c.fillRect(278, 40, 6, 160);
+  txt('BASES TIPO', 320, 125, '400 92px Anton', '#fff'); const wb = (c.font = '400 92px Anton', c.measureText('BASES TIPO ').width); txt('BOX', 320 + wb, 125, '400 92px Anton', NAR);
+  c.fillStyle = '#9A9A9A'; c.fillRect(320, 168, 120, 2); c.fillRect(780, 168, 120, 2);
+  c.save(); c.letterSpacing = '22px'; txt('TEPIC', 610, 180, '600 34px Barlow', '#fff', 'center'); c.restore();
+  // tarjeta con borde de ticket
+  const X = 30, Y = 240, CW = W - 60, CH = H - Y - 40;
+  c.fillStyle = '#F6F5F2'; rr(X, Y, CW, CH, 28); c.fill();
+  // título
+  txt('RESUMEN DE PEDIDO', W / 2, Y + 92, '400 64px Anton', TINTA, 'center');
+  c.fillStyle = NAR; c.fillRect(X + 50, Y + 70, 150, 5); c.fillRect(X + CW - 200, Y + 70, 150, 5);
+  // cliente / teléfono
+  let y = Y + 170;
+  txt('Cliente:', 150, y, '700 30px Barlow', TINTA); txt(D.cliente, 150, y + 50, '700 50px Barlow', TINTA);
+  c.strokeStyle = TINTA; c.lineWidth = 4; c.beginPath(); c.arc(105, y + 2, 16, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(78, y + 52); c.quadraticCurveTo(105, y + 12, 132, y + 52); c.closePath(); c.stroke();
+  c.fillStyle = '#DADADA'; c.fillRect(560, y - 30, 2, 100);
+  if (D.tel) { txt('Teléfono:', 680, y, '700 30px Barlow', TINTA); txt(D.tel, 680, y + 50, '700 50px Barlow', TINTA); c.beginPath(); c.arc(625, y + 12, 26, Math.PI * 0.72, Math.PI * 2.62); c.lineTo(600, y + 42); c.closePath(); c.stroke(); c.font = '700 26px Barlow'; c.fillStyle = TINTA; c.textAlign = 'center'; c.fillText('✆', 625, y + 21); }
+  // producto(s)
+  y += 100; const PH = 210 + Math.max(0, D.lineas.length - 1) * 60;
+  c.strokeStyle = '#CFCFCF'; c.lineWidth = 2; rr(70, y, 940, PH, 24); c.fillStyle = '#fff'; c.fill(); c.stroke();
+  const hex = D.lineas.length ? hexOk(D.lineas[0].hex) : '#8A8D8F', bx = 110, by = y + PH / 2 - 72;
+  c.fillStyle = oscuro(hex, 0.45); [[bx + 14, by + 92], [bx + 196, by + 136], [bx + 380, by + 92]].forEach(([px, py]) => c.fillRect(px, py, 14, 22));
+  c.fillStyle = oscuro(hex, 0.7); c.beginPath(); c.moveTo(bx, by + 30); c.lineTo(bx + 205, by + 80); c.lineTo(bx + 205, by + 130); c.lineTo(bx, by + 80); c.fill();
+  c.fillStyle = oscuro(hex, 0.85); c.beginPath(); c.moveTo(bx + 205, by + 80); c.lineTo(bx + 400, by + 30); c.lineTo(bx + 400, by + 80); c.lineTo(bx + 205, by + 130); c.fill();
+  c.fillStyle = hex; c.beginPath(); c.moveTo(bx, by + 30); c.lineTo(bx + 185, by - 18); c.lineTo(bx + 400, by + 30); c.lineTo(bx + 205, by + 80); c.fill();
+  c.fillStyle = '#DADADA'; c.fillRect(570, y + 30, 2, PH - 60);
+  let ly = y + 70;
+  if (!D.lineas.length) { ajustar(a.detalle || 'Pedido', 600, ly, 380, '700 40px Barlow', TINTA, 46, 3); }
+  D.lineas.forEach((l, i) => {
+    txt(l.cant + ' Base' + (l.cant > 1 ? 's ' : ' ') + l.medida, 600, ly, '700 46px Barlow', TINTA);
+    c.fillStyle = hexOk(l.hex); c.beginPath(); c.arc(625, ly + 40, 20, 0, Math.PI * 2); c.fill();
+    txt('Color: ' + (l.color || '—'), 665, ly + 50, '400 32px Barlow', TINTA); ly += i < D.lineas.length - 1 ? 60 + 46 : 0;
+  });
+  if (D.patas) { c.fillStyle = '#4A3A30'; c.fillRect(617, ly + 85, 16, 30); txt('Patas: ' + D.patas, 665, ly + 110, '400 32px Barlow', TINTA); }
+  // fecha y hora
+  y += PH + 70;
+  c.strokeStyle = TINTA; c.lineWidth = 4; rr(85, y - 38, 52, 50, 8); c.stroke(); c.fillStyle = TINTA; c.fillRect(85, y - 24, 52, 4);
+  txt('Fecha de entrega:', 160, y - 10, '700 32px Barlow', TINTA); txt(D.dia, 160, y + 32, '400 32px Barlow', TINTA);
+  c.fillStyle = '#DADADA'; c.fillRect(700, y - 40, 2, 80);
+  c.beginPath(); c.arc(760, y - 4, 26, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(760, y - 18); c.lineTo(760, y - 4); c.lineTo(772, y + 4); c.stroke();
+  txt('Hora:', 800, y - 10, '700 32px Barlow', TINTA); txt(D.hora, 800, y + 32, '400 34px Barlow', TINTA);
+  c.fillStyle = '#DADADA'; c.fillRect(70, y + 60, 940, 2);
+  // dirección y referencia
+  y += 120;
+  c.beginPath(); c.arc(110, y - 12, 18, Math.PI, 0); c.lineTo(110, y + 28); c.closePath(); c.stroke();
+  txt('Dirección de entrega:', 160, y - 10, '700 32px Barlow', TINTA);
+  const nd = ajustar(D.direccion, 160, y + 32, 840, '400 32px Barlow', TINTA, 38, 3); y += 32 + nd * 38;
+  if (D.referencia) { y += 30; c.beginPath(); c.moveTo(88, y + 6); c.lineTo(110, y - 16); c.lineTo(132, y + 6); c.moveTo(94, y); c.lineTo(94, y + 26); c.lineTo(126, y + 26); c.lineTo(126, y); c.stroke(); txt('Referencia:', 160, y - 6, '700 32px Barlow', TINTA); const nr = ajustar(D.referencia, 160, y + 34, 840, '400 30px Barlow', TINTA, 36, 2); y += 34 + nr * 36; }
+  // pago
+  y += 40; const PY = y, PHh = 300;
+  c.strokeStyle = '#3A3A3A'; c.lineWidth = 3; rr(70, PY + 20, 940, PHh, 22); c.stroke();
+  c.fillStyle = '#3A3A3A'; rr(70, PY - 12, 210, 60, 18); c.fill(); txt('PAGO', 175, PY + 32, '700 40px "Barlow Condensed"', '#fff', 'center');
+  let py = PY + 100;
+  txt('Total del pedido:', 190, py, '700 38px Barlow', TINTA);
+  c.fillStyle = NAR; rr(640, py - 58, 340, 82, 14); c.fill(); txt(dinero(D.total) + ' MXN', 810, py + 2, '700 52px Barlow', '#fff', 'center');
+  c.strokeStyle = TINTA; c.lineWidth = 3; [0, 10, 20].forEach((o) => { c.beginPath(); c.ellipse(130, py - 20 + o, 22, 9, 0, 0, Math.PI * 2); c.stroke(); });
+  c.setLineDash([8, 8]); c.strokeStyle = '#BDBDBD'; c.beginPath(); c.moveTo(190, py + 30); c.lineTo(980, py + 30); c.stroke(); c.setLineDash([]);
+  py += 74;
+  if (D.anticipo) {
+    txt('Anticipo:', 190, py, '400 34px Barlow', TINTA); txt(dinero(D.anticipo) + ' MXN', 980, py, '700 36px Barlow', TINTA, 'right');
+    txt('Saldo pendiente:', 190, py + 58, '400 34px Barlow', TINTA); txt(dinero(D.saldo) + ' MXN', 980, py + 58, '700 36px Barlow', TINTA, 'right');
+  } else txt('Saldo a pagar al recibir:', 190, py, '400 34px Barlow', TINTA), txt(dinero(D.total) + ' MXN', 980, py, '700 36px Barlow', TINTA, 'right');
+  if (D.forma) txt('Forma de pago: ' + D.forma, 190, PY + PHh - 6, '700 32px Barlow', TINTA);
+  // estado, folio y pie (la altura del ticket se ajusta al contenido)
+  y = PY + PHh + 95;
+  c.fillStyle = '#FCE3B4'; rr(70, y - 50, 440, 84, 42); c.fill(); txt('ESTADO: ' + D.estado.toUpperCase(), 290, y + 6, '700 40px "Barlow Condensed"', '#B4580C', 'center');
+  let x = 600; const sem = D.id.split('').map((ch) => ch.charCodeAt(0));
+  c.fillStyle = TINTA; for (let i = 0; x < 1000; i++) { const w = 2 + (sem[i % sem.length] % 4) * 2; if (i % 2 === 0) c.fillRect(x, y - 50, w, 64); x += w + 2; }
+  txt('Folio ' + D.id.slice(-6).toUpperCase(), 800, y + 46, '600 24px Barlow', GRIS, 'center');
+  y += 130; c.save(); c.letterSpacing = '10px'; txt('GRACIAS POR TU CONFIANZA', W / 2, y, '600 30px Barlow', TINTA, 'center'); c.restore();
+  const fin = y + 60, HF = fin + 40;
+  c.fillStyle = '#1C1C1C'; c.fillRect(0, fin, W, H - fin);
+  for (let px = X + 30; px < X + CW - 10; px += 44) { c.beginPath(); c.arc(px, fin, 16, Math.PI, 0); c.fill(); }
+  const out = document.createElement('canvas'); out.width = W; out.height = HF;
+  out.getContext('2d').drawImage(cv, 0, 0, W, HF, 0, 0, W, HF);
+  return out;
+}
+async function abrirTicket(a) {
+  let cv;
+  try { cv = await dibujarTicket(a); } catch (e) { toast('No pude armar el ticket: ' + e.message, { tipo: 'error' }); return; }
+  const url = cv.toDataURL('image/png'), nombre = 'Pedido-' + a.cliente.replace(/[^\wÀ-ÿ]+/g, '_') + '.png';
+  const d = dialogo({
+    titulo: 'Ticket para ' + a.cliente,
+    cuerpo: html`<img src="${url}" alt="Ticket del pedido de ${a.cliente}" style="width:100%;border-radius:12px;display:block">`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><a class="btn btn-g" id="tk-bajar" href="${url}" download="${nombre}">${ico('bajar')}Descargar</a><button type="button" class="btn btn-p" id="tk-compartir">Compartir</button>`
+  });
+  $('#tk-compartir', d.el).addEventListener('click', async () => {
+    try {
+      const blob = await new Promise((ok) => cv.toBlob(ok, 'image/png'));
+      const file = new File([blob], nombre, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: 'Pedido ' + a.cliente });
+      else { $('#tk-bajar', d.el).click(); toast('Tu navegador no deja compartir: se descargó la imagen.'); }
+    } catch (e) { if (e && e.name !== 'AbortError') toast('No se pudo compartir: ' + e.message, { tipo: 'error' }); }
+  });
+}
+
 function abrirPedidoCliente(a, alCambiar) {
   const puede = S.rol !== 'dueno' && S.rol !== 'ruben', abierto = a.estado === 'pendiente' || a.estado === 'listo';
   const tot = totalPedido(a);
@@ -1409,13 +1541,15 @@ function abrirPedidoCliente(a, alCambiar) {
         ${a.nota ? html`<dt>Nota</dt><dd>${a.nota}</dd>` : ''}
         <dt>Apuntó</dt><dd>${ROLES[a.rol] ? ROLES[a.rol].nombre : a.rol} · ${hace(a.ts)}</dd>
         ${a.estado === 'entregado' || a.estado === 'cancelado' ? html`<dt>${AG_EST[a.estado][0]}</dt><dd>${hace(a.estado_ts)}${a.estado_nota ? ' · ' + a.estado_nota : ''}</dd>` : ''}
-      </dl>`,
+      </dl>
+      ${S.rol !== 'dueno' ? html`<button type="button" class="btn btn-g btn-b" id="pc-ticket" style="margin-top:14px">${ico('recibo')}Ticket para el cliente</button>` : ''}`,
     pie: !puede ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
       : abierto ? html`<button type="button" class="btn btn-g" id="pc-cerrar-p" data-cerrar>Cerrar</button><button type="button" class="btn btn-g" id="pc-editar">${ico('editar')}Editar</button>${a.estado === 'pendiente' ? html`<button type="button" class="btn btn-g" id="pc-listo">Marcar listo</button>` : ''}<button type="button" class="btn btn-p" id="pc-entregar">${S.rol === 'tienda' && a.lineas.length ? 'Entregar y cobrar' : 'Marcar entregado'}</button>`
         : esAdmin() ? html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button><button type="button" class="btn btn-p" id="pc-reabrir">Reabrir</button>` : html`<button type="button" class="btn btn-g" data-cerrar>Cerrar</button>`
   });
   const ir = (sel, fn) => { const b = $(sel, d.el); if (b) b.addEventListener('click', fn); };
   const cambiar = async (estado, extra) => { await op(Object.assign({ op: 'agenda.estado', id: a.id, estado }, extra)); if (alCambiar) alCambiar(); };
+  ir('#pc-ticket', () => abrirTicket(a));
   ir('#pc-editar', () => { d.cerrar(); formPedidoCliente(a, null, alCambiar); });
   ir('#pc-listo', async () => { try { await cambiar('listo'); d.cerrar(); toast('Marcado como listo.'); } catch (e) { toast(e.message, { tipo: 'error' }); } });
   ir('#pc-reabrir', async () => { try { await cambiar('pendiente'); d.cerrar(); toast('Pedido reabierto.'); } catch (e) { toast(e.message, { tipo: 'error' }); } });
