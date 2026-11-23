@@ -569,7 +569,35 @@ function pintarInicioRuben(cont) {
     <section class="card" aria-label="Mis ventas de hoy"><div class="card-t"><h2 class="t-sec">Mis ventas de hoy</h2><b class="cifras">${dinero(sumar(deHoy, (g) => g.total))}</b></div>
       ${deHoy.length ? html`<ul class="lista">${deHoy.map(filaOperacion)}</ul>` : html`<div class="vacio" style="padding:14px 8px"><b>Aún no registras ventas hoy</b><span>Toca “Nueva venta” para empezar.</span></div>`}</section>
     <section class="card flat" aria-label="Bases en tienda"><div class="card-t" style="padding:14px 16px 0;margin:0"><h2 class="t-sec">Bases disponibles en tienda</h2><span class="t-peq">${plural(sumar(bases, (p) => p.stock_tienda), 'pieza', 'piezas')}</span></div>
-      <p class="t-peq" style="padding:6px 16px 14px">Para vender una base en específico ve a <b>Inventario</b> y toca <b>Vender</b>.</p></section>`);
+      <p class="t-peq" style="padding:6px 16px 14px">Para vender una base en específico ve a <b>Inventario</b> y toca <b>Vender</b>.</p></section>
+    ${cardPorHacerHoy()}`);
+}
+
+// pedidos de hoy (y atrasados) sin entregar y las bases que faltan por fabricar para cubrirlos
+function porHacerHoy() {
+  const h = hoyK(), ab = ((S.est && S.est.agenda) || []).filter((a) => a.dia <= h);
+  const nec = {};
+  ab.filter((a) => a.estado === 'pendiente').forEach((a) => a.lineas.forEach((l) => { nec[l.id] = (nec[l.id] || 0) + l.cant; }));
+  const faltan = Object.keys(nec).map((id) => {
+    const p = S.idx[id], hay = p ? (p.stock_local || 0) + (p.stock_tienda || 0) : 0;
+    return { id, nombre: nombreProd(id).replace(/^Base /, ''), pide: nec[id], hay, falta: Math.max(0, nec[id] - hay) };
+  }).filter((x) => x.falta > 0).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  return { pedidos: ab, faltan, revisar: ab.filter((a) => !a.lineas.length) };
+}
+function cardPorHacerHoy() {
+  const { pedidos, faltan, revisar } = porHacerHoy();
+  return html`<section class="card" aria-label="Pedidos pendientes de hoy"><div class="card-t"><h2 class="t-sec">Pedidos pendientes de hoy</h2><span class="t-peq">${plural(pedidos.length, 'pedido', 'pedidos')}</span></div>
+    ${pedidos.length ? html`<ul class="lista">${pedidos.map((a) => html`<li><button type="button" class="item" data-act="agenda">
+      <span class="ico-c ${a.estado === 'listo' ? 'ok' : a.dia < hoyK() ? 'bad' : 'info'}">${ico('reloj')}</span>
+      <div class="grow"><div class="item-t">${a.cliente}${a.hora ? ' · ' + a.hora : ''}</div><div class="item-s">${resumenPedido(a) || 'Sin detalle'}${a.dia < hoyK() ? ' · atrasado (' + etiquetaDiaAg(a.dia) + ')' : ''}${a.estado === 'listo' ? ' · listo' : ''}</div></div>
+    </button></li>`)}</ul>` : html`<div class="vacio" style="padding:14px 8px"><b>No hay pedidos para hoy</b><span>Los de los próximos días están en “Pedidos de clientes”.</span></div>`}
+  </section>
+  <section class="card" aria-label="Bases por hacer hoy"><div class="card-t"><h2 class="t-sec">Bases por hacer hoy</h2><span class="t-peq">${plural(sumar(faltan, (x) => x.falta), 'base', 'bases')}</span></div>
+    ${faltan.length ? html`<ul class="lista">${faltan.map((x) => html`<li><div class="item"><span class="ico-c bad">${ico('fabrica')}</span>
+      <div class="grow"><div class="item-t">${x.falta} × ${x.nombre}</div><div class="item-s">Piden ${x.pide} · hay ${x.hay} en inventario</div></div></div></li>`)}</ul>`
+    : html`<div class="vacio" style="padding:14px 8px"><b>No falta fabricar nada</b><span>Hay inventario para los pedidos de hoy.</span></div>`}
+    ${revisar.length ? html`<p class="t-peq" style="padding:6px 16px 14px">Revisar a mano (sin productos capturados): ${revisar.map((a) => a.cliente).join(', ')}.</p>` : ''}
+  </section>`;
 }
 
 function filaOperacion(g) {
