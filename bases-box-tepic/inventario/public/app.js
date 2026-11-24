@@ -260,6 +260,7 @@ async function cargarEstado() {
   const r = await llamar('GET', '/estado');
   if (r.json.ok) { aplicarEstado(r.json); return true; }
   if (r.status === 401 && r.json.error.code === 'sin_sesion') { salir(r.json.error.mensaje); return false; }
+  if (r.json.error && r.json.error.code === 'negocio_cerrado') { pantallaCerrado(r.json.error); return false; }
   throw new ErrorApi(r.json.error);
 }
 
@@ -273,6 +274,7 @@ async function op(cuerpo) {
   }
   const er = r.json.error;
   if (r.status === 401 && er.code === 'sin_sesion') { salir(er.mensaje); throw new ErrorApi(er); }
+  if (er.code === 'negocio_cerrado') { pantallaCerrado(er); throw new ErrorApi(er); }
   if (er.code === 'conflicto' || er.code === 'duplicado') await cargarEstado().catch(() => {});
   if (er.code === 'duplicado') return {};
   throw new ErrorApi(er);
@@ -287,6 +289,7 @@ async function sincronizar(forzar) {
     const r = await llamar('GET', '/rev');
     if (r.json.ok) { if (r.json.rev !== S.est.rev) await cargarEstado(); }
     else if (r.status === 401 && r.json.error.code === 'sin_sesion') salir(r.json.error.mensaje);
+    else if (r.json.error && r.json.error.code === 'negocio_cerrado') pantallaCerrado(r.json.error);
   } catch (e) { /* sin red: el chip ya lo avisa */ } finally { sincronizando = false; }
 }
 
@@ -2884,6 +2887,7 @@ VISTAS.mas = {
         ${local ? fila('usuario', 'PIN del dueño', e.dueno ? 'Cambiar el PIN con el que entra el dueño' : 'Crea el acceso del dueño (solo consulta)', 'pin-dueno') : ''}
         ${local ? fila('candado', 'Código de recuperación', 'Genera uno nuevo si perdiste el anterior', 'codigo-nuevo') : ''}
         ${local && S.modo !== 'local' ? fila('basura', 'Dejar todo en cero', 'Borra movimientos y existencias para empezar limpio', 'reiniciar') : ''}
+        ${local && S.modo !== 'local' ? fila('candado', 'Cerrar el negocio (emergencia)', 'Apaga la app para todos; solo el almacén la reabre con su PIN', 'cerrar-negocio') : ''}
         ${fila('x', 'Cerrar sesión', '', 'salir')}
       </ul></div></section>
       ${S.rol === 'ruben' ? html`<section class="sec-mas"><span class="t-sec">Pedidos</span><div class="card flat"><ul class="lista">${fila('reloj', 'Pedidos de clientes', 'Próximos, por calendario y entregados (solo consulta)', 'agenda')}</ul></div></section>` : html`${local ? html`<section class="sec-mas"><span class="t-sec">Negocio y catálogo</span><div class="card flat"><ul class="lista">
@@ -2974,6 +2978,7 @@ const A = {
   'pin-tienda': () => formPin(true),
   'codigo-nuevo': () => formCodigoNuevo(),
   reiniciar: () => formReiniciar(),
+  'cerrar-negocio': () => formCerrarNegocio(),
   tema: (b) => { store.set(CLAVE_TEMA, b.dataset.v); aplicarTema(); VISTAS.mas.actualizar(); },
   instalar: async () => {
     if (!S.instalar) return;
@@ -3033,6 +3038,26 @@ function formReiniciar() {
     S.hist.rev = null;
     d.cerrar();
     toast('Listo: todo quedó en cero.');
+  }));
+}
+
+// Botón de emergencia: cerrar el negocio digital.
+function formCerrarNegocio() {
+  const d = dialogo({
+    titulo: 'Cerrar el negocio',
+    cuerpo: html`<div class="aviso warn" style="margin-bottom:14px">${ico('alerta')}<span class="grow">Al cerrar, <b>nadie podrá entrar ni registrar ventas, gastos o pedidos</b> (ni Zeus, ni Rubén, ni el dueño). Los datos NO se borran. Solo el almacén, con su PIN, puede volver a abrir.</span></div>
+      <label class="campo"><span class="lbl">Tu PIN (almacén)</span><input class="inp pin" id="cn-pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">Motivo (opcional, se muestra al abrir la app)</span><input class="inp" id="cn-motivo" autocomplete="off" maxlength="120" placeholder="Ej. Negocio en pausa"></label>
+      <p class="err" id="cn-err" hidden></p>`,
+    pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-r" id="cn-ok">Cerrar el negocio</button>`
+  });
+  const btn = $('#cn-ok', d.el), err = $('#cn-err', d.el);
+  btn.addEventListener('click', () => guardando(btn, err, async () => {
+    const pin = $('#cn-pin', d.el).value;
+    if (!pin) throw new ErrorApi({ mensaje: 'Escribe el PIN del almacén.' });
+    await op({ op: 'negocio.cerrar', pinActual: pin, motivo: $('#cn-motivo', d.el).value });
+    d.cerrar();
+    pantallaCerrado({ motivo: $('#cn-motivo', d.el).value });
   }));
 }
 const vistaCodigo = (codigo) => html`<p class="t-peq" style="margin-bottom:12px">Guárdalo en un lugar seguro (una foto, tu gestor de contraseñas o un papel). Solo se muestra ahora.</p><span class="codigo" id="codigo-v">${codigo}</span><div style="margin-top:12px"><button type="button" class="btn btn-g btn-b" id="cod-copiar">${ico('copiar')}Copiar código</button></div>`;
@@ -3104,6 +3129,45 @@ function pantallaLogin(msg) {
     });
   };
   render();
+}
+
+// Pantalla de bloqueo cuando el negocio está cerrado (botón de emergencia).
+function pantallaCerrado(info) {
+  $$('dialog.sheet').forEach((d) => d.close());
+  const admin = esAdmin(), motivo = (info && info.motivo) || '';
+  poner($('#raiz'), html`<div class="acceso"><div class="acceso-in">
+    ${cabeceraMarca()}
+    <div class="card pila" style="text-align:center">
+      <span class="ico-c warn" style="width:64px;height:64px;margin:0 auto">${ico('candado', 'g')}</span>
+      <h2 class="t-sec">Negocio cerrado</h2>
+      <p class="t-peq">El negocio digital está cerrado temporalmente. No se puede entrar ni registrar nada.${motivo ? ' Motivo: ' + motivo : ''}</p>
+      ${admin
+        ? html`<p class="err" id="ce-err" hidden></p><button type="button" class="btn btn-p btn-b" id="ce-reabrir">Reabrir el negocio</button>`
+        : html`<p class="t-peq">Solo el Almacén puede reabrirlo. Pídele que entre con su PIN.</p>`}
+      <button type="button" class="btn btn-g btn-s btn-b" id="ce-salir">Cerrar sesión</button>
+    </div>
+    ${pie()}
+  </div></div>`);
+  const bs = $('#ce-salir'); if (bs) bs.addEventListener('click', () => salir());
+  const br = $('#ce-reabrir');
+  if (br) br.addEventListener('click', () => {
+    const d = dialogo({
+      titulo: 'Reabrir el negocio',
+      cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Escribe el PIN del almacén para volver a abrir el negocio.</p>
+        <label class="campo"><span class="lbl">PIN del almacén</span><input class="inp pin" id="ce-pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+        <p class="err" id="ce-d-err" hidden></p>`,
+      pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="ce-ok">Reabrir</button>`
+    });
+    $('#ce-ok', d.el).addEventListener('click', () => guardando($('#ce-ok', d.el), $('#ce-d-err', d.el), async () => {
+      const pin = $('#ce-pin', d.el).value;
+      if (!pin) throw new ErrorApi({ mensaje: 'Escribe el PIN del almacén.' });
+      await op({ op: 'negocio.abrir', pinActual: pin });
+      d.cerrar();
+      await cargarEstado();
+      irA('inicio', { forzar: true });
+      toast('Negocio reabierto.');
+    }));
+  });
 }
 
 function formOlvide(rolInicial) {

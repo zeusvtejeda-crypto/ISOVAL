@@ -219,6 +219,7 @@
       acceso: raw.acceso || {},
       intentos: raw.intentos || {},
       secret: raw.secret || '',
+      cerrado: raw.cerrado || null,
       rev: raw.rev | 0
     };
   }
@@ -270,7 +271,8 @@
     const cfg = await cargarCfg(ctx);
     return ok({
       servidor: ctx.servidor !== false, version: VERSION, configurado: cfg.configurado, negocio: cfg.negocio.nombre,
-      requiereClave: !cfg.configurado && !!ctx.claveInstalacion, dueno: !!(cfg.acceso && cfg.acceso.dueno), ruben: !!(cfg.acceso && cfg.acceso.ruben)
+      requiereClave: !cfg.configurado && !!ctx.claveInstalacion, dueno: !!(cfg.acceso && cfg.acceso.dueno), ruben: !!(cfg.acceso && cfg.acceso.ruben),
+      cerrado: cfg.cerrado ? { ts: cfg.cerrado.ts, motivo: cfg.cerrado.motivo || '' } : null
     });
   }
 
@@ -1602,6 +1604,28 @@
     return {};
   }
 
+  // Botón de emergencia: cierra el negocio digital. Con el negocio cerrado, nadie puede
+  // entrar ni registrar nada; solo el Almacén, con su PIN, puede reabrirlo.
+  async function opCerrarNegocio(ctx, b, tx) {
+    const cfg = ctx.cfg;
+    const it = await reservar(ctx, 'local');
+    const acc = cfg.acceso.local;
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local');
+    tx.config = { cerrado: { ts: ctx.ahora, por: ctx.rol, motivo: clean(b.motivo, 120) } };
+    return {};
+  }
+
+  async function opAbrirNegocio(ctx, b, tx) {
+    const cfg = ctx.cfg;
+    const it = await reservar(ctx, 'local');
+    const acc = cfg.acceso.local;
+    if (!igual(hashPin(acc.salt, String(b.pinActual || '')), acc.hash)) fallar(it, 'pin_incorrecto', 'Tu PIN no coincide.');
+    await limpiarIntentos(ctx, 'local');
+    tx.config = { cerrado: null };
+    return {};
+  }
+
   const OPS = {
     'producto.crear': [['local'], opProductoCrear],
     'producto.variantes': [['local'], opVariantes],
@@ -1638,7 +1662,9 @@
     'pin.dueno': [['local'], opPinDueno],
     'pin.reiniciar': [['local'], opPinReiniciar],
     'recup.nueva': [['local'], opRecupNueva],
-    'sistema.reiniciar': [['local'], opReiniciar]
+    'sistema.reiniciar': [['local'], opReiniciar],
+    'negocio.cerrar': [['local'], opCerrarNegocio],
+    'negocio.abrir': [['local'], opAbrirNegocio]
   };
 
   // Ejecuta una operación ya autenticada y la guarda de forma atómica.
@@ -1671,6 +1697,11 @@
       const au = verificar(cfg, ctx.req.token, ahora);
       ctx.rol = au.rol;
       ctx.exp = au.exp;
+      if (cfg.cerrado) {
+        const opCerr = ctx.req.body && ctx.req.body.op;
+        const permitido = path === '/op' && m === 'POST' && (opCerr === 'negocio.abrir' || opCerr === 'pin.cambiar' || opCerr === 'pin.reiniciar');
+        if (!permitido) throw new ApiError(503, 'negocio_cerrado', cfg.cerrado.motivo ? ('Negocio cerrado: ' + cfg.cerrado.motivo) : 'El negocio está cerrado temporalmente. Solo el Almacén puede reabrirlo con su PIN.');
+      }
       if (path === '/rev' && m === 'GET') return ok({ rev: cfg.rev });
       if (path === '/estado' && m === 'GET') return ok(await armarEstado(ctx));
       if (path === '/movs' && m === 'GET') return ok(await listarMovs(ctx));

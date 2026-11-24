@@ -94,4 +94,34 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     assert.equal(dz.puso, 1000); assert.equal(dz.regresado, 400); assert.equal(dz.debe, 600);
     assert.equal(dr.debe, 170);
   });
+
+  test('botón de emergencia: cerrar y reabrir el negocio · ' + nombre, async () => {
+    const { local, tienda, b } = await arrancar(fabrica);
+
+    // cerrar pide el PIN del almacén: uno incorrecto no cierra nada
+    assert.equal((await local.op({ op: 'negocio.cerrar', pinActual: '000000', motivo: 'x' })).json.error.code, 'pin_incorrecto');
+    assert.equal((await tienda.call('GET', '/estado')).status, 200, 'sigue abierto');
+
+    // ping anuncia que está abierto
+    assert.equal((await tienda.call('GET', '/ping')).json.cerrado, null);
+
+    // cerrar con el PIN correcto
+    assert.equal((await local.op({ op: 'negocio.cerrar', pinActual: '482159', motivo: 'En pausa' })).status, 200);
+
+    // con el negocio cerrado nadie entra ni registra nada
+    const bloq = await tienda.call('GET', '/estado');
+    assert.equal(bloq.status, 503); assert.equal(bloq.json.error.code, 'negocio_cerrado');
+    assert.equal((await tienda.op({ op: 'mov.venta', pago: 'efectivo', lineas: [{ id: b.id, cant: 1, precio: 1000 }] })).json.error.code, 'negocio_cerrado');
+    assert.equal((await local.op({ op: 'gasto.crear', monto: 50, cat: 'comida', concepto: 'x', pago: 'efectivo' })).json.error.code, 'negocio_cerrado');
+
+    // ping avisa el cierre y su motivo (para la pantalla de bloqueo)
+    const png = (await tienda.call('GET', '/ping')).json;
+    assert.equal(png.cerrado.motivo, 'En pausa');
+
+    // reabrir pide el PIN del almacén; con el correcto vuelve a funcionar
+    assert.equal((await local.op({ op: 'negocio.abrir', pinActual: '999999' })).json.error.code, 'pin_incorrecto');
+    assert.equal((await local.op({ op: 'negocio.abrir', pinActual: '482159' })).status, 200);
+    assert.equal((await tienda.call('GET', '/estado')).status, 200, 'reabierto');
+    assert.equal((await tienda.op({ op: 'mov.venta', pago: 'efectivo', lineas: [{ id: b.id, cant: 1, precio: 1000 }] })).status, 200);
+  });
 }
