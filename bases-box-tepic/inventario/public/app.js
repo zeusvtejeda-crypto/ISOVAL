@@ -589,7 +589,7 @@ function cardPorHacerHoy() {
   return html`<section class="card" aria-label="Pedidos pendientes de hoy"><div class="card-t"><h2 class="t-sec">Pedidos pendientes de hoy</h2><span class="t-peq">${plural(pedidos.length, 'pedido', 'pedidos')}</span></div>
     ${pedidos.length ? html`<ul class="lista">${pedidos.map((a) => html`<li><button type="button" class="item" data-act="agenda">
       <span class="ico-c ${a.estado === 'listo' ? 'ok' : a.dia < hoyK() ? 'bad' : 'info'}">${ico('reloj')}</span>
-      <div class="grow"><div class="item-t">${a.cliente}${a.hora ? ' · ' + a.hora : ''}</div><div class="item-s">${resumenPedido(a) || 'Sin detalle'}${a.dia < hoyK() ? ' · atrasado (' + etiquetaDiaAg(a.dia) + ')' : ''}${a.estado === 'listo' ? ' · listo' : ''}</div></div>
+      <div class="grow"><div class="item-t">${a.cliente}${a.hora ? ' · ' + a.hora : ''}</div><div class="item-s">${resumenPedido(a) || 'Sin detalle'}${a.dia < hoyK() ? ' · atrasado (' + etiquetaDiaAg(a.dia) + ')' : ''}${a.estado === 'listo' ? ' · listo' : ''}</div>${pillCobro(a)}</div>
     </button></li>`)}</ul>` : html`<div class="vacio" style="padding:14px 8px"><b>No hay pedidos para hoy</b><span>Los de los próximos días están en “Pedidos de clientes”.</span></div>`}
   </section>
   <section class="card" aria-label="Bases por hacer hoy"><div class="card-t"><h2 class="t-sec">Bases por hacer hoy</h2><span class="t-peq">${plural(sumar(faltan, (x) => x.falta), 'base', 'bases')}</span></div>
@@ -1331,7 +1331,7 @@ async function abrirAgenda(inicial) {
   };
   const filaPedido = (a) => html`<button type="button" class="ag-item ${a.estado}" data-pedido="${a.id}">
       <span class="ag-hora">${a.hora || '—'}</span>
-      <span class="ag-main"><b>${a.cliente}</b><small>${resumenPedido(a) || 'Sin detalle'}</small><small>${AG_ENT[a.entrega]}${a.direccion ? ' · ' + a.direccion : ''}${a.anticipo ? ' · anticipo ' + dinero(a.anticipo) : ''}${totalPedido(a) ? ' · total ' + dinero(totalPedido(a)) : ''}</small></span>
+      <span class="ag-main"><b>${a.cliente}</b><small>${resumenPedido(a) || 'Sin detalle'}</small><small>${AG_ENT[a.entrega]}${a.direccion ? ' · ' + a.direccion : ''}${a.anticipo ? ' · anticipo ' + dinero(a.anticipo) : ''}${totalPedido(a) ? ' · total ' + dinero(totalPedido(a)) : ''}</small>${pillCobro(a)}</span>
       <span class="pill ${AG_EST[a.estado][1]}">${AG_EST[a.estado][0]}</span></button>`;
   const visibles = () => datos.filter((a) => cerrados || a.estado === 'pendiente' || a.estado === 'listo');
   const pintarProximos = () => {
@@ -1417,6 +1417,18 @@ function datosTicket(a) {
     referencia: corte > 0 ? dir.slice(corte).replace(/^\.\s+/, '') : '', estado: AG_EST[a.estado] ? AG_EST[a.estado][0] : a.estado, id: a.id
   };
 }
+// cómo se cobra un pedido al entregarlo: ya pagado, terminal, transferencia, efectivo o por confirmar
+function cobroPedido(a) {
+  const D = datosTicket(a), txt = [a.nota || '', a.detalle || ''].join(' ');
+  const pagado = /ya\s+pagad|ya\s+pag[óo]|pagad[oa]\s+(con|por|en|completo)|^pagad[oa]|\bpagó(?=[\s.,;]|$)/i.test(txt) || (D.total > 0 && D.saldo === 0);
+  const falta = D.total ? dinero(D.saldo) : '';
+  if (pagado) return { t: 'Ya pagado · no cobrar', c: 'ok' };
+  if (D.forma === 'Tarjeta') return { t: 'Terminal' + (falta ? ' · cobrar ' + falta : '') + ' · llevarla', c: 'info' };
+  if (D.forma === 'Transferencia bancaria') return { t: 'Transferencia' + (falta ? ' · ' + falta : ''), c: 'info' };
+  if (D.forma === 'Efectivo') return { t: 'Efectivo' + (falta ? ' · cobrar ' + falta : ''), c: 'warn' };
+  return { t: 'Pago por confirmar' + (falta ? ' · ' + falta : ''), c: 'bad' };
+}
+const pillCobro = (a) => { const k = cobroPedido(a); return html`<span class="pill ${k.c}" style="margin-top:4px;white-space:normal;height:auto;min-height:22px;padding:3px 8px">${k.t}</span>`; };
 function cargarImg(src) { return new Promise((ok, mal) => { const i = new Image(); i.onload = () => ok(i); i.onerror = mal; i.src = src; }); }
 async function dibujarTicket(a) {
   const D = datosTicket(a), W = 1080, H = 2600, NAR = '#F15A22', TINTA = '#1A1A1A', GRIS = '#5F6368';
@@ -1532,6 +1544,7 @@ function abrirPedidoCliente(a, alCambiar) {
     titulo: a.cliente,
     cuerpo: html`<div class="sep" style="margin-bottom:12px"><span class="t-peq">${mayus(fmtDiaAgLargo.format(fechaDeKey(a.dia)))}${a.hora ? ' · ' + a.hora : ''}</span><span class="pill ${AG_EST[a.estado][1]}">${AG_EST[a.estado][0]}</span></div>
       ${a.lineas.length ? html`<div class="card flat" style="margin-bottom:14px"><ul class="lista">${a.lineas.map((l) => html`<li class="item" style="min-height:48px"><span class="prod-ico" style="width:36px;height:36px">${S.idx[l.id] ? iconoProd(S.idx[l.id], 26) : ''}</span><div class="grow"><div class="item-t">${nombreProd(l.id)}</div><div class="item-s">${dinero(l.precio)} c/u</div></div><b class="cifras">× ${l.cant}</b></li>`)}</ul></div>` : ''}
+      <div style="margin:-4px 0 12px">${pillCobro(a)}</div>
       <dl class="kv">
         ${a.detalle ? html`<dt>Detalle</dt><dd>${a.detalle}</dd>` : ''}
         <dt>Entrega</dt><dd>${AG_ENT[a.entrega]}${a.direccion ? ' · ' + a.direccion : ''}</dd>
