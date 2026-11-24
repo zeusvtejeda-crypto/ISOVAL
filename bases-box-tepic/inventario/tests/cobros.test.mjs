@@ -30,7 +30,7 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     const { local, tienda, b, hoy, ayer } = await arrancar(fabrica);
 
     // ── pago dividido: $1,950 = $1,500 con tarjeta ayer + $450 en efectivo hoy
-    const v = await tienda.op({ op: 'mov.venta', pago: 'efectivo', cliente: 'Almadelia', entrega: 'tepic', envio: 150, reparto: 'Zeus, Alan', lineas: [{ id: b.id, cant: 1, precio: 1800 }], otroPago: { monto: 1500, pago: 'tarjeta', dia: ayer } });
+    const v = await tienda.op({ op: 'mov.venta', pago: 'efectivo', cliente: 'Almadelia', entrega: 'tepic', envio: 150, reparto: 'Germán, Alan', lineas: [{ id: b.id, cant: 1, precio: 1800 }], otroPago: { monto: 1500, pago: 'tarjeta', dia: ayer } });
     assert.equal(v.status, 200, JSON.stringify(v.json));
     assert.equal(v.json.resultado.total, 1950);
     const rh = (await tienda.call('GET', '/reporte-dia')).json;
@@ -84,10 +84,10 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
 
     // ── nómina: sueldo + comisión por base + repartos − adelantos
     await tienda.op({ op: 'gasto.crear', monto: 300, cat: 'sueldos', concepto: 'Adelanto', pago: 'efectivo', persona: 'Rubén' });
-    assert.equal((await tienda.op({ op: 'nomina.config', lista: [{ n: 'Zeus', sueldo: 4000, com: 100, rep: 25 }, { n: 'Alan', sueldo: 0, com: 0, rep: 25 }, { n: 'Rubén', sueldo: 2700, com: 0, rep: 25 }] })).status, 200);
+    assert.equal((await tienda.op({ op: 'nomina.config', lista: [{ n: 'Germán', sueldo: 4000, com: 100, rep: 25 }, { n: 'Alan', sueldo: 0, com: 0, rep: 25 }, { n: 'Rubén', sueldo: 2700, com: 0, rep: 25 }] })).status, 200);
     const nom = (await tienda.call('GET', '/nomina')).json;
-    const zeus = nom.personas.find((x) => x.n === 'Zeus'), ruben = nom.personas.find((x) => x.n === 'Rubén'), alan = nom.personas.find((x) => x.n === 'Alan');
-    assert.equal(zeus.bases, 2); assert.equal(zeus.comision, 200); assert.equal(zeus.viajes, 1); assert.equal(zeus.total, 4225);
+    const german = nom.personas.find((x) => x.n === 'Germán'), ruben = nom.personas.find((x) => x.n === 'Rubén'), alan = nom.personas.find((x) => x.n === 'Alan');
+    assert.equal(german.bases, 2); assert.equal(german.comision, 200); assert.equal(german.viajes, 1); assert.equal(german.total, 4225);
     assert.equal(alan.viajes, 1); assert.equal(alan.total, 25);
     assert.equal(ruben.viajes, 1); assert.equal(ruben.pagado, 300); assert.equal(ruben.falta, 2700 + 25 - 300);
     const dz = nom.deudas.find((d) => d.k === 'zeus'), dr = nom.deudas.find((d) => d.k === 'rene');

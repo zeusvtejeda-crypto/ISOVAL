@@ -93,12 +93,12 @@ let sincronizando = false;
 
 const ROLES = {
   local: { nombre: 'Almacén', corto: 'Almacén', desc: 'Bodega y fábrica: materiales, bases en producción y envíos a la tienda.', ic: 'fabrica' },
-  tienda: { nombre: 'Zeus', corto: 'Zeus', desc: 'Tienda y ventas, con acceso a todo (cuentas, gastos, resumen y ajustes).', ic: 'tienda' },
+  tienda: { nombre: 'Germán', corto: 'Germán', desc: 'Tienda y ventas, con acceso a todo (cuentas, gastos, resumen y ajustes).', ic: 'tienda' },
   dueno: { nombre: 'Dueño', corto: 'Dueño', desc: 'Solo consulta: resumen de producción, ventas, gastos y egresos.', ic: 'usuario' },
   ruben: { nombre: 'Rubén', corto: 'Rubén', desc: 'Solo registra ventas. El almacén recibe un aviso de cada venta.', ic: 'recibo' }
 };
 const esVendedor = () => S.rol === 'tienda' || S.rol === 'ruben';
-const esAdmin = () => S.rol === 'local' || S.rol === 'tienda'; // Zeus (tienda) tiene acceso a todo
+const esAdmin = () => S.rol === 'local' || S.rol === 'tienda'; // Germán (tienda) tiene acceso a todo
 const CATS = { base: 'Bases', material: 'Materiales', accesorio: 'Accesorios' };
 const TIPOS = {
   entrada: { t: 'Entrada al almacén', ic: 'entrada', c: 'ok' },
@@ -370,7 +370,7 @@ const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado',
 // quién hizo la venta (las anteriores a este campo muestran el usuario que la registró)
 const vendedorDe = (g) => g.vendedor || (ROLES[g.rol] ? ROLES[g.rol].nombre : '');
 const VENDEDORES_BASE = ['Tienda', 'Hugo', 'Carlos', 'VILLEDA'];
-const REPARTIDORES = ['Zeus', 'Alan', 'Rubén'];
+const REPARTIDORES = ['Germán', 'Alan', 'Rubén'];
 const ultimoVendedor = () => { try { return localStorage.getItem('bb-inv:vendedor') || ''; } catch (e) { return ''; } };
 const guardarVendedor = (v) => { try { localStorage.setItem('bb-inv:vendedor', v); } catch (e) { /* sin almacenamiento */ } };
 
@@ -582,7 +582,7 @@ async function abrirNomina(desde) {
       <span class="t-sec">Dinero que pusieron de su bolsa</span>
       <table class="tabla" style="margin-top:6px"><thead><tr><th>Quién</th><th class="r">Puso</th><th class="r">Se le regresó</th><th class="r">Se le debe</th></tr></thead><tbody>
       ${x.deudas.map((y) => html`<tr><td><b>${y.n}</b></td><td class="r">${dinero(y.puso)}</td><td class="r">${dinero(y.regresado)}</td><td class="r"><b style="color:${y.debe > 0 ? 'var(--bad)' : 'inherit'}">${dinero(y.debe)}</b></td></tr>`)}</tbody></table>
-      <p class="t-peq" style="margin-top:6px">Cuenta los gastos marcados como pagados por Zeus o René. Para regresarles dinero registra un gasto “Regresar dinero” a su nombre.</p>`);
+      <p class="t-peq" style="margin-top:6px">Cuenta los gastos marcados como pagados por Germán o René. Para regresarles dinero registra un gasto “Regresar dinero” a su nombre.</p>`);
     $('#nm-prev', d.el).addEventListener('click', () => cargar(sumaK(x.desde, -7)));
     $('#nm-sig', d.el).addEventListener('click', () => cargar(sumaK(x.desde, 7)));
   };
@@ -1995,9 +1995,9 @@ async function descargarPdfSemanal(sem, btn) {
 }
 
 /* ───────── gastos (salidas de dinero) ───────── */
-const GASTO_CATS = { materiales: 'Materiales', sueldos: 'Sueldos', renta: 'Renta', servicios: 'Luz, agua, internet', transporte: 'Gasolina y transporte', comida: 'Comida', mantenimiento: 'Mantenimiento', publicidad: 'Publicidad', comisiones: 'Comisiones (Mercado Pago, banco)', retiro: 'Retiro del dueño', reembolso: 'Regresar dinero (Zeus/René)', otro: 'Otro' };
-const PAGADORES_UI = { caja: 'Caja', zeus: 'Zeus (su bolsa)', rene: 'René', mp: 'Mercado Pago' };
-const PERSONAS_UI = ['Zeus', 'René', 'Alan', 'Rubén', 'Don Cruz', 'Hugo', 'Carlos'];
+const GASTO_CATS = { materiales: 'Materiales', sueldos: 'Sueldos', renta: 'Renta', servicios: 'Luz, agua, internet', transporte: 'Gasolina y transporte', comida: 'Comida', mantenimiento: 'Mantenimiento', publicidad: 'Publicidad', comisiones: 'Comisiones (Mercado Pago, banco)', retiro: 'Retiro del dueño', reembolso: 'Regresar dinero (Germán/René)', otro: 'Otro' };
+const PAGADORES_UI = { caja: 'Caja', zeus: 'Germán (su bolsa)', rene: 'René', mp: 'Mercado Pago' };
+const PERSONAS_UI = ['Germán', 'René', 'Alan', 'Rubén', 'Don Cruz', 'Hugo', 'Carlos'];
 const fechaLocal = (ts) => fechaISO(ts).slice(0, 10);
 function enPeriodo(ts, per) {
   const hoy = new Date(), k = fechaLocal(ts), kh = fechaLocal(hoy.getTime());
@@ -2078,7 +2078,7 @@ function formGasto(alGuardar) {
       <label class="campo"><span class="lbl" id="gs-lbl-con">Detalle (opcional)</span><input class="inp" id="gs-concepto" maxlength="80" placeholder="Ej. gasolina camioneta, tela, comida del equipo" autocomplete="off"></label>
       <label class="campo" id="gs-persona-c" hidden><span class="lbl" id="gs-persona-l">¿Para quién?</span><input class="inp" id="gs-persona" maxlength="30" list="gs-personas" autocomplete="off" placeholder="Ej. Rubén"><datalist id="gs-personas">${PERSONAS_UI.map((n) => html`<option value="${n}"></option>`)}</datalist></label>
       <div class="campo"><span class="lbl">Cómo se pagó</span><div class="opciones g4" id="gs-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>
-      <div class="campo"><span class="lbl">¿De dónde salió el dinero?</span><div class="opciones g4" id="gs-pagador">${Object.keys(PAGADORES_UI).map((k) => html`<button type="button" class="opcion" data-pagador="${k}" aria-pressed="${String(k === pagador)}" style="padding:0 6px">${PAGADORES_UI[k]}</button>`)}</div><span class="ayuda">Solo lo que sale de la caja se descuenta del efectivo. Si lo puso Zeus o René, el negocio se los debe.</span></div>
+      <div class="campo"><span class="lbl">¿De dónde salió el dinero?</span><div class="opciones g4" id="gs-pagador">${Object.keys(PAGADORES_UI).map((k) => html`<button type="button" class="opcion" data-pagador="${k}" aria-pressed="${String(k === pagador)}" style="padding:0 6px">${PAGADORES_UI[k]}</button>`)}</div><span class="ayuda">Solo lo que sale de la caja se descuenta del efectivo. Si lo puso Germán o René, el negocio se los debe.</span></div>
       <label class="campo" style="max-width:220px"><span class="lbl">Día</span><input class="inp" type="date" id="gs-dia" value="${hoy}" max="${hoy}" min="${minK}"></label>
       <p class="err" id="gs-err" hidden></p>`,
     pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="gs-ok">Guardar gasto</button>`
@@ -2431,7 +2431,7 @@ function abrirOperacion(grupo) {
     const s2 = dialogo({
       titulo: 'Cambiar vendedor',
       cuerpo: html`<p class="t-peq" style="margin:0 0 12px">Ahora: <b>${vendedorDe(g)}</b>. La venta conserva su día, pago y piezas; el cambio queda anotado en el historial.</p>
-        <label class="campo"><span class="lbl">Vendedor correcto</span><input class="inp" id="cv-nombre" maxlength="40" list="cv-lista" autocomplete="off" placeholder="Ej. Hugo, Carlos, Zeus"><datalist id="cv-lista">${[...new Set([...VENDEDORES_BASE, 'Zeus', 'Rubén', ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
+        <label class="campo"><span class="lbl">Vendedor correcto</span><input class="inp" id="cv-nombre" maxlength="40" list="cv-lista" autocomplete="off" placeholder="Ej. Hugo, Carlos, Germán"><datalist id="cv-lista">${[...new Set([...VENDEDORES_BASE, 'Germán', 'Rubén', ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
         <p class="err" id="cv-err" hidden></p>`,
       pie: html`<button type="button" class="btn btn-g" data-cerrar>Volver</button><button type="button" class="btn btn-p" id="cv-ok">Guardar</button>`
     });
@@ -2878,7 +2878,7 @@ VISTAS.mas = {
       ${S.modo === 'local' ? html`<div class="aviso warn">${ico('alerta')}<div><b>Los datos están solo en este equipo.</b> La otra persona (almacén o vendedor) no los verá. Para compartir el inventario entre los dos hay que publicar la app con su servidor (mira el archivo README).</div></div>` : ''}
       <section class="sec-mas"><span class="t-sec">Mi cuenta</span><div class="card flat"><ul class="lista">
         ${fila('candado', 'Cambiar mi PIN', 'Cierra tu sesión en los demás equipos', 'pin-propio')}
-        ${local ? fila('tienda', 'Reiniciar el PIN de Zeus (tienda)', 'Si se olvidó; se pide el PIN del almacén', 'pin-tienda') : ''}
+        ${local ? fila('tienda', 'Reiniciar el PIN de Germán (tienda)', 'Si se olvidó; se pide el PIN del almacén', 'pin-tienda') : ''}
         ${local ? fila('recibo', 'PIN de Rubén', e.ruben ? 'Cambiar el PIN con el que entra Rubén (solo ventas)' : 'Crea el acceso de Rubén: solo registra ventas', 'pin-ruben') : ''}
         ${local ? fila('alerta', 'Avisos al celular', e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + ' · cada venta de Rubén te llega como notificación' : 'Recibe una notificación cada vez que Rubén registre una venta', 'avisos') : ''}
         ${local ? fila('usuario', 'PIN del dueño', e.dueno ? 'Cambiar el PIN con el que entra el dueño' : 'Crea el acceso del dueño (solo consulta)', 'pin-dueno') : ''}
@@ -2893,7 +2893,7 @@ VISTAS.mas = {
       </ul></div></section>` : ''}
       <section class="sec-mas"><span class="t-sec">Datos</span><div class="card flat"><ul class="lista">
         ${local ? fila('tabla', 'Resumen del negocio', 'Producción, ventas, gastos y egresos', 'resumen') : ''}
-        ${local || S.rol === 'dueno' ? fila('usuario', 'Nómina y deudas', 'Sueldos, comisiones, repartos y lo que se le debe a Zeus o René', 'nomina') : ''}
+        ${local || S.rol === 'dueno' ? fila('usuario', 'Nómina y deudas', 'Sueldos, comisiones, repartos y lo que se le debe a Germán o René', 'nomina') : ''}
         ${local || S.rol === 'dueno' ? fila('check', 'Revisar cuentas', 'Comprueba que el efectivo y los cobros cuadren y que no haya errores', 'cuentas') : ''}
         ${fila('reloj', 'Pedidos de clientes', 'Agenda de entregas: apuntar, programar y ver por calendario', 'agenda')}
         ${fila('salida', 'Gastos', S.rol === 'dueno' ? 'Salidas de dinero por día, semana y mes' : 'Salidas de dinero: registrar y ver por día, semana y mes', 'gastos')}

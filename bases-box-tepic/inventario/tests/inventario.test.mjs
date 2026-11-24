@@ -336,9 +336,9 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       const v2 = await tienda.op({ op: 'mov.venta', pago: 'tarjeta', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
       const hist = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;
       assert.equal(hist.find((m) => m.grupo === v1.json.resultado.grupo).vendedor, 'Hugo');
-      assert.equal(hist.find((m) => m.grupo === v2.json.resultado.grupo).vendedor, 'Zeus', 'sin nombre queda el usuario que la registró (tienda = Zeus)');
+      assert.equal(hist.find((m) => m.grupo === v2.json.resultado.grupo).vendedor, 'Germán', 'sin nombre queda el usuario que la registró (tienda = Zeus)');
       const rep = (await tienda.call('GET', '/reporte-dia')).json;
-      assert.deepEqual(rep.ventas.map((v) => v.vendedor).sort(), ['Hugo', 'Zeus']);
+      assert.deepEqual(rep.ventas.map((v) => v.vendedor).sort(), ['Germán', 'Hugo']);
       // cambiar el pago conserva el vendedor
       const c = await tienda.op({ op: 'venta.pago', grupo: v1.json.resultado.grupo, pago: 'transferencia' });
       const h2 = (await local.call('GET', '/movs', null, { limite: '20' })).json.items;

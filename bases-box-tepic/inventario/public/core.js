@@ -15,11 +15,11 @@
   const DIA = 86400000;
   const ROLES = ['local', 'tienda', 'dueno', 'ruben']; // dueno: solo lectura (resumen del negocio); ruben: solo registra ventas
   const SOLO_VENTAS = ['ruben']; // no ven resumen, reporte semanal ni revisión de cuentas
-  const ADMIN = ['local', 'tienda']; // tienda = Zeus: acceso a todo, igual que el Almacén
+  const ADMIN = ['local', 'tienda']; // tienda = Germán: acceso a todo, igual que el Almacén
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
   const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'comisiones', 'retiro', 'reembolso', 'otro'];
-  // quién puso el dinero de un gasto: la caja (efectivo de la tienda), Zeus o René de su bolsa, o la cuenta de Mercado Pago
+  // quién puso el dinero de un gasto: la caja (efectivo de la tienda), Germán o René de su bolsa, o la cuenta de Mercado Pago
   const PAGADORES = ['caja', 'zeus', 'rene', 'mp'];
   // un gasto solo saca efectivo de la caja si se pagó en efectivo y lo pagó la caja (o no se dijo quién)
   const deCaja = (g) => g.pago === 'efectivo' && (!g.pagador || g.pagador === 'caja');
@@ -461,12 +461,12 @@
 
   // ───────── nómina de la semana y lo que el negocio le debe a quien puso dinero de su bolsa
   const NOMINA_BASE = [
-    { n: 'Zeus', sueldo: 4000, com: 100, rep: 25 }, { n: 'Alan', sueldo: 0, com: 0, rep: 25 }, { n: 'Rubén', sueldo: 2700, com: 0, rep: 25 },
+    { n: 'Germán', sueldo: 4000, com: 100, rep: 25 }, { n: 'Alan', sueldo: 0, com: 0, rep: 25 }, { n: 'Rubén', sueldo: 2700, com: 0, rep: 25 },
     { n: 'Don Cruz', sueldo: 2500, com: 0, rep: 0 }, { n: 'Hugo', sueldo: 0, com: 150, rep: 0 }, { n: 'Carlos', sueldo: 0, com: 100, rep: 0 }
   ];
   const normN = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
   const r2 = (n) => Math.round(n * 100) / 100;
-  const PAGADOR_NOMBRE = { zeus: 'Zeus', rene: 'René', mp: 'Mercado Pago', caja: 'Caja' };
+  const PAGADOR_NOMBRE = { zeus: 'Germán', rene: 'René', mp: 'Mercado Pago', caja: 'Caja' };
   async function nominaConfig(ctx) {
     const raw = await ctx.repo.config();
     return Array.isArray(raw.nomina) && raw.nomina.length ? raw.nomina : NOMINA_BASE;
@@ -501,7 +501,7 @@
       const comision = v.bases * v.com, repartos = v.viajes.size * v.rep, total = v.sueldo + comision + repartos;
       return { n: v.n, sueldo: v.sueldo, com: v.com, rep: v.rep, bases: v.bases, comision, viajes: v.viajes.size, repartos, total: r2(total), pagado: r2(v.pagado), falta: r2(total - v.pagado), movs: v.movs };
     });
-    // deudas: lo que Zeus o René pagaron de su bolsa menos lo que ya se les regresó (gastos tipo reembolso a su nombre)
+    // deudas: lo que Germán o René pagaron de su bolsa menos lo que ya se les regresó (gastos tipo reembolso a su nombre)
     const deudas = ['zeus', 'rene'].map((k) => {
       const puso = vivos.filter((g) => g.pagador === k && g.cat !== 'reembolso').reduce((a, g) => a + g.monto, 0);
       const regresado = vivos.filter((g) => g.cat === 'reembolso' && normN(g.persona) === k).reduce((a, g) => a + g.monto, 0);
@@ -909,7 +909,7 @@
   }
 
   // quién hizo la venta (nombre del vendedor); si no lo mandan, queda el usuario que la registró
-  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Rubén' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Zeus' : 'Almacén'));
+  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Rubén' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Germán' : 'Almacén'));
 
   // entrega de una venta → tarifa de envío en la configuración del negocio (null = sin cargo)
   const ENTREGAS = { recoge: null, tepic: 'envioTepic', xalisco: 'envioFuera', cantera: 'envioFuera' };
@@ -1176,12 +1176,12 @@
     const orig = (await ctx.repo.movsGrupo(grupo)).filter((m) => m.tipo !== 'anulacion');
     if (!orig.length) throw new ApiError(404, 'no_existe', 'No encontré esa venta.');
     if (orig.some((m) => m.tipo !== 'venta')) throw bad('no_es_venta', 'Solo se puede cambiar la forma de pago de una venta.');
-    // también corrige quién la vendió (solo Zeus y el Almacén)
+    // también corrige quién la vendió (solo Germán y el Almacén)
     const base = orig.find((m) => !soloMonto(m)) || orig[0];
     const vendAntes = base.vendedor || '';
     const vend = b.vendedor === undefined || b.vendedor === null ? null : clean(b.vendedor, 40);
     if (vend !== null && !vend) throw bad('falta_vendedor', 'Escribe quién hizo la venta.');
-    if (vend !== null && !ADMIN.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo Zeus o el Almacén cambian el vendedor.');
+    if (vend !== null && !ADMIN.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo Germán o el Almacén cambian el vendedor.');
     const pago = b.pago === undefined || b.pago === null || b.pago === '' ? (vend !== null ? base.pago || 'efectivo' : '') : String(b.pago);
     if (!PAGOS.includes(pago)) throw bad('pago_invalido', 'Elige la forma de pago correcta.');
     if (orig.some((m) => m.anulado)) throw new ApiError(409, 'ya_anulado', 'Esa venta está anulada.');
@@ -1642,7 +1642,7 @@
   };
 
   // Ejecuta una operación ya autenticada y la guarda de forma atómica.
-  Object.keys(OPS).forEach((k) => { const r = OPS[k][0]; if (r.includes('local') && !r.includes('tienda')) r.push('tienda'); }); // Zeus: acceso a todo
+  Object.keys(OPS).forEach((k) => { const r = OPS[k][0]; if (r.includes('local') && !r.includes('tienda')) r.push('tienda'); }); // Germán: acceso a todo
   async function correrOp(ctx, body) {
     const def = body && typeof body.op === 'string' && Object.prototype.hasOwnProperty.call(OPS, body.op) ? OPS[body.op] : null;
     if (!def) throw bad('op_invalida', 'Operación desconocida.');
@@ -1684,7 +1684,7 @@
         return ok(await reporteSemana(ctx));
       }
       if (path === '/nomina' && m === 'GET') {
-        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La nómina es de Zeus, del almacén y del dueño.');
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La nómina es de Germán, del almacén y del dueño.');
         return ok(await nominaSemana(ctx));
       }
       if (path === '/cuentas' && m === 'GET') {
@@ -1695,7 +1695,7 @@
       if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/push/clave' && m === 'GET') {
-        if (!ADMIN.includes(ctx.rol) && ctx.rol !== 'dueno') throw new ApiError(403, 'sin_permiso', 'Los avisos al celular son de Zeus, del almacén y del dueño.');
+        if (!ADMIN.includes(ctx.rol) && ctx.rol !== 'dueno') throw new ApiError(403, 'sin_permiso', 'Los avisos al celular son de Germán, del almacén y del dueño.');
         if (!opts.claveVapid) throw new ApiError(501, 'sin_push', 'Los avisos al celular necesitan la app publicada con su servidor.');
         return ok({ publica: await opts.claveVapid() });
       }
