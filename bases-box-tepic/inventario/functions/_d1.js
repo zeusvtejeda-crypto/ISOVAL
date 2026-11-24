@@ -21,7 +21,7 @@ const SCHEMA = [
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, prod TEXT NOT NULL, loc TEXT NOT NULL, delta INTEGER NOT NULL, tipo TEXT NOT NULL,
     motivo TEXT NOT NULL DEFAULT '', nota TEXT NOT NULL DEFAULT '', rol TEXT NOT NULL, precio REAL, cliente TEXT NOT NULL DEFAULT '',
     pago TEXT NOT NULL DEFAULT '', envio REAL NOT NULL DEFAULT 0, grupo TEXT NOT NULL, ref TEXT NOT NULL DEFAULT '', anulado INTEGER NOT NULL DEFAULT 0,
-    anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '', vendedor TEXT)`,
+    anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '', vendedor TEXT, abono REAL, reparto TEXT)`,
   `CREATE INDEX IF NOT EXISTS movs_ts ON movs (ts DESC, id DESC)`,
   `CREATE INDEX IF NOT EXISTS movs_grupo ON movs (grupo)`,
   `CREATE INDEX IF NOT EXISTS movs_prod ON movs (prod, ts DESC)`,
@@ -35,13 +35,13 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS pedido_lineas (pedido_id TEXT NOT NULL, prod TEXT NOT NULL, cant INTEGER NOT NULL, PRIMARY KEY (pedido_id, prod))`,
   `CREATE TABLE IF NOT EXISTS gastos (
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, rol TEXT NOT NULL, monto REAL NOT NULL CHECK (monto > 0), cat TEXT NOT NULL, concepto TEXT NOT NULL DEFAULT '',
-    pago TEXT NOT NULL DEFAULT 'efectivo', anulado INTEGER NOT NULL DEFAULT 0, anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '')`,
+    pago TEXT NOT NULL DEFAULT 'efectivo', anulado INTEGER NOT NULL DEFAULT 0, anulado_ts INTEGER NOT NULL DEFAULT 0, anulado_por TEXT NOT NULL DEFAULT '', anulado_nota TEXT NOT NULL DEFAULT '', pagador TEXT, persona TEXT)`,
   `CREATE INDEX IF NOT EXISTS gastos_ts ON gastos (ts DESC)`,
   `CREATE TABLE IF NOT EXISTS agenda (
     id TEXT PRIMARY KEY, ts INTEGER NOT NULL, rol TEXT NOT NULL, cliente TEXT NOT NULL, tel TEXT NOT NULL DEFAULT '', dia TEXT NOT NULL, hora TEXT NOT NULL DEFAULT '',
     lineas TEXT NOT NULL DEFAULT '[]', detalle TEXT NOT NULL DEFAULT '', entrega TEXT NOT NULL DEFAULT '', direccion TEXT NOT NULL DEFAULT '', anticipo REAL NOT NULL DEFAULT 0,
     nota TEXT NOT NULL DEFAULT '', estado TEXT NOT NULL DEFAULT 'pendiente', estado_ts INTEGER NOT NULL DEFAULT 0, estado_por TEXT NOT NULL DEFAULT '', estado_nota TEXT NOT NULL DEFAULT '',
-    venta TEXT NOT NULL DEFAULT '', actualizado INTEGER NOT NULL DEFAULT 0)`,
+    venta TEXT NOT NULL DEFAULT '', actualizado INTEGER NOT NULL DEFAULT 0, extra TEXT)`,
   `CREATE INDEX IF NOT EXISTS agenda_dia ON agenda (dia)`,
   `CREATE TABLE IF NOT EXISTS intentos (k TEXT PRIMARY KEY, n INTEGER NOT NULL, b INTEGER NOT NULL, hasta INTEGER NOT NULL, adm INTEGER NOT NULL)`,
   // tabla trampa: insertar aquí rompe el CHECK y deshace todo el batch (ver guardas)
@@ -49,15 +49,18 @@ const SCHEMA = [
 ];
 
 const COLS_PRODUCTO = ['id', 'nombre', 'cat', 'medida', 'tono', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'activo', 'stock_local', 'stock_tienda', 'hubo_local', 'hubo_tienda', 'creado', 'actualizado'];
-const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'envio', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota', 'vendedor'];
-const COLS_GASTO = ['id', 'ts', 'rol', 'monto', 'cat', 'concepto', 'pago', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota'];
-const COLS_AGENDA = ['id', 'ts', 'rol', 'cliente', 'tel', 'dia', 'hora', 'lineas', 'detalle', 'entrega', 'direccion', 'anticipo', 'nota', 'estado', 'estado_ts', 'estado_por', 'estado_nota', 'venta', 'actualizado'];
+const COLS_MOV = ['id', 'ts', 'prod', 'loc', 'delta', 'tipo', 'motivo', 'nota', 'rol', 'precio', 'cliente', 'pago', 'envio', 'grupo', 'ref', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota', 'vendedor', 'abono', 'reparto'];
+const COLS_GASTO = ['id', 'ts', 'rol', 'monto', 'cat', 'concepto', 'pago', 'anulado', 'anulado_ts', 'anulado_por', 'anulado_nota', 'pagador', 'persona'];
+const COLS_AGENDA = ['id', 'ts', 'rol', 'cliente', 'tel', 'dia', 'hora', 'lineas', 'detalle', 'entrega', 'direccion', 'anticipo', 'nota', 'estado', 'estado_ts', 'estado_por', 'estado_nota', 'venta', 'actualizado', 'extra'];
 const COLS_EDITABLES = ['nombre', 'unidad', 'precio', 'costo', 'min_local', 'min_tienda', 'medida', 'tono', 'activo', 'actualizado'];
 
 const insertarJson = (tabla, cols) =>
   `INSERT INTO ${tabla} (${cols.join(', ')}) SELECT ${cols.map((c) => `json_extract(value, '$.${c}')`).join(', ')} FROM json_each(?1)`;
 
-const filaAgenda = (f) => Object.assign({}, f, { lineas: (() => { try { const l = JSON.parse(f.lineas); return Array.isArray(l) ? l : []; } catch (e) { return []; } })() });
+const filaAgenda = (f) => Object.assign({}, f, {
+  lineas: (() => { try { const l = JSON.parse(f.lineas); return Array.isArray(l) ? l : []; } catch (e) { return []; } })(),
+  extra: (() => { try { const x = JSON.parse(f.extra || '{}'); return x && typeof x === 'object' && !Array.isArray(x) ? x : {}; } catch (e) { return {}; } })()
+});
 const migradas = new WeakSet();
 
 export async function crearRepoD1(db) {
@@ -72,6 +75,13 @@ export async function crearRepoD1(db) {
       // quién hizo cada venta (columna nueva)
       try { await db.prepare(`SELECT vendedor FROM movs LIMIT 0`).all(); } catch (e) {
         try { await db.prepare(`ALTER TABLE movs ADD COLUMN vendedor TEXT`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
+      }
+      // columnas nuevas: pago dividido (abono), quién repartió, quién pagó el gasto, para quién era y datos extra del pedido
+      for (const [t, c] of [['movs', 'abono REAL'], ['movs', 'reparto TEXT'], ['gastos', 'pagador TEXT'], ['gastos', 'persona TEXT'], ['agenda', 'extra TEXT']]) {
+        const col = c.split(' ')[0];
+        try { await db.prepare(`SELECT ${col} FROM ${t} LIMIT 0`).all(); } catch (e) {
+          try { await db.prepare(`ALTER TABLE ${t} ADD COLUMN ${c}`).run(); } catch (e2) { /* otra instancia ya la agregó */ }
+        }
       }
     }
     for (const sql of SCHEMA.filter((x) => /TABLE IF NOT EXISTS (intentos|gastos|agenda)|INDEX IF NOT EXISTS (gastos_ts|agenda_dia)/.test(x))) await db.prepare(sql).run();
@@ -139,7 +149,7 @@ export async function crearRepoD1(db) {
     }
     if (tx.agendaUpsert.length) {
       const sets = COLS_AGENDA.filter((c) => c !== 'id').map((c) => `${c} = excluded.${c}`).join(', ');
-      st.push(q(`INSERT INTO agenda (${COLS_AGENDA.join(', ')}) SELECT ${COLS_AGENDA.map((c) => (c === 'lineas' ? `json_extract(value, '$.lineas')` : `json_extract(value, '$.${c}')`)).join(', ')} FROM json_each(?1) WHERE true ON CONFLICT(id) DO UPDATE SET ${sets}`, JSON.stringify(tx.agendaUpsert)));
+      st.push(q(`INSERT INTO agenda (${COLS_AGENDA.join(', ')}) SELECT ${COLS_AGENDA.map((c) => (c === 'lineas' || c === 'extra' ? `json(json_extract(value, '$.${c}'))` : `json_extract(value, '$.${c}')`)).join(', ')} FROM json_each(?1) WHERE true ON CONFLICT(id) DO UPDATE SET ${sets}`, JSON.stringify(tx.agendaUpsert)));
     }
     if (tx.gastosInsert.length) st.push(q(insertarJson('gastos', COLS_GASTO), JSON.stringify(tx.gastosInsert)));
     tx.traspasos.forEach(({ t, lineas }) => {
@@ -227,7 +237,7 @@ export async function crearRepoD1(db) {
     gastos(desde) { return todas(`SELECT * FROM gastos WHERE ts >= ?1 ORDER BY ts DESC`, desde); },
     async gasto(id) { return (await q(`SELECT * FROM gastos WHERE id = ?1`, id).first()) || null; },
     ventas(desde) {
-      return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol, vendedor FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
+      return todas(`SELECT ts, prod, delta, precio, grupo, tipo, cliente, pago, motivo, envio, rol, vendedor, abono, reparto FROM movs WHERE tipo IN ('venta', 'devolucion') AND anulado = 0 AND ts >= ?1`, desde);
     },
     // Cuenta un intento de PIN en una sola sentencia atómica (el contador no se pierde aunque lleguen muchas peticiones a la vez).
     async intento(clave, ahora) {

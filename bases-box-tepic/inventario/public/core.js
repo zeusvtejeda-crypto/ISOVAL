@@ -18,7 +18,11 @@
   const ADMIN = ['local', 'tienda']; // tienda = Zeus: acceso a todo, igual que el Almacén
   const CATS = ['base', 'material', 'accesorio'];
   const PAGOS = ['efectivo', 'transferencia', 'tarjeta', 'otro'];
-  const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'comisiones', 'retiro', 'otro'];
+  const CATS_GASTO = ['materiales', 'sueldos', 'renta', 'servicios', 'transporte', 'comida', 'mantenimiento', 'publicidad', 'comisiones', 'retiro', 'reembolso', 'otro'];
+  // quién puso el dinero de un gasto: la caja (efectivo de la tienda), Zeus o René de su bolsa, o la cuenta de Mercado Pago
+  const PAGADORES = ['caja', 'zeus', 'rene', 'mp'];
+  // un gasto solo saca efectivo de la caja si se pagó en efectivo y lo pagó la caja (o no se dijo quién)
+  const deCaja = (g) => g.pago === 'efectivo' && (!g.pagador || g.pagador === 'caja');
   const MAX_LINEAS = 60;
   const SESION_DIAS = 14;
   const TZ_DEFECTO = -420; // Tepic, Nayarit: UTC−7 todo el año
@@ -350,7 +354,9 @@
   // ───────── estado para el cliente
 
   // una venta “solo monto” (cobro sin producto, p. ej. de antes de usar la app) guarda su importe en `envio` con motivo 'monto'
-  const soloMonto = (r) => r.motivo === 'monto';
+  const soloMonto = (r) => r.motivo === 'monto' || r.motivo === 'anticipo';
+  // dinero que una fila de venta suma de verdad: el envío menos lo que ya se había cobrado antes como anticipo (abono)
+  const envNeto = (r) => (r.envio || 0) - (r.abono || 0);
 
   // lunes de la semana de una fecha 'YYYY-MM-DD' (semana lunes–domingo)
   function lunesDe(k) {
@@ -372,15 +378,15 @@
     const out = {};
     Object.keys(per).forEach((n) => { out[n] = { desde: per[n].desde, total: 0, envios: 0, pzas: 0, n: 0, g: new Set(), prods: {}, dias: {} }; });
     filas.forEach((r) => {
-      const pzas = -r.delta, monto = pzas * (r.precio || 0), env = r.envio || 0, k = diaKey(r.ts, tz);
+      const pzas = -r.delta, monto = pzas * (r.precio || 0), env = r.envio || 0, neto = envNeto(r), k = diaKey(r.ts, tz);
       Object.keys(per).forEach((n) => {
         if (!per[n].test(k)) return;
         const o = out[n];
-        o.total += monto + env; o.envios += soloMonto(r) ? 0 : env; o.pzas += pzas;
+        o.total += monto + neto; o.envios += soloMonto(r) ? 0 : env; o.pzas += pzas;
         const pr = o.prods[r.prod] || (o.prods[r.prod] = { id: r.prod, pzas: 0, total: 0 });
         pr.pzas += pzas; pr.total += monto;
         const d = o.dias[k] || (o.dias[k] = { k, pzas: 0, total: 0, envios: 0, g: new Set() });
-        d.pzas += pzas; d.total += monto + env; d.envios += soloMonto(r) ? 0 : env;
+        d.pzas += pzas; d.total += monto + neto; d.envios += soloMonto(r) ? 0 : env;
         if (r.tipo === 'venta') { o.g.add(r.grupo); d.g.add(r.grupo); }
       });
     });
@@ -408,7 +414,7 @@
     const top = {};
     filas.forEach((r) => {
       const pzas = -r.delta, monto = pzas * (r.precio || 0), k = diaKey(r.ts, tz);
-      if (k in idxDia) { dias[idxDia[k]].total += monto + (r.envio || 0); dias[idxDia[k]].pzas += pzas; }
+      if (k in idxDia) { dias[idxDia[k]].total += monto + envNeto(r); dias[idxDia[k]].pzas += pzas; }
       if (r.ts >= ahora - 30 * DIA) {
         const t = top[r.prod] || (top[r.prod] = { id: r.prod, pzas: 0, total: 0 });
         t.pzas += pzas;
@@ -453,6 +459,57 @@
     return { items, resumen: resumenGastos(filas, ctx.ahora, ctx.tz) };
   }
 
+  // ───────── nómina de la semana y lo que el negocio le debe a quien puso dinero de su bolsa
+  const NOMINA_BASE = [
+    { n: 'Zeus', sueldo: 4000, com: 100, rep: 25 }, { n: 'Alan', sueldo: 0, com: 0, rep: 25 }, { n: 'Rubén', sueldo: 2700, com: 0, rep: 25 },
+    { n: 'Don Cruz', sueldo: 2500, com: 0, rep: 0 }, { n: 'Hugo', sueldo: 0, com: 150, rep: 0 }, { n: 'Carlos', sueldo: 0, com: 100, rep: 0 }
+  ];
+  const normN = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  const r2 = (n) => Math.round(n * 100) / 100;
+  const PAGADOR_NOMBRE = { zeus: 'Zeus', rene: 'René', mp: 'Mercado Pago', caja: 'Caja' };
+  async function nominaConfig(ctx) {
+    const raw = await ctx.repo.config();
+    return Array.isArray(raw.nomina) && raw.nomina.length ? raw.nomina : NOMINA_BASE;
+  }
+  async function opNominaConfig(ctx, b, tx) {
+    if (!Array.isArray(b.lista) || b.lista.length > 30) throw bad('lista_invalida', 'Manda la lista de personas.');
+    const vistos = new Set();
+    const lista = b.lista.map((x) => ({ n: clean(x && x.n, 30), sueldo: numero(x && x.sueldo, 0, 1e6, 0), com: numero(x && x.com, 0, 1e5, 0), rep: numero(x && x.rep, 0, 1e4, 0) }))
+      .filter((x) => x.n && !vistos.has(normN(x.n)) && vistos.add(normN(x.n)));
+    if (!lista.length) throw bad('lista_invalida', 'Agrega al menos una persona.');
+    tx.config = { nomina: lista };
+    tx.sinRev = true;
+    return { personas: lista.length };
+  }
+  async function nominaSemana(ctx) {
+    const q = ctx.req.query || {}, hoyK = diaKey(ctx.ahora, ctx.tz);
+    const desde = /^\d{4}-\d{2}-\d{2}$/.test(String(q.desde || '')) ? lunesDe(String(q.desde)) : lunesDe(hoyK), hasta = sumaDiasKey(desde, 6);
+    if (desde < sumaDiasKey(hoyK, -60)) throw bad('rango_invalido', 'La nómina se puede ver de las últimas 8 semanas.');
+    const en = (k) => k >= desde && k <= hasta;
+    const conf = await nominaConfig(ctx);
+    const [ventas, gastos] = await Promise.all([ctx.repo.ventas(ctx.ahora - 70 * DIA), ctx.repo.gastos(ctx.ahora - 400 * DIA)]);
+    const P = {}; conf.forEach((c) => { P[normN(c.n)] = Object.assign({ bases: 0, viajes: new Set(), pagado: 0, movs: [] }, c); });
+    ventas.filter((r) => r.tipo === 'venta' && !soloMonto(r) && en(diaKey(r.ts, ctx.tz))).forEach((r) => {
+      const v = P[normN(r.vendedor)]; if (v) v.bases += Math.abs(r.delta);
+      String(r.reparto || '').split(',').map(normN).filter(Boolean).forEach((n) => { if (P[n]) P[n].viajes.add(r.grupo); });
+    });
+    const vivos = gastos.filter((g) => !g.anulado);
+    vivos.filter((g) => (g.cat === 'sueldos' || g.cat === 'comisiones') && g.persona && en(diaKey(g.ts, ctx.tz))).forEach((g) => {
+      const v = P[normN(g.persona)]; if (v) { v.pagado += g.monto; v.movs.push({ ts: g.ts, concepto: g.concepto, monto: g.monto }); }
+    });
+    const personas = Object.values(P).map((v) => {
+      const comision = v.bases * v.com, repartos = v.viajes.size * v.rep, total = v.sueldo + comision + repartos;
+      return { n: v.n, sueldo: v.sueldo, com: v.com, rep: v.rep, bases: v.bases, comision, viajes: v.viajes.size, repartos, total: r2(total), pagado: r2(v.pagado), falta: r2(total - v.pagado), movs: v.movs };
+    });
+    // deudas: lo que Zeus o René pagaron de su bolsa menos lo que ya se les regresó (gastos tipo reembolso a su nombre)
+    const deudas = ['zeus', 'rene'].map((k) => {
+      const puso = vivos.filter((g) => g.pagador === k && g.cat !== 'reembolso').reduce((a, g) => a + g.monto, 0);
+      const regresado = vivos.filter((g) => g.cat === 'reembolso' && normN(g.persona) === k).reduce((a, g) => a + g.monto, 0);
+      return { k, n: PAGADOR_NOMBRE[k], puso: r2(puso), regresado: r2(regresado), debe: r2(puso - regresado) };
+    });
+    return { desde, hasta, personas, deudas, total: r2(personas.reduce((a, x) => a + x.total, 0)), falta: r2(personas.reduce((a, x) => a + Math.max(0, x.falta), 0)) };
+  }
+
   async function opGastoCrear(ctx, b, tx) {
     const monto = Number(b.monto);
     if (!Number.isFinite(monto) || monto <= 0) throw bad('falta_monto', 'Escribe cuánto se gastó.');
@@ -469,6 +526,7 @@
     const id = grupoDe(b, 'X');
     tx.gastosInsert.push({
       id, ts, rol: ctx.rol, monto: Math.round(monto * 100) / 100, cat, concepto, pago: PAGOS.includes(b.pago) ? b.pago : 'efectivo',
+      pagador: PAGADORES.includes(b.pagador) ? b.pagador : '', persona: clean(b.persona, 30),
       anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: ''
     });
     return { id, monto: Math.round(monto * 100) / 100 };
@@ -504,14 +562,14 @@
     const grupos = {};
     Object.keys(per).forEach((n) => { grupos[n] = new Set(); });
     filasV.forEach((r) => {
-      const k = diaKey(r.ts, tz), pz = Math.abs(r.delta), monto = pz * (r.precio || 0), env = r.envio || 0;
+      const k = diaKey(r.ts, tz), pz = Math.abs(r.delta), monto = pz * (r.precio || 0), env = r.envio || 0, neto = envNeto(r);
       Object.keys(per).forEach((n) => {
         if (!per[n](k)) return;
         const v = periodos[n].ventas;
         if (r.tipo === 'venta') {
-          v.bruto += monto + env; v.envios += soloMonto(r) ? 0 : env; v.pzas += pz; grupos[n].add(r.grupo);
+          v.bruto += monto + neto; v.envios += soloMonto(r) ? 0 : env; v.pzas += pz; grupos[n].add(r.grupo);
           const pg = r.pago || 'efectivo';
-          v.porPago[pg] = (v.porPago[pg] || 0) + monto + env;
+          v.porPago[pg] = (v.porPago[pg] || 0) + monto + neto;
         } else { v.devuelto += monto; v.pzas -= pz; }
       });
     });
@@ -543,7 +601,7 @@
     for (let i = 6; i >= 0; i--) dias.push({ k: diaKey(ahora - i * DIA, tz), ventas: 0, gastos: 0 });
     const idx = {};
     dias.forEach((d, i) => { idx[d.k] = i; });
-    filasV.forEach((r) => { const i = idx[diaKey(r.ts, tz)]; if (i === undefined) return; const m = Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0); dias[i].ventas += r.tipo === 'venta' ? m : -Math.abs(r.delta) * (r.precio || 0); });
+    filasV.forEach((r) => { const i = idx[diaKey(r.ts, tz)]; if (i === undefined) return; const m = Math.abs(r.delta) * (r.precio || 0) + envNeto(r); dias[i].ventas += r.tipo === 'venta' ? m : -Math.abs(r.delta) * (r.precio || 0); });
     gastosF.filter((g) => !g.anulado).forEach((g) => { const i = idx[diaKey(g.ts, tz)]; if (i !== undefined) dias[i].gastos += g.monto; });
     dias.forEach((d) => { d.ventas = r2(d.ventas); d.gastos = r2(d.gastos); });
     // inventario
@@ -587,14 +645,14 @@
     let devuelto = 0, gEf = 0;
     const ventasP = filasV.filter((r) => en(diaKey(r.ts, tz)));
     ventasP.forEach((r) => {
-      const m = Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0);
+      const m = Math.abs(r.delta) * (r.precio || 0) + envNeto(r);
       if (r.tipo === 'venta') pago[r.pago in pago ? r.pago : 'efectivo'] += m; else devuelto += Math.abs(r.delta) * (r.precio || 0);
     });
-    gastosF.filter((g) => !g.anulado && en(diaKey(g.ts, tz)) && g.pago === 'efectivo').forEach((g) => { gEf += g.monto; });
+    gastosF.filter((g) => !g.anulado && en(diaKey(g.ts, tz)) && deCaja(g)).forEach((g) => { gEf += g.monto; });
     // caja al empezar el periodo: lo que quedó en efectivo de los días anteriores (ventas en efectivo − gastos en efectivo)
     let inicial = 0;
-    filasV.forEach((r) => { if (r.tipo === 'venta' && (r.pago || 'efectivo') === 'efectivo' && diaKey(r.ts, tz) < desde) inicial += Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0); });
-    gastosF.forEach((g) => { if (!g.anulado && g.pago === 'efectivo' && diaKey(g.ts, tz) < desde) inicial -= g.monto; });
+    filasV.forEach((r) => { if (r.tipo === 'venta' && (r.pago || 'efectivo') === 'efectivo' && diaKey(r.ts, tz) < desde) inicial += Math.abs(r.delta) * (r.precio || 0) + envNeto(r); });
+    gastosF.forEach((g) => { if (!g.anulado && deCaja(g) && diaKey(g.ts, tz) < desde) inicial -= g.monto; });
     inicial = r2(inicial);
     const esperado = r2(inicial + pago.efectivo - gEf);
     const digital = r2(pago.tarjeta + pago.transferencia);
@@ -619,13 +677,13 @@
     });
     if (desc.length) add('error', 'existencias_descuadradas', 'Las existencias no coinciden con los movimientos', desc.length + ' producto(s) tienen una existencia distinta a la que dicen sus movimientos (' + desc.slice(0, 3).map((x) => x.nombre + ' en ' + (x.loc === 'local' ? 'almacén' : 'tienda') + ': ' + x.existencia + ' vs ' + x.segunMovimientos).join('; ') + (desc.length > 3 ? '…' : '') + '). Esto no debería pasar: la existencia cambió sin un movimiento que la respalde. Avisa a soporte; un conteo físico ajusta las existencias pero esta alerta se queda hasta que se revise.', { productos: desc.slice(0, 20) });
     // ventas sospechosas
-    const sinPrecio = ventasP.filter((r) => r.tipo === 'venta' && r.motivo !== 'monto' && !(r.precio > 0));
+    const sinPrecio = ventasP.filter((r) => r.tipo === 'venta' && !soloMonto(r) && !(r.precio > 0));
     if (sinPrecio.length) add('error', 'venta_sin_precio', 'Hay ventas registradas sin precio', sinPrecio.length + ' línea(s) de venta quedaron en $0 (' + [...new Set(sinPrecio.map((r) => nombre[r.prod] || r.prod))].slice(0, 3).join(', ') + '). El dinero de esas ventas no está contado.', { grupos: [...new Set(sinPrecio.map((r) => r.grupo))].slice(0, 20) });
     const costoDe = {}; prods.forEach((p) => { costoDe[p.id] = p.costo || 0; });
-    const bajoCosto = ventasP.filter((r) => r.tipo === 'venta' && r.motivo !== 'monto' && r.precio > 0 && costoDe[r.prod] > 0 && r.precio < costoDe[r.prod]);
+    const bajoCosto = ventasP.filter((r) => r.tipo === 'venta' && !soloMonto(r) && r.precio > 0 && costoDe[r.prod] > 0 && r.precio < costoDe[r.prod]);
     if (bajoCosto.length) add('aviso', 'venta_bajo_costo', 'Ventas por debajo del costo', bajoCosto.length + ' línea(s) se vendieron a un precio menor que su costo de producción (' + [...new Set(bajoCosto.map((r) => nombre[r.prod] || r.prod))].slice(0, 3).join(', ') + ').', { grupos: [...new Set(bajoCosto.map((r) => r.grupo))].slice(0, 20) });
     const gr = {};
-    ventasP.filter((r) => r.tipo === 'venta' && r.motivo !== 'monto').forEach((r) => { const g = gr[r.grupo] || (gr[r.grupo] = { ts: r.ts, rol: r.rol, total: 0, firma: [] }); g.total += Math.abs(r.delta) * (r.precio || 0) + (r.envio || 0); g.firma.push(r.prod + ':' + Math.abs(r.delta)); });
+    ventasP.filter((r) => r.tipo === 'venta' && !soloMonto(r)).forEach((r) => { const g = gr[r.grupo] || (gr[r.grupo] = { ts: r.ts, rol: r.rol, total: 0, firma: [] }); g.total += Math.abs(r.delta) * (r.precio || 0) + envNeto(r); g.firma.push(r.prod + ':' + Math.abs(r.delta)); });
     const lista = Object.keys(gr).map((k) => Object.assign({ grupo: k }, gr[k], { firma: gr[k].firma.sort().join(',') })).sort((a, b) => a.ts - b.ts);
     const dup = [];
     for (let i = 1; i < lista.length; i++) for (let j = i - 1; j >= 0 && lista[i].ts - lista[j].ts <= 10 * 60000; j--) if (lista[i].firma === lista[j].firma && lista[i].total === lista[j].total) { dup.push(lista[i].grupo); break; }
@@ -668,12 +726,12 @@
     filasV.forEach((r) => {
       const k = diaKey(r.ts, tz);
       if (!en(k)) return;
-      const pz = Math.abs(r.delta), monto = pz * (r.precio || 0), env = r.envio || 0, d = dias[idx[k]];
+      const pz = Math.abs(r.delta), monto = pz * (r.precio || 0), env = r.envio || 0, neto = envNeto(r), d = dias[idx[k]];
       if (r.tipo === 'venta') {
-        ventas.bruto += monto + env; ventas.envios += soloMonto(r) ? 0 : env; ventas.pzas += pz; grupos.add(r.grupo); d.g.add(r.grupo);
+        ventas.bruto += monto + neto; ventas.envios += soloMonto(r) ? 0 : env; ventas.pzas += pz; grupos.add(r.grupo); d.g.add(r.grupo);
         const pg = r.pago || 'efectivo';
-        ventas.porPago[pg] = (ventas.porPago[pg] || 0) + monto + env;
-        d.ventas += monto + env;
+        ventas.porPago[pg] = (ventas.porPago[pg] || 0) + monto + neto;
+        d.ventas += monto + neto;
         const t = porProd[r.prod] || (porProd[r.prod] = { id: r.prod, pzas: 0, total: 0 });
         t.pzas += pz; t.total += monto;
       } else {
@@ -738,29 +796,32 @@
     const filas = (await ctx.repo.ventas(ctx.ahora - 36 * DIA)).filter((r) => diaKey(r.ts, ctx.tz) === dia && (ctx.rol !== 'ruben' || r.rol === 'ruben')).sort((a, b) => a.ts - b.ts);
     const grupos = Object.create(null), orden = [];
     filas.forEach((r) => {
-      const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', vendedor: r.vendedor || '', pago: r.pago || '', entrega: r.tipo === 'venta' && !soloMonto(r) ? r.motivo || '' : '', envio: 0, soloMonto: soloMonto(r), lineas: [], total: 0 });
+      const g = grupos[r.grupo] || (grupos[r.grupo] = { grupo: r.grupo, ts: r.ts, tipo: r.tipo, cliente: r.cliente || '', vendedor: r.vendedor || '', pago: r.pago || '', entrega: r.tipo === 'venta' && !soloMonto(r) ? r.motivo || '' : '', envio: 0, abono: 0, reparto: r.reparto || '', soloMonto: soloMonto(r), lineas: [], total: 0, pagos: {} });
       if (!orden.includes(g)) orden.push(g);
-      if (soloMonto(r)) { g.total += r.envio || 0; return; }
-      const pzas = Math.abs(r.delta);
+      const pg = r.pago || 'efectivo';
+      if (soloMonto(r)) { g.total += r.envio || 0; g.pagos[pg] = (g.pagos[pg] || 0) + (r.envio || 0); return; }
+      if (g.soloMonto) { g.soloMonto = false; g.pago = r.pago || ''; g.entrega = r.motivo || ''; }
+      if (r.reparto) g.reparto = r.reparto;
+      const pzas = Math.abs(r.delta), m = pzas * (r.precio || 0) + envNeto(r);
       g.lineas.push({ id: r.prod, pzas, precio: r.precio || 0 });
-      g.envio += r.envio || 0;
-      g.total += pzas * (r.precio || 0) + (r.envio || 0);
+      g.envio += r.envio || 0; g.abono += r.abono || 0;
+      g.total += m; g.pagos[pg] = (g.pagos[pg] || 0) + m;
     });
     const redo = (n) => Math.round(n * 100) / 100;
-    const ventas = orden.filter((g) => g.tipo === 'venta').map((g) => Object.assign(g, { total: redo(g.total), envio: redo(g.envio) }));
+    const ventas = orden.filter((g) => g.tipo === 'venta').map((g) => { Object.keys(g.pagos).forEach((k) => { g.pagos[k] = redo(g.pagos[k]); }); return Object.assign(g, { total: redo(g.total), envio: redo(g.envio), abono: redo(g.abono) }); });
     const devs = orden.filter((g) => g.tipo === 'devolucion').map((g) => ({ grupo: g.grupo, ts: g.ts, lineas: g.lineas, total: redo(g.total) }));
     const t = { ventas: ventas.length, pzas: 0, envios: 0, vendido: 0, devuelto: 0, neto: 0, porPago: {} };
     ventas.forEach((g) => {
       t.vendido += g.total; t.envios += g.envio;
       g.lineas.forEach((l) => { t.pzas += l.pzas; });
-      t.porPago[g.pago || 'efectivo'] = redo((t.porPago[g.pago || 'efectivo'] || 0) + g.total);
+      Object.keys(g.pagos).forEach((k) => { t.porPago[k] = redo((t.porPago[k] || 0) + g.pagos[k]); });
     });
     devs.forEach((g) => { t.devuelto += g.total; g.lineas.forEach((l) => { t.pzas -= l.pzas; }); });
     t.vendido = redo(t.vendido); t.envios = redo(t.envios); t.devuelto = redo(t.devuelto); t.neto = redo(t.vendido - t.devuelto);
     const prods = await ctx.repo.productos();
     const gastos = (await ctx.repo.gastos(ctx.ahora - 36 * DIA)).filter((g) => g.rol === 'tienda' && !g.anulado && diaKey(g.ts, ctx.tz) === dia).sort((a, b) => a.ts - b.ts);
     t.gastos = redo(gastos.reduce((a, g) => a + g.monto, 0));
-    t.gastosEfectivo = redo(gastos.filter((g) => g.pago === 'efectivo').reduce((a, g) => a + g.monto, 0));
+    t.gastosEfectivo = redo(gastos.filter(deCaja).reduce((a, g) => a + g.monto, 0));
     t.efectivoNeto = redo((t.porPago.efectivo || 0) - t.gastosEfectivo);
     return { dia, hoy: dia === hoyK, ventas, devoluciones: devs, gastos, totales: t, tienda: { pzas: prods.filter((p) => p.activo).reduce((a, p) => a + p.stock_tienda, 0) } };
   }
@@ -833,7 +894,7 @@
   function nuevoMov(ctx, grupo, i, p, loc, delta, tipo, extra) {
     return Object.assign({
       id: grupo + '-' + i, ts: ctx.ahora, prod: p.id, loc, delta, tipo, motivo: '', nota: '', rol: ctx.rol, precio: null,
-      cliente: '', pago: '', envio: 0, grupo, ref: '', anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '', vendedor: ''
+      cliente: '', pago: '', envio: 0, grupo, ref: '', anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '', vendedor: '', abono: 0, reparto: ''
     }, extra);
   }
   async function productoPorId(ctx, id) {
@@ -891,7 +952,35 @@
       tx.stock.push(deltaStock(p.id, def.loc, delta));
       tx.movs.push(nuevoMov(ctx, grupo, i, p, def.loc, delta, tipo, Object.assign({ precio, envio: i === 0 ? envio : 0 }, extra)));
     });
-    return { grupo, total: Math.round((total + envio) * 100) / 100, piezas, envio };
+    let abono = 0;
+    if (tipo === 'venta') {
+      const bruto = Math.round((total + envio) * 100) / 100;
+      // lo que ya se cobró antes como anticipo de un pedido (ese dinero ya se contó el día que entró)
+      const previo = numero(b.abono, 0, bruto, 0);
+      // pago dividido: una parte con otra forma de pago (y otro día, si fue antes); va en la misma venta
+      let parte = null;
+      if (b.otroPago && Number(b.otroPago.monto) > 0) {
+        const mo = Math.round(Number(b.otroPago.monto) * 100) / 100, pg = PAGOS.includes(b.otroPago.pago) ? b.otroPago.pago : '';
+        if (!pg) throw bad('pago_invalido', 'Elige la forma de pago de la otra parte.');
+        if (!Number.isFinite(mo) || mo + previo > bruto) throw bad('pago_dividido', 'La parte pagada aparte no puede ser mayor que el total de la venta.');
+        let ts = ctx.ahora;
+        if (b.otroPago.dia) {
+          const hoyK = diaKey(ctx.ahora, ctx.tz), dia = String(b.otroPago.dia);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dia) || dia > hoyK || diaKey(ctx.ahora - 34 * DIA, ctx.tz) > dia) throw bad('dia_invalido', 'El pago aparte debe ser de los últimos 30 días.');
+          if (dia !== hoyK) { const [y, m, d] = dia.split('-').map(Number); ts = Date.UTC(y, m - 1, d, 12, 0, 0) - ctx.tz * 60000; }
+        }
+        parte = { mo, pg, ts };
+      }
+      abono = Math.round((previo + (parte ? parte.mo : 0)) * 100) / 100;
+      if (abono > bruto) throw bad('pago_dividido', 'Lo ya pagado no puede ser mayor que el total de la venta.');
+      if (tx.movs.length) {
+        const primero = tx.movs[tx.movs.length - ls.length];
+        primero.abono = abono;
+        primero.reparto = clean(b.reparto, 80);
+      }
+      if (parte) tx.movs.push(nuevoMov(ctx, grupo, 'a', { id: '' }, 'tienda', 0, 'venta', { ts: parte.ts, precio: 0, envio: parte.mo, motivo: 'anticipo', nota: 'Parte pagada aparte', cliente: extra.cliente, pago: parte.pg, vendedor: extra.vendedor }));
+    }
+    return { grupo, total: Math.round((total + envio - abono + (b.otroPago && Number(b.otroPago.monto) > 0 ? Number(b.otroPago.monto) : 0)) * 100) / 100, piezas, envio };
   }
 
   // Registra un cobro SIN producto (p. ej. una venta de antes de usar la app): suma al dinero vendido, no mueve inventario.
@@ -944,15 +1033,42 @@
     if (!ls.length && !detalle) throw bad('falta_detalle', 'Agrega los productos del pedido o escribe qué pidió.');
     const entrega = b.entrega === undefined || b.entrega === null ? '' : String(b.entrega);
     if (!ENTREGAS_AG.includes(entrega)) throw bad('entrega_invalida', 'Elige cómo se entrega.');
+    // datos aparte del pedido: patas, envío, cómo paga, referencia y con qué se dio el anticipo (y cuánto ya se contó como cobro)
+    const px = (previo && previo.extra) || {};
+    let extra;
+    if (b.extra === undefined || b.extra === null) extra = Object.assign({}, px);
+    else {
+      const x = typeof b.extra === 'object' ? b.extra : {};
+      extra = {
+        patas: clean(x.patas, 40), referencia: clean(x.referencia, 120),
+        envio: x.envio === '' || x.envio == null ? null : numero(x.envio, 0, 100000, 0),
+        pago: PAGOS.includes(x.pago) ? x.pago : '', antPago: PAGOS.includes(x.antPago) ? x.antPago : ''
+      };
+    }
+    extra.antReg = Number(px.antReg) || 0;
+    extra.antGrupos = Array.isArray(px.antGrupos) ? px.antGrupos.slice(0, 20) : [];
     return {
       cliente, tel: String(b.tel || '').replace(/\D/g, '').slice(0, 15), dia, hora, lineas: ls, detalle, entrega, direccion: clean(b.direccion, 120),
-      anticipo: numero(b.anticipo, 0, 1e7, 0), nota: clean(b.nota, 200)
+      anticipo: numero(b.anticipo, 0, 1e7, 0), nota: clean(b.nota, 200), extra
     };
+  }
+  // el anticipo de un pedido cuenta como dinero el día que entra (con su forma de pago), no hasta que se entrega
+  function registrarAnticipo(ctx, tx, d, idPed) {
+    const x = d.extra, reg = x.antReg || 0;
+    if (!x.antPago || !ADMIN.includes(ctx.rol)) return;
+    if (d.anticipo < reg) throw bad('anticipo_cobrado', 'Ya se registraron ' + reg + ' pesos de anticipo como cobro; para bajarlo anula ese cobro en el historial.');
+    if (d.anticipo === reg) return;
+    const grupo = uid('M');
+    tx.movs.push(nuevoMov(ctx, grupo, 0, { id: '' }, 'tienda', 0, 'venta', {
+      precio: 0, envio: Math.round((d.anticipo - reg) * 100) / 100, motivo: 'anticipo', nota: 'Anticipo del pedido ' + idPed, cliente: d.cliente, pago: x.antPago, vendedor: vendedorDe(ctx, {})
+    }));
+    x.antReg = d.anticipo; x.antGrupos = x.antGrupos.concat(grupo).slice(-20);
   }
   async function opAgendaCrear(ctx, b, tx) {
     const d = await datosPedidoCliente(ctx, b);
     const id = grupoDe(b, 'Q');
     if (await ctx.repo.pedidoCliente(id)) throw new ApiError(409, 'duplicado', 'Este pedido ya se había guardado.');
+    registrarAnticipo(ctx, tx, d, id);
     tx.agendaUpsert.push(Object.assign({ id, ts: ctx.ahora, rol: ctx.rol, estado: 'pendiente', estado_ts: ctx.ahora, estado_por: ctx.rol, estado_nota: '', venta: '', actualizado: ctx.ahora }, d));
     return { id };
   }
@@ -961,6 +1077,7 @@
     if (!prev) throw new ApiError(404, 'no_existe', 'No encontré ese pedido.');
     if (prev.estado === 'entregado' || prev.estado === 'cancelado') throw new ApiError(409, 'pedido_cerrado', 'Ese pedido ya está ' + prev.estado + '. Reábrelo para editarlo.');
     const d = await datosPedidoCliente(ctx, b, prev);
+    registrarAnticipo(ctx, tx, d, prev.id);
     tx.agendaUpsert.push(Object.assign({}, prev, d, { actualizado: ctx.ahora }));
     return { id: prev.id };
   }
@@ -1060,15 +1177,16 @@
     if (!orig.length) throw new ApiError(404, 'no_existe', 'No encontré esa venta.');
     if (orig.some((m) => m.tipo !== 'venta')) throw bad('no_es_venta', 'Solo se puede cambiar la forma de pago de una venta.');
     // también corrige quién la vendió (solo Zeus y el Almacén)
-    const vendAntes = orig[0].vendedor || '';
+    const base = orig.find((m) => !soloMonto(m)) || orig[0];
+    const vendAntes = base.vendedor || '';
     const vend = b.vendedor === undefined || b.vendedor === null ? null : clean(b.vendedor, 40);
     if (vend !== null && !vend) throw bad('falta_vendedor', 'Escribe quién hizo la venta.');
     if (vend !== null && !ADMIN.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo Zeus o el Almacén cambian el vendedor.');
-    const pago = b.pago === undefined || b.pago === null || b.pago === '' ? (vend !== null ? orig[0].pago || 'efectivo' : '') : String(b.pago);
+    const pago = b.pago === undefined || b.pago === null || b.pago === '' ? (vend !== null ? base.pago || 'efectivo' : '') : String(b.pago);
     if (!PAGOS.includes(pago)) throw bad('pago_invalido', 'Elige la forma de pago correcta.');
     if (orig.some((m) => m.anulado)) throw new ApiError(409, 'ya_anulado', 'Esa venta está anulada.');
     if (!ADMIN.includes(ctx.rol) && orig.some((m) => m.rol !== ctx.rol)) throw new ApiError(403, 'sin_permiso', 'Solo puedes corregir ventas de tu tienda.');
-    const antes = orig[0].pago || 'efectivo';
+    const antes = base.pago || 'efectivo';
     const cambiaVend = vend !== null && vend !== vendAntes;
     if (antes === pago && !cambiaVend) throw bad('mismo_pago', vend !== null ? 'La venta ya tiene ese vendedor.' : 'La venta ya está registrada con esa forma de pago.');
     const nombre = { efectivo: 'efectivo', transferencia: 'transferencia', tarjeta: 'tarjeta', otro: 'otro' };
@@ -1078,7 +1196,7 @@
       tx.movs.push(Object.assign({}, m, { id: anul + '-' + i, ts: ctx.ahora, delta: -m.delta, tipo: 'anulacion', motivo: '', nota: motivo, rol: ctx.rol, cliente: '', pago: '', envio: 0, grupo: anul, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
       tx.movsAnulados.push({ id: m.id, ts: ctx.ahora, por: ctx.rol, nota: motivo });
       // la misma venta, con su fecha y su vendedor; el inventario no cambia (se anula −1 y se registra −1)
-      tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago, vendedor: cambiaVend ? vend : m.vendedor, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
+      tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago: m.motivo === 'anticipo' ? m.pago : pago, vendedor: cambiaVend ? vend : m.vendedor, grupo: nuevo, ref: m.id, anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
     });
     tx.guardas.push({ tipo: 'grupo_sin_anular', grupo });
     return { grupo: nuevo, anulada: grupo, antes, pago, vendedor: cambiaVend ? vend : vendAntes };
@@ -1103,7 +1221,7 @@
     const nota = (orig[0].nota ? orig[0].nota + ' · ' : '') + 'Repuesta con pago ' + pago;
     orig.forEach((m, i) => {
       if (m.delta) tx.stock.push(deltaStock(m.prod, m.loc, m.delta));
-      tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago, grupo: nuevo, ref: m.id, nota: clean(nota, 200), anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
+      tx.movs.push(Object.assign({}, m, { id: nuevo + '-' + i, pago: m.motivo === 'anticipo' ? m.pago : pago, grupo: nuevo, ref: m.id, nota: clean(nota, 200), anulado: 0, anulado_ts: 0, anulado_por: '', anulado_nota: '' }));
     });
     return { grupo: nuevo, repuesta: grupo, pago };
   }
@@ -1513,6 +1631,7 @@
     'config.guardar': [['local'], opConfigGuardar],
     'pin.cambiar': [['local', 'tienda', 'dueno', 'ruben'], opPinCambiar],
     'pin.ruben': [['local'], opPinRuben],
+    'nomina.config': [['local', 'tienda'], opNominaConfig],
     'push.suscribir': [['local', 'dueno'], opPushSuscribir],
     'push.quitar': [['local', 'dueno'], opPushQuitar],
     'push.probar': [['local'], opPushProbar],
@@ -1563,6 +1682,10 @@
       if (path === '/reporte-semana' && m === 'GET') {
         if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'El reporte semanal es del dueño y del almacén.');
         return ok(await reporteSemana(ctx));
+      }
+      if (path === '/nomina' && m === 'GET') {
+        if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La nómina es de Zeus, del almacén y del dueño.');
+        return ok(await nominaSemana(ctx));
       }
       if (path === '/cuentas' && m === 'GET') {
         if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La revisión de cuentas es del dueño y del almacén.');
@@ -1683,7 +1806,7 @@
       },
       async ventas(desde) {
         return S.movs.filter((m) => (m.tipo === 'venta' || m.tipo === 'devolucion') && !m.anulado && m.ts >= desde)
-          .map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, precio: m.precio, grupo: m.grupo, tipo: m.tipo, cliente: m.cliente, pago: m.pago, motivo: m.motivo, envio: m.envio || 0, rol: m.rol, vendedor: m.vendedor || '' }));
+          .map((m) => ({ ts: m.ts, prod: m.prod, delta: m.delta, precio: m.precio, grupo: m.grupo, tipo: m.tipo, cliente: m.cliente, pago: m.pago, motivo: m.motivo, envio: m.envio || 0, rol: m.rol, vendedor: m.vendedor || '', abono: m.abono || 0, reparto: m.reparto || '' }));
       },
       async commit(tx) {
         // 1) verificar todo antes de tocar nada

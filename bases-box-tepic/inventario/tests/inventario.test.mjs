@@ -882,8 +882,8 @@ for (const [nombre, fabrica] of Object.entries(fabricas)) {
       assert.equal(ll.resumen.hoy.porPago.efectivo, 120.5);
       assert.equal((await tienda.estado()).resumen.gastos.hoy, 5420.5);
       assert.equal((await local.estado()).resumen.gastos.mes, 5420.5);
-      // un gasto de ayer entra al mes pero no al día de hoy
-      const ayerK = new Date(Date.now() - DIA).toISOString().slice(0, 10);
+      // un gasto de antier entra al mes pero no al día de hoy (dos días atrás: no depende de la hora ni de la zona horaria)
+      const ayerK = new Date(Date.now() - 2 * DIA).toISOString().slice(0, 10);
       const g4 = await tienda.op({ op: 'gasto.crear', monto: 80, cat: 'comida', dia: ayerK });
       assert.equal(g4.status, 200, JSON.stringify(g4.json));
       assert.equal((await tienda.call('GET', '/gastos', null, { tz: '0' })).json.resumen.hoy.total, 5420.5);
