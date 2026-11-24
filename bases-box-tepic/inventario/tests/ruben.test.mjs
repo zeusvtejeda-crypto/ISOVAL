@@ -49,10 +49,10 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     const v = await ruben.op({ op: 'mov.venta', pago: 'efectivo', vendedor: 'Hugo', cliente: 'Ana', lineas: [{ id: b.id, cant: 1, precio: 1600 }] });
     assert.equal(v.status, 200, JSON.stringify(v.json));
     assert.equal(avisos.length, 1);
-    assert.match(avisos[0].titulo, /Rubén registró una venta · \$1,600/);
+    assert.match(avisos[0].titulo, /Carlos registró una venta · \$1,600/);
     assert.match(avisos[0].texto, /1 × Base Individual · Rosa · efectivo · cliente Ana/);
     const mov = (await local.call('GET', '/movs', null, { limite: '10', tipos: 'venta' })).json.items.find((m) => m.grupo === v.json.resultado.grupo);
-    assert.equal(mov.vendedor, 'Rubén'); assert.equal(mov.rol, 'ruben');
+    assert.equal(mov.vendedor, 'Carlos'); assert.equal(mov.rol, 'ruben');
     assert.equal(v.json.estado.productos[0].costo, undefined, 'Rubén no ve costos');
 
     // lo demás no lo puede hacer
@@ -74,7 +74,7 @@ for (const [nombre, fabrica] of [['local', async () => Core.crearRepoLocal(Core.
     assert.ok(suyos.length >= 1 && suyos.every((m) => m.rol === 'ruben'));
     assert.ok((await ruben.call('GET', '/estado')).json.recientes.every((m) => m.rol === 'ruben'));
     const rep = (await ruben.call('GET', '/reporte-dia')).json;
-    assert.equal(rep.ventas.length, 1); assert.equal(rep.ventas[0].vendedor, 'Rubén');
+    assert.equal(rep.ventas.length, 1); assert.equal(rep.ventas[0].vendedor, 'Carlos');
     // el Almacén sí puede anular la venta de Rubén
     assert.equal((await local.op({ op: 'mov.anular', grupo: v.json.resultado.grupo, motivo: 'prueba' })).status, 200);
 

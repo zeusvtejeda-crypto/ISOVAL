@@ -461,8 +461,8 @@
 
   // ───────── nómina de la semana y lo que el negocio le debe a quien puso dinero de su bolsa
   const NOMINA_BASE = [
-    { n: 'Germán', sueldo: 4000, com: 100, rep: 25 }, { n: 'Alan', sueldo: 0, com: 0, rep: 25 }, { n: 'Rubén', sueldo: 2700, com: 0, rep: 25 },
-    { n: 'Don Cruz', sueldo: 2500, com: 0, rep: 0 }, { n: 'Hugo', sueldo: 0, com: 150, rep: 0 }, { n: 'Carlos', sueldo: 0, com: 100, rep: 0 }
+    { n: 'Germán', sueldo: 4000, com: 100, rep: 25 }, { n: 'Alan', sueldo: 0, com: 0, rep: 25 }, { n: 'Carlos', sueldo: 2700, com: 100, rep: 25 },
+    { n: 'Don Cruz', sueldo: 2500, com: 0, rep: 0 }, { n: 'Hugo', sueldo: 0, com: 150, rep: 0 }
   ];
   const normN = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
   const r2 = (n) => Math.round(n * 100) / 100;
@@ -909,7 +909,7 @@
   }
 
   // quién hizo la venta (nombre del vendedor); si no lo mandan, queda el usuario que la registró
-  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Rubén' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Germán' : 'Almacén'));
+  const vendedorDe = (ctx, b) => (ctx.rol === 'ruben' ? 'Carlos' : clean(b.vendedor, 40) || (ctx.rol === 'tienda' ? 'Germán' : 'Almacén'));
 
   // entrega de una venta → tarifa de envío en la configuración del negocio (null = sin cargo)
   const ENTREGAS = { recoge: null, tepic: 'envioTepic', xalisco: 'envioFuera', cantera: 'envioFuera' };
@@ -1233,8 +1233,8 @@
     const lineas = Array.isArray(b.lineas) ? b.lineas.slice(0, 6).map((l) => (l.cant || 1) + ' × ' + ((idx[l.id] || {}).nombre || 'producto')).join(', ') : '';
     const pago = { efectivo: 'efectivo', tarjeta: 'tarjeta', transferencia: 'transferencia', otro: 'otro' }[b.pago] || 'efectivo';
     const total = res && res.total ? '$' + Number(res.total).toLocaleString('en-US') : '';
-    if (b.op === 'mov.venta') return { titulo: 'Rubén registró una venta' + (total ? ' · ' + total : ''), texto: [lineas, pago, b.cliente ? 'cliente ' + clean(b.cliente, 40) : ''].filter(Boolean).join(' · ') };
-    return { titulo: 'Rubén hizo un movimiento', texto: String(b.op) + (lineas ? ' · ' + lineas : '') };
+    if (b.op === 'mov.venta') return { titulo: 'Carlos registró una venta' + (total ? ' · ' + total : ''), texto: [lineas, pago, b.cliente ? 'cliente ' + clean(b.cliente, 40) : ''].filter(Boolean).join(' · ') };
+    return { titulo: 'Carlos hizo un movimiento', texto: String(b.op) + (lineas ? ' · ' + lineas : '') };
   }
   async function opPushSuscribir(ctx, b, tx) {
     const endpoint = String(b.endpoint || ''), p256dh = String(b.p256dh || ''), auth = String(b.auth || '');
@@ -1691,7 +1691,7 @@
         if (SOLO_VENTAS.includes(ctx.rol)) throw new ApiError(403, 'sin_permiso', 'La revisión de cuentas es del dueño y del almacén.');
         return ok(await revisarCuentas(ctx));
       }
-      if (ctx.rol === 'ruben' && path === '/gastos') throw new ApiError(403, 'sin_permiso', 'Tu perfil solo registra ventas.'); // Rubén sí ve los pedidos de clientes (solo lectura)
+      if (ctx.rol === 'ruben' && path === '/gastos') throw new ApiError(403, 'sin_permiso', 'Tu perfil solo registra ventas.'); // Carlos sí ve los pedidos de clientes (solo lectura)
       if (path === '/agenda' && m === 'GET') return ok(await listarAgenda(ctx));
       if (path === '/gastos' && m === 'GET') return ok(await listarGastos(ctx));
       if (path === '/push/clave' && m === 'GET') {
@@ -1703,7 +1703,7 @@
       if (path === '/op' && m === 'POST') {
         const resultado = await correrOp(ctx, ctx.req.body);
         if (opts.avisar) {
-          const aviso = ctx.rol === 'ruben' ? await avisoDeRuben(ctx, ctx.req.body, resultado) : ctx.req.body && ctx.req.body.op === 'push.probar' ? { titulo: 'Avisos activados', texto: 'Así te llegará cada venta que registre Rubén.' } : null;
+          const aviso = ctx.rol === 'ruben' ? await avisoDeRuben(ctx, ctx.req.body, resultado) : ctx.req.body && ctx.req.body.op === 'push.probar' ? { titulo: 'Avisos activados', texto: 'Así te llegará cada venta que registre Carlos.' } : null;
           if (aviso) { try { opts.avisar(aviso); } catch (e) { /* el aviso nunca detiene la operación */ } }
         }
         const extra = {};

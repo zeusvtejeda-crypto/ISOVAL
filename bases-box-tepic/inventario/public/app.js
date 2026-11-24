@@ -95,7 +95,7 @@ const ROLES = {
   local: { nombre: 'Almacén', corto: 'Almacén', desc: 'Bodega y fábrica: materiales, bases en producción y envíos a la tienda.', ic: 'fabrica' },
   tienda: { nombre: 'Germán', corto: 'Germán', desc: 'Tienda y ventas, con acceso a todo (cuentas, gastos, resumen y ajustes).', ic: 'tienda' },
   dueno: { nombre: 'Dueño', corto: 'Dueño', desc: 'Solo consulta: resumen de producción, ventas, gastos y egresos.', ic: 'usuario' },
-  ruben: { nombre: 'Rubén', corto: 'Rubén', desc: 'Solo registra ventas. El almacén recibe un aviso de cada venta.', ic: 'recibo' }
+  ruben: { nombre: 'Carlos', corto: 'Carlos', desc: 'Solo registra ventas. El almacén recibe un aviso de cada venta.', ic: 'recibo' }
 };
 const esVendedor = () => S.rol === 'tienda' || S.rol === 'ruben';
 const esAdmin = () => S.rol === 'local' || S.rol === 'tienda'; // Germán (tienda) tiene acceso a todo
@@ -370,7 +370,7 @@ const puedeAnular = (g) => !g.anulado && !['envio', 'recibo', 'envio_cancelado',
 // quién hizo la venta (las anteriores a este campo muestran el usuario que la registró)
 const vendedorDe = (g) => g.vendedor || (ROLES[g.rol] ? ROLES[g.rol].nombre : '');
 const VENDEDORES_BASE = ['Tienda', 'Hugo', 'Carlos', 'VILLEDA'];
-const REPARTIDORES = ['Germán', 'Alan', 'Rubén'];
+const REPARTIDORES = ['Germán', 'Alan', 'Carlos'];
 const ultimoVendedor = () => { try { return localStorage.getItem('bb-inv:vendedor') || ''; } catch (e) { return ''; } };
 const guardarVendedor = (v) => { try { localStorage.setItem('bb-inv:vendedor', v); } catch (e) { /* sin almacenamiento */ } };
 
@@ -382,7 +382,7 @@ const TABS = [
   { id: 'historial', t: 'Historial', ic: 'reloj' },
   { id: 'mas', t: 'Más', ic: 'mas' }
 ];
-const tabsDe = () => TABS.filter((t) => !((S.rol === 'dueno' || S.rol === 'ruben') && t.id === 'mover')); // el dueño solo consulta; Rubén solo vende
+const tabsDe = () => TABS.filter((t) => !((S.rol === 'dueno' || S.rol === 'ruben') && t.id === 'mover')); // el dueño solo consulta; Carlos solo vende
 const marca = () => html`<div class="marca"><span class="logo"><img src="logo.png" alt="" width="38" height="38"></span><span class="marca-t"><span class="marca-n">Bases Bo<b>x</b></span><span class="marca-s">Tepic · Inventario</span></span></div>`;
 
 function montarApp() {
@@ -635,7 +635,7 @@ function pintarInicioRuben(cont) {
   const deHoy = mias.filter((g) => !g.anulado && new Date(g.ts).toDateString() === hoy.toDateString());
   const bases = e.productos.filter((p) => p.cat === 'base' && p.activo && p.stock_tienda > 0);
   poner(cont, html`
-    <div class="cabecera"><div><h1 class="t-pant">${saludo}, Rubén</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · Solo ventas</p></div></div>
+    <div class="cabecera"><div><h1 class="t-pant">${saludo}, Carlos</h1><p class="t-peq" style="margin-top:8px">${mayus(fmtDiaLargo.format(hoy))} · Solo ventas</p></div></div>
     <button type="button" class="btn btn-p btn-b btn-venta-grande" data-act="venta-nueva">${ico('recibo')}Nueva venta</button>
     <button type="button" class="btn btn-g btn-b" data-act="agenda">${ico('reloj')}Pedidos de clientes${(e.agenda || []).length ? ' · ' + (e.agenda || []).length + ' abiertos' : ''}</button>
     <section class="card" aria-label="Mis ventas de hoy"><div class="card-t"><h2 class="t-sec">Mis ventas de hoy</h2><b class="cifras">${dinero(sumar(deHoy, (g) => g.total))}</b></div>
@@ -1112,7 +1112,7 @@ function abrirForma(tipo, o) {
       ${f.precio ? html`<div class="total-b"><span>Total</span><b id="f-total">${dinero(0)}</b></div><p class="t-peq" id="f-total-sub" style="margin:-6px 0 14px"></p>` : ''}
       ${f.venta ? html`<div class="campo"><span class="lbl">Entrega</span><div class="opciones" id="f-entrega">${ENTREGAS.map(([k, t]) => html`<button type="button" class="opcion" data-entrega="${k}" aria-pressed="${String(k === entrega)}" style="padding:0 12px">${t}</button>`)}</div><p class="t-peq" id="f-entrega-ayuda" style="margin-top:8px"></p></div>
         <label class="campo" id="f-envio-campo" hidden><span class="lbl">Cobro de envío</span><span class="precio" style="max-width:160px"><span class="muted">$</span><input id="f-envio" type="text" inputmode="decimal" value="" aria-label="Cobro de envío"></span></label>
-        <label class="campo"><span class="lbl">Vendedor (quién hizo la venta)</span><input class="inp" id="f-vendedor" maxlength="40" list="f-vendedores" placeholder="Ej. Hugo, Carlos, Tienda" autocomplete="off" value="${S.rol === 'ruben' ? 'Rubén' : o.vendedor || ultimoVendedor()}" ${S.rol === 'ruben' ? raw('readonly') : ''}><datalist id="f-vendedores">${[...new Set([...VENDEDORES_BASE, ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
+        <label class="campo"><span class="lbl">Vendedor (quién hizo la venta)</span><input class="inp" id="f-vendedor" maxlength="40" list="f-vendedores" placeholder="Ej. Hugo, Carlos, Tienda" autocomplete="off" value="${S.rol === 'ruben' ? 'Carlos' : o.vendedor || ultimoVendedor()}" ${S.rol === 'ruben' ? raw('readonly') : ''}><datalist id="f-vendedores">${[...new Set([...VENDEDORES_BASE, ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
         <label class="campo"><span class="lbl">Cliente (opcional)</span><input class="inp" id="f-cliente" maxlength="60" placeholder="Nombre o referencia" autocomplete="off" value="${o.cliente || ''}"></label>
         <div class="campo"><span class="lbl">${abono ? 'Forma de pago del saldo' : 'Forma de pago'}</span><div class="opciones g4" id="f-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>
         ${abono ? html`<div class="aviso ok" style="margin-bottom:12px">${ico('check')}<span class="grow">Ya pagó <b>${dinero(abono)}</b> de anticipo (ya está contado). Aquí solo se cobra el saldo.</span></div>` : ''}
@@ -1408,7 +1408,7 @@ function mostrarAvisoAgenda() {
 
 async function abrirAgenda(inicial) {
   let vista = (inicial && inicial.vista) || 'proximos', mes = hoyK().slice(0, 7), sel = hoyK(), cerrados = false, datos = [];
-  const puede = S.rol !== 'dueno' && S.rol !== 'ruben'; // el dueño y Rubén solo consultan los pedidos
+  const puede = S.rol !== 'dueno' && S.rol !== 'ruben'; // el dueño y Carlos solo consultan los pedidos
   const d = dialogo({
     titulo: 'Pedidos de clientes',
     clase: 'ancho',
@@ -1997,7 +1997,7 @@ async function descargarPdfSemanal(sem, btn) {
 /* ───────── gastos (salidas de dinero) ───────── */
 const GASTO_CATS = { materiales: 'Materiales', sueldos: 'Sueldos', renta: 'Renta', servicios: 'Luz, agua, internet', transporte: 'Gasolina y transporte', comida: 'Comida', mantenimiento: 'Mantenimiento', publicidad: 'Publicidad', comisiones: 'Comisiones (Mercado Pago, banco)', retiro: 'Retiro del dueño', reembolso: 'Regresar dinero (Germán/René)', otro: 'Otro' };
 const PAGADORES_UI = { caja: 'Caja', zeus: 'Germán (su bolsa)', rene: 'René', mp: 'Mercado Pago' };
-const PERSONAS_UI = ['Germán', 'René', 'Alan', 'Rubén', 'Don Cruz', 'Hugo', 'Carlos'];
+const PERSONAS_UI = ['Germán', 'René', 'Alan', 'Carlos', 'Don Cruz', 'Hugo'];
 const fechaLocal = (ts) => fechaISO(ts).slice(0, 10);
 function enPeriodo(ts, per) {
   const hoy = new Date(), k = fechaLocal(ts), kh = fechaLocal(hoy.getTime());
@@ -2076,7 +2076,7 @@ function formGasto(alGuardar) {
     cuerpo: html`<label class="campo"><span class="lbl">Monto</span><span class="precio gs-monto"><span class="muted">$</span><input id="gs-monto" type="text" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Monto del gasto"></span></label>
       <div class="campo"><span class="lbl">¿En qué fue?</span><div class="opciones" id="gs-cats">${Object.keys(GASTO_CATS).map((k) => html`<button type="button" class="opcion" data-cat="${k}" aria-pressed="false" style="padding:0 12px">${GASTO_CATS[k]}</button>`)}</div></div>
       <label class="campo"><span class="lbl" id="gs-lbl-con">Detalle (opcional)</span><input class="inp" id="gs-concepto" maxlength="80" placeholder="Ej. gasolina camioneta, tela, comida del equipo" autocomplete="off"></label>
-      <label class="campo" id="gs-persona-c" hidden><span class="lbl" id="gs-persona-l">¿Para quién?</span><input class="inp" id="gs-persona" maxlength="30" list="gs-personas" autocomplete="off" placeholder="Ej. Rubén"><datalist id="gs-personas">${PERSONAS_UI.map((n) => html`<option value="${n}"></option>`)}</datalist></label>
+      <label class="campo" id="gs-persona-c" hidden><span class="lbl" id="gs-persona-l">¿Para quién?</span><input class="inp" id="gs-persona" maxlength="30" list="gs-personas" autocomplete="off" placeholder="Ej. Carlos"><datalist id="gs-personas">${PERSONAS_UI.map((n) => html`<option value="${n}"></option>`)}</datalist></label>
       <div class="campo"><span class="lbl">Cómo se pagó</span><div class="opciones g4" id="gs-pagos">${Object.keys(PAGOS).map((k) => html`<button type="button" class="opcion" data-pago="${k}" aria-pressed="${String(k === pago)}" style="padding:0 6px">${PAGOS[k]}</button>`)}</div></div>
       <div class="campo"><span class="lbl">¿De dónde salió el dinero?</span><div class="opciones g4" id="gs-pagador">${Object.keys(PAGADORES_UI).map((k) => html`<button type="button" class="opcion" data-pagador="${k}" aria-pressed="${String(k === pagador)}" style="padding:0 6px">${PAGADORES_UI[k]}</button>`)}</div><span class="ayuda">Solo lo que sale de la caja se descuenta del efectivo. Si lo puso Germán o René, el negocio se los debe.</span></div>
       <label class="campo" style="max-width:220px"><span class="lbl">Día</span><input class="inp" type="date" id="gs-dia" value="${hoy}" max="${hoy}" min="${minK}"></label>
@@ -2431,7 +2431,7 @@ function abrirOperacion(grupo) {
     const s2 = dialogo({
       titulo: 'Cambiar vendedor',
       cuerpo: html`<p class="t-peq" style="margin:0 0 12px">Ahora: <b>${vendedorDe(g)}</b>. La venta conserva su día, pago y piezas; el cambio queda anotado en el historial.</p>
-        <label class="campo"><span class="lbl">Vendedor correcto</span><input class="inp" id="cv-nombre" maxlength="40" list="cv-lista" autocomplete="off" placeholder="Ej. Hugo, Carlos, Germán"><datalist id="cv-lista">${[...new Set([...VENDEDORES_BASE, 'Germán', 'Rubén', ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
+        <label class="campo"><span class="lbl">Vendedor correcto</span><input class="inp" id="cv-nombre" maxlength="40" list="cv-lista" autocomplete="off" placeholder="Ej. Hugo, Carlos, Germán"><datalist id="cv-lista">${[...new Set([...VENDEDORES_BASE, 'Germán', 'Carlos', ...S.est.recientes.map((m) => m.vendedor).filter(Boolean)])].map((v) => html`<option value="${v}"></option>`)}</datalist></label>
         <p class="err" id="cv-err" hidden></p>`,
       pie: html`<button type="button" class="btn btn-g" data-cerrar>Volver</button><button type="button" class="btn btn-p" id="cv-ok">Guardar</button>`
     });
@@ -2729,11 +2729,11 @@ function formPinDueno() {
 }
 function formPinRuben() {
   const d = dialogo({
-    titulo: 'PIN de Rubén',
-    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Rubén entra con su propio PIN y <b>solo puede registrar ventas</b> (con su nombre). No ve gastos, costos, cuentas ni movimientos de los demás, y no puede anular. Cada venta suya te llega como aviso si activas “Avisos al celular”.</p>
+    titulo: 'PIN de Carlos',
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Carlos entra con su propio PIN y <b>solo puede registrar ventas</b> (con su nombre). No ve gastos, costos, cuentas ni movimientos de los demás, y no puede anular. Cada venta suya te llega como aviso si activas “Avisos al celular”.</p>
       <label class="campo"><span class="lbl">Tu PIN (almacén)</span><input class="inp pin" id="pr-act" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
-      <label class="campo"><span class="lbl">PIN de Rubén (6 a 8 números)</span><input class="inp pin" id="pr-nvo" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
-      <label class="campo"><span class="lbl">Repite el PIN de Rubén</span><input class="inp pin" id="pr-rep" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">PIN de Carlos (6 a 8 números)</span><input class="inp pin" id="pr-nvo" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+      <label class="campo"><span class="lbl">Repite el PIN de Carlos</span><input class="inp pin" id="pr-rep" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
       <p class="err" id="pr-err" hidden></p>`,
     pie: html`<button type="button" class="btn btn-g" data-cerrar>Cancelar</button><button type="button" class="btn btn-p" id="pr-ok">Guardar PIN</button>`
   });
@@ -2744,7 +2744,7 @@ function formPinRuben() {
     await op({ op: 'pin.ruben', pinActual: $('#pr-act', d.el).value, pinNuevo: nvo });
     d.cerrar();
     S.hayRuben = true;
-    toast('Listo: Rubén ya puede entrar con su PIN.');
+    toast('Listo: Carlos ya puede entrar con su PIN.');
   });
   btn.addEventListener('click', enviar);
   d.el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') enviar(); });
@@ -2773,7 +2773,7 @@ function abrirAvisos() {
   const e = S.est;
   const d = dialogo({
     titulo: 'Avisos al celular',
-    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Cada vez que Rubén registre una venta te llega una notificación a este celular, aunque no tengas la app abierta.</p>
+    cuerpo: html`<p class="t-peq" style="margin-bottom:14px">Cada vez que Carlos registre una venta te llega una notificación a este celular, aunque no tengas la app abierta.</p>
       <div class="aviso ${e.avisos ? 'ok' : ''}" style="margin-bottom:14px">${ico(e.avisos ? 'check' : 'info')}<span>${e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + '.' : 'Todavía no están activos en ningún celular.'}</span></div>
       ${/iPhone|iPad/.test(navigator.userAgent) && !(window.matchMedia && matchMedia('(display-mode: standalone)').matches) ? html`<div class="aviso warn" style="margin-bottom:14px">${ico('alerta')}<span>En iPhone las notificaciones solo funcionan con la app <b>agregada a la pantalla de inicio</b>: toca Compartir → Agregar a pantalla de inicio, ábrela desde ese ícono y activa aquí.</span></div>` : ''}
       <p class="err" id="av-err" hidden></p>`,
@@ -2879,8 +2879,8 @@ VISTAS.mas = {
       <section class="sec-mas"><span class="t-sec">Mi cuenta</span><div class="card flat"><ul class="lista">
         ${fila('candado', 'Cambiar mi PIN', 'Cierra tu sesión en los demás equipos', 'pin-propio')}
         ${local ? fila('tienda', 'Reiniciar el PIN de Germán (tienda)', 'Si se olvidó; se pide el PIN del almacén', 'pin-tienda') : ''}
-        ${local ? fila('recibo', 'PIN de Rubén', e.ruben ? 'Cambiar el PIN con el que entra Rubén (solo ventas)' : 'Crea el acceso de Rubén: solo registra ventas', 'pin-ruben') : ''}
-        ${local ? fila('alerta', 'Avisos al celular', e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + ' · cada venta de Rubén te llega como notificación' : 'Recibe una notificación cada vez que Rubén registre una venta', 'avisos') : ''}
+        ${local ? fila('recibo', 'PIN de Carlos', e.ruben ? 'Cambiar el PIN con el que entra Carlos (solo ventas)' : 'Crea el acceso de Carlos: solo registra ventas', 'pin-ruben') : ''}
+        ${local ? fila('alerta', 'Avisos al celular', e.avisos ? 'Activos en ' + plural(e.avisos, 'equipo', 'equipos') + ' · cada venta de Carlos te llega como notificación' : 'Recibe una notificación cada vez que Carlos registre una venta', 'avisos') : ''}
         ${local ? fila('usuario', 'PIN del dueño', e.dueno ? 'Cambiar el PIN con el que entra el dueño' : 'Crea el acceso del dueño (solo consulta)', 'pin-dueno') : ''}
         ${local ? fila('candado', 'Código de recuperación', 'Genera uno nuevo si perdiste el anterior', 'codigo-nuevo') : ''}
         ${local && S.modo !== 'local' ? fila('basura', 'Dejar todo en cero', 'Borra movimientos y existencias para empezar limpio', 'reiniciar') : ''}
