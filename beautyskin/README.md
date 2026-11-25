@@ -21,5 +21,5 @@ Kit digital para la página de Facebook /LinaresSkin.
 - PIN del CRM: inicial `1234` → cambiarlo en CRM → Ajustes el primer día.
 
 ## Notas técnicas
-- Sitio estático: se publica en GitHub Pages / Cloudflare Pages / Netlify tal cual.
+- Publicado en https://beautyskin-tepic.vercel.app (Vercel, proyecto `beautyskin-tepic`). También existe copia en GitHub Pages.
 - El CRM guarda en el navegador del dispositivo (localStorage). Usar **un solo dispositivo principal** (iPad de recepción) y descargar respaldo semanal en Ajustes. Las reservas web hechas desde otros teléfonos llegan por WhatsApp y se registran con "+ Nueva cita".

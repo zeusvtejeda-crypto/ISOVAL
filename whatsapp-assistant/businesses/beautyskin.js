@@ -26,7 +26,7 @@ COFEPRIS 2318015036X00364.
 
 UBICACIÓN: Calle Cedro #15, esquina con Av. Jacarandas, Col. Versalles Sur, 63000 Tepic, Nay.
 WHATSAPP: 33 1225 6402. Instagram: @beautyskin_real_spa.
-WEB (servicios, precios y agenda en línea): https://zeusvtejeda-crypto.github.io/ISOVAL/beautyskin/#agendar
+WEB (servicios, precios y agenda en línea): https://beautyskin-tepic.vercel.app/#agendar
 
 VALORACIÓN MÉDICA: $300, se descuentan del total del tratamiento. Todo es sujeto a valoración médica.
 
