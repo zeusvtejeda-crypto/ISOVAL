@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /crm/
+Sitemap: https://beautyskin-tepic.vercel.app/sitemap.xml

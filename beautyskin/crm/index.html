@@ -173,6 +173,19 @@ aside nav button .c{animation:badge 2s ease-in-out infinite}
 .pin.err{animation:shake .4s}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .pad button{transition:transform .12s,background .2s}.pad button:active{transform:scale(.92);background:var(--blush)}
+
+/* ═══ MEJORAS CRM ═══ */
+.goal-bar{height:10px;background:var(--blush);border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.goal-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#E7C77A);border-radius:99px;animation:grow 1.2s var(--ease) both;transform-origin:left}
+.card h3 .pill{font:500 12px Jost,sans-serif}
+.up{color:var(--ok)}.down{color:var(--bad)}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:8px 0}
+.ph-grid figure{position:relative;border-radius:12px;overflow:hidden;background:var(--blush);aspect-ratio:1/1}
+.ph-grid img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.ph-grid figcaption{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(10,38,56,.8));color:#fff;font-size:11px;padding:14px 6px 4px}
+.ph-grid .del{position:absolute;top:4px;right:4px;border:0;border-radius:50%;width:24px;height:24px;background:rgba(255,255,255,.9);cursor:pointer;font-size:12px}
+.corte td:last-child,.corte th:last-child{text-align:right}
+@media print{body>*:not(.ov){display:none!important}.ov{position:static;background:none;padding:0;animation:none}.modal{box-shadow:none;max-width:none;animation:none}.acts,.noprint{display:none!important}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -211,7 +224,8 @@ window.addEventListener('storage',function(e){if(e.key&&e.key.indexOf(K(''))===0
 
 /* ── PIN (hash simple; seguridad básica de dispositivo, no de servidor) ── */
 function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(16)}
-if(!DB.cfg.pin){DB.cfg.pin=hash(N.slug+':'+N.pinInicial);DB.cfg.usuario='Recepción';save('config',DB.cfg)}
+if(!DB.cfg.pin){DB.cfg.pin=hash(N.slug+':'+N.pinInicial);DB.cfg.usuario=N.duena||'Recepción';save('config',DB.cfg)}
+if(N.duena&&(!DB.cfg.usuario||DB.cfg.usuario==='Recepción')){DB.cfg.usuario=N.duena;save('config',DB.cfg)}
 var S={auth:sessionStorage.getItem(K('auth'))==='1',tab:location.hash.replace('#','')||'inicio',q:'',agendaRef:today(),filtroCita:'hoy',cart:[],cartCli:'',pago:'Efectivo',desc:0,segF:'pendientes'};
 
 function toast(t){var el=document.createElement('div');el.className='toast';el.textContent=t;document.body.appendChild(el);setTimeout(function(){el.remove()},2400)}
@@ -264,7 +278,7 @@ function render(){
 
 function renderLogin(){
   var v='';
-  root.innerHTML='<div class="login"><div class="card"><img src="../assets/logo.svg" alt="" style="width:84px;margin:0 auto 10px"/><h1>BeautySkin</h1><p class="hint">Acceso del equipo</p><div class="pin" id="dots"></div><div class="pad" id="pad"></div><p class="hint" style="margin-top:14px">¿Sin PIN? Pídelo a la administración.</p></div></div>';
+  root.innerHTML='<div class="login"><div class="card"><img src="../assets/logo.svg" alt="" style="width:84px;margin:0 auto 10px"/><h1>Hola, '+esc(DB.cfg.usuario||N.duena||'equipo')+' ✨</h1><p class="hint">BeautySkin · escribe tu PIN</p><div class="pin" id="dots"></div><div class="pad" id="pad"></div><p class="hint" style="margin-top:14px">¿Sin PIN? Pídelo a la administración.</p></div></div>';
   function dots(){$('#dots').innerHTML=[0,1,2,3].map(function(i){return '<i class="'+(i<v.length?'f':'')+'"></i>'}).join('')}
   $('#pad').innerHTML=[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(function(n){return n===''?'<span></span>':'<button data-n="'+n+'">'+n+'</button>'}).join('');
   dots();
@@ -286,7 +300,7 @@ function vInicio(m){
   var nuevas=DB.clientes.filter(function(c){return (c.alta||'')>=mes}).length;
   var pend=DB.citas.filter(function(c){return c.estado==='pendiente'&&c.fecha>=t}).sort(function(a,b){return (a.fecha+pad(a.inicio)).localeCompare(b.fecha+pad(b.inicio))});
   var hr=new Date().getHours(),sal=hr<12?'Buenos días':hr<19?'Buenas tardes':'Buenas noches';
-  m.innerHTML='<div class="top"><div><h1>'+sal+' ✦</h1><p>'+fdate(t)+' · resumen de la clínica</p></div><div class="row" style="flex:none"><button class="btn" data-go="agenda-new">+ Cita</button><button class="btn p" data-go="venta">+ Venta</button></div></div>'+
+  m.innerHTML='<div class="top"><div><h1>'+sal+', '+esc(DB.cfg.usuario||N.duena||'')+' ✦</h1><p>'+fdate(t)+' · resumen de la clínica</p></div><div class="row" style="flex:none"><button class="btn" data-go="agenda-new">+ Cita</button><button class="btn p" data-go="venta">+ Venta</button></div></div>'+
   '<div class="grid k4">'+
    kpi('Ventas hoy',money(suma(vh)),vh.length+' tickets')+kpi('Ventas del mes',money(suma(vm)),'ticket prom. '+money(vm.length?suma(vm)/vm.length:0))+
    kpi('Citas hoy',citasHoy.length,citasHoy.filter(function(c){return c.estado==='atendida'}).length+' atendidas')+kpi('Clientas nuevas',nuevas,'este mes · total '+DB.clientes.length)+
@@ -553,6 +567,94 @@ function demo(){
   });
   persist();toast('Datos de ejemplo cargados');
 }
+
+/* ═══ MEJORAS CRM ═══ */
+function mesAnterior(k){var d=new Date(k+'T00:00:00');d.setDate(1);d.setMonth(d.getMonth()-1);return dk(d)}
+// Pegar la reserva que llega por WhatsApp desde la web → cita lista para revisar
+function modalPegar(){
+  modal('<h2>Pegar reserva de WhatsApp</h2><p class="hint">Copia el mensaje que te llegó desde la página (empieza con “Folio: BS-…”) y pégalo aquí.</p><textarea id="pTx" rows="9" placeholder="Hola BeautySkin ✨ quiero confirmar mi cita.\n\nFolio: BS-…\nNombre: …\nTel: …\nDía: …\nFecha: 2026-11-28\nServicios: …"></textarea><div class="acts"><button class="btn" data-close>Cancelar</button><button class="btn p" id="pOk2">Leer reserva</button></div>',function(ov,close){
+    $('#pTx',ov).focus();
+    $('#pOk2',ov).onclick=function(){
+      var t=$('#pTx',ov).value,g=function(k){var m=t.match(new RegExp(k+'\\s*:\\s*(.+)','i'));return m?m[1].trim():''};
+      var folio=g('Folio'),nom=g('Nombre'),tel=g('Tel').replace(/\D/g,'').slice(-10),fecha=g('Fecha'),hora=(t.match(/(\d{1,2}):(\d{2})/)||[]);
+      if(!fecha){var dm=g('D[ií]a').match(/(\d{1,2})\/(\d{1,2})/);if(dm){var y=new Date().getFullYear(),f=y+'-'+pad(+dm[2])+'-'+pad(+dm[1]);if(f<today())f=(y+1)+f.slice(4);fecha=f}}
+      if(!nom||!fecha||!hora[0]){toast('No encontré nombre, fecha u hora en el mensaje');return}
+      if(folio&&DB.citas.some(function(c){return c.folio===folio})){toast('Esa reserva ('+folio+') ya está registrada');return}
+      var sv=g('Servicios').split(',').map(function(n){n=n.trim().toLowerCase();var x=DB.cat.filter(function(c){return c.nombre.toLowerCase()===n})[0]||DB.cat.filter(function(c){return n&&(c.nombre.toLowerCase().indexOf(n)>-1||n.indexOf(c.nombre.toLowerCase())>-1)})[0];return x&&x.id}).filter(Boolean);
+      var ex=cliByTel(tel);
+      close();modalCita({id:uid('ct'),folio:folio||'',cliente:ex?ex.id:'',nombre:nom,telefono:tel,fecha:fecha,inicio:+hora[1]*60+ +hora[2],dur:60,servicios:sv,estado:'confirmada',origen:'web',nota:g('Nota')});
+      toast('Revisa los datos y toca Guardar');
+    };
+  });
+}
+// Inicio: meta del mes, comparativo y recordatorios de mañana
+var _vInicio=vInicio;vInicio=function(m){
+  _vInicio(m);
+  var t=today(),mes=t.slice(0,8)+'01',vm=suma(ventasEntre(mes,t)),pa=mesAnterior(t),pFin=addDays(mes,-1),dia=+t.slice(8),
+      vp=suma(ventasEntre(pa,pa.slice(0,8)+pad(Math.min(dia,+pFin.slice(8))))),meta=+DB.cfg.meta||0,pct=meta?Math.min(100,Math.round(vm/meta*100)):0,
+      dif=vp?Math.round((vm-vp)/vp*100):null;
+  var man=addDays(t,1),cm=DB.citas.filter(function(c){return c.fecha===man&&c.estado!=='cancelada'}).sort(function(a,b){return a.inicio-b.inicio});
+  var html='<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Meta del mes <button class="btn s" data-go="ajustes">Ajustar</button></h3>'+
+    (meta?'<div style="display:flex;justify-content:space-between"><b style="font:600 26px Cormorant Garamond">'+money(vm)+'</b><span class="hint">de '+money(meta)+' · '+pct+'%</span></div><div class="goal-bar"><i style="width:'+pct+'%"></i></div><p class="hint">'+(pct>=100?'🎉 ¡Meta cumplida!':'Faltan '+money(Math.max(0,meta-vm))+' · '+Math.max(0,new Date(+t.slice(0,4),+t.slice(5,7),0).getDate()-dia)+' días')+'</p>':'<p class="hint">Define una meta mensual en Ajustes para ver tu avance.</p>')+
+    (dif!==null?'<p style="margin-top:8px;font-size:14px">vs. mismo periodo del mes pasado: <b class="'+(dif>=0?'up':'down')+'">'+(dif>=0?'▲ ':'▼ ')+Math.abs(dif)+'%</b></p>':'')+'</div>'+
+    '<div class="card"><h3>Recordar citas de mañana <span class="pill">'+cm.length+'</span></h3><div class="list">'+(cm.map(function(c){var x=cli(c.cliente)||c;return '<div class="li"><div class="t">'+hm(c.inicio)+'</div><div class="m"><b>'+esc(x.nombre)+'</b><span>'+esc(svcNames(c.servicios))+'</span></div><a class="btn s wa" target="_blank" rel="noopener" href="'+wa(x.telefono,'Hola '+(x.nombre||'').split(' ')[0]+' ✨ te recordamos tu cita mañana '+fdate(c.fecha)+' a las '+hm(c.inicio)+' en BeautySkin ('+N.direccion.split(',')[0]+'). ¿Nos confirmas? 💕')+'">Recordar</a></div>'}).join('')||'<p class="empty">Sin citas mañana.</p>')+'</div></div></div>';
+  var k=$('.k4',m);k.insertAdjacentHTML('afterend',html);
+  var row=$('.top .row',m);row.insertAdjacentHTML('afterbegin','<button class="btn" id="paste">📋 Pegar reserva</button>');
+  $('#paste',m).onclick=modalPegar;bindCommon(m);
+};
+var _vAgenda=vAgenda;vAgenda=function(m){_vAgenda(m);var row=$('.top .row',m);row.insertAdjacentHTML('afterbegin','<button class="btn" id="paste">📋 Pegar reserva</button>');$('#paste',m).onclick=modalPegar};
+// Reportes: corte de caja
+var _vRep=vReportes;vReportes=function(m){_vRep(m);var row=$('.top .row',m);row.insertAdjacentHTML('afterbegin','<button class="btn p" id="corte">🧾 Corte de caja</button>');$('#corte',m).onclick=function(){modalCorte(today())}};
+function modalCorte(f){
+  var vs=ventasEntre(f,f),pp={},cnt={};vs.forEach(function(v){pp[v.pago]=(pp[v.pago]||0)+v.total;cnt[v.pago]=(cnt[v.pago]||0)+1});
+  var an=DB.ventas.filter(function(v){return v.fecha===f&&v.anulada}).length,desc=vs.reduce(function(s,v){return s+(v.descuento||0)},0);
+  modal('<h2>Corte de caja</h2><p class="hint">BeautySkin · Real Clínica Estética</p><div class="row noprint" style="margin-top:8px"><div><label>Fecha</label><input type="date" id="cF" value="'+f+'"/></div></div><p style="margin-top:10px"><b>'+fdate(f)+'</b> · '+esc(DB.cfg.usuario||'')+'</p>'+
+   '<table class="corte" style="margin-top:10px"><thead><tr><th>Forma de pago</th><th>Tickets</th><th>Total</th></tr></thead><tbody>'+(Object.keys(pp).map(function(k){return '<tr><td>'+esc(k)+'</td><td>'+cnt[k]+'</td><td>'+money(pp[k])+'</td></tr>'}).join('')||'<tr><td colspan="3" class="empty">Sin ventas.</td></tr>')+'</tbody></table>'+
+   '<div class="tot"><span>Total del día</span><span>'+money(suma(vs))+'</span></div><p class="hint">'+vs.length+' tickets · descuentos '+money(desc)+' · anulados '+an+'</p>'+
+   '<table style="margin-top:14px"><thead><tr><th>Folio</th><th>Hora</th><th>Detalle</th><th>Total</th></tr></thead><tbody>'+vs.map(function(v){return '<tr><td>'+v.folio+'</td><td>'+v.hora+'</td><td>'+esc(v.items.map(function(i){return i.q+'× '+i.nombre}).join(', '))+'</td><td>'+money(v.total)+'</td></tr>'}).join('')+'</tbody></table>'+
+   '<p style="margin-top:40px">______________________<br><span class="hint">Firma de quien entrega</span></p>'+
+   '<div class="acts"><button class="btn" data-close>Cerrar</button><button class="btn p" id="cP">Imprimir / PDF</button></div>',function(ov,close){
+    $('#cF',ov).onchange=function(){close();modalCorte(this.value)};$('#cP',ov).onclick=function(){window.print()};});
+}
+// Fotos antes/después por clienta (IndexedDB, comprimidas en el dispositivo)
+var FOTOS=(function(){var dbp=null;function db(){return dbp||(dbp=new Promise(function(res,rej){var r=indexedDB.open('bs-fotos-'+N.slug,1);r.onupgradeneeded=function(){var s=r.result.createObjectStore('fotos',{keyPath:'id'});s.createIndex('cliente','cliente')};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}}))}
+ function tx(mode,fn){return db().then(function(d){return new Promise(function(res,rej){var t=d.transaction('fotos',mode),s=t.objectStore('fotos'),out=fn(s);t.oncomplete=function(){res(out&&out.result!==undefined?out.result:out)};t.onerror=function(){rej(t.error)}})})}
+ return {add:function(f){return tx('readwrite',function(s){s.put(f)})},del:function(id){return tx('readwrite',function(s){s['delete'](id)})},
+  of:function(c){return tx('readonly',function(s){return s.index('cliente').getAll(c)})},all:function(){return tx('readonly',function(s){return s.getAll()})}}})();
+function comprimir(file){return new Promise(function(res,rej){var img=new Image(),u=URL.createObjectURL(file);img.onload=function(){var m=1000,w=img.width,h=img.height,k=Math.min(1,m/Math.max(w,h)),cv=document.createElement('canvas');cv.width=Math.round(w*k);cv.height=Math.round(h*k);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);URL.revokeObjectURL(u);res(cv.toDataURL('image/jpeg',.72))};img.onerror=rej;img.src=u})}
+function pintarFotos(ov,c){var g=$('#phG',ov);if(!g)return;FOTOS.of(c.id).then(function(l){l.sort(function(a,b){return a.fecha<b.fecha?-1:1});
+  g.innerHTML=l.map(function(f){return '<figure><img src="'+f.data+'" data-big="'+f.id+'" alt=""/><figcaption>'+esc(f.tipo)+' · '+fdate(f.fecha)+'</figcaption><button class="del" data-fd="'+f.id+'" title="Borrar">✕</button></figure>'}).join('')||'<p class="hint" style="grid-column:1/-1">Sin fotos. Toma la de “antes” en la primera sesión.</p>';
+  $$('[data-fd]',g).forEach(function(b){b.onclick=function(){if(confirm('¿Borrar esta foto?'))FOTOS.del(b.dataset.fd).then(function(){pintarFotos(ov,c)})}});
+  $$('[data-big]',g).forEach(function(im){im.onclick=function(){modal('<img src="'+im.src+'" style="width:100%;border-radius:14px"/><div class="acts"><button class="btn p" data-close>Cerrar</button></div>')}});
+ }).catch(function(){g.innerHTML='<p class="hint">Este navegador no permite guardar fotos.</p>'})}
+// Consentimiento informado imprimible
+function consentimiento(c){
+  var sv=DB.cat.filter(function(x){return x.cat==='Médico estético'||x.tipo==='servicio'}).map(function(x){return '<label style="display:block;margin:3px 0">☐ '+esc(x.nombre)+'</label>'}).join('');
+  var w=window.open('','_blank');if(!w){toast('Permite ventanas emergentes para imprimir');return}
+  w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Consentimiento · '+esc(c.nombre)+'</title><style>body{font:14px/1.55 Georgia,serif;color:#0A2638;max-width:760px;margin:30px auto;padding:0 24px}h1{font-size:22px;margin:0}h2{font-size:15px;margin:22px 0 6px;text-transform:uppercase;letter-spacing:2px}.cols{columns:2;font-size:13px}.f{display:flex;gap:40px;margin-top:60px}.f div{flex:1;border-top:1px solid #0A2638;padding-top:6px;text-align:center;font-size:12px}small{color:#555}@media print{button{display:none}}</style></head><body>'+
+   '<button onclick="print()" style="float:right;padding:8px 16px">Imprimir</button><h1>Consentimiento informado</h1><small>BeautySkin · Real Clínica Estética y Cosmetológica · '+esc(N.direccion)+'<br>'+esc(N.medico)+' · '+esc(N.medicoCred)+' · '+esc(N.cofepris)+'</small>'+
+   '<h2>Datos de la paciente</h2><p>Nombre: <b>'+esc(c.nombre)+'</b> &nbsp; Tel.: '+esc(c.telefono)+' &nbsp; Fecha: '+fdate(today())+'<br>Tipo de piel: '+esc(c.piel||'________')+' &nbsp; Alergias / contraindicaciones: '+esc(c.alergias||'________________')+'</p>'+
+   '<h2>Tratamiento a realizar</h2><div class="cols">'+sv+'</div><p>Zona / cantidad: ______________________________________________</p>'+
+   '<h2>Declaración</h2><p>Declaro que la '+esc(N.medico)+' me explicó en qué consiste el tratamiento, sus beneficios, alternativas, riesgos y posibles efectos secundarios (enrojecimiento, inflamación, hematomas, asimetrías, reacciones alérgicas, entre otros), así como los cuidados posteriores. Informé con veracidad mis antecedentes médicos, medicamentos, embarazo o lactancia. Entiendo que los resultados varían en cada persona y que pueden requerirse sesiones o retoques adicionales. Autorizo la realización del tratamiento y la toma de fotografías clínicas para mi expediente'+' (☐ y su uso en redes sociales, sin mostrar mi identidad).</p>'+
+   '<div class="f"><div>Nombre y firma de la paciente</div><div>'+esc(N.medico)+'<br>'+esc(N.medicoCred)+'</div></div></body></html>');
+  w.document.close();c.consentimiento=true;persist();
+}
+var _mCli=modalCliente;modalCliente=function(c){
+  _mCli(c);if(!c)return;var ov=$$('.ov').pop();if(!ov)return;var acts=$('.acts',ov);
+  acts.insertAdjacentHTML('beforebegin','<h3 style="margin-top:16px;font-size:20px;display:flex;justify-content:space-between;align-items:center">Fotos antes / después <span><select id="phT" style="width:auto;padding:6px 10px;margin-right:6px;font:400 14px Jost,sans-serif"><option>Antes</option><option>Después</option><option>Seguimiento</option></select><label class="btn s" style="margin:0;text-transform:none;letter-spacing:0;color:var(--ink)">+ Foto<input type="file" id="phIn" accept="image/*" capture="environment" style="display:none"/></label></span></h3><div class="ph-grid" id="phG"></div>');
+  acts.insertAdjacentHTML('afterbegin','<button class="btn" id="cCons">📝 Consentimiento</button>');
+  $('#cCons',ov).onclick=function(){consentimiento(c)};
+  $('#phIn',ov).onchange=function(){var f=this.files[0];if(!f)return;comprimir(f).then(function(d){return FOTOS.add({id:uid('f'),cliente:c.id,fecha:today(),tipo:$('#phT',ov).value,data:d})}).then(function(){pintarFotos(ov,c);toast('Foto guardada')}).catch(function(){toast('No se pudo guardar la foto')})};
+  pintarFotos(ov,c);
+};
+// Ajustes: meta mensual y respaldo de fotos
+var _vAj=vAjustes;vAjustes=function(m){_vAj(m);
+  m.insertAdjacentHTML('beforeend','<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Meta de ventas mensual</h3><label>Meta en pesos</label><input id="aMeta" inputmode="numeric" value="'+(DB.cfg.meta||'')+'" placeholder="Ej. 80000"/><button class="btn p" id="aMetaOk" style="margin-top:12px">Guardar meta</button></div>'+
+   '<div class="card"><h3>Fotos de clientas</h3><p class="hint">Las fotos viven en este dispositivo. Descárgalas junto con el respaldo semanal.</p><div class="row" style="margin-top:12px"><button class="btn p" id="fExp">Descargar fotos</button><label class="btn" style="margin:0;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);justify-content:center">Importar fotos<input type="file" id="fImp" accept="application/json" style="display:none"/></label></div></div></div>');
+  $('#aMetaOk').onclick=function(){DB.cfg.meta=+$('#aMeta').value.replace(/\D/g,'')||0;save('config',DB.cfg);toast('Meta guardada')};
+  $('#fExp').onclick=function(){FOTOS.all().then(function(l){dl('fotos-beautyskin-'+today()+'.json',JSON.stringify({negocio:N.slug,fotos:l}),'application/json');toast(l.length+' fotos exportadas')})};
+  $('#fImp').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.negocio!==N.slug)throw 0;Promise.all(d.fotos.map(FOTOS.add)).then(function(){toast(d.fotos.length+' fotos importadas')})}catch(e){toast('Archivo no válido')}};r.readAsText(f)};
+};
 
 window.addEventListener('hashchange',function(){var h=location.hash.replace('#','');if(h&&h!==S.tab){S.tab=h;render()}});
 render();

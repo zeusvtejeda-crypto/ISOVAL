@@ -8,7 +8,9 @@
 <meta property="og:title" content="BeautySkin · Real Clínica Estética"/>
 <meta property="og:description" content="Resalta tu belleza en Tepic. Agenda tu valoración médica por WhatsApp."/>
 <meta property="og:type" content="website"/>
-<meta property="og:image" content="posts/01-promo-valoracion.png"/>
+<meta property="og:image" content="https://beautyskin-tepic.vercel.app/posts/03-valoracion.png"/>
+<meta property="og:url" content="https://beautyskin-tepic.vercel.app/"/>
+<link rel="canonical" href="https://beautyskin-tepic.vercel.app/"/>
 <meta name="theme-color" content="#0A2638"/>
 <link rel="icon" href="assets/logo.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -270,9 +272,58 @@ body.hov #cur .dot{background:var(--ink)}
 .step{transition:border-color .4s}
 .step:hover{border-color:var(--gold)}
 details p{animation:fadeUp .5s var(--ease)}
+
+/* ═══ MEJORAS ═══ */
+.promos{background:linear-gradient(180deg,var(--cream),#F6ECE6)}
+.pr-row{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 18px;scrollbar-width:thin}
+.pr{flex:none;width:min(300px,78vw);scroll-snap-align:start;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;cursor:pointer;padding:0;text-align:left;font:inherit;color:inherit;transition:transform .45s var(--ease),box-shadow .45s var(--ease)}
+.pr:hover{transform:translateY(-6px);box-shadow:0 30px 60px -32px rgba(10,38,56,.45)}
+.pr img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+.pr div{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pr b{font:600 20px 'Cormorant Garamond'}
+.pr span{font-size:13px;color:var(--rose2);white-space:nowrap}
+.pr-nav{display:flex;gap:8px}
+.pr-nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:18px;color:var(--ink);transition:background .25s,color .25s}
+.pr-nav button:hover{background:var(--ink);color:#fff}
+dialog.lb{border:0;padding:0;background:transparent;max-width:min(480px,92vw);width:100%}
+dialog.lb::backdrop{background:rgba(10,38,56,.75);backdrop-filter:blur(4px)}
+dialog.lb[open]{animation:mIn .45s var(--ease)}
+@keyframes mIn{from{opacity:0;transform:translateY(20px) scale(.97)}}
+dialog.lb img{width:100%;border-radius:20px;display:block}
+dialog.lb .lb-a{display:flex;gap:10px;margin-top:12px}
+dialog.lb .lb-a>*{flex:1}
+dialog.lb .lb-x{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.9);cursor:pointer;font-size:18px}
+.doc{display:grid;grid-template-columns:.8fr 1.2fr;gap:48px;align-items:center}
+@media(max-width:860px){.doc{grid-template-columns:1fr;gap:28px}}
+.doc-pic{position:relative;aspect-ratio:4/5;border-radius:200px 200px 24px 24px;background:linear-gradient(165deg,#16465F,#0A2638 70%);overflow:hidden;max-width:380px;width:100%;justify-self:center;box-shadow:0 40px 80px -30px rgba(10,38,56,.45)}
+.doc-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.doc-pic .mono{position:absolute;inset:0;display:grid;place-items:center;font:500 120px 'Cormorant Garamond';color:#E7C77A;letter-spacing:4px}
+.doc-pic .mono small{position:absolute;bottom:34px;font:500 12px 'Jost';letter-spacing:4px;color:#F3E6CF;text-transform:uppercase}
+.creds{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+.creds span{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:14px}
+.creds span::before{content:'✓ ';color:var(--gold)}
+blockquote.q{font:italic 500 26px/1.35 'Cormorant Garamond';border-left:2px solid var(--gold);padding-left:18px;color:var(--ink2);margin:10px 0 24px}
+.map{margin-top:18px;border-radius:22px;overflow:hidden;border:1px solid var(--line);height:320px;background:var(--blush)}
+.map iframe{width:100%;height:100%;border:0;filter:saturate(.85)}
+.mbar{display:none}
+@media(max-width:700px){.card{padding:20px}.card h3{font-size:23px}.card p{font-size:14px}section{padding:64px 0}}
+@media(max-width:700px){
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:55;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(251,246,242,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);transform:translateY(110%);transition:transform .45s var(--ease)}
+  .mbar.on{transform:none}
+  .mbar .btn{flex:1;padding:13px 10px;font-size:13px}
+  .fab{display:none}
+  footer{padding-bottom:96px}
+}
+.ok .cal{display:inline-flex;margin-top:10px}
+.err-msg{color:var(--bad,#B5484B);font-size:13px;margin-top:4px;display:none}
+input:invalid:not(:placeholder-shown)+.err-msg{display:block}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal,.rl,.fade-up,.hero .eyebrow{opacity:1!important;transform:none!important}.arch .sl:first-child{opacity:1}.hero-line{transform:none}#cur{display:none!important}}
 
 </style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"MedicalClinic","name":"BeautySkin · Real Clínica Estética","url":"https://beautyskin-tepic.vercel.app/","image":"https://beautyskin-tepic.vercel.app/posts/03-valoracion.png","logo":"https://beautyskin-tepic.vercel.app/assets/icon-512.png","telephone":"+52 33 1225 6402","priceRange":"$$","medicalSpecialty":"Dermatology","address":{"@type":"PostalAddress","streetAddress":"Calle Cedro #15, esq. Av. Jacarandas, Col. Versalles Sur","addressLocality":"Tepic","addressRegion":"Nayarit","postalCode":"63000","addressCountry":"MX"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"09:00","closes":"19:00"}],"sameAs":["https://www.facebook.com/LinaresSkin/","https://www.instagram.com/beautyskin_real_spa/"],"aggregateRating":{"@type":"AggregateRating","ratingValue":"5","reviewCount":"15"}}
+</script>
 </head>
 <body>
 <div id="sp"></div><div id="cur" aria-hidden="true"><span class="dot"></span><span class="ring"></span></div>
@@ -389,6 +440,15 @@ details p{animation:fadeUp .5s var(--ease)}
   </div>
 </section>
 
+
+<section class="promos" id="promos">
+  <div class="wrap">
+    <div class="head reveal" style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;max-width:none;flex-wrap:wrap"><div style="max-width:640px"><p class="eyebrow">Promociones</p><h2>Lo más pedido <em>este mes</em></h2><p>Toca una promoción para verla completa y apartarla por WhatsApp.</p></div><div class="pr-nav"><button type="button" id="prPrev" aria-label="Anterior">‹</button><button type="button" id="prNext" aria-label="Siguiente">›</button></div></div>
+    <div class="pr-row" id="prRow"></div>
+  </div>
+  <dialog class="lb" id="lb"><button class="lb-x" type="button" aria-label="Cerrar">✕</button><img id="lbImg" alt=""/><div class="lb-a"><a class="btn btn-rose" id="lbWa" target="_blank" rel="noopener">Apartar por WhatsApp</a></div></dialog>
+</section>
+
 <section id="resultados">
   <div class="wrap">
     <div class="head reveal"><p class="eyebrow">Resultados</p><h2>Antes y <em>después</em></h2><p>Resultados de nuestras pacientes. Más casos en nuestro <a href="https://www.facebook.com/LinaresSkin/" target="_blank" rel="noopener" style="text-decoration:underline">Facebook</a>.</p></div>
@@ -404,6 +464,24 @@ details p{animation:fadeUp .5s var(--ease)}
       <div class="step reveal"><h3>Valoración</h3><p>La doctora revisa tu caso ($300 que se descuentan de tu tratamiento).</p></div>
       <div class="step reveal"><h3>Tratamiento</h3><p>Aplicamos el protocolo ideal para ti, con productos profesionales.</p></div>
       <div class="step reveal"><h3>Seguimiento</h3><p>Cuidados en casa y recordatorio de tu siguiente sesión.</p></div>
+    </div>
+  </div>
+</section>
+
+
+<section id="doctora">
+  <div class="wrap doc">
+    <div class="doc-pic reveal">
+      <!-- Foto real: guarda assets/doctora.jpg (vertical) -->
+      <div class="mono">GR<small>Médico estético</small></div>
+      <img src="assets/doctora.jpg" alt="Dra. Grecia Angélica Ríos Figueroa" onerror="this.remove()"/>
+    </div>
+    <div>
+      <p class="eyebrow reveal">Conoce a tu doctora</p>
+      <h2 class="reveal"><span data-n="medico"></span></h2>
+      <div class="creds reveal"><span>Médico Cirujano U.A.N.</span><span>Céd. Prof. 11499694</span><span>Aviso COFEPRIS</span><span>Productos originales</span></div>
+      <blockquote class="q reveal">“Mi objetivo es que te veas como tú, en tu mejor versión: resultados naturales, seguros y con seguimiento.”</blockquote>
+      <div class="cta reveal"><a class="btn btn-rose" href="#agendar">Agenda con la doctora</a><a class="btn" id="waDoc" target="_blank" rel="noopener">Preguntar por WhatsApp</a></div>
     </div>
   </div>
 </section>
@@ -437,7 +515,7 @@ details p{animation:fadeUp .5s var(--ease)}
       <form class="panel" id="form">
         <h3>3 · Tus datos</h3>
         <label for="fNom">Nombre</label><input id="fNom" required autocomplete="name"/>
-        <label for="fTel">WhatsApp (10 dígitos)</label><input id="fTel" required inputmode="tel" pattern="[0-9 ]{10,14}" autocomplete="tel"/>
+        <label for="fTel">WhatsApp (10 dígitos)</label><input id="fTel" required inputmode="tel" pattern="[0-9 ]{10,14}" autocomplete="tel" placeholder="311 123 4567"/><div class="err-msg">Escribe tus 10 dígitos.</div>
         <label for="fNota">¿Algo que debamos saber? (alergias, embarazo, tratamientos previos)</label><textarea id="fNota" rows="3"></textarea>
         <label style="display:flex;gap:10px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px"><input type="checkbox" id="fOk" required style="width:auto"/> Acepto el aviso de privacidad y ser contactada por WhatsApp.</label>
         <button class="btn btn-rose" style="width:100%;margin-top:20px" type="submit">Confirmar por WhatsApp</button>
@@ -469,6 +547,7 @@ details p{animation:fadeUp .5s var(--ease)}
       <a class="panel" id="cFb" target="_blank" rel="noopener"><b>Facebook</b><span>BeautySkin · 8.2 mil seguidores</span></a>
       <a class="panel" id="cIg" target="_blank" rel="noopener"><b>Instagram</b><span>@beautyskin_real_spa</span></a>
     </div>
+    <div class="map reveal"><iframe title="Mapa BeautySkin" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Calle%20Cedro%2015%2C%20Versalles%20Sur%2C%20Tepic%2C%20Nayarit&z=16&output=embed"></iframe></div>
   </div>
 </section>
 
@@ -479,6 +558,7 @@ details p{animation:fadeUp .5s var(--ease)}
   </div>
 </footer>
 
+<div class="mbar" id="mbar"><a class="btn btn-ink" href="#agendar">Agendar cita</a><a class="btn btn-rose" id="waBar" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.1.1.6-.1 1.2z"/></svg> WhatsApp</a></div>
 <a class="fab" id="fab" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.1.1.6-.1 1.2z"/></svg></a>
 
 <script src="data.js"></script>
@@ -515,7 +595,7 @@ function renderSvc(keep){
 document.addEventListener('click',function(e){
   var t=e.target.closest('.tab');if(t){cur=t.dataset.c;renderSvc();return}
   var a=e.target.closest('.add');if(a){toggle(a.dataset.id);return}
-  var x=e.target.closest('.x');if(x){toggle(x.dataset.id)}
+  var x=e.target.closest('.sel .x');if(x&&x.dataset.id){toggle(x.dataset.id)}
 });
 function toggle(id){var i=sel.indexOf(id);if(i>-1)sel.splice(i,1);else sel.push(id);renderSvc(true);renderSel();if(window._goalDraw)_goalDraw();document.querySelectorAll('.add[data-id="'+id+'"]').forEach(function(b){b.classList.add('pop')})}
 function byId(id){return C.filter(function(x){return x.id===id})[0]}
@@ -557,9 +637,9 @@ $('#form').onsubmit=function(e){
   var d=new Date(day+'T00:00:00'),fechaTxt=DN[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);
   var cita={id:folio,folio:folio,fecha:day,inicio:time,dur:dur(),nombre:nom,telefono:tel,servicios:items.map(function(x){return x.id}),total:items.reduce(function(s,x){return s+(x.precio||0)},0),nota:$('#fNota').value.trim(),estado:'pendiente',origen:'web',creada:new Date().toISOString()};
   try{var l=taken();l.push(cita);localStorage.setItem('bs:'+N.slug+':citas',JSON.stringify(l))}catch(err){}
-  var msg='Hola BeautySkin ✨ quiero confirmar mi cita.\n\nFolio: '+folio+'\nNombre: '+nom+'\nDía: '+fechaTxt+' · '+hora+'\nServicios: '+(items.length?items.map(function(x){return x.nombre}).join(', '):'Valoración médica')+(cita.total?'\nTotal aprox. (desde): '+money(cita.total):'')+(cita.nota?'\nNota: '+cita.nota:'');
+  var msg='Hola BeautySkin ✨ quiero confirmar mi cita.\n\nFolio: '+folio+'\nNombre: '+nom+'\nTel: '+tel+'\nDía: '+fechaTxt+' · '+hora+'\nFecha: '+day+'\nServicios: '+(items.length?items.map(function(x){return x.nombre}).join(', '):'Valoración médica')+(cita.total?'\nTotal aprox. (desde): '+money(cita.total):'')+(cita.nota?'\nNota: '+cita.nota:'');
   window.open(waLink(msg),'_blank','noopener');
-  var ok=$('#ok');ok.style.display='block';ok.innerHTML='✓ Folio <b>'+folio+'</b> · '+esc(fechaTxt)+' '+hora+'. Se abrió WhatsApp con tu mensaje; envíalo para confirmar. <a href="'+waLink(msg)+'" target="_blank" rel="noopener" style="text-decoration:underline">¿No se abrió? Toca aquí</a>.';
+  var ok=$('#ok');ok.style.display='block';ok.innerHTML='✓ Folio <b>'+folio+'</b> · '+esc(fechaTxt)+' '+hora+'. Se abrió WhatsApp con tu mensaje; envíalo para confirmar. <a href="'+waLink(msg)+'" target="_blank" rel="noopener" style="text-decoration:underline">¿No se abrió? Toca aquí</a>.<br><a class="btn cal" download="cita-beautyskin.ics" href="'+icsCita(cita)+'">📅 Agregar a mi calendario</a>';
 };
 
 // ── antes/después: guarda assets/ba1.jpg, ba2.jpg, ba3.jpg (collage antes|después)
@@ -593,6 +673,23 @@ document.querySelectorAll('.rl').forEach(function(el){setTimeout(function(){el.c
   document.querySelectorAll('.goal-art .zone').forEach(function(z){z.classList.toggle('on',z.dataset.z===cur)});
   var g=G.filter(function(x){return x[0]===cur})[0];$('#rec').innerHTML=g[2].split(',').map(byId).filter(Boolean).map(function(x,i){return '<div class="ri" style="animation-delay:'+(i*90)+'ms"><div><b>'+esc(x.nombre)+'</b><br><span>'+esc(x.desc)+'</span></div><button class="add'+(sel.indexOf(x.id)>-1?' on':'')+'" data-id="'+x.id+'">'+(sel.indexOf(x.id)>-1?'✓':'+ Agregar')+'</button></div>'}).join('')}
  $('#goals').onclick=function(e){var b=e.target.closest('.gch');if(b){cur=b.dataset.g;draw()}};window._goalDraw=draw;draw()})();
+
+// ═══ MEJORAS ═══
+$('#waDoc').href=waLink('Hola, quiero agendar una valoración con la doctora ✨');
+$('#waBar').href=waBase;
+// barra inferior en celular: aparece al pasar el hero
+(function(){var mb=$('#mbar'),h=document.querySelector('.hero');if(!mb||!h)return;var io=new IntersectionObserver(function(e){mb.classList.toggle('on',!e[0].isIntersecting)},{threshold:0});io.observe(h)})();
+// promociones + lightbox
+(function(){var P=[['01-toxina-botulinica','Toxina botulínica','$3,500 · retoque incluido'],['05-rinomodelacion','Rinomodelación','10% de descuento'],['02-hollywood-peel','Hollywood Peel','2 sesiones $1,450'],['06-labios','Labios','Ácido hialurónico'],['03-valoracion','Valoración','$300 a cuenta'],['04-menu-servicios','Todos los tratamientos','Ver menú']];
+ var row=$('#prRow');row.innerHTML=P.map(function(p,i){return '<button type="button" class="pr reveal" data-i="'+i+'"><img src="posts/'+p[0]+'.png" alt="'+esc(p[1])+'" loading="lazy"/><div><b>'+esc(p[1])+'</b><span>'+esc(p[2])+'</span></div></button>'}).join('');
+ var lb=$('#lb');row.onclick=function(e){var b=e.target.closest('.pr');if(!b)return;var p=P[+b.dataset.i];$('#lbImg').src='posts/'+p[0]+'.png';$('#lbImg').alt=p[1];$('#lbWa').href=waLink('Hola ✨ me interesa la promoción de '+p[1]+'. ¿Me dan informes?');if(lb.showModal)lb.showModal();else window.open('posts/'+p[0]+'.png')};
+ lb.querySelector('.lb-x').onclick=function(){lb.close()};lb.onclick=function(e){if(e.target===lb)lb.close()};
+ function step(d){row.scrollBy({left:d*(row.querySelector('.pr').offsetWidth+18),behavior:RM?'auto':'smooth'})}
+ $('#prPrev').onclick=function(){step(-1)};$('#prNext').onclick=function(){step(1)};})();
+// archivo .ics para agregar la cita al calendario
+window.icsCita=function(c){var d=c.fecha.replace(/-/g,''),f=function(m){return pad(Math.floor(m/60))+pad(m%60)+'00'};
+ var ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BeautySkin//Citas//ES','BEGIN:VEVENT','UID:'+c.folio+'@beautyskin','DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z','DTSTART;TZID=America/Mazatlan:'+d+'T'+f(c.inicio),'DTEND;TZID=America/Mazatlan:'+d+'T'+f(c.inicio+c.dur),'SUMMARY:Cita BeautySkin ('+c.folio+')','LOCATION:'+N.direccion.replace(/,/g,'\\,'),'DESCRIPTION:Confirma o cambia tu cita por WhatsApp '+N.whatsappDisplay,'BEGIN:VALARM','TRIGGER:-PT2H','ACTION:DISPLAY','DESCRIPTION:Cita en BeautySkin','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+ return URL.createObjectURL(new Blob([ics],{type:'text/calendar'}))};
 
 renderSvc(true);renderSel();renderDays();renderSlots();
 var io='IntersectionObserver' in window?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12}):null;
