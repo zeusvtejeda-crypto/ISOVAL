@@ -11,6 +11,10 @@ module.exports = {
   // phone_number_id del WhatsApp 33 1225 6402 (ver README)
   phoneNumberId: process.env.PHONE_ID_BEAUTYSKIN || "",
 
+  // Token de la app de Meta donde vive el número de BeautySkin. Si es la
+  // misma app que los demás negocios, déjalo vacío y se usa WHATSAPP_TOKEN.
+  whatsappToken: process.env.WHATSAPP_TOKEN_BEAUTYSKIN || process.env.WHATSAPP_TOKEN || "",
+
   saludo:
     "¡Hola! ✨ Bienvenida a BeautySkin · Real Clínica Estética en Tepic. " +
     "¿Te interesa algún tratamiento facial, toxina, labios o quieres agendar tu valoración?",
@@ -21,7 +25,8 @@ Médico responsable: Dra. Grecia Angélica Ríos Figueroa, Médico Cirujano U.A.
 COFEPRIS 2318015036X00364.
 
 UBICACIÓN: Calle Cedro #15, esquina con Av. Jacarandas, Col. Versalles Sur, 63000 Tepic, Nay.
-WHATSAPP: 33 1225 6402. Instagram: @beautyskin_real_spa. Web: (poner URL cuando se publique).
+WHATSAPP: 33 1225 6402. Instagram: @beautyskin_real_spa.
+WEB (servicios, precios y agenda en línea): https://zeusvtejeda-crypto.github.io/ISOVAL/beautyskin/#agendar
 
 VALORACIÓN MÉDICA: $300, se descuentan del total del tratamiento. Todo es sujeto a valoración médica.
 
