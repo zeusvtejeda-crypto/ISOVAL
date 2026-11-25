@@ -156,12 +156,126 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 footer a:hover{color:#fff}
 .fab{position:fixed;right:16px;bottom:16px;z-index:50;width:58px;height:58px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(0,0,0,.4)}
 .fab svg{width:30px;height:30px;fill:#fff}
-.reveal{opacity:0;transform:translateY(16px);transition:.7s}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+/* ═══ ANIMACIONES (estilo ISOVAL + Bases Box) ═══ */
+:root{--ease:cubic-bezier(.16,1,.3,1)}
+#sp{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--gold),#E7C77A);z-index:100;transition:width .1s linear}
+header{transition:box-shadow .4s var(--ease),background .4s}
+header.scrolled{box-shadow:0 10px 30px -18px rgba(10,38,56,.35);background:rgba(251,246,242,.97)}
+.nav{transition:height .4s var(--ease)}
+header.scrolled .nav{height:60px}
+/* cursor (solo escritorio) */
+#cur{position:fixed;left:0;top:0;pointer-events:none;z-index:120;display:none;opacity:0;transition:opacity .3s}#cur.on{opacity:1}
+#cur .dot{position:fixed;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--gold);transition:width .25s var(--ease),height .25s var(--ease),margin .25s var(--ease),background .25s}
+#cur .ring{position:fixed;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:1px solid rgba(196,154,74,.6);transition:width .35s var(--ease),height .35s var(--ease),margin .35s var(--ease),opacity .3s}
+body.hov #cur .ring{width:58px;height:58px;margin:-29px 0 0 -29px;border-color:var(--gold)}
+body.hov #cur .dot{background:var(--ink)}
+@media (hover:hover) and (pointer:fine){#cur{display:block}}
+/* hero: texto por líneas */
+.rw{overflow:hidden;display:block;padding-bottom:.06em}
+.rl{display:block;opacity:0;transform:translateY(110%) skewY(2deg)}
+.rl.go{opacity:1;transform:none;transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.hero .eyebrow{display:flex;align-items:center;gap:14px;opacity:0;animation:fadeSlideX .8s var(--ease) .15s forwards}
+.hero .eyebrow::before{content:'';width:32px;height:1px;background:var(--gold)}
+@keyframes fadeSlideX{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
+.fade-up{opacity:0;animation:fadeUp 1s var(--ease) forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.hero-line{position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,transparent,var(--gold) 25%,var(--gold) 75%,transparent);transform:scaleY(0);animation:lineGrow 1.4s var(--ease) .4s forwards}
+@keyframes lineGrow{to{transform:scaleY(1)}}
+/* arco: slideshow Ken Burns */
+.arch .sl{position:absolute;inset:0;opacity:0;will-change:opacity,transform}
+.arch .sl:nth-child(1){animation:kb1 18s ease-in-out infinite 0s}
+.arch .sl:nth-child(2){animation:kb2 18s ease-in-out infinite -6s}
+.arch .sl:nth-child(3){animation:kb3 18s ease-in-out infinite -12s}
+@keyframes kb1{0%{opacity:0;transform:scale(1.08) translate(1%,.5%)}8%{opacity:1}33%{opacity:1;transform:scale(1.15) translate(-.5%,-.5%)}41%{opacity:0}100%{opacity:0}}
+@keyframes kb2{0%{opacity:0;transform:scale(1.1) translate(-.5%,0)}8%{opacity:1}33%{opacity:1;transform:scale(1.16) translate(.5%,.5%)}41%{opacity:0}100%{opacity:0}}
+@keyframes kb3{0%{opacity:0;transform:scale(1.06) translate(0,.5%)}8%{opacity:1}33%{opacity:1;transform:scale(1.13) translate(-.5%,-.5%)}41%{opacity:0}100%{opacity:0}}
+.arch .sl svg{position:absolute;inset:0;width:100%;height:100%}
+.arch .draw path{stroke-dasharray:900;stroke-dashoffset:900;animation:draw 3.2s var(--ease) .3s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.sl-cap{position:absolute;left:40px;bottom:40px;color:#F3E6CF;font:500 12px 'Jost';letter-spacing:3px;text-transform:uppercase;z-index:2}
+.sdots{position:absolute;right:-26px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px}
+.sdot{width:2px;height:26px;background:rgba(10,38,56,.15);position:relative;overflow:hidden}
+.sdot i{position:absolute;left:0;right:0;top:0;height:0;background:var(--gold)}
+.sdot.on i{animation:fillDot 6s linear forwards}
+@keyframes fillDot{to{height:100%}}
+.hero-art{transition:transform .2s linear}
+.badge{animation:float 6s ease-in-out infinite}
+.b2{animation-delay:-3s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+/* botones: relleno que barre (ISOVAL) */
+.btn{position:relative;overflow:hidden;isolation:isolate}
+.btn::before{content:'';position:absolute;inset:0;z-index:-1;transform:scaleX(0);transform-origin:left;transition:transform .46s var(--ease)}
+.btn-rose::before{background:var(--rose2)}
+.btn-ink::before{background:#123b52}
+.btn:not(.btn-rose):not(.btn-ink)::before{background:var(--ink)}
+.btn:not(.btn-rose):not(.btn-ink):hover{color:#fff}
+.btn:hover::before{transform:scaleX(1)}
+.btn:hover{transform:none}
+/* marquee */
+.mq{overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#F6ECE6;padding:14px 0}
+.mq-t{display:flex;width:max-content;animation:mq 38s linear infinite}
+.mq:hover .mq-t{animation-play-state:paused}
+.mq span{display:inline-flex;align-items:center;gap:22px;padding:0 22px;font:500 13px 'Jost';letter-spacing:3px;text-transform:uppercase;color:var(--ink2);white-space:nowrap}
+.mq span::after{content:'✦';color:var(--gold)}
+@keyframes mq{to{transform:translateX(-50%)}}
+/* reveals con escalonado */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
 .reveal.in{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+.card{transition:transform .45s var(--ease),box-shadow .45s var(--ease),border-color .3s}
+.card:hover{transform:translateY(-6px);border-color:rgba(196,154,74,.45);box-shadow:0 30px 60px -32px rgba(10,38,56,.45)}
+.card .ic{transition:transform .5s var(--ease),background .3s}
+.card:hover .ic{transform:rotate(-8deg) scale(1.08);background:#F3DFC4}
+.add{transition:background .25s,color .25s,transform .2s}
+.add:active{transform:scale(.94)}
+.add.pop{animation:pop .45s var(--ease)}
+@keyframes pop{40%{transform:scale(1.15)}}
+.grid.swap .card{animation:cardIn .55s var(--ease) both}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+.tab{transition:background .3s,color .3s,border-color .3s}
+/* sello de promo (Bases Box) */
+.promo{position:relative;overflow:hidden}
+.stamp{position:absolute;right:-46px;top:16px;transform:rotate(18deg);background:var(--gold);color:var(--ink);font:600 12px 'Jost';letter-spacing:3px;padding:6px 56px;text-transform:uppercase;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.promo h3 em{background:linear-gradient(90deg,#E7C77A,#fff6df,#E7C77A);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 4s linear infinite}
+@keyframes shine{to{background-position:-200% 0}}
+/* selector de objetivo (como los tonos de Bases Box) */
+.goal{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
+@media(max-width:860px){.goal{grid-template-columns:1fr}}
+.goal-art{position:relative;aspect-ratio:1/1;max-width:420px;width:100%;justify-self:center;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,var(--blush) 70%);box-shadow:inset 0 0 0 1px var(--line)}
+.goal-art svg{position:absolute;inset:8%;width:84%;height:84%}
+.goal-art .zone{fill:var(--gold);opacity:0;transition:opacity .5s var(--ease),transform .6s var(--ease);transform-origin:center;transform-box:fill-box;transform:scale(.6)}
+.goal-art .zone.on{opacity:.38;transform:scale(1);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.2}}
+.goal-art .ring{fill:none;stroke:var(--gold);stroke-width:1.2;stroke-dasharray:4 6;transform-origin:center;transform-box:fill-box;animation:spin 30s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chips-g{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+.gch{border:1px solid var(--line);background:#fff;border-radius:999px;padding:11px 18px;cursor:pointer;font:400 15px 'Jost';color:var(--ink);transition:transform .2s,background .3s,color .3s,box-shadow .3s}
+.gch:hover{transform:translateY(-2px);box-shadow:0 10px 20px -12px rgba(10,38,56,.4)}
+.gch.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rec{display:flex;flex-direction:column;gap:10px;min-height:190px}
+.rec .ri{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 18px;animation:cardIn .5s var(--ease) both}
+.rec .ri b{font:600 20px 'Cormorant Garamond'}
+.rec .ri span{color:var(--muted);font-size:14px}.rec .add{white-space:nowrap;flex:none}
+/* contadores, ok y fab */
+.ok{animation:fadeUp .6s var(--ease)}
+.fab{transition:transform .25s var(--ease)}
+.fab:hover{transform:scale(1.1)}
+.fab::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid #25D366;animation:ping 2.4s cubic-bezier(0,0,.2,1) infinite}
+@keyframes ping{75%,100%{transform:scale(1.7);opacity:0}}
+.slot,.day{transition:background .25s,color .25s,transform .2s}
+.slot:hover,.day:hover{transform:translateY(-2px)}
+.sel li{animation:cardIn .4s var(--ease) both}
+.ba figure{transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.ba figure:hover{transform:translateY(-6px) rotate(-.4deg);box-shadow:0 30px 60px -32px rgba(10,38,56,.45)}
+.step{transition:border-color .4s}
+.step:hover{border-color:var(--gold)}
+details p{animation:fadeUp .5s var(--ease)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal,.rl,.fade-up,.hero .eyebrow{opacity:1!important;transform:none!important}.arch .sl:first-child{opacity:1}.hero-line{transform:none}#cur{display:none!important}}
+
 </style>
 </head>
 <body>
+<div id="sp"></div><div id="cur" aria-hidden="true"><span class="dot"></span><span class="ring"></span></div>
 <div class="topbar" id="topbar"></div>
 
 <header>
@@ -178,45 +292,40 @@ footer a:hover{color:#fff}
 </header>
 
 <section class="hero" style="padding:0">
+  <span class="hero-line"></span>
   <div class="wrap hero-grid">
     <div>
       <p class="eyebrow">Clínica estética en <span data-n="ciudad"></span></p>
-      <h1>Resaltar <em>tu belleza</em>.</h1>
-      <p class="script" style="margin-top:10px">Atrévete a ser como quieres ser</p>
-      <p class="lead">Tu espacio 100% seguro y confiable en Tepic. Medicina estética con la <b data-n="medico"></b> y cosmetología profesional: cuidamos tu piel con profesionalismo, precisión y calidez.</p>
-      <div class="cta">
+      <h1><span class="rw"><span class="rl" data-d="250">Resaltar</span></span><span class="rw"><span class="rl" data-d="420"><em>tu belleza</em>.</span></span></h1>
+      <p class="script fade-up" style="margin-top:10px;animation-delay:.75s">Atrévete a ser como quieres ser</p>
+      <p class="lead fade-up" style="animation-delay:.9s">Tu espacio 100% seguro y confiable en Tepic. Medicina estética con la <b data-n="medico"></b> y cosmetología profesional: cuidamos tu piel con profesionalismo, precisión y calidez.</p>
+      <div class="cta fade-up" style="animation-delay:1.05s">
         <a class="btn btn-rose" href="#agendar">Agenda tu valoración</a>
         <a class="btn" id="waHero" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.1.1.6-.1 1.2z"/></svg>WhatsApp</a>
       </div>
-      <div class="stats">
-        <div><b>8.2k</b><span>seguidoras</span></div>
-        <div><b>100%</b><span>recomendado</span></div>
-        <div><b>3 MSI</b><span>en tratamientos</span></div>
+      <div class="stats fade-up" style="animation-delay:1.2s">
+        <div><b data-to="8.2" data-dec="1" data-suf="k">0</b><span>seguidoras</span></div>
+        <div><b data-to="100" data-suf="%">0</b><span>recomendado</span></div>
+        <div><b data-to="3" data-suf=" MSI">0</b><span>en tratamientos</span></div>
       </div>
     </div>
-    <div class="hero-art">
+    <div class="hero-art fade-up" style="animation-delay:.5s">
       <div class="arch">
-        <!-- Para usar una foto real: guarda assets/hero.jpg (vertical) y se mostrará sola -->
-        <img src="assets/hero.jpg" alt="Tratamiento facial en BeautySkin" onerror="this.remove()" style="position:relative;z-index:1"/>
-        <svg viewBox="0 0 400 500" aria-hidden="true">
-          <defs><radialGradient id="g" cx="50%" cy="35%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
-          <rect width="400" height="500" fill="url(#g)"/>
-          <g fill="none" stroke="#FBF7F4" stroke-width="2.2" stroke-linecap="round" opacity=".9">
-            <path d="M228 120c-46 0-80 38-80 92 0 30 8 50 8 66 0 12-10 20-10 28 0 6 8 8 12 10-2 6-4 12 0 16 4 3 8 2 8 6 0 6-6 10-2 18 4 6 16 6 28 4 18-3 26 10 28 30"/>
-            <path d="M196 196c8-6 18-6 26 0M160 230c6 4 12 4 18 0"/>
-            <path d="M236 128c40 8 64 46 64 92 0 70-40 110-40 170"/>
-          </g>
-          <g fill="#FBF7F4" opacity=".85"><circle cx="300" cy="120" r="3"/><circle cx="320" cy="160" r="2"/><circle cx="96" cy="140" r="2.5"/><circle cx="110" cy="380" r="2"/></g>
-          <g fill="none" stroke="#F4E6E1" stroke-width="1.4" opacity=".7"><path d="M80 440c30-40 60-60 100-60M90 460c40-30 80-40 130-36"/><path d="M300 420c-6-30 4-60 30-80M318 434c0-26 10-46 30-60"/></g>
-        </svg>
+        <div class="sl draw"><svg viewBox="0 0 400 500" aria-hidden="true"><defs><radialGradient id="g" cx="50%" cy="35%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><rect width="400" height="500" fill="url(#g)"/><g fill="none" stroke="#F3E6CF" stroke-width="2.2" stroke-linecap="round"><path d="M228 120c-46 0-80 38-80 92 0 30 8 50 8 66 0 12-10 20-10 28 0 6 8 8 12 10-2 6-4 12 0 16 4 3 8 2 8 6 0 6-6 10-2 18 4 6 16 6 28 4 18-3 26 10 28 30"/><path d="M196 196c8-6 18-6 26 0"/><path d="M236 128c40 8 64 46 64 92 0 70-40 110-40 170"/><path d="M80 440c30-40 60-60 100-60M90 460c40-30 80-40 130-36"/></g></svg><span class="sl-cap">Medicina estética</span></div>
+        <div class="sl draw"><svg viewBox="0 0 400 500" aria-hidden="true"><rect width="400" height="500" fill="url(#g)"/><g fill="none" stroke="#E7C77A" stroke-width="2.2" stroke-linecap="round"><path d="M90 250c40-36 80-44 110-20 30-24 70-16 110 20-40 40-70 58-110 58S130 290 90 250z"/><path d="M90 250c50 8 170 8 220 0"/><path d="M200 230v-6"/><circle cx="300" cy="140" r="4"/><circle cx="110" cy="150" r="3"/><path d="M140 380c40 20 80 20 120 0"/></g></svg><span class="sl-cap">Labios · ácido hialurónico</span></div>
+        <div class="sl draw"><svg viewBox="0 0 400 500" aria-hidden="true"><rect width="400" height="500" fill="url(#g)"/><g fill="none" stroke="#F3E6CF" stroke-width="2.2" stroke-linecap="round"><path d="M200 110c38 52 62 88 62 124a62 62 0 0 1-124 0c0-36 24-72 62-124z"/><path d="M170 240a34 34 0 0 0 30 30"/><path d="M110 360c30 30 150 30 180 0M90 400c40 40 180 40 220 0"/><circle cx="300" cy="150" r="3"/><circle cx="96" cy="200" r="2.5"/></g></svg><span class="sl-cap">Faciales · piel radiante</span></div>
+        <img src="assets/hero.jpg" alt="Tratamiento en BeautySkin" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1"/>
       </div>
+      <div class="sdots" aria-hidden="true"><span class="sdot on"><i></i></span><span class="sdot"><i></i></span><span class="sdot"><i></i></span></div>
       <div class="badge b1"><b>100%</b><span>Recomendado<br>en Facebook</span></div>
       <div class="badge b2"><span>♛</span><span>Médico<br><b style="font-size:18px">certificado</b></span></div>
     </div>
   </div>
 </section>
 
+<div class="mq" aria-hidden="true"><div class="mq-t"><span>Toxina botulínica</span><span>Aumento de labios</span><span>Rinomodelación</span><span>Radiesse®</span><span>Hollywood Peel</span><span>Dermaplaning</span><span>Dermapen</span><span>Limpieza facial profunda</span><span>Despigmentante</span><span>Moldeo corporal</span><span>Toxina botulínica</span><span>Aumento de labios</span><span>Rinomodelación</span><span>Radiesse®</span><span>Hollywood Peel</span><span>Dermaplaning</span><span>Dermapen</span><span>Limpieza facial profunda</span><span>Despigmentante</span><span>Moldeo corporal</span></div></div>
 <section class="promo" id="promo">
+  <span class="stamp">Vigente</span>
   <div class="wrap">
     <div><h3 id="promoT"></h3><p id="promoX"></p></div>
     <a class="btn btn-rose" href="#agendar">Lo quiero</a>
@@ -229,6 +338,35 @@ footer a:hover{color:#fff}
     <div class="tabs" id="tabs"></div>
     <div class="grid" id="svc"></div>
     <p class="note">* Precios sujetos a valoración médica. “Desde” = precio base; el total depende de la zona y cantidad de producto que necesites. Tratamientos médicos aplicados por la <span data-n="medico"></span>.</p>
+  </div>
+</section>
+
+
+<section id="objetivo" style="padding-top:0">
+  <div class="wrap goal">
+    <div class="goal-art reveal" aria-hidden="true">
+      <svg viewBox="0 0 300 300">
+        <circle class="ring" cx="150" cy="150" r="142"/>
+        <g fill="none" stroke="#0A2638" stroke-width="2" stroke-linecap="round" opacity=".85">
+          <path d="M176 52c-36 0-62 30-62 72 0 22 6 38 6 50 0 9-8 15-8 21 0 5 6 6 9 8-1 5-3 9 0 13 3 2 6 1 6 5 0 5-5 8-1 14 3 5 13 5 22 3 14-2 20 8 22 23"/>
+          <path d="M152 112c6-5 14-5 20 0M182 58c32 6 50 36 50 72 0 56-30 86-30 134"/>
+        </g>
+        <ellipse class="zone" data-z="rostro" cx="160" cy="130" rx="52" ry="66"/>
+        <ellipse class="zone" data-z="arrugas" cx="160" cy="82" rx="40" ry="14"/>
+        <ellipse class="zone" data-z="labios" cx="121" cy="212" rx="16" ry="10"/>
+        <ellipse class="zone" data-z="nariz" cx="112" cy="176" rx="12" ry="16"/>
+        <ellipse class="zone" data-z="manchas" cx="176" cy="148" rx="24" ry="18"/>
+        <ellipse class="zone" data-z="firmeza" cx="190" cy="200" rx="36" ry="30"/>
+        <rect class="zone" data-z="cuerpo" x="40" y="250" width="220" height="34" rx="17"/>
+      </svg>
+    </div>
+    <div>
+      <p class="eyebrow reveal">Tu objetivo</p>
+      <h2 class="reveal">¿Qué quieres <em>mejorar</em>?</h2>
+      <p class="reveal" style="color:var(--muted);margin-top:12px">Toca tu objetivo y te mostramos los tratamientos recomendados.</p>
+      <div class="chips-g reveal" id="goals"></div>
+      <div class="rec" id="rec"></div>
+    </div>
   </div>
 </section>
 
@@ -363,13 +501,14 @@ var cats=['Todos'].concat(svcs.map(function(x){return x.cat}).filter(function(v,
 var cur='Todos',sel=[];
 function card(x){
   var on=sel.indexOf(x.id)>-1;
-  return '<article class="card reveal in">'+(x.top?'<span class="tagtop">Más pedido</span>':'')+
+  return '<article class="card">'+(x.top?'<span class="tagtop">Más pedido</span>':'')+
   '<div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(ICON[x.cat]||ICON.Facial)+'</svg></div>'+
   '<h3>'+esc(x.nombre)+'</h3><p>'+esc(x.desc)+'</p><div class="row"><div class="price">'+(x.precio?(x.desde?'<small style="display:inline;font-size:13px;color:var(--muted)">Desde </small>':'')+money(x.precio):'Cotiza')+
   '<small>'+(x.sesiones?x.sesiones+' sesiones':x.min+' min')+'</small></div><button class="add'+(on?' on':'')+'" data-id="'+x.id+'">'+(on?'✓ Agregado':'+ Agregar')+'</button></div></article>';
 }
-function renderSvc(){
+function renderSvc(keep){
   $('#tabs').innerHTML=cats.map(function(c){return '<button class="tab'+(c===cur?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</button>'}).join('');
+  var g=$('#svc');g.classList.toggle('swap',!keep);if(!keep){void g.offsetWidth}
   $('#svc').innerHTML=svcs.filter(function(x){return cur==='Todos'||x.cat===cur}).map(card).join('');
   $('#pkg').innerHTML=pkgs.map(card).join('');
 }
@@ -378,7 +517,7 @@ document.addEventListener('click',function(e){
   var a=e.target.closest('.add');if(a){toggle(a.dataset.id);return}
   var x=e.target.closest('.x');if(x){toggle(x.dataset.id)}
 });
-function toggle(id){var i=sel.indexOf(id);if(i>-1)sel.splice(i,1);else sel.push(id);renderSvc();renderSel()}
+function toggle(id){var i=sel.indexOf(id);if(i>-1)sel.splice(i,1);else sel.push(id);renderSvc(true);renderSel();if(window._goalDraw)_goalDraw();document.querySelectorAll('.add[data-id="'+id+'"]').forEach(function(b){b.classList.add('pop')})}
 function byId(id){return C.filter(function(x){return x.id===id})[0]}
 function renderSel(){
   $('#sel').innerHTML=sel.length?sel.map(function(id){var x=byId(id);return '<li><span>'+esc(x.nombre)+'</span><span>'+(x.desde?'desde ':'')+(x.precio?money(x.precio):'Cotiza')+' <button class="x" data-id="'+id+'" aria-label="Quitar">✕</button></span></li>'}).join(''):'<li class="empty">Sin servicios aún: agrega uno o agenda solo tu <b>valoración</b>.</li>';
@@ -428,9 +567,38 @@ var BA=[['Rinomodelación','Ácido hialurónico · resultado inmediato'],['Derma
 $('#ba').innerHTML=BA.map(function(b,i){return '<figure class="reveal"><div class="pic"><span class="ph">Antes</span><span class="ph">Después</span></div><figcaption><b>'+b[0]+'</b>'+b[1]+'</figcaption></figure>'}).join('');
 BA.forEach(function(b,i){var im=new Image();im.onload=function(){var p=document.querySelectorAll('#ba .pic')[i];p.innerHTML='';im.alt=b[0]+' antes y después';p.appendChild(im)};im.src='assets/ba'+(i+1)+'.jpg'});
 
-renderSvc();renderSel();renderDays();renderSlots();
+
+// ═══ ANIMACIONES ═══
+var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+// texto del hero por líneas
+document.querySelectorAll('.rl').forEach(function(el){setTimeout(function(){el.classList.add('go')},RM?0:+(el.dataset.d||0))});
+// barra de progreso + nav + parallax (un solo rAF)
+(function(){var sp=document.getElementById('sp'),hd=document.querySelector('header'),art=document.querySelector('.hero-art'),t=false;
+ function upd(){var y=scrollY,h=document.documentElement.scrollHeight-innerHeight;sp.style.width=(h>0?y/h*100:0)+'%';hd.classList.toggle('scrolled',y>40);if(art&&!RM&&y<900)art.style.transform='translateY('+(y*0.12)+'px)';t=false}
+ addEventListener('scroll',function(){if(!t){t=true;requestAnimationFrame(upd)}},{passive:true});upd()})();
+// cursor
+(function(){var c=document.getElementById('cur');if(!c||RM||!matchMedia('(hover:hover) and (pointer:fine)').matches)return;var d=c.querySelector('.dot'),r=c.querySelector('.ring'),x=0,y=0,rx=0,ry=0;
+ addEventListener('mousemove',function(e){c.classList.add('on');x=e.clientX;y=e.clientY;d.style.transform='translate('+x+'px,'+y+'px)'},{passive:true});
+ (function loop(){rx+=(x-rx)*.18;ry+=(y-ry)*.18;r.style.transform='translate('+rx+'px,'+ry+'px)';requestAnimationFrame(loop)})();
+ document.addEventListener('mouseover',function(e){document.body.classList.toggle('hov',!!e.target.closest('a,button,.card,.gch,.slot,.day,summary,figure'))})})();
+// puntos del slideshow
+(function(){var ds=document.querySelectorAll('.sdot'),i=0;if(!ds.length||RM)return;setInterval(function(){ds[i].classList.remove('on');i=(i+1)%ds.length;var n=ds[i],f=n.querySelector('i');n.classList.add('on');f.style.animation='none';void f.offsetWidth;f.style.animation=''},6000)})();
+// contadores
+(function(){var row=document.querySelector('.stats');if(!row)return;var io=new IntersectionObserver(function(es){if(!es[0].isIntersecting)return;io.disconnect();
+ row.querySelectorAll('[data-to]').forEach(function(n){var to=+n.dataset.to,dec=+(n.dataset.dec||0),suf=n.dataset.suf||'',t0=null;
+  (function st(ts){if(!t0)t0=ts;var p=RM?1:Math.min((ts-t0)/1400,1),e=1-Math.pow(1-p,4);n.textContent=(e*to).toFixed(dec)+suf;if(p<1)requestAnimationFrame(st)})(performance.now())})},{threshold:.4});io.observe(row)})();
+// selector de objetivo
+(function(){var G=[['rostro','Rejuvenecer','toxina,babybotox,radiesse'],['arrugas','Líneas de expresión','toxina,babybotox'],['labios','Labios','labios'],['nariz','Perfil nasal','rino'],['manchas','Manchas y tono','despig,hollywood,electro'],['firmeza','Firmeza y textura','radiesse,dermapen,dermapen-cic'],['cuerpo','Cuerpo','corporal,axilas']];
+ var cur='rostro';function draw(){$('#goals').innerHTML=G.map(function(g){return '<button class="gch'+(g[0]===cur?' on':'')+'" data-g="'+g[0]+'">'+g[1]+'</button>'}).join('');
+  document.querySelectorAll('.goal-art .zone').forEach(function(z){z.classList.toggle('on',z.dataset.z===cur)});
+  var g=G.filter(function(x){return x[0]===cur})[0];$('#rec').innerHTML=g[2].split(',').map(byId).filter(Boolean).map(function(x,i){return '<div class="ri" style="animation-delay:'+(i*90)+'ms"><div><b>'+esc(x.nombre)+'</b><br><span>'+esc(x.desc)+'</span></div><button class="add'+(sel.indexOf(x.id)>-1?' on':'')+'" data-id="'+x.id+'">'+(sel.indexOf(x.id)>-1?'✓':'+ Agregar')+'</button></div>'}).join('')}
+ $('#goals').onclick=function(e){var b=e.target.closest('.gch');if(b){cur=b.dataset.g;draw()}};window._goalDraw=draw;draw()})();
+
+renderSvc(true);renderSel();renderDays();renderSlots();
 var io='IntersectionObserver' in window?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12}):null;
+document.querySelectorAll('.grid,.ba,.steps,.rv,.contact').forEach(function(g){g.querySelectorAll('.reveal').forEach(function(el,i){el.style.transitionDelay=(i%6*80)+'ms'})});
 document.querySelectorAll('.reveal').forEach(function(el){io?io.observe(el):el.classList.add('in')});
+setTimeout(function(){document.querySelectorAll('.reveal:not(.in)').forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add('in')})},1500);
 })();
 </script>
 </body>
