@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>BeautySkin CRM · Ventas y clientes</title>
+<meta name="robots" content="noindex"/>
+<meta name="theme-color" content="#0A2638"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="icon" href="../assets/logo.svg"/>
+<link rel="apple-touch-icon" href="../assets/icon-192.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="BeautySkin"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--ink:#0A2638;--ink2:#23465A;--rose:#C49A4A;--rose2:#9C7430;--blush:#F5E6DF;--cream:#FBF6F2;--gold:#C49A4A;--muted:#7D8790;--line:rgba(10,38,56,.12);--ok:#3E8E5E;--warn:#C7862E;--bad:#B5484B;--card:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--cream);color:var(--ink);font:400 15px/1.5 'Jost',system-ui,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;line-height:1.1}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+aside{background:var(--ink);color:#E9DEDF;padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px}
+aside .logo{font:600 24px 'Cormorant Garamond';color:#fff;padding:0 10px 4px;display:flex;gap:10px;align-items:center}aside .logo img{width:40px;height:40px}
+aside .logo small{display:block;font:400 10px 'Jost';letter-spacing:3px;text-transform:uppercase;color:#BBAEB0}
+aside nav{display:flex;flex-direction:column;gap:2px;margin-top:16px}
+aside nav button{background:none;border:0;text-align:left;padding:11px 12px;border-radius:10px;cursor:pointer;display:flex;gap:10px;align-items:center;color:#E9DEDF}
+aside nav button.on{background:rgba(255,255,255,.1);color:#fff}
+aside nav button .c{margin-left:auto;background:var(--rose);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px}
+aside .me{margin-top:auto;font-size:13px;color:#BBAEB0;padding:10px}
+aside .me button{background:none;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;margin-top:6px}
+main{padding:24px clamp(16px,3vw,36px) 100px;max-width:1200px;width:100%}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.top h1{font-size:34px}
+.top p{color:var(--muted)}
+@media(max-width:820px){.app{grid-template-columns:1fr}aside{position:fixed;bottom:0;top:auto;left:0;right:0;height:auto;z-index:30;flex-direction:row;padding:6px calc(6px + env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom))}aside .logo,aside .me{display:none}aside nav{flex-direction:row;margin:0;width:100%;justify-content:space-around}aside nav button{flex-direction:column;gap:2px;font-size:10.5px;padding:6px 4px}aside nav button .c{position:absolute;margin:0 0 0 18px;font-size:9px}main{padding-bottom:110px}}
+.ico{width:20px;height:20px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:500;white-space:nowrap;text-decoration:none}
+.btn.p{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.r{background:var(--rose);color:#fff;border-color:var(--rose)}
+.btn.s{padding:6px 12px;font-size:13px}
+.btn.wa{background:#25D366;color:#fff;border-color:#25D366}
+.btn.d{color:var(--bad)}
+.grid{display:grid;gap:14px}
+.k4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.c2{grid-template-columns:1.3fr 1fr}
+@media(max-width:980px){.c2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card h3{font-size:22px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.kpi small{color:var(--muted);font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
+.kpi b{display:block;font:600 32px 'Cormorant Garamond';margin-top:2px}
+.kpi span{font-size:13px;color:var(--muted)}
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border:0}
+.li .t{font-weight:600;min-width:52px;color:var(--rose2)}
+.li .m{flex:1;min-width:0}
+.li .m b{display:block;font-weight:500}
+.li .m span{color:var(--muted);font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pill{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--blush);color:var(--ink2);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.pill.pendiente{background:#FBEFD9;color:var(--warn)}.pill.confirmada{background:#E3F0E7;color:var(--ok)}.pill.atendida{background:#E8E2F2;color:#6B568F}.pill.cancelada,.pill.no-show{background:#F6E0E0;color:var(--bad)}
+.empty{color:var(--muted);padding:14px 0;text-align:center}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--cream)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--rose);border-color:transparent}
+label{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+.search{max-width:320px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:500;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.tw{overflow-x:auto}
+/* POS */
+.pos{display:grid;grid-template-columns:1fr 360px;gap:14px;align-items:start}
+@media(max-width:980px){.pos{grid-template-columns:1fr}}
+.prods{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.prod{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:96px}
+.prod:hover{border-color:var(--rose)}
+.prod b{font-weight:500;line-height:1.25}
+.prod span{margin-top:auto;font:600 19px 'Cormorant Garamond'}
+.prod small{color:var(--muted);font-size:11px}
+.cart{position:sticky;top:16px}
+.cl{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line);align-items:center}
+.cl .q{display:flex;gap:4px;align-items:center}
+.cl .q button{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer}
+.tot{display:flex;justify-content:space-between;font:600 28px 'Cormorant Garamond';margin:12px 0}
+/* calendar */
+.week{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:8px;overflow-x:auto}
+.wd{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;min-height:140px}
+.wd.today{border-color:var(--rose);box-shadow:0 0 0 1px var(--rose)}
+.wd h4{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:6px}
+.ev{background:var(--blush);border-radius:8px;padding:6px 8px;font-size:12px;margin-bottom:6px;cursor:pointer;border-left:3px solid var(--rose)}
+.ev.confirmada{border-color:var(--ok)}.ev.atendida{opacity:.6;border-color:#6B568F}.ev.cancelada{text-decoration:line-through;opacity:.5}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(43,32,36,.45);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto}
+.modal{background:var(--cream);border-radius:20px;padding:22px;max-width:620px;width:100%;box-shadow:0 30px 80px -20px rgba(0,0,0,.4)}
+.modal h2{font-size:28px;margin-bottom:6px}
+.modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:80;font-size:14px}
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;background:radial-gradient(900px 500px at 80% 10%,#DCEFF2,transparent 60%),var(--cream);padding:20px}
+.login .card{max-width:340px;width:100%;text-align:center;padding:30px}
+.login h1{font-size:36px}
+.pin{display:flex;gap:10px;justify-content:center;margin:22px 0}
+.pin i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--ink)}
+.pin i.f{background:var(--ink)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pad button{height:58px;border-radius:16px;border:1px solid var(--line);background:#fff;font-size:22px;cursor:pointer}
+.bar{height:8px;background:var(--blush);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--rose)}
+.chart{display:flex;gap:6px;align-items:flex-end;height:130px;padding-top:10px}
+.chart div{flex:1;background:var(--rose);border-radius:6px 6px 0 0;position:relative;min-height:2px}
+.chart div span{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted)}
+.chart div:hover::after{content:attr(data-v);position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;background:var(--ink);color:#fff;padding:1px 6px;border-radius:6px;white-space:nowrap}
+.hint{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="../data.js"></script>
+<script>
+(function(){
+'use strict';
+var N=NEGOCIO,root=document.getElementById('root');
+var $=function(s,el){return (el||document).querySelector(s)},$$=function(s,el){return [].slice.call((el||document).querySelectorAll(s))};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var money=function(n){return '$'+Math.round(Number(n)||0).toLocaleString('es-MX')};
+var pad=function(n){return String(n).padStart(2,'0')};
+var dk=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+var hm=function(m){return pad(Math.floor(m/60))+':'+pad(m%60)};
+var uid=function(p){return (p||'')+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
+var DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],MN=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+var fdate=function(k){var d=new Date(k+'T00:00:00');return DN[d.getDay()]+' '+d.getDate()+' '+MN[d.getMonth()]};
+var today=function(){return dk(new Date())};
+var addDays=function(k,n){var d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return dk(d)};
+
+/* ── Almacenamiento local (por negocio). Usa el mismo cajón de citas que la web. ── */
+var K=function(n){return 'bs:'+N.slug+':'+n};
+function load(n,def){try{var v=JSON.parse(localStorage.getItem(K(n)));return v==null?def:v}catch(e){return def}}
+function save(n,v){try{localStorage.setItem(K(n),JSON.stringify(v))}catch(e){toast('No se pudo guardar (almacenamiento lleno o bloqueado)')}}
+var DB={};
+function loadAll(){
+  DB.clientes=load('clientes',[]);DB.citas=load('citas',[]);DB.ventas=load('ventas',[]);DB.paquetes=load('paquetes',[]);DB.seg=load('seguimientos',[]);
+  DB.cat=load('catalogo',null)||CATALOGO.map(function(x){return Object.assign({},x)});
+  DB.cfg=load('config',{});
+}
+function persist(){['clientes','citas','ventas','paquetes'].forEach(function(n){save(n,DB[n])});save('seguimientos',DB.seg);save('catalogo',DB.cat);save('config',DB.cfg)}
+loadAll();
+window.addEventListener('storage',function(e){if(e.key&&e.key.indexOf(K(''))===0){loadAll();render()}});
+
+/* ── PIN (hash simple; seguridad básica de dispositivo, no de servidor) ── */
+function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(16)}
+if(!DB.cfg.pin){DB.cfg.pin=hash(N.slug+':'+N.pinInicial);DB.cfg.usuario='Recepción';save('config',DB.cfg)}
+var S={auth:sessionStorage.getItem(K('auth'))==='1',tab:location.hash.replace('#','')||'inicio',q:'',agendaRef:today(),filtroCita:'hoy',cart:[],cartCli:'',pago:'Efectivo',desc:0,segF:'pendientes'};
+
+function toast(t){var el=document.createElement('div');el.className='toast';el.textContent=t;document.body.appendChild(el);setTimeout(function(){el.remove()},2400)}
+function cat(id){return DB.cat.filter(function(x){return x.id===id})[0]}
+function cli(id){return DB.clientes.filter(function(x){return x.id===id})[0]}
+function cliByTel(t){t=String(t||'').replace(/\D/g,'').slice(-10);return t?DB.clientes.filter(function(x){return x.telefono===t})[0]:null}
+function wa(tel,txt){return 'https://wa.me/52'+String(tel||'').replace(/\D/g,'').slice(-10)+'?text='+encodeURIComponent(txt)}
+function svcNames(ids){return (ids||[]).map(function(i){var c=cat(i);return c?c.nombre:i}).join(', ')||'Valoración'}
+
+/* Une citas que llegaron de la web (sin cliente) a la ficha de clienta por teléfono */
+function syncWebCitas(){
+  var ch=false;
+  DB.citas.forEach(function(c){
+    if(c.cliente)return;
+    var x=cliByTel(c.telefono);
+    if(!x&&c.telefono){x={id:uid('c'),nombre:c.nombre||'Sin nombre',telefono:String(c.telefono).replace(/\D/g,'').slice(-10),origen:c.origen||'web',alta:today(),piel:'',alergias:c.nota||'',notas:'',etiquetas:['nueva']};DB.clientes.push(x)}
+    if(x){c.cliente=x.id;ch=true}
+  });
+  if(ch)persist();
+}
+
+/* ── Iconos ── */
+var I={
+  inicio:'<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
+  agenda:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>',
+  clientes:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M17 11a3 3 0 1 0 0-6M22 21c0-3-2-5-4-6"/>',
+  venta:'<path d="M6 6h15l-2 9H8zM6 6L5 2H2M9 20a1 1 0 1 0 0-.01M18 20a1 1 0 1 0 0-.01"/>',
+  seguimiento:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
+  reportes:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  ajustes:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3.6 15H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 9.6 4.6V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>'
+};
+function ic(n){return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+I[n]+'</svg>'}
+var TABS=[['inicio','Inicio'],['agenda','Agenda'],['clientes','Clientas'],['venta','Venta'],['seguimiento','Seguimiento'],['reportes','Reportes'],['ajustes','Ajustes']];
+
+/* ── Render principal ── */
+function render(){
+  if(!S.auth)return renderLogin();
+  syncWebCitas();
+  var pend=DB.citas.filter(function(c){return c.estado==='pendiente'&&c.fecha>=today()}).length;
+  var segP=segPendientes().length;
+  root.innerHTML='<div class="app"><aside><div class="logo"><img src="../assets/logo.svg" alt=""/><span>BeautySkin<small>Real · CRM</small></span></div><nav>'+
+    TABS.map(function(t){var c=t[0]==='agenda'&&pend?pend:t[0]==='seguimiento'&&segP?segP:0;
+      return '<button data-tab="'+t[0]+'" class="'+(S.tab===t[0]?'on':'')+'">'+ic(t[0])+'<span>'+t[1]+'</span>'+(c?'<span class="c">'+c+'</span>':'')+'</button>'}).join('')+
+    '</nav><div class="me">'+esc(DB.cfg.usuario||'Equipo')+'<br><button id="out">Cerrar sesión</button></div></aside><main id="main"></main></div>';
+  ({inicio:vInicio,agenda:vAgenda,clientes:vClientes,venta:vVenta,seguimiento:vSeg,reportes:vReportes,ajustes:vAjustes}[S.tab]||vInicio)($('#main'));
+  $$('aside [data-tab]').forEach(function(b){b.onclick=function(){S.tab=b.dataset.tab;location.hash=S.tab;render();window.scrollTo(0,0)}});
+  $('#out').onclick=function(){sessionStorage.removeItem(K('auth'));S.auth=false;render()};
+}
+
+function renderLogin(){
+  var v='';
+  root.innerHTML='<div class="login"><div class="card"><img src="../assets/logo.svg" alt="" style="width:84px;margin:0 auto 10px"/><h1>BeautySkin</h1><p class="hint">Acceso del equipo</p><div class="pin" id="dots"></div><div class="pad" id="pad"></div><p class="hint" style="margin-top:14px">¿Sin PIN? Pídelo a la administración.</p></div></div>';
+  function dots(){$('#dots').innerHTML=[0,1,2,3].map(function(i){return '<i class="'+(i<v.length?'f':'')+'"></i>'}).join('')}
+  $('#pad').innerHTML=[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(function(n){return n===''?'<span></span>':'<button data-n="'+n+'">'+n+'</button>'}).join('');
+  dots();
+  function press(n){
+    if(n==='⌫'){v=v.slice(0,-1);dots();return}
+    if(v.length>=4)return;v+=n;dots();
+    if(v.length===4){if(hash(N.slug+':'+v)===DB.cfg.pin){sessionStorage.setItem(K('auth'),'1');S.auth=true;render()}else{setTimeout(function(){v='';dots();toast('PIN incorrecto')},150)}}
+  }
+  $('#pad').onclick=function(e){var b=e.target.closest('button');if(b)press(b.dataset.n)};
+  document.onkeydown=function(e){if(S.auth)return;if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==='Backspace')press('⌫')};
+}
+
+/* ── INICIO ── */
+function ventasEntre(a,b){return DB.ventas.filter(function(v){return v.fecha>=a&&v.fecha<=b&&!v.anulada})}
+function suma(vs){return vs.reduce(function(s,v){return s+v.total},0)}
+function vInicio(m){
+  var t=today(),mes=t.slice(0,8)+'01',vh=ventasEntre(t,t),vm=ventasEntre(mes,t);
+  var citasHoy=DB.citas.filter(function(c){return c.fecha===t&&c.estado!=='cancelada'}).sort(function(a,b){return a.inicio-b.inicio});
+  var nuevas=DB.clientes.filter(function(c){return (c.alta||'')>=mes}).length;
+  var pend=DB.citas.filter(function(c){return c.estado==='pendiente'&&c.fecha>=t}).sort(function(a,b){return (a.fecha+pad(a.inicio)).localeCompare(b.fecha+pad(b.inicio))});
+  var hr=new Date().getHours(),sal=hr<12?'Buenos días':hr<19?'Buenas tardes':'Buenas noches';
+  m.innerHTML='<div class="top"><div><h1>'+sal+' ✦</h1><p>'+fdate(t)+' · resumen de la clínica</p></div><div class="row" style="flex:none"><button class="btn" data-go="agenda-new">+ Cita</button><button class="btn p" data-go="venta">+ Venta</button></div></div>'+
+  '<div class="grid k4">'+
+   kpi('Ventas hoy',money(suma(vh)),vh.length+' tickets')+kpi('Ventas del mes',money(suma(vm)),'ticket prom. '+money(vm.length?suma(vm)/vm.length:0))+
+   kpi('Citas hoy',citasHoy.length,citasHoy.filter(function(c){return c.estado==='atendida'}).length+' atendidas')+kpi('Clientas nuevas',nuevas,'este mes · total '+DB.clientes.length)+
+  '</div><div class="grid c2" style="margin-top:14px">'+
+   '<div class="card"><h3>Agenda de hoy <button class="btn s" data-go="agenda">Ver agenda</button></h3><div class="list">'+(citasHoy.map(citaLi).join('')||'<p class="empty">Sin citas hoy.</p>')+'</div></div>'+
+   '<div class="grid" style="align-content:start"><div class="card"><h3>Por confirmar</h3><div class="list">'+(pend.slice(0,6).map(citaLi).join('')||'<p class="empty">Todo confirmado ✓</p>')+'</div></div>'+
+   '<div class="card"><h3>Seguimientos <button class="btn s" data-go="seguimiento">Ver todos</button></h3><div class="list">'+(segPendientes().slice(0,5).map(segLi).join('')||'<p class="empty">Nada pendiente.</p>')+'</div></div></div>'+
+  '</div>';
+  bindCommon(m);
+}
+function kpi(l,v,s){return '<div class="card kpi"><small>'+l+'</small><b>'+v+'</b><span>'+s+'</span></div>'}
+function citaLi(c){
+  var x=cli(c.cliente)||{nombre:c.nombre,telefono:c.telefono};
+  return '<div class="li"><div class="t">'+hm(c.inicio)+'</div><div class="m"><b>'+esc(x.nombre)+'</b><span>'+(c.fecha!==today()?fdate(c.fecha)+' · ':'')+esc(svcNames(c.servicios))+'</span></div><div class="a"><span class="pill '+c.estado+'">'+c.estado+'</span><button class="btn s" data-cita="'+c.id+'">Abrir</button></div></div>';
+}
+function bindCommon(m){
+  $$('[data-go]',m).forEach(function(b){b.onclick=function(){var g=b.dataset.go;if(g==='agenda-new'){modalCita()}else{S.tab=g;location.hash=g;render()}}});
+  $$('[data-cita]',m).forEach(function(b){b.onclick=function(){modalCita(DB.citas.filter(function(c){return c.id===b.dataset.cita})[0])}});
+  $$('[data-cli]',m).forEach(function(b){b.onclick=function(){modalCliente(cli(b.dataset.cli))}});
+  $$('[data-segok]',m).forEach(function(b){b.onclick=function(){var s=DB.seg.filter(function(x){return x.id===b.dataset.segok})[0];if(s){s.hecho=today();persist();render()}}});
+}
+
+/* ── AGENDA ── */
+function vAgenda(m){
+  var ref=new Date(S.agendaRef+'T00:00:00');ref.setDate(ref.getDate()-((ref.getDay()+6)%7));var ini=dk(ref);
+  var days=[0,1,2,3,4,5,6].map(function(i){return addDays(ini,i)});
+  m.innerHTML='<div class="top"><div><h1>Agenda</h1><p>Semana del '+fdate(days[0])+' al '+fdate(days[6])+'</p></div><div class="row" style="flex:none"><button class="btn" id="prev">‹</button><button class="btn" id="hoy">Hoy</button><button class="btn" id="next">›</button><button class="btn p" data-go="agenda-new">+ Nueva cita</button></div></div>'+
+  '<div class="week">'+days.map(function(d){
+    var cs=DB.citas.filter(function(c){return c.fecha===d}).sort(function(a,b){return a.inicio-b.inicio});
+    return '<div class="wd'+(d===today()?' today':'')+'"><h4>'+fdate(d)+'</h4>'+cs.map(function(c){var x=cli(c.cliente)||c;return '<div class="ev '+c.estado+'" data-cita="'+c.id+'"><b>'+hm(c.inicio)+'</b> '+esc(x.nombre)+'<br><span style="color:var(--muted)">'+esc(svcNames(c.servicios))+'</span></div>'}).join('')+'</div>'}).join('')+'</div>'+
+  '<p class="hint" style="margin-top:12px">Las reservas hechas en la página web en este mismo dispositivo aparecen aquí como <b>pendiente</b>. Las que llegan por WhatsApp desde otro teléfono, regístralas con “+ Nueva cita”.</p>';
+  $('#prev').onclick=function(){S.agendaRef=addDays(ini,-7);render()};$('#next').onclick=function(){S.agendaRef=addDays(ini,7);render()};$('#hoy').onclick=function(){S.agendaRef=today();render()};
+  bindCommon(m);
+}
+function cliOptions(selId){return '<option value="">— Nueva clienta —</option>'+DB.clientes.slice().sort(function(a,b){return a.nombre.localeCompare(b.nombre)}).map(function(c){return '<option value="'+c.id+'"'+(c.id===selId?' selected':'')+'>'+esc(c.nombre)+' · '+esc(c.telefono)+'</option>'}).join('')}
+function svcChecks(sel){return DB.cat.filter(function(x){return x.tipo==='servicio'}).map(function(x){return '<label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" value="'+x.id+'" style="width:auto"'+((sel||[]).indexOf(x.id)>-1?' checked':'')+'/> '+esc(x.nombre)+' <span style="color:var(--muted);margin-left:auto">'+(x.precio?money(x.precio):'cotizar')+'</span></label>'}).join('')}
+function modal(html,onMount){var ov=document.createElement('div');ov.className='ov';ov.innerHTML='<div class="modal">'+html+'</div>';document.body.appendChild(ov);ov.onclick=function(e){if(e.target===ov)ov.remove()};var close=function(){ov.remove()};$$('[data-close]',ov).forEach(function(b){b.onclick=close});onMount&&onMount(ov,close);return ov}
+function modalCita(c){
+  var nueva=!c;c=c||{id:uid('ct'),fecha:today(),inicio:11*60,dur:60,servicios:[],estado:'confirmada',origen:'recepción'};
+  var x=cli(c.cliente);
+  var horas=[];for(var t=7*60;t<=21*60;t+=15)horas.push(t);
+  modal('<h2>'+(nueva?'Nueva cita':'Cita · '+esc(c.folio||''))+'</h2>'+(c.origen==='web'?'<p class="hint">Reservada desde la página web</p>':'')+
+   '<label>Clienta</label><select id="mCli">'+cliOptions(c.cliente)+'</select>'+
+   '<div id="mNew" class="row"'+(c.cliente?' style="display:none"':'')+'><div><label>Nombre</label><input id="mNom" value="'+esc(c.nombre||'')+'"/></div><div><label>WhatsApp</label><input id="mTel" inputmode="tel" value="'+esc(c.telefono||'')+'"/></div></div>'+
+   '<div class="row"><div><label>Fecha</label><input type="date" id="mF" value="'+c.fecha+'"/></div><div><label>Hora</label><select id="mH">'+horas.map(function(t){return '<option value="'+t+'"'+(t===c.inicio?' selected':'')+'>'+hm(t)+'</option>'}).join('')+'</select></div><div><label>Estado</label><select id="mE">'+['pendiente','confirmada','atendida','no-show','cancelada'].map(function(s){return '<option'+(s===c.estado?' selected':'')+'>'+s+'</option>'}).join('')+'</select></div></div>'+
+   '<label>Servicios</label><div id="mS" style="max-height:220px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 10px">'+svcChecks(c.servicios)+'</div>'+
+   '<label>Notas</label><textarea id="mN" rows="2">'+esc(c.nota||'')+'</textarea>'+
+   '<div class="acts">'+(nueva?'':'<button class="btn d" id="mDel">Eliminar</button><a class="btn wa" id="mWa" target="_blank" rel="noopener">WhatsApp</a><button class="btn" id="mCob">Cobrar</button>')+'<button class="btn" data-close>Cancelar</button><button class="btn p" id="mOk">Guardar</button></div>',
+  function(ov,close){
+    $('#mCli',ov).onchange=function(){$('#mNew',ov).style.display=this.value?'none':''};
+    function collect(){
+      var id=$('#mCli',ov).value;
+      if(!id){var nom=$('#mNom',ov).value.trim(),tel=$('#mTel',ov).value.replace(/\D/g,'').slice(-10);if(!nom){toast('Escribe el nombre');return null}
+        var ex=cliByTel(tel);if(ex)id=ex.id;else{var nc={id:uid('c'),nombre:nom,telefono:tel,origen:'recepción',alta:today(),piel:'',alergias:'',notas:'',etiquetas:['nueva']};DB.clientes.push(nc);id=nc.id}}
+      c.cliente=id;var cc=cli(id);c.nombre=cc.nombre;c.telefono=cc.telefono;
+      c.fecha=$('#mF',ov).value;c.inicio=+$('#mH',ov).value;c.estado=$('#mE',ov).value;c.nota=$('#mN',ov).value.trim();
+      c.servicios=$$('#mS input:checked',ov).map(function(i){return i.value});
+      c.dur=Math.max(30,c.servicios.reduce(function(s,i){return s+((cat(i)||{}).min||30)},0));
+      c.total=c.servicios.reduce(function(s,i){return s+((cat(i)||{}).precio||0)},0);
+      if(!c.folio)c.folio='BS-'+Date.now().toString(36).toUpperCase().slice(-5);
+      return c;
+    }
+    function store(){DB.citas=DB.citas.filter(function(z){return z.id!==c.id}).concat([c]);persist()}
+    $('#mOk',ov).onclick=function(){if(!collect())return;store();close();toast('Cita guardada');render()};
+    if(!nueva){
+      var xx=cli(c.cliente)||c;
+      $('#mWa',ov).href=wa(xx.telefono,'Hola '+(xx.nombre||'').split(' ')[0]+' ✨ te escribimos de BeautySkin para confirmar tu cita el '+fdate(c.fecha)+' a las '+hm(c.inicio)+' ('+svcNames(c.servicios)+'). ¿Nos confirmas? 💕');
+      $('#mDel',ov).onclick=function(){if(confirm('¿Eliminar esta cita?')){DB.citas=DB.citas.filter(function(z){return z.id!==c.id});persist();close();render()}};
+      $('#mCob',ov).onclick=function(){if(!collect())return;store();close();S.cart=c.servicios.map(function(i){return {id:i,q:1,precio:(cat(i)||{}).precio||0}});S.cartCli=c.cliente;S.citaCobro=c.id;S.tab='venta';location.hash='venta';render()};
+    }
+  });
+}
+
+/* ── CLIENTAS ── */
+function statsCli(id){
+  var vs=DB.ventas.filter(function(v){return v.cliente===id&&!v.anulada}),cs=DB.citas.filter(function(c){return c.cliente===id});
+  var ult=vs.map(function(v){return v.fecha}).concat(cs.filter(function(c){return c.estado==='atendida'}).map(function(c){return c.fecha})).sort().pop()||'';
+  return {gasto:suma(vs),visitas:vs.length,ultima:ult,citas:cs};
+}
+function vClientes(m){
+  var q=S.q.toLowerCase(),f=S.cliF||'todas';
+  var list=DB.clientes.map(function(c){return Object.assign({st:statsCli(c.id)},c)}).filter(function(c){
+    if(q&&(c.nombre+' '+c.telefono+' '+(c.etiquetas||[]).join(' ')).toLowerCase().indexOf(q)<0)return false;
+    if(f==='vip')return c.st.gasto>=5000;
+    if(f==='inactivas')return c.st.ultima&&c.st.ultima<addDays(today(),-60);
+    if(f==='nuevas')return (c.alta||'')>=addDays(today(),-30);
+    if(f==='paquete')return DB.paquetes.some(function(p){return p.cliente===c.id&&p.usadas<p.sesiones});
+    return true;
+  }).sort(function(a,b){return b.st.gasto-a.st.gasto||a.nombre.localeCompare(b.nombre)});
+  m.innerHTML='<div class="top"><div><h1>Clientas</h1><p>'+DB.clientes.length+' registradas</p></div><div class="row" style="flex:none"><input class="search" id="q" placeholder="Buscar nombre, tel. o etiqueta" value="'+esc(S.q)+'"/><button class="btn p" id="nc">+ Clienta</button></div></div>'+
+   '<div class="chips">'+[['todas','Todas'],['nuevas','Nuevas (30 días)'],['vip','VIP ($5k+)'],['paquete','Con paquete activo'],['inactivas','Sin venir +60 días']].map(function(x){return '<button class="chip'+(f===x[0]?' on':'')+'" data-f="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'+
+   '<div class="card tw"><table><thead><tr><th>Clienta</th><th>Teléfono</th><th>Última visita</th><th>Visitas</th><th>Total</th><th></th></tr></thead><tbody>'+
+   (list.map(function(c){return '<tr><td><b style="font-weight:500">'+esc(c.nombre)+'</b><br>'+(c.etiquetas||[]).map(function(t){return '<span class="pill">'+esc(t)+'</span> '}).join('')+'</td><td>'+esc(c.telefono)+'</td><td>'+(c.st.ultima?fdate(c.st.ultima):'—')+'</td><td>'+c.st.visitas+'</td><td>'+money(c.st.gasto)+'</td><td style="text-align:right"><button class="btn s" data-cli="'+c.id+'">Ficha</button></td></tr>'}).join('')||'<tr><td colspan="6" class="empty">Sin resultados.</td></tr>')+
+   '</tbody></table></div>';
+  var qi=$('#q');qi.oninput=function(){S.q=qi.value;var p=qi.selectionStart;render();var n=$('#q');n.focus();n.setSelectionRange(p,p)};
+  $$('[data-f]',m).forEach(function(b){b.onclick=function(){S.cliF=b.dataset.f;render()}});
+  $('#nc').onclick=function(){modalCliente()};
+  bindCommon(m);
+}
+function modalCliente(c){
+  var nueva=!c;c=c||{id:uid('c'),nombre:'',telefono:'',alta:today(),origen:'recepción',piel:'',alergias:'',notas:'',etiquetas:[]};
+  var st=statsCli(c.id),pk=DB.paquetes.filter(function(p){return p.cliente===c.id});
+  var hist=DB.ventas.filter(function(v){return v.cliente===c.id}).sort(function(a,b){return b.fecha.localeCompare(a.fecha)});
+  modal('<h2>'+(nueva?'Nueva clienta':esc(c.nombre))+'</h2>'+(nueva?'':'<p class="hint">Desde '+fdate(c.alta||today())+' · '+st.visitas+' compras · '+money(st.gasto)+'</p>')+
+   '<div class="row"><div><label>Nombre</label><input id="cN" value="'+esc(c.nombre)+'"/></div><div><label>WhatsApp</label><input id="cT" inputmode="tel" value="'+esc(c.telefono)+'"/></div></div>'+
+   '<div class="row"><div><label>Cumpleaños</label><input type="date" id="cB" value="'+esc(c.cumple||'')+'"/></div><div><label>Tipo de piel</label><select id="cP">'+['','Normal','Seca','Grasa','Mixta','Sensible','Con acné','Con manchas / melasma'].map(function(p){return '<option'+(p===c.piel?' selected':'')+'>'+p+'</option>'}).join('')+'</select></div><div><label>¿Cómo nos conoció?</label><select id="cO">'+['recepción','web','Facebook','Instagram','recomendación','WhatsApp','otro'].map(function(p){return '<option'+(p===c.origen?' selected':'')+'>'+p+'</option>'}).join('')+'</select></div></div>'+
+   '<label>Alergias / contraindicaciones</label><input id="cA" value="'+esc(c.alergias||'')+'" placeholder="Ej. embarazo, isotretinoína, alergia a…"/>'+
+   '<label>Notas clínicas / preferencias</label><textarea id="cX" rows="3">'+esc(c.notas||'')+'</textarea>'+
+   '<label>Etiquetas (separadas por coma)</label><input id="cE" value="'+esc((c.etiquetas||[]).join(', '))+'"/>'+
+   '<label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="cC" style="width:auto"'+(c.consentimiento?' checked':'')+'/> Firmó consentimiento informado</label>'+
+   (nueva?'':
+   '<h3 style="margin-top:16px;font-size:20px">Paquetes</h3>'+(pk.map(function(p){var pc=Math.round(p.usadas/p.sesiones*100);return '<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:14px"><span>'+esc(p.nombre)+'</span><span>'+p.usadas+'/'+p.sesiones+'</span></div><div class="bar"><i style="width:'+pc+'%"></i></div>'+(p.usadas<p.sesiones?'<button class="btn s" style="margin-top:6px" data-uso="'+p.id+'">Registrar sesión usada</button>':'<span class="hint">Completado ✓</span>')+'</div>'}).join('')||'<p class="hint">Sin paquetes.</p>')+
+   '<h3 style="margin-top:16px;font-size:20px">Historial</h3>'+(hist.slice(0,10).map(function(v){return '<div class="li"><div class="m"><b>'+fdate(v.fecha)+' · '+money(v.total)+'</b><span>'+esc(v.items.map(function(i){return i.nombre}).join(', '))+'</span></div>'+(v.anulada?'<span class="pill cancelada">anulada</span>':'')+'</div>'}).join('')||'<p class="hint">Sin compras aún.</p>'))+
+   '<div class="acts">'+(nueva?'':'<button class="btn d" id="cDel">Eliminar</button><a class="btn wa" target="_blank" rel="noopener" href="'+wa(c.telefono,'Hola '+(c.nombre||'').split(' ')[0]+' ✨ te saludamos de BeautySkin.')+'">WhatsApp</a><button class="btn" id="cCita">+ Cita</button>')+'<button class="btn" data-close>Cerrar</button><button class="btn p" id="cOk">Guardar</button></div>',
+  function(ov,close){
+    $('#cOk',ov).onclick=function(){
+      var nom=$('#cN',ov).value.trim();if(!nom){toast('Escribe el nombre');return}
+      var tel=$('#cT',ov).value.replace(/\D/g,'').slice(-10),dup=cliByTel(tel);
+      if(dup&&dup.id!==c.id){toast('Ese teléfono ya es de '+dup.nombre);return}
+      Object.assign(c,{nombre:nom,telefono:tel,cumple:$('#cB',ov).value,piel:$('#cP',ov).value,origen:$('#cO',ov).value,alergias:$('#cA',ov).value.trim(),notas:$('#cX',ov).value.trim(),consentimiento:$('#cC',ov).checked,etiquetas:$('#cE',ov).value.split(',').map(function(s){return s.trim()}).filter(Boolean)});
+      DB.clientes=DB.clientes.filter(function(z){return z.id!==c.id}).concat([c]);persist();close();toast('Guardado');render();
+    };
+    if(!nueva){
+      $('#cDel',ov).onclick=function(){if(confirm('¿Eliminar a '+c.nombre+'? Sus ventas se conservan para reportes.')){DB.clientes=DB.clientes.filter(function(z){return z.id!==c.id});persist();close();render()}};
+      $('#cCita',ov).onclick=function(){close();modalCita({id:uid('ct'),cliente:c.id,fecha:today(),inicio:11*60,dur:60,servicios:[],estado:'confirmada',origen:'recepción'})};
+      $$('[data-uso]',ov).forEach(function(b){b.onclick=function(){var p=DB.paquetes.filter(function(x){return x.id===b.dataset.uso})[0];p.usadas++;(p.usos=p.usos||[]).push(today());persist();close();modalCliente(c);toast('Sesión '+p.usadas+'/'+p.sesiones+' registrada')}});
+    }
+  });
+}
+
+/* ── VENTA (punto de venta) ── */
+function vVenta(m){
+  var cats=['Todo'].concat(DB.cat.map(function(x){return x.cat}).filter(function(v,i,a){return a.indexOf(v)===i}));
+  var cf=S.posCat||'Todo';
+  var items=DB.cat.filter(function(x){return cf==='Todo'||x.cat===cf});
+  var sub=S.cart.reduce(function(s,l){return s+l.precio*l.q},0),desc=Math.min(sub,Math.max(0,+S.desc||0)),tot=sub-desc;
+  m.innerHTML='<div class="top"><div><h1>Nueva venta</h1><p>Servicios, paquetes y productos</p></div></div><div class="pos"><div>'+
+   '<div class="chips">'+cats.map(function(c){return '<button class="chip'+(c===cf?' on':'')+'" data-pc="'+esc(c)+'">'+esc(c)+'</button>'}).join('')+'</div>'+
+   '<div class="prods">'+items.map(function(x){return '<button class="prod" data-add="'+x.id+'"><small>'+esc(x.cat)+(x.tipo==='producto'&&x.stock!=null?' · stock '+x.stock:'')+'</small><b>'+esc(x.nombre)+'</b><span>'+(x.precio?(x.desde?'desde ':'')+money(x.precio):'Cotizar')+'</span></button>'}).join('')+'</div></div>'+
+   '<div class="card cart"><h3>Ticket</h3><label>Clienta</label><select id="pCli">'+cliOptions(S.cartCli).replace('— Nueva clienta —','— Venta de mostrador —')+'</select>'+
+   '<div style="margin-top:10px">'+(S.cart.map(function(l,i){var x=cat(l.id)||{nombre:l.id};return '<div class="cl"><div style="flex:1"><div>'+esc(x.nombre)+'</div><small class="hint">'+money(l.precio)+' c/u · <a href="#" data-px="'+i+'" onclick="return false">cambiar</a></small></div><div class="q"><button data-q="'+i+'" data-d="-1">−</button><span>'+l.q+'</span><button data-q="'+i+'" data-d="1">+</button></div><b style="min-width:70px;text-align:right">'+money(l.precio*l.q)+'</b></div>'}).join('')||'<p class="empty">Toca un servicio o producto.</p>')+'</div>'+
+   '<div class="row" style="margin-top:8px"><div><label>Descuento $</label><input id="pDesc" inputmode="numeric" value="'+(S.desc||'')+'"/></div><div><label>Pago</label><select id="pPago">'+['Efectivo','Tarjeta','Transferencia','Mixto'].map(function(p){return '<option'+(p===S.pago?' selected':'')+'>'+p+'</option>'}).join('')+'</select></div></div>'+
+   (desc?'<div style="display:flex;justify-content:space-between;margin-top:10px;color:var(--muted)"><span>Subtotal</span><span>'+money(sub)+'</span></div>':'')+
+   '<div class="tot"><span>Total</span><span>'+money(tot)+'</span></div>'+
+   '<button class="btn r" id="pOk" style="width:100%;justify-content:center"'+(S.cart.length?'':' disabled')+'>Cobrar '+money(tot)+'</button>'+
+   (S.cart.length?'<button class="btn" id="pClr" style="width:100%;justify-content:center;margin-top:8px">Vaciar</button>':'')+'</div></div>';
+  $$('[data-pc]',m).forEach(function(b){b.onclick=function(){S.posCat=b.dataset.pc;render()}});
+  $$('[data-add]',m).forEach(function(b){b.onclick=function(){var x=cat(b.dataset.add),l=S.cart.filter(function(z){return z.id===x.id})[0];if(l){l.q++;render();return}var pr=x.precio;if(x.desde){var q=prompt('Precio final de '+x.nombre+' (base '+money(x.precio)+'):',x.precio);if(q===null)return;pr=+String(q).replace(/[^\d.]/g,'')||x.precio}if(!pr){pr=+String(prompt('Precio de '+x.nombre+' para esta clienta:','')||'').replace(/[^\d.]/g,'');if(!pr)return}S.cart.push({id:x.id,q:1,precio:pr});render()}});
+  $$('[data-px]',m).forEach(function(b){b.onclick=function(){var l=S.cart[+b.dataset.px],v=+String(prompt('Nuevo precio:',l.precio)||'').replace(/[^\d.]/g,'');if(v){l.precio=v;render()}}});
+  $$('[data-q]',m).forEach(function(b){b.onclick=function(){var l=S.cart[+b.dataset.q];l.q+=+b.dataset.d;if(l.q<=0)S.cart.splice(+b.dataset.q,1);render()}});
+  $('#pCli').onchange=function(){S.cartCli=this.value};
+  $('#pDesc').onchange=function(){S.desc=+this.value.replace(/\D/g,'')||0;render()};
+  $('#pPago').onchange=function(){S.pago=this.value};
+  if($('#pClr'))$('#pClr').onclick=function(){S.cart=[];S.desc=0;S.citaCobro=null;render()};
+  $('#pOk').onclick=function(){
+    var tienePaquete=S.cart.some(function(l){return (cat(l.id)||{}).tipo==='paquete'});
+    if(tienePaquete&&!S.cartCli){toast('Elige la clienta para asignarle el paquete');return}
+    var v={id:uid('v'),folio:'T-'+(DB.ventas.length+1001),fecha:today(),hora:hm(new Date().getHours()*60+new Date().getMinutes()),cliente:S.cartCli||'',pago:S.pago,descuento:desc,subtotal:sub,total:tot,
+      items:S.cart.map(function(l){var x=cat(l.id)||{};return {id:l.id,nombre:x.nombre,tipo:x.tipo,cat:x.cat,precio:l.precio,q:l.q}}),usuario:DB.cfg.usuario||''};
+    DB.ventas.push(v);
+    v.items.forEach(function(it){var x=cat(it.id);if(!x)return;
+      if(x.tipo==='producto'&&x.stock!=null)x.stock=Math.max(0,x.stock-it.q);
+      if(x.tipo==='paquete')for(var i=0;i<it.q;i++)DB.paquetes.push({id:uid('pk'),cliente:v.cliente,paquete:x.id,nombre:x.nombre,sesiones:x.sesiones,usadas:0,compra:v.fecha,venta:v.id,usos:[]});
+      if(x.tipo==='servicio'&&v.cliente&&x.seguimiento)DB.seg.push({id:uid('s'),cliente:v.cliente,servicio:x.id,fecha:addDays(v.fecha,x.seguimiento),motivo:(x.id==='toxina'||x.id==='babybotox'?'Retoque de '+x.nombre+' (15 días)':x.cat==='Médico estético'?'Revisión de '+x.nombre:x.id==='valoracion'?'¿Agendamos tu tratamiento? (post-valoración)':'Próxima sesión de '+x.nombre),venta:v.id});
+    });
+    if(v.cliente)DB.seg.push({id:uid('s'),cliente:v.cliente,fecha:addDays(v.fecha,2),motivo:'¿Cómo te sentiste? (post-tratamiento)',venta:v.id});
+    if(S.citaCobro){var c=DB.citas.filter(function(z){return z.id===S.citaCobro})[0];if(c)c.estado='atendida'}
+    persist();
+    var cl=cli(v.cliente);S.cart=[];S.desc=0;S.citaCobro=null;S.cartCli='';
+    var ticket='✨ *BeautySkin* · Ticket '+v.folio+'\n'+fdate(v.fecha)+' '+v.hora+'\n\n'+v.items.map(function(i){return i.q+'× '+i.nombre+' — '+money(i.precio*i.q)}).join('\n')+(v.descuento?'\nDescuento: −'+money(v.descuento):'')+'\n*Total: '+money(v.total)+'* ('+v.pago+')\n\n¡Gracias por tu visita! 💕';
+    modal('<h2>Venta registrada ✓</h2><p>'+v.folio+' · <b>'+money(v.total)+'</b> · '+esc(v.pago)+'</p>'+(cl?'<p class="hint" style="margin-top:6px">Se crearon recordatorios de seguimiento para '+esc(cl.nombre)+'.</p>':'')+
+      '<div class="acts">'+(cl&&cl.telefono?'<a class="btn wa" target="_blank" rel="noopener" href="'+wa(cl.telefono,ticket)+'">Enviar ticket por WhatsApp</a>':'')+'<button class="btn p" data-close>Listo</button></div>');
+    render();
+  };
+}
+
+/* ── SEGUIMIENTO (postventa y reactivación) ── */
+function segPendientes(){
+  var t=today();
+  var base=DB.seg.filter(function(s){return !s.hecho&&s.fecha<=addDays(t,3)});
+  // cumpleaños de la semana
+  DB.clientes.forEach(function(c){if(!c.cumple)return;var md=c.cumple.slice(5),y=t.slice(0,4),f=y+'-'+md;if(f<t)f=(+y+1)+'-'+md;
+    if(f<=addDays(t,7)&&!DB.seg.some(function(s){return s.cliente===c.id&&s.tipo==='cumple'&&s.fecha===f}))base.push({id:'cumple-'+c.id+'-'+f,cliente:c.id,fecha:f,motivo:'🎂 Cumpleaños: regálale 15% de descuento',tipo:'cumple',virtual:true})});
+  // paquetes sin usar en 21 días
+  DB.paquetes.forEach(function(p){if(p.usadas>=p.sesiones)return;var u=(p.usos||[]).slice(-1)[0]||p.compra;if(u<=addDays(t,-21)&&!DB.seg.some(function(s){return s.paquete===p.id&&!s.hecho}))base.push({id:'pk-'+p.id,cliente:p.cliente,fecha:addDays(u,21),motivo:'Le quedan '+(p.sesiones-p.usadas)+' sesiones de '+p.nombre,paquete:p.id,virtual:true})});
+  return base.filter(function(s){return cli(s.cliente)}).sort(function(a,b){return a.fecha.localeCompare(b.fecha)});
+}
+function segMsg(s,c){var n=(c.nombre||'').split(' ')[0];
+  if(s.tipo==='cumple')return 'Hola '+n+' 🎂✨ ¡Feliz cumpleaños de parte de BeautySkin! Te regalamos 15% en tu próximo tratamiento este mes. ¿Te agendamos?';
+  if(/^Retoque/.test(s.motivo))return 'Hola '+n+' ✨ ya se cumplen 15 días de tu aplicación: te esperamos para tu retoque incluido. ¿Qué día te acomoda?';
+  if(/post-valoración/.test(s.motivo))return 'Hola '+n+' ✨ gracias por tu valoración en BeautySkin. Recuerda que tus $300 se descuentan de tu tratamiento. ¿Te apartamos fecha?';
+  if(/^Revisión/.test(s.motivo))return 'Hola '+n+' ✨ ¿cómo te sientes con tu '+s.motivo.replace('Revisión de ','')+'? Si quieres, agendamos una revisión rápida con la doctora 💕';
+  if(/post-tratamiento/.test(s.motivo))return 'Hola '+n+' ✨ ¿cómo sigue tu piel después de tu tratamiento? Recuerda usar bloqueador y mantenerte hidratada. Cualquier duda aquí estamos 💕';
+  if(s.paquete)return 'Hola '+n+' ✨ te recordamos que aún tienes sesiones de tu paquete en BeautySkin. ¿Te agendamos esta semana?';
+  return 'Hola '+n+' ✨ ya toca tu '+s.motivo.replace('Próxima sesión de ','')+' para mantener tus resultados. ¿Qué día te acomoda?';
+}
+function segLi(s){var c=cli(s.cliente);var venc=s.fecha<today();
+  return '<div class="li"><div class="m"><b>'+esc(c.nombre)+'</b><span>'+esc(s.motivo)+' · '+(venc?'<b style="color:var(--bad)">desde '+fdate(s.fecha)+'</b>':fdate(s.fecha))+'</span></div><div class="a"><a class="btn s wa" target="_blank" rel="noopener" href="'+wa(c.telefono,segMsg(s,c))+'">WhatsApp</a>'+(s.virtual?'':'<button class="btn s" data-segok="'+s.id+'">✓</button>')+'</div></div>'}
+function vSeg(m){
+  var p=segPendientes(),inact=DB.clientes.filter(function(c){var u=statsCli(c.id).ultima;return u&&u<addDays(today(),-60)});
+  m.innerHTML='<div class="top"><div><h1>Seguimiento</h1><p>Postventa, próximas sesiones, cumpleaños y reactivación</p></div></div><div class="grid c2">'+
+   '<div class="card"><h3>Para hoy y próximos días <span class="pill">'+p.length+'</span></h3><div class="list">'+(p.map(segLi).join('')||'<p class="empty">Nada pendiente 🎉</p>')+'</div><p class="hint" style="margin-top:8px">Se crean solos al cobrar: mensaje a los 2 días y recordatorio de la próxima sesión según el servicio.</p></div>'+
+   '<div class="card"><h3>Recuperar clientas <span class="pill">'+inact.length+'</span></h3><p class="hint">No vienen hace más de 60 días.</p><div class="list">'+(inact.map(function(c){return '<div class="li"><div class="m"><b>'+esc(c.nombre)+'</b><span>Última: '+fdate(statsCli(c.id).ultima)+'</span></div><a class="btn s wa" target="_blank" rel="noopener" href="'+wa(c.telefono,'Hola '+c.nombre.split(' ')[0]+' ✨ ¡te extrañamos en BeautySkin! Esta semana tenemos 15% en tu tratamiento favorito. ¿Te apartamos lugar?')+'">WhatsApp</a></div>'}).join('')||'<p class="empty">Todas activas ✓</p>')+'</div></div></div>';
+  bindCommon(m);
+}
+
+/* ── REPORTES ── */
+function vReportes(m){
+  var per=S.per||'mes',t=today(),ini=per==='hoy'?t:per==='semana'?addDays(t,-6):per==='mes'?t.slice(0,8)+'01':addDays(t,-364);
+  var vs=ventasEntre(ini,t),tot=suma(vs);
+  var porSvc={},porPago={},porOrigen={};
+  vs.forEach(function(v){v.items.forEach(function(i){porSvc[i.nombre]=(porSvc[i.nombre]||0)+i.precio*i.q});porPago[v.pago]=(porPago[v.pago]||0)+v.total});
+  DB.clientes.forEach(function(c){porOrigen[c.origen||'otro']=(porOrigen[c.origen||'otro']||0)+1});
+  var top=Object.keys(porSvc).map(function(k){return [k,porSvc[k]]}).sort(function(a,b){return b[1]-a[1]}).slice(0,8),mx=top.length?top[0][1]:1;
+  var dias=[];for(var i=13;i>=0;i--){var d=addDays(t,-i);dias.push([d,suma(ventasEntre(d,d))])}var dmx=Math.max.apply(null,dias.map(function(d){return d[1]}).concat([1]));
+  var cits=DB.citas.filter(function(c){return c.fecha>=ini&&c.fecha<=t}),ns=cits.filter(function(c){return c.estado==='no-show'}).length;
+  m.innerHTML='<div class="top"><div><h1>Reportes</h1><p>'+fdate(ini)+' – '+fdate(t)+'</p></div><div class="row" style="flex:none"><button class="btn" id="csvV">Exportar ventas CSV</button><button class="btn" id="csvC">Exportar clientas CSV</button></div></div>'+
+   '<div class="chips">'+[['hoy','Hoy'],['semana','7 días'],['mes','Este mes'],['año','12 meses']].map(function(x){return '<button class="chip'+(per===x[0]?' on':'')+'" data-per="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>'+
+   '<div class="grid k4">'+kpi('Ingresos',money(tot),vs.length+' tickets')+kpi('Ticket promedio',money(vs.length?tot/vs.length:0),'por venta')+kpi('Citas',cits.length,ns+' no-show')+kpi('Paquetes vendidos',vs.reduce(function(s,v){return s+v.items.filter(function(i){return i.tipo==='paquete'}).length},0),'en el periodo')+'</div>'+
+   '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Ventas últimos 14 días</h3><div class="chart" style="margin-bottom:22px">'+dias.map(function(d){return '<div style="height:'+Math.round(d[1]/dmx*100)+'%" data-v="'+money(d[1])+'"><span>'+(+d[0].slice(8))+'</span></div>'}).join('')+'</div></div>'+
+   '<div class="card"><h3>Formas de pago</h3>'+(Object.keys(porPago).map(function(k){return '<div class="li"><div class="m"><b>'+esc(k)+'</b></div><b>'+money(porPago[k])+'</b></div>'}).join('')||'<p class="empty">Sin ventas.</p>')+'</div></div>'+
+   '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Top servicios y productos</h3>'+(top.map(function(x){return '<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:14px"><span>'+esc(x[0])+'</span><b>'+money(x[1])+'</b></div><div class="bar"><i style="width:'+Math.round(x[1]/mx*100)+'%"></i></div></div>'}).join('')||'<p class="empty">Sin ventas.</p>')+'</div>'+
+   '<div class="card"><h3>¿Cómo nos conocen?</h3>'+(Object.keys(porOrigen).map(function(k){return '<div class="li"><div class="m"><b>'+esc(k)+'</b></div><span>'+porOrigen[k]+'</span></div>'}).join('')||'<p class="empty">Sin clientas.</p>')+'</div></div>'+
+   '<div class="card tw" style="margin-top:14px"><h3>Tickets del periodo</h3><table><thead><tr><th>Folio</th><th>Fecha</th><th>Clienta</th><th>Detalle</th><th>Pago</th><th>Total</th><th></th></tr></thead><tbody>'+
+   (vs.concat(DB.ventas.filter(function(v){return v.anulada&&v.fecha>=ini})).sort(function(a,b){return (b.fecha+b.hora).localeCompare(a.fecha+a.hora)}).map(function(v){var c=cli(v.cliente);return '<tr'+(v.anulada?' style="opacity:.5;text-decoration:line-through"':'')+'><td>'+v.folio+'</td><td>'+fdate(v.fecha)+' '+v.hora+'</td><td>'+(c?esc(c.nombre):'Mostrador')+'</td><td>'+esc(v.items.map(function(i){return i.q+'× '+i.nombre}).join(', '))+'</td><td>'+esc(v.pago)+'</td><td>'+money(v.total)+'</td><td>'+(v.anulada?'':'<button class="btn s d" data-anu="'+v.id+'">Anular</button>')+'</td></tr>'}).join('')||'<tr><td colspan="7" class="empty">Sin ventas.</td></tr>')+'</tbody></table></div>';
+  $$('[data-per]',m).forEach(function(b){b.onclick=function(){S.per=b.dataset.per;render()}});
+  $$('[data-anu]',m).forEach(function(b){b.onclick=function(){if(!confirm('¿Anular este ticket? Se quita de los ingresos (los paquetes y el stock no se revierten solos).'))return;var v=DB.ventas.filter(function(x){return x.id===b.dataset.anu})[0];v.anulada=today();persist();render()}});
+  $('#csvV').onclick=function(){csv('ventas-beautyskin.csv',[['folio','fecha','hora','clienta','telefono','detalle','pago','descuento','total','anulada']].concat(DB.ventas.map(function(v){var c=cli(v.cliente)||{};return [v.folio,v.fecha,v.hora,c.nombre||'Mostrador',c.telefono||'',v.items.map(function(i){return i.q+'x '+i.nombre}).join(' | '),v.pago,v.descuento,v.total,v.anulada||'']})))};
+  $('#csvC').onclick=function(){csv('clientas-beautyskin.csv',[['nombre','telefono','alta','origen','piel','cumpleaños','alergias','etiquetas','compras','total']].concat(DB.clientes.map(function(c){var s=statsCli(c.id);return [c.nombre,c.telefono,c.alta,c.origen,c.piel,c.cumple||'',c.alergias,(c.etiquetas||[]).join('|'),s.visitas,s.gasto]})))};
+}
+function csv(name,rows){var t='﻿'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')}).join('\n');dl(name,t,'text/csv')}
+function dl(name,text,type){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type+';charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}
+
+/* ── AJUSTES: catálogo, PIN, respaldo ── */
+function vAjustes(m){
+  m.innerHTML='<div class="top"><div><h1>Ajustes</h1><p>Catálogo, precios, acceso y respaldo</p></div></div>'+
+  '<div class="card tw"><h3>Catálogo y precios <button class="btn s" id="aAdd">+ Agregar</button></h3><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Categoría</th><th>Precio</th><th>Min / ses.</th><th>Seguim. (días)</th><th>Stock</th><th></th></tr></thead><tbody>'+
+  DB.cat.map(function(x,i){return '<tr data-i="'+i+'"><td><input data-k="nombre" value="'+esc(x.nombre)+'"/></td><td><select data-k="tipo">'+['servicio','paquete','producto'].map(function(t){return '<option'+(t===x.tipo?' selected':'')+'>'+t+'</option>'}).join('')+'</select></td><td><input data-k="cat" value="'+esc(x.cat)+'"/></td><td><input data-k="precio" inputmode="numeric" value="'+(x.precio==null?'':x.precio)+'" placeholder="cotizar" style="width:90px"/></td><td><input data-k="'+(x.tipo==='paquete'?'sesiones':'min')+'" inputmode="numeric" value="'+(x.tipo==='paquete'?x.sesiones:(x.min||''))+'" style="width:70px"/></td><td><input data-k="seguimiento" inputmode="numeric" value="'+(x.seguimiento||'')+'" style="width:70px"/></td><td><input data-k="stock" inputmode="numeric" value="'+(x.stock==null?'':x.stock)+'" style="width:70px"/></td><td><button class="btn s d" data-rm="'+i+'">✕</button></td></tr>'}).join('')+
+  '</tbody></table><div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn p" id="aSave" style="flex:none">Guardar catálogo</button><button class="btn" id="aReset" style="flex:none">Restaurar catálogo de data.js</button></div><p class="hint" style="margin-top:8px">Este catálogo es el del CRM en este dispositivo. Los precios de la página web se editan en <b>data.js</b>.</p></div>'+
+  '<div class="grid c2" style="margin-top:14px"><div class="card"><h3>Acceso</h3><label>Nombre de quien atiende</label><input id="aUser" value="'+esc(DB.cfg.usuario||'')+'"/><label>Nuevo PIN (4 dígitos)</label><input id="aPin" inputmode="numeric" maxlength="4" placeholder="••••"/><button class="btn p" id="aAcc" style="margin-top:12px">Guardar</button></div>'+
+  '<div class="card"><h3>Respaldo</h3><p class="hint">Los datos viven en este navegador. Descarga un respaldo cada semana y guárdalo en Drive/iCloud. Para pasar los datos a otro equipo (iPad ↔ Mac), descarga aquí e impórtalo allá.</p><div class="row" style="margin-top:12px"><button class="btn p" id="aExp">Descargar respaldo</button><label class="btn" style="margin:0;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);justify-content:center">Importar respaldo<input type="file" id="aImp" accept="application/json" style="display:none"/></label></div><button class="btn s" id="aDemo" style="margin-top:12px">Cargar datos de ejemplo</button></div></div>';
+  $('#aAdd').onclick=function(){DB.cat.push({id:uid('x'),tipo:'servicio',cat:'Facial',nombre:'Nuevo servicio',min:60,precio:0});save('catalogo',DB.cat);render()};
+  $$('[data-rm]',m).forEach(function(b){b.onclick=function(){if(confirm('¿Quitar del catálogo?')){DB.cat.splice(+b.dataset.rm,1);save('catalogo',DB.cat);render()}}});
+  $('#aSave').onclick=function(){$$('tr[data-i]',m).forEach(function(tr){var x=DB.cat[+tr.dataset.i];$$('[data-k]',tr).forEach(function(inp){var k=inp.dataset.k,v=inp.value.trim();if(['precio','min','sesiones','seguimiento','stock'].indexOf(k)>-1){if(v===''){if(k==='stock'||k==='seguimiento')delete x[k];if(k==='precio')x.precio=null;return}v=+v.replace(/[^\d.]/g,'')||0}x[k]=v})});save('catalogo',DB.cat);toast('Catálogo guardado');render()};
+  $('#aReset').onclick=function(){if(confirm('¿Reemplazar el catálogo por el de data.js?')){DB.cat=CATALOGO.map(function(x){return Object.assign({},x)});save('catalogo',DB.cat);render()}};
+  $('#aAcc').onclick=function(){DB.cfg.usuario=$('#aUser').value.trim()||'Equipo';var p=$('#aPin').value;if(p){if(!/^\d{4}$/.test(p)){toast('El PIN debe ser de 4 dígitos');return}DB.cfg.pin=hash(N.slug+':'+p)}save('config',DB.cfg);toast('Guardado');render()};
+  $('#aExp').onclick=function(){dl('respaldo-beautyskin-'+today()+'.json',JSON.stringify({v:1,negocio:N.slug,fecha:new Date().toISOString(),clientes:DB.clientes,citas:DB.citas,ventas:DB.ventas,paquetes:DB.paquetes,seguimientos:DB.seg,catalogo:DB.cat},null,1),'application/json')};
+  $('#aImp').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.negocio!==N.slug)throw 0;if(!confirm('Esto reemplaza los datos de este dispositivo por los del respaldo. ¿Continuar?'))return;['clientes','citas','ventas','paquetes'].forEach(function(k){DB[k]=d[k]||[]});DB.seg=d.seguimientos||[];DB.cat=d.catalogo||DB.cat;persist();toast('Respaldo importado');render()}catch(e){toast('Archivo no válido')}};r.readAsText(f)};
+  $('#aDemo').onclick=function(){if(DB.clientes.length&&!confirm('Ya hay datos. ¿Agregar ejemplos de todos modos?'))return;demo();render()};
+}
+function demo(){
+  var nombres=[['Mariana López (demo)','3110000001'],['Daniela Ruiz (demo)','3110000002'],['Fernanda Ortiz (demo)','3110000003'],['Sofía Medina (demo)','3110000004'],['Paola Navarro (demo)','3110000005'],['Andrea Salas (demo)','3110000006']];
+  var t=today();
+  nombres.forEach(function(n,i){
+    var c={id:uid('c'),nombre:n[0],telefono:n[1],alta:addDays(t,-90+i*12),origen:['Facebook','Instagram','recomendación','web','Facebook','WhatsApp'][i],piel:['Mixta','Grasa','Seca','Sensible','Con manchas','Normal'][i],alergias:'',notas:'',etiquetas:i===0?['VIP']:[],cumple:i===2?'1995-'+addDays(t,4).slice(5):''};
+    DB.clientes.push(c);
+    var svc=['toxina','hollywood','limpieza','labios','dermaplaning','dermapen'][i],x=cat(svc);
+    if(!x)return;var pz=x.precio||[0,0,900,4500,700,1200][i];
+    for(var k=0;k<(i%3)+1;k++){var f=addDays(t,-(k*20+i*3+(i===5?70:0)));DB.ventas.push({id:uid('v'),folio:'T-'+(DB.ventas.length+1001),fecha:f,hora:'12:00',cliente:c.id,pago:k%2?'Tarjeta':'Efectivo',descuento:0,subtotal:pz,total:pz,items:[{id:x.id,nombre:x.nombre,tipo:'servicio',cat:x.cat,precio:pz,q:1}],usuario:'demo'})}
+    DB.citas.push({id:uid('ct'),folio:'BS-D'+i,cliente:c.id,nombre:c.nombre,telefono:c.telefono,fecha:addDays(t,i%3),inicio:(10+i)*60,dur:60,servicios:[svc],estado:i%2?'pendiente':'confirmada',origen:'demo'});
+    if(i===1)DB.paquetes.push({id:uid('pk'),cliente:c.id,paquete:'pk-hollywood2',nombre:'Hollywood Peel · 2 sesiones',sesiones:2,usadas:1,compra:addDays(t,-40),usos:[addDays(t,-40)]});
+    if(i===0)DB.seg.push({id:uid('s'),cliente:c.id,servicio:'toxina',fecha:t,motivo:'Retoque de toxina (15 días)'});
+  });
+  persist();toast('Datos de ejemplo cargados');
+}
+
+window.addEventListener('hashchange',function(){var h=location.hash.replace('#','');if(h&&h!==S.tab){S.tab=h;render()}});
+render();
+})();
+</script>
+</body>
+</html>
