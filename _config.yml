@@ -1,0 +1,11 @@
+# GitHub Pages (Jekyll): carpetas que NO se publican en *.github.io.
+# beautyskin/ vive en Vercel (beautyskin-tepic.vercel.app); aquí solo se guarda el código.
+exclude:
+  - beautyskin/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/

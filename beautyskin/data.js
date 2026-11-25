@@ -25,6 +25,7 @@ window.NEGOCIO = {
   horario: 'Lunes a viernes 9:00–19:00 · Solo con cita',
   horas: { 1:[9,19], 2:[9,19], 3:[9,19], 4:[9,19], 5:[9,19] }, // sáb y dom cerrado
   valoracion: 300,          // se descuenta del total del tratamiento
+  duena: 'Karla',            // nombre con el que saluda el CRM
   pinInicial: '1234'        // PIN del CRM (cámbialo dentro del CRM → Ajustes)
 };
 

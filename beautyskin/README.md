@@ -20,6 +20,10 @@ Kit digital para la página de Facebook /LinaresSkin.
 - Reseñas reales (las de la web son de ejemplo y lo dicen).
 - PIN del CRM: inicial `1234` → cambiarlo en CRM → Ajustes el primer día.
 
+## Extras
+- Web: promos con visor, sección de la doctora (foto en `assets/doctora.jpg`), mapa, barra fija en celular, archivo .ics para calendario, SEO (JSON-LD, sitemap, robots).
+- CRM: saluda a Karla (`duena` en data.js), pegar reserva de WhatsApp, meta mensual con comparativo, recordatorios de mañana, corte de caja imprimible, fotos antes/después por clienta y consentimiento informado imprimible.
+
 ## Notas técnicas
-- Publicado en https://beautyskin-tepic.vercel.app (Vercel, proyecto `beautyskin-tepic`). También existe copia en GitHub Pages.
+- Publicado SOLO en https://beautyskin-tepic.vercel.app (Vercel, proyecto `beautyskin-tepic`). `_config.yml` lo excluye de GitHub Pages.
 - El CRM guarda en el navegador del dispositivo (localStorage). Usar **un solo dispositivo principal** (iPad de recepción) y descargar respaldo semanal en Ajustes. Las reservas web hechas desde otros teléfonos llegan por WhatsApp y se registran con "+ Nueva cita".
