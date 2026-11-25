@@ -2,7 +2,8 @@
    BEAUTYSKIN · REAL CLÍNICA ESTÉTICA — DATOS DEL NEGOCIO
    Único lugar a editar. Lo usan la web (index.html) y el CRM (crm/).
    Fuente: página de Facebook /LinaresSkin (nov 2026).
-   precio: null  → en la web dice "Cotiza" y en el CRM se captura al cobrar.
+   desde:true → precio ESTIMADO de mercado (Tepic, nov 2026); la web muestra "Desde $X".
+   Confírmalos con la Dra. y ajústalos aquí. precio:null → "Cotiza".
    ═══════════════════════════════════════════════════════════════ */
 window.NEGOCIO = {
   nombre: 'BeautySkin',
@@ -21,8 +22,8 @@ window.NEGOCIO = {
   cofepris: 'COFEPRIS 2318015036X00364 · Aviso de publicidad 2318012002A00075',
   seguidores: '8.2 mil',
   recomendacion: '100% recomendado (15 opiniones en Facebook)',
-  horario: 'Lun–Vie 10:00–19:00 · Sáb 10:00–15:00', // EDITAR si cambia
-  horas: { 1:[10,19], 2:[10,19], 3:[10,19], 4:[10,19], 5:[10,19], 6:[10,15] }, // 0 = domingo cerrado
+  horario: 'Lunes a viernes 9:00–19:00 · Solo con cita',
+  horas: { 1:[9,19], 2:[9,19], 3:[9,19], 4:[9,19], 5:[9,19] }, // sáb y dom cerrado
   valoracion: 300,          // se descuenta del total del tratamiento
   pinInicial: '1234'        // PIN del CRM (cámbialo dentro del CRM → Ajustes)
 };
@@ -32,21 +33,21 @@ window.CATALOGO = [
   {id:'valoracion', tipo:'servicio', cat:'Valoración', nombre:'Valoración médica', min:30, precio:300, seguimiento:7, desc:'Revisión con la doctora y plan a tu medida. Los $300 se descuentan del total de tu tratamiento.', top:true},
   // ── Médico estético (aplica la Dra.)
   {id:'toxina',  tipo:'servicio', cat:'Médico estético', nombre:'Toxina botulínica', min:30, precio:3500, seguimiento:15, desc:'Frente, entrecejo, patas de gallo y bunny lines. Incluye retoque a los 15 días. Hasta 3 meses sin intereses.', top:true},
-  {id:'babybotox', tipo:'servicio', cat:'Médico estético', nombre:'Baby Botox', min:30, precio:null, seguimiento:15, desc:'Microdosis para un acabado natural y preventivo: suaviza sin perder expresión.'},
-  {id:'labios',  tipo:'servicio', cat:'Médico estético', nombre:'Aumento de labios', min:45, precio:null, seguimiento:15, desc:'Ácido hialurónico para labios más definidos, hidratados y con volumen natural.', top:true},
-  {id:'rino',    tipo:'servicio', cat:'Médico estético', nombre:'Rinomodelación con ácido hialurónico', min:45, precio:null, seguimiento:15, desc:'Perfil nasal más armonioso y punta más elevada, sin cirugía. Resultados inmediatos.'},
-  {id:'radiesse',tipo:'servicio', cat:'Médico estético', nombre:'Radiesse®', min:45, precio:null, seguimiento:30, desc:'Bioestimulador: estimula el colágeno, mejora la firmeza y apoya el contorno facial.'},
+  {id:'babybotox', tipo:'servicio', cat:'Médico estético', nombre:'Baby Botox', min:30, precio:2800, desde:true, seguimiento:15, desc:'Microdosis para un acabado natural y preventivo: suaviza sin perder expresión.'},
+  {id:'labios',  tipo:'servicio', cat:'Médico estético', nombre:'Aumento de labios (1 ml)', min:45, precio:4500, desde:true, seguimiento:15, desc:'Ácido hialurónico para labios más definidos, hidratados y con volumen natural.', top:true},
+  {id:'rino',    tipo:'servicio', cat:'Médico estético', nombre:'Rinomodelación con ácido hialurónico', min:45, precio:4500, desde:true, seguimiento:15, desc:'Perfil nasal más armonioso y punta más elevada, sin cirugía. Resultados inmediatos.'},
+  {id:'radiesse',tipo:'servicio', cat:'Médico estético', nombre:'Radiesse® (1 jeringa)', min:45, precio:8500, desde:true, seguimiento:30, desc:'Bioestimulador: estimula el colágeno, mejora la firmeza y apoya el contorno facial.'},
   // ── Faciales y cosmetología
-  {id:'limpieza', tipo:'servicio', cat:'Facial', nombre:'Limpieza facial profunda', min:60, precio:null, seguimiento:30, desc:'Extracción, exfoliación e hidratación. Piel limpia y luminosa desde la primera sesión.', top:true},
+  {id:'limpieza', tipo:'servicio', cat:'Facial', nombre:'Limpieza facial profunda', min:60, precio:600, desde:true, seguimiento:30, desc:'Extracción, exfoliación e hidratación. Piel limpia y luminosa desde la primera sesión.', top:true},
   {id:'hollywood',tipo:'servicio', cat:'Facial', nombre:'Hollywood Peel', min:45, precio:950, seguimiento:15, desc:'Peeling con láser y carbón: textura más uniforme, poros menos visibles y menos grasa superficial.'},
-  {id:'dermaplaning', tipo:'servicio', cat:'Facial', nombre:'Dermaplaning', min:45, precio:null, seguimiento:30, desc:'Retira células muertas y vello fino. Resultados inmediatos: piel suave y maquillaje perfecto.'},
-  {id:'dermapen', tipo:'servicio', cat:'Facial', nombre:'Dermapen con vitaminas', min:60, precio:null, seguimiento:30, desc:'Microagujas + vitaminas para luminosidad, firmeza y textura.'},
-  {id:'dermapen-cic', tipo:'servicio', cat:'Facial', nombre:'Dermapen en cicatrices de acné', min:60, precio:null, seguimiento:30, desc:'Protocolo para mejorar marcas y cicatrices de acné sesión a sesión.'},
-  {id:'electro',  tipo:'servicio', cat:'Facial', nombre:'Electroporación', min:45, precio:null, seguimiento:21, desc:'Introduce activos en la piel sin agujas: hidratación y nutrición profunda.'},
-  {id:'despig',   tipo:'servicio', cat:'Facial', nombre:'Despigmentante facial', min:45, precio:null, seguimiento:21, desc:'Tratamiento para manchas, melasma y tono disparejo.'},
+  {id:'dermaplaning', tipo:'servicio', cat:'Facial', nombre:'Dermaplaning', min:45, precio:650, desde:true, seguimiento:30, desc:'Retira células muertas y vello fino. Resultados inmediatos: piel suave y maquillaje perfecto.'},
+  {id:'dermapen', tipo:'servicio', cat:'Facial', nombre:'Dermapen con vitaminas', min:60, precio:1100, desde:true, seguimiento:30, desc:'Microagujas + vitaminas para luminosidad, firmeza y textura.'},
+  {id:'dermapen-cic', tipo:'servicio', cat:'Facial', nombre:'Dermapen en cicatrices de acné', min:60, precio:1300, desde:true, seguimiento:30, desc:'Protocolo para mejorar marcas y cicatrices de acné sesión a sesión.'},
+  {id:'electro',  tipo:'servicio', cat:'Facial', nombre:'Electroporación', min:45, precio:700, desde:true, seguimiento:21, desc:'Introduce activos en la piel sin agujas: hidratación y nutrición profunda.'},
+  {id:'despig',   tipo:'servicio', cat:'Facial', nombre:'Despigmentante facial', min:45, precio:900, desde:true, seguimiento:21, desc:'Tratamiento para manchas, melasma y tono disparejo.'},
   // ── Corporal
-  {id:'axilas',   tipo:'servicio', cat:'Corporal', nombre:'Despigmentante de axilas', min:40, precio:null, seguimiento:21, desc:'Aclara y unifica el tono de axilas de forma segura.'},
-  {id:'corporal', tipo:'servicio', cat:'Corporal', nombre:'Moldeo y reductivo corporal', min:60, precio:null, seguimiento:7, desc:'Tratamientos para reducir medidas y reafirmar. Te armamos tu plan en la valoración.'},
+  {id:'axilas',   tipo:'servicio', cat:'Corporal', nombre:'Despigmentante de axilas', min:40, precio:600, desde:true, seguimiento:21, desc:'Aclara y unifica el tono de axilas de forma segura.'},
+  {id:'corporal', tipo:'servicio', cat:'Corporal', nombre:'Moldeo y reductivo corporal (sesión)', min:60, precio:550, desde:true, seguimiento:7, desc:'Tratamientos para reducir medidas y reafirmar. Te armamos tu plan en la valoración.'},
   // ── Paquetes
   {id:'pk-hollywood2', tipo:'paquete', cat:'Paquetes', nombre:'Hollywood Peel · 2 sesiones', sesiones:2, servicio:'hollywood', min:45, precio:1450, desc:'Precio regular $950 por sesión: ahorras $450.'}
   // ── Productos: agrégalos desde el CRM → Ajustes (tipo "producto", con stock)

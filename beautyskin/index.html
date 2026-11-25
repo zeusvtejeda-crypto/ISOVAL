@@ -228,7 +228,7 @@ footer a:hover{color:#fff}
     <div class="head reveal"><p class="eyebrow">Servicios</p><h2>Tratamientos para <em>cada piel</em></h2><p>Elige lo que te interesa y agrégalo a tu cita. ¿No sabes qué necesitas? Agenda tu valoración médica: los $300 se descuentan de tu tratamiento.</p></div>
     <div class="tabs" id="tabs"></div>
     <div class="grid" id="svc"></div>
-    <p class="note">* Precios sujetos a valoración médica. “Cotiza” = te damos precio exacto por WhatsApp según tu caso. Tratamientos médicos aplicados por la <span data-n="medico"></span>.</p>
+    <p class="note">* Precios sujetos a valoración médica. “Desde” = precio base; el total depende de la zona y cantidad de producto que necesites. Tratamientos médicos aplicados por la <span data-n="medico"></span>.</p>
   </div>
 </section>
 
@@ -283,7 +283,7 @@ footer a:hover{color:#fff}
 
 <section id="agendar">
   <div class="wrap">
-    <div class="head reveal"><p class="eyebrow">Agenda en línea</p><h2>Reserva tu <em>cita</em></h2><p>Elige día y hora; te confirmamos por WhatsApp. Si no eliges servicio, agendamos tu valoración.</p></div>
+    <div class="head reveal"><p class="eyebrow">Agenda en línea</p><h2>Reserva tu <em>cita</em></h2><p>Atendemos <b>solo con cita</b>, de lunes a viernes de 9:00 a 19:00. Elige día y hora y te confirmamos por WhatsApp. Si no eliges servicio, agendamos tu valoración.</p></div>
     <div class="book">
       <div class="panel">
         <h3>1 · Tu selección</h3>
@@ -316,6 +316,7 @@ footer a:hover{color:#fff}
     <details><summary>¿Quién aplica la toxina y los rellenos?</summary><p>La <span data-n="medico"></span>, <span data-n="medicoCred"></span>. Usamos productos originales y la toxina incluye retoque a los 15 días.</p></details>
     <details><summary>¿Cuánto dura la toxina botulínica? ¿Y el ácido hialurónico?</summary><p>La toxina dura en promedio 4 a 6 meses; el ácido hialurónico en labios o nariz, de 8 a 12 meses según tu metabolismo. Te lo explicamos a detalle en tu valoración.</p></details>
     <details><summary>¿Qué formas de pago aceptan?</summary><p>Efectivo, transferencia y tarjeta, con opción a 3 meses sin intereses en tratamientos seleccionados.</p></details>
+    <details><summary>¿Atienden sin cita?</summary><p>Trabajamos solo con cita para dedicarte el tiempo que mereces: lunes a viernes de 9:00 a 19:00. Agenda aquí o por WhatsApp.</p></details>
     <details><summary>¿Puedo cancelar o cambiar mi cita?</summary><p>Sí, avísanos por WhatsApp con al menos 24 horas de anticipación.</p></details>
   </div>
 </section>
@@ -364,7 +365,7 @@ function card(x){
   var on=sel.indexOf(x.id)>-1;
   return '<article class="card reveal in">'+(x.top?'<span class="tagtop">Más pedido</span>':'')+
   '<div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+(ICON[x.cat]||ICON.Facial)+'</svg></div>'+
-  '<h3>'+esc(x.nombre)+'</h3><p>'+esc(x.desc)+'</p><div class="row"><div class="price">'+(x.precio?money(x.precio):'Cotiza')+
+  '<h3>'+esc(x.nombre)+'</h3><p>'+esc(x.desc)+'</p><div class="row"><div class="price">'+(x.precio?(x.desde?'<small style="display:inline;font-size:13px;color:var(--muted)">Desde </small>':'')+money(x.precio):'Cotiza')+
   '<small>'+(x.sesiones?x.sesiones+' sesiones':x.min+' min')+'</small></div><button class="add'+(on?' on':'')+'" data-id="'+x.id+'">'+(on?'✓ Agregado':'+ Agregar')+'</button></div></article>';
 }
 function renderSvc(){
@@ -380,9 +381,9 @@ document.addEventListener('click',function(e){
 function toggle(id){var i=sel.indexOf(id);if(i>-1)sel.splice(i,1);else sel.push(id);renderSvc();renderSel()}
 function byId(id){return C.filter(function(x){return x.id===id})[0]}
 function renderSel(){
-  $('#sel').innerHTML=sel.length?sel.map(function(id){var x=byId(id);return '<li><span>'+esc(x.nombre)+'</span><span>'+(x.precio?money(x.precio):'Cotiza')+' <button class="x" data-id="'+id+'" aria-label="Quitar">✕</button></span></li>'}).join(''):'<li class="empty">Sin servicios aún: agrega uno o agenda solo tu <b>valoración</b>.</li>';
-  $('#tot').textContent=money(sel.reduce(function(s,id){return s+(byId(id).precio||0)},0))+(sel.some(function(id){return !byId(id).precio})?' + cotización':'');
-  $('#svcPick').innerHTML='<option value="">— Elegir —</option>'+svcs.concat(pkgs).filter(function(x){return sel.indexOf(x.id)<0}).map(function(x){return '<option value="'+x.id+'">'+esc(x.nombre)+' · '+(x.precio?money(x.precio):'Cotiza')+'</option>'}).join('');
+  $('#sel').innerHTML=sel.length?sel.map(function(id){var x=byId(id);return '<li><span>'+esc(x.nombre)+'</span><span>'+(x.desde?'desde ':'')+(x.precio?money(x.precio):'Cotiza')+' <button class="x" data-id="'+id+'" aria-label="Quitar">✕</button></span></li>'}).join(''):'<li class="empty">Sin servicios aún: agrega uno o agenda solo tu <b>valoración</b>.</li>';
+  $('#tot').textContent=(sel.some(function(id){return byId(id).desde})?'desde ':'')+money(sel.reduce(function(s,id){return s+(byId(id).precio||0)},0));
+  $('#svcPick').innerHTML='<option value="">— Elegir —</option>'+svcs.concat(pkgs).filter(function(x){return sel.indexOf(x.id)<0}).map(function(x){return '<option value="'+x.id+'">'+esc(x.nombre)+' · '+(x.desde?'desde ':'')+(x.precio?money(x.precio):'Cotiza')+'</option>'}).join('');
   renderSlots();
 }
 $('#svcPick').onchange=function(){if(this.value)toggle(this.value)};
@@ -417,7 +418,7 @@ $('#form').onsubmit=function(e){
   var d=new Date(day+'T00:00:00'),fechaTxt=DN[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);
   var cita={id:folio,folio:folio,fecha:day,inicio:time,dur:dur(),nombre:nom,telefono:tel,servicios:items.map(function(x){return x.id}),total:items.reduce(function(s,x){return s+(x.precio||0)},0),nota:$('#fNota').value.trim(),estado:'pendiente',origen:'web',creada:new Date().toISOString()};
   try{var l=taken();l.push(cita);localStorage.setItem('bs:'+N.slug+':citas',JSON.stringify(l))}catch(err){}
-  var msg='Hola BeautySkin ✨ quiero confirmar mi cita.\n\nFolio: '+folio+'\nNombre: '+nom+'\nDía: '+fechaTxt+' · '+hora+'\nServicios: '+(items.length?items.map(function(x){return x.nombre}).join(', '):'Valoración médica')+(cita.total?'\nTotal aprox.: '+money(cita.total):'')+(cita.nota?'\nNota: '+cita.nota:'');
+  var msg='Hola BeautySkin ✨ quiero confirmar mi cita.\n\nFolio: '+folio+'\nNombre: '+nom+'\nDía: '+fechaTxt+' · '+hora+'\nServicios: '+(items.length?items.map(function(x){return x.nombre}).join(', '):'Valoración médica')+(cita.total?'\nTotal aprox. (desde): '+money(cita.total):'')+(cita.nota?'\nNota: '+cita.nota:'');
   window.open(waLink(msg),'_blank','noopener');
   var ok=$('#ok');ok.style.display='block';ok.innerHTML='✓ Folio <b>'+folio+'</b> · '+esc(fechaTxt)+' '+hora+'. Se abrió WhatsApp con tu mensaje; envíalo para confirmar. <a href="'+waLink(msg)+'" target="_blank" rel="noopener" style="text-decoration:underline">¿No se abrió? Toca aquí</a>.';
 };

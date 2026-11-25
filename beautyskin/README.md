@@ -15,8 +15,8 @@ Kit digital para la página de Facebook /LinaresSkin.
 - Fotos reales: guarda `assets/hero.jpg` (vertical) y `assets/ba1.jpg`, `ba2.jpg`, `ba3.jpg` (collage antes|después). Aparecen solas.
 
 ## Pendientes por confirmar con la clínica
-- Horario real (en `data.js` está L–V 10–19, S 10–15).
-- Precios de los servicios marcados "Cotiza".
+- Horario: L–V 9:00–19:00, solo con cita (confirmado).
+- Precios "desde": estimados de mercado Tepic (nov 2026). Confirmar con la Dra.
 - Reseñas reales (las de la web son de ejemplo y lo dicen).
 - PIN del CRM: inicial `1234` → cambiarlo en CRM → Ajustes el primer día.
 

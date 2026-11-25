@@ -27,19 +27,21 @@ VALORACIÓN MÉDICA: $300, se descuentan del total del tratamiento. Todo es suje
 
 MÉDICO ESTÉTICO (aplica la doctora):
 - Toxina botulínica: $3,500 (frente, entrecejo, patas de gallo, bunny lines). Incluye retoque a los 15 días. Hasta 3 meses sin intereses.
-- Baby Botox: precio en valoración.
-- Aumento de labios con ácido hialurónico: precio en valoración.
-- Rinomodelación con ácido hialurónico: 10% de descuento vigente.
-- Radiesse (bioestimulador de colágeno): precio en valoración.
+- Baby Botox: desde $2,800.
+- Aumento de labios con ácido hialurónico: desde $4,500 (1 ml).
+- Rinomodelación con ácido hialurónico: desde $4,500, con 10% de descuento vigente.
+- Radiesse (bioestimulador de colágeno): desde $8,500 por jeringa.
 
 FACIALES / COSMETOLOGÍA:
 - Hollywood Peel: $950 por sesión, o 2 sesiones por $1,450.
-- Limpieza facial profunda, Dermaplaning, Dermapen con vitaminas, Dermapen en cicatrices de acné,
-  Electroporación, Despigmentante facial: precio en valoración / por WhatsApp.
+- Limpieza facial profunda: desde $600. Dermaplaning: desde $650. Electroporación: desde $700.
+- Dermapen con vitaminas: desde $1,100. Dermapen en cicatrices de acné: desde $1,300.
+- Despigmentante facial: desde $900.
 
-CORPORAL: Despigmentante de axilas, moldeo y reductivo corporal: precio en valoración.
+CORPORAL: Despigmentante de axilas desde $600. Moldeo y reductivo corporal desde $550 por sesión.
+Los precios 'desde' son base; el total exacto se define en la valoración.
 
-HORARIOS: (confirmar) Lunes a viernes 10:00–19:00, sábado 10:00–15:00, domingo cerrado.
+HORARIOS: Lunes a viernes 9:00–19:00, SOLO CON CITA. Sábado y domingo cerrado.
 FORMAS DE PAGO: efectivo, transferencia, tarjeta; 3 meses sin intereses en tratamientos seleccionados.
 `,
 
