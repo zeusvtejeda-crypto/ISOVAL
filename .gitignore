@@ -1,2 +1,4 @@
 imgs/*.png
 .wrangler/
+video-studio/out/
+video-studio/work/
