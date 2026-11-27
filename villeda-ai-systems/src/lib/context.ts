@@ -22,3 +22,15 @@ export async function getContext(): Promise<Ctx | null> {
     ent: { plan: ws.plan as PlanId, modules: (subs ?? []).map((s) => s.module_id).filter(isModuleId) as ModuleId[], creditsUsed: (use ?? []).reduce((a, r) => a + Number(r.units), 0) },
   };
 }
+
+/** Entitlement de un workspace desde el servidor (webhooks, sin sesión de usuario). SOLO servidor. */
+export async function entitlementFor(workspaceId: string): Promise<Entitlement> {
+  const { supabaseAdmin } = await import("./supabase/admin");
+  const a = supabaseAdmin();
+  const { data: ws } = await a.from("workspaces").select("plan").eq("id", workspaceId).single();
+  const [{ data: subs }, { data: use }] = await Promise.all([
+    a.from("module_subscriptions").select("module_id").eq("workspace_id", workspaceId).eq("active", true),
+    a.from("usage_ledger").select("units").eq("workspace_id", workspaceId).eq("period", new Date().toISOString().slice(0, 7) + "-01"),
+  ]);
+  return { plan: (ws?.plan ?? "starter") as PlanId, modules: (subs ?? []).map((s) => s.module_id).filter(isModuleId) as ModuleId[], creditsUsed: (use ?? []).reduce((x, r) => x + Number(r.units), 0) };
+}
