@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MODULES } from "@/core/modules";
+import { logout } from "@/app/actions";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const mods = Object.values(MODULES).sort((a, b) => a.phase - b.phase);
@@ -10,6 +11,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {mods.map((m) => (
           <Link key={m.id} href={`/app/${m.id}`} className="shrink-0 rounded px-3 py-1.5 text-sm hover:bg-current/10">{m.name}</Link>
         ))}
+        <Link href="/app/settings" className="ml-auto shrink-0 rounded px-3 py-1.5 text-sm hover:bg-current/10">Integraciones</Link>
+        <form action={logout}><button className="shrink-0 rounded px-3 py-1.5 text-sm hover:bg-current/10">Salir</button></form>
       </nav>
       <div className="mx-auto max-w-6xl px-4 py-8">{children}</div>
     </div>
