@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { MODULES, MODULE_IDS, isModuleId } from "@/core/modules";
 import { canUseModule } from "@/core/plans";
@@ -5,7 +6,11 @@ import { getContext } from "@/lib/context";
 
 export function generateStaticParams() { return MODULE_IDS.map((module) => ({ module })); }
 
-export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {
+export default function Page({ params }: { params: Promise<{ module: string }> }) {
+  return <Suspense fallback={<p role="status">Cargando…</p>}><ModulePage params={params} /></Suspense>;
+}
+
+async function ModulePage({ params }: { params: Promise<{ module: string }> }) {
   const { module } = await params;
   if (!isModuleId(module)) notFound();
   const m = MODULES[module];
