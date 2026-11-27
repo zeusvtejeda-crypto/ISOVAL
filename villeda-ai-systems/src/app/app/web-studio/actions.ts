@@ -44,3 +44,37 @@ export async function restoreVersion(projectId: string, n: number) {
   await sb.from("web_versions").insert({ project_id: projectId, workspace_id: ctx.workspaceId, n: last.n + 1, spec: siteSchema.parse(v.spec), note: `Restaurada v${n}` });
   revalidatePath(`/app/web-studio/${projectId}`);
 }
+
+import { chatEdit } from "@/core/web-studio/edit";
+import { TEMPLATES } from "@/core/web-studio/templates";
+
+async function nextVersion(projectId: string, ctx: { workspaceId: string }, spec: unknown, note: string) {
+  const sb = await supabaseServer();
+  const { data: last } = await sb.from("web_versions").select("n").eq("project_id", projectId).order("n", { ascending: false }).limit(1).single();
+  const { error } = await sb.from("web_versions").insert({ project_id: projectId, workspace_id: ctx.workspaceId, n: (last?.n ?? 0) + 1, spec, note });
+  if (error) throw new Error("No se pudo guardar la versión");
+}
+
+export async function editWithChat(projectId: string, _: FormState, fd: FormData): Promise<FormState> {
+  const instruction = z.string().min(3).max(1000).safeParse(fd.get("instruction")); if (!instruction.success) return { error: "Escribe una instrucción (mín. 3 caracteres)" };
+  try {
+    const ctx = await guard(); const sb = await supabaseServer();
+    const { data: cur } = await sb.from("web_versions").select("spec").eq("project_id", projectId).order("n", { ascending: false }).limit(1).single();
+    if (!cur) return { error: "Proyecto no encontrado" };
+    const spec = await chatEdit(siteSchema.parse(cur.spec), instruction.data, ctx.ent, {
+      recordUsage: async ({ provider, credits }) => { await supabaseAdmin().from("usage_ledger").insert({ workspace_id: ctx.workspaceId, module_id: "web-studio", provider, units: credits, kind: "ai.edit" }); },
+    });
+    await nextVersion(projectId, ctx, spec, `Chat: ${instruction.data.slice(0, 50)}`);
+    revalidatePath(`/app/web-studio/${projectId}`);
+    return { ok: "Cambios aplicados" };
+  } catch (e) { return { error: e instanceof Error ? e.message : "Error inesperado" }; }
+}
+
+export async function createFromTemplate(key: string): Promise<void> {
+  const t = TEMPLATES[key]; if (!t) throw new Error("Plantilla inexistente");
+  const ctx = await guard(); const sb = await supabaseServer();
+  const { data: proj } = await sb.from("web_projects").insert({ workspace_id: ctx.workspaceId, name: t.label, created_by: ctx.userId }).select("id").single();
+  if (!proj) throw new Error("No se pudo crear");
+  await nextVersion(proj.id, ctx, t.spec, `Plantilla: ${t.label}`);
+  redirect(`/app/web-studio/${proj.id}`);
+}

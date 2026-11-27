@@ -6,6 +6,7 @@ import { siteSchema } from "@/core/web-studio/spec";
 import { renderSite } from "@/core/web-studio/render";
 import { audit } from "@/core/web-studio/audit";
 import { restoreVersion } from "../actions";
+import { ChatEdit } from "./ChatEdit";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return <Suspense fallback={<p role="status">Cargando…</p>}><Project params={params} /></Suspense>;
@@ -30,6 +31,7 @@ async function Project({ params }: { params: Promise<{ id: string }> }) {
           <section><h2 className="font-semibold">Auditoría SEO / accesibilidad</h2>
             {findings.length ? <ul className="mt-2 space-y-1">{findings.map((f) => <li key={f.code}><b className={f.level === "error" ? "text-red-500" : "text-yellow-600"}>{f.level}</b> {f.message}</li>)}</ul> : <p className="mt-2 opacity-70">Sin hallazgos en las reglas estáticas.</p>}
           </section>
+          <ChatEdit id={id} />
           <section><h2 className="font-semibold">Versiones</h2>
             <ul className="mt-2 space-y-2">{vs.map((v) => <li key={v.n} className="flex items-center justify-between gap-2"><span>v{v.n} · {v.note}</span>
               {v.n !== vs[0].n && <form action={restoreVersion.bind(null, id, v.n)}><button className="underline">Restaurar</button></form>}</li>)}</ul>

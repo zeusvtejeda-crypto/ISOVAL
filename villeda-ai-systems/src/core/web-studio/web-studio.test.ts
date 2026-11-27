@@ -57,3 +57,26 @@ describe("generateSite (IA simulada)", () => {
     await expect(generateSite({ description: "x" }, ent, { env: { ANTHROPIC_API_KEY: "k" }, fetchFn: mk("basura") })).rejects.toThrow("especificación válida");
   });
 });
+
+import { applyOps, chatEdit } from "./edit";
+import { TEMPLATES, placeholders } from "./templates";
+describe("edit", () => {
+  it("aplica operaciones sin mutar el original", () => {
+    const out = applyOps(spec, [{ op: "set_theme", theme: { primary: "#000000" } }, { op: "move_section", from: 2, to: 1 }, { op: "remove_section", index: 0 }]);
+    expect(out.theme.primary).toBe("#000000"); expect(out.sections.map((s) => s.type)).toEqual(["contact", "catalog"]); expect(spec.sections).toHaveLength(3); expect(spec.theme.primary).toBe("#1d4ed8");
+  });
+  it("rechaza índices fuera de rango y resultados inválidos", () => {
+    expect(() => applyOps(spec, [{ op: "remove_section", index: 9 }])).toThrow();
+    expect(() => applyOps({ ...spec, sections: [spec.sections[0]] }, [{ op: "remove_section", index: 0 }])).toThrow(); // quedaría sin secciones
+  });
+  it("chatEdit valida la salida de la IA (simulada)", async () => {
+    const ent = { plan: "business" as const, modules: [], creditsUsed: 0 };
+    const f = (t: string) => vi.fn(async () => new Response(JSON.stringify({ content: [{ text: t }], usage: {} }))) as unknown as typeof fetch;
+    const ok = await chatEdit(spec, "cambia el color", ent, { env: { ANTHROPIC_API_KEY: "k" }, fetchFn: f('[{"op":"set_theme","theme":{"primary":"#b91c1c"}}]') });
+    expect(ok.theme.primary).toBe("#b91c1c");
+    await expect(chatEdit(spec, "x", ent, { env: { ANTHROPIC_API_KEY: "k" }, fetchFn: f('[{"op":"hack"}]') })).rejects.toThrow();
+  });
+});
+describe("templates", () => {
+  it("son válidas y marcan placeholders", () => { for (const t of Object.values(TEMPLATES)) expect(placeholders(t.spec)).toBeGreaterThan(0); });
+});
